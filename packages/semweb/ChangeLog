@@ -1,6 +1,7 @@
 Sep 14, 2004
 
   * FIXED: Bug#183: memory corruption due to invalid free.  Sandro Hawke.
+    Same test also provided other consistency errors.
 
 Sep 2, 2004
 

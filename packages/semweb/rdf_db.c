@@ -241,6 +241,8 @@ get_bool_arg_ex(int a, term_t t, int *val)
 
 #ifdef O_DEBUG
 
+#define PRT_SRC	0x1
+
 static void
 print_triple_source(triple *t)
 { if ( t->line == NO_LINE )
@@ -283,11 +285,18 @@ print_object(triple *t)
 
 
 static void
-print_triple(triple *t)
+print_triple(triple *t, int flags)
 { Sdprintf("<%s %s ",
 	   PL_atom_chars(t->subject),
 	   PL_atom_chars(t->predicate->name));
   print_object(t);
+  if ( (flags & PRT_SRC) )
+  { if ( t->line == NO_LINE )
+      Sdprintf(" @%s", PL_atom_chars(t->source));
+    else
+      Sdprintf(" @%s:%ld", PL_atom_chars(t->source), t->line);
+  }
+  Sdprintf(">");
 }
 
 #endif
@@ -1285,6 +1294,10 @@ rehash_triples()
       PL_free(t2);
       freed++;
     }
+
+    t->next[BY_NONE] = t2;
+    if ( !t2 )
+      by_none_tail = t;
   }
 
   if ( by_none == NULL )
@@ -1422,7 +1435,7 @@ Match triple t to pattern p.  Erased triples are always skipped.
 static int
 match_triples(triple *t, triple *p, unsigned flags)
 { DEBUG(3, Sdprintf("match_triple(");
-	   print_triple(t);
+	   print_triple(t, 0);
 	   Sdprintf(")\n"));
 
   if ( t->erased )
@@ -2610,23 +2623,21 @@ update_duplicates_add(triple *t)
   assert(t->duplicates == 0);
 
   d = table[indexed][triple_hash(t, indexed)];
-  for( ; d; d = d->next[indexed] )
-  { if ( d != t && match_triples(d, t, MATCH_EXACT) )
+  for( ; d && d != t; d = d->next[indexed] )
+  { if ( match_triples(d, t, MATCH_EXACT) )
     { t->is_duplicate = TRUE;
-      if ( !d->is_duplicate )
-      { d->duplicates++;
+      assert( !d->is_duplicate );
 
-	DEBUG(1,
-	      print_triple_source(t);
-	      Sdprintf("%p: %d-th duplicate: ", t, d->duplicates);
-	      print_triple(t);
-	      print_triple_source(d);
-	      Sdprintf("Location of first (%p)\n", d));
+      d->duplicates++;
 
-	assert(d->duplicates);		/* check overflow */
-	duplicates++;
-	return TRUE;
-      }
+      DEBUG(1,
+	    print_triple(t, PRT_SRC);
+	    Sdprintf(" %p: %d-th duplicate: ", t, d->duplicates);
+	    Sdprintf("Location of first (%p)\n", d));
+      
+      assert(d->duplicates);		/* check overflow */
+      duplicates++;
+      return TRUE;
     }
   }
 
@@ -2644,8 +2655,8 @@ update_duplicates_del(triple *t)
   { triple *d;
       
     DEBUG(1,
-	  print_triple(t);
-	  Sdprintf(": Deleting %p, %d duplicates\n", t, t->duplicates));
+	  print_triple(t, PRT_SRC);
+	  Sdprintf(": Deleting %p, %d duplicates: ", t, t->duplicates));
 
     d = table[indexed][triple_hash(t, indexed)];
     for( ; d; d = d->next[indexed] )
@@ -2663,18 +2674,22 @@ update_duplicates_del(triple *t)
   { triple *d;
       
     DEBUG(1,
-	  print_triple(t);
-	  Sdprintf(": Deleting, is a duplicate\n"));
+	  print_triple(t, PRT_SRC);
+	  Sdprintf(": Deleting, is a duplicate: "));
 
     d = table[indexed][triple_hash(t, indexed)];
     for( ; d; d = d->next[indexed] )
     { if ( d != t && match_triples(d, t, MATCH_EXACT) )
       { if ( d->duplicates )
 	{ d->duplicates--;
+	  DEBUG(1, Sdprintf("Principal %p has %d duplicates\n",
+			    d, d->duplicates));
 	  return;
 	}
       }
     }
+    Sdprintf("FATAL\n");
+    PL_halt(1);
     assert(0);
   }
 }
