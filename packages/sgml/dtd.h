@@ -81,7 +81,7 @@ typedef enum
 } charfunc;				/* function of characters */
 
 typedef enum
-{ ENC_ISO_LATIN1,			/* ISO-Latin-1 */
+{ ENC_ISO_LATIN1 = 0,			/* ISO-Latin-1 */
   ENC_UTF8				/* Multi-byte UTF-8 encoding */
 } dtd_char_encoding;
 
