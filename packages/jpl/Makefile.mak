@@ -81,8 +81,8 @@ exjava-install::
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\run.bat "$(EXJAVA)\%f
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\README "$(EXJAVA)\%f\README.txt
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\%f.java "$(EXJAVA)\%f
-		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXJAVA)\%f
-		copy examples\java\SemWeb\test.rdf "$(EXJAVA)\SemWeb\test.rdf
+		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXJAVA)\%f"
+		copy examples\java\SemWeb\test.rdf "$(EXJAVA)\SemWeb"
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
