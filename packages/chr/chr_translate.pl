@@ -925,6 +925,12 @@ apply_unique_pattern(Constraint,Id,Pattern,Pragma) :-
 	),
 	Pragma = unique(Id,Vars).
 
+%	subsumes(+Term1, +Term2, -Unifier)
+%	
+%	If Term1 is a more general term   than  Term2 (e.g. has a larger
+%	part instantiated), unify  Unifier  with   a  list  Var-Value of
+%	variables from Term2 and their corresponding values in Term1.
+
 subsumes(Term1,Term2,Unifier) :-
 	empty_assoc(S0),
 	subsumes_aux(Term1,Term2,S0,S),
@@ -936,9 +942,13 @@ subsumes_aux(Term1, Term2, S0, S) :-
             functor(Term2, F, N)
         ->  compound(Term1), functor(Term1, F, N),
             subsumes_aux(N, Term1, Term2, S0, S)
-        ;   Term1 == Term2 -> S = S0
-	;   var(Term2),  get_assoc(Term1,S0,V) ->  V == Term2, S = S0
-	;   var(Term2),  put_assoc(Term1, S0, Term2, S)
+        ;   Term1 == Term2
+	->  S = S0
+	;   var(Term2),
+	    get_assoc(Term1,S0,V)
+	->  V == Term2, S = S0
+	;   var(Term2),
+	    put_assoc(Term1, S0, Term2, S)
         ).
 
 subsumes_aux(0, _, _, S, S) :- ! .
