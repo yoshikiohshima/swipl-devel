@@ -4457,12 +4457,6 @@ Leave the clause:
   - restore machine registers from parent frame
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
       {				MARK(I_EXIT);
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-i_exitfact is generated to close a fact. The reason for not generating a
-plain I_EXIT is first of all that the actual sequence should be I_ENTER,
-I_EXIT,  and  just  optimising   to    I_EXIT   looses   the  unify-port
-interception. Second, there should be some room for optimisation here.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     exit_builtin:
 #ifdef O_ATTVAR
       if ( *valTermRef(LD->attvar.head) ) /* can be faster */
@@ -4475,6 +4469,12 @@ interception. Second, there should be some room for optimisation here.
 #endif
       goto exit_builtin_cont;
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+i_exitfact is generated to close a fact. The reason for not generating a
+plain I_EXIT is first of all that the actual sequence should be I_ENTER,
+I_EXIT,  and  just  optimising   to    I_EXIT   looses   the  unify-port
+interception. Second, there should be some room for optimisation here.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     VMI(I_EXITFACT) MARK(EXITFACT);
 #if O_DEBUGGER
@@ -4485,6 +4485,13 @@ interception. Second, there should be some room for optimisation here.
 	  }
 	}
 #endif /*O_DEBUGGER*/
+#ifdef O_ATTVAR
+	if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+	{ ARGP = argFrameP(lTop, 0);	    /* needed? */
+	  goto wakeup;
+	}
+#endif
+
         /* FALLTHROUGH*/
     VMI(I_EXIT) MARK(EXIT);
 
