@@ -457,11 +457,11 @@ put(X,L,U,Exp) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 min_inf(Inf) :-
-	feature(min_integer,MInf),
+	current_prolog_flag(min_integer,MInf),
 	Inf is MInf + 1.
 
 max_inf(Inf) :-
-	feature(max_integer,Inf).
+	current_prolog_flag(max_integer,Inf).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 attr_unify_hook(bounds(L,U,Exp),Other) :-
