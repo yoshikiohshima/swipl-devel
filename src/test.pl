@@ -1064,18 +1064,18 @@ avar(type-5) :-
 		 *******************************/
 
 copy_term(rct-1) :-
-	really_copy_term(a, X), X == a.
+	copy_term(a, X), X == a.
 copy_term(rct-2) :-
-	really_copy_term(X, Y), X \== Y.
+	copy_term(X, Y), X \== Y.
 copy_term(rct-3) :-
-	really_copy_term(f(a), Y), Y == f(a).
+	copy_term(f(a), Y), Y == f(a).
 copy_term(rct-4) :-
-	really_copy_term(f(X), Y), Y = f(Z), X \== Z.
+	copy_term(f(X), Y), Y = f(Z), X \== Z.
 copy_term(rct-5) :-
-	really_copy_term(f(X, X), Y), Y = f(A,B), A == B.
+	copy_term(f(X, X), Y), Y = f(A,B), A == B.
 copy_term(rct-6) :-
 	X = f(X),
-	really_copy_term(X, Y),
+	copy_term(X, Y),
 	X = Y.
 copy_term(ct-1) :-
 	T = (A=foo(bar(A), y:x(A, b, c))),
@@ -1085,7 +1085,7 @@ copy_term(ct-1) :-
 copy_term(av-1) :-			% copy attributed variables
 	X = foo(V),
 	put_attr(V, test, y),
-	really_copy_term(X, Y),
+	copy_term(X, Y),
 	Y = foo(Arg),
 	get_attr(Arg, test, A),
 	A == y,
@@ -1094,20 +1094,20 @@ copy_term(av-1) :-			% copy attributed variables
 copy_term(av-2) :-
 	X = foo(V,V),
 	put_attr(V, test, y),
-	really_copy_term(X, Y),
+	copy_term(X, Y),
 	Y = foo(A,B),
 	A == B,
 	get_attr(A, test, y).
 copy_term(av-3) :-
 	put_attr(X, test, f(X)),
-	really_copy_term(X, Y),
+	copy_term(X, Y),
 	get_attr(Y, test, A),
 	A = f(Z),
 	Y == Z.
 copy_term(av-3) :-
 	freeze(X, true),
 	freeze(X, Done = true),
-	really_copy_term(X, Y),
+	copy_term(X, Y),
 	X = ok,
 	Done == true,
 	get_attr(Y, freeze, (true, D2=true)),
