@@ -1,3 +1,8 @@
+Apr 27, 2004
+
+  * ADDED: first version of xsdp_types.pl, a module to do type checking
+    and type conversion for XSD (XML Schema DataTypes).
+
 Apr 26, 2004
 
   * FIXED: Bug#149: Buffer overflow reading too long NAME, NMTOKEN, etc.
