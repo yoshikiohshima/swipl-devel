@@ -67,7 +67,7 @@ predicate calls:
     ssl_accept/3  &     \\
     ssl_open/4    &     ssl_open/3 \\
     \ldots        &     \ldots \\
-    ssl_exit      &     ssl_exit \\
+    ssl_exit/1      &   ssl_exit/1 \\
 \hline
 \end{tabular}
 \end{center}
@@ -154,6 +154,18 @@ ssl_init/3 and create the Prolog I/O streams.
     \predicate{ssl_exit}{2}{+SSL}
 Clean up all resources related to the SSL + TCP/IP socket layers.
 \end{description}
+
+
+\section{Bugs}
+
+The current implementation uses blocking (socket) I/O, which implies
+it is not possible to deal with timeouts and (XPCE) event dispatching.
+It is adviced to use the SSL library from Prolog threads to prevent the
+toplevel from blocking, especially on MS-Windows.
+
+We plan to merge the non-blocking socket based implementation used by
+library \pllib{socket} with OpenSSL.
+
 
 \section{Acknowledgments}
 
