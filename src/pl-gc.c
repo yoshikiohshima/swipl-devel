@@ -670,7 +670,7 @@ term_refs_to_gvars(fid_t fid, Word *saved_bar_at)
   { assert((void *)(saved_bar_at+1) == (void*)lTop);
     LD->frozen_bar = valPtr2((word)*saved_bar_at, STG_GLOBAL);
 
-    assert(onStack(global, LD->frozen_bar));
+    assert(onStack(global, LD->frozen_bar) || LD->frozen_bar == gTop);
     lTop = (LocalFrame) saved_bar_at;
   }
 
