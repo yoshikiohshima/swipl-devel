@@ -91,7 +91,7 @@ COMMON(fid_t) 		PL_open_signal_foreign_frame(void);
 /* pl-atom.c */
 COMMON(word) 		lookupAtom(const char *s, unsigned int len);
 COMMON(word) 		lookupBlob(const char *s, unsigned int len,
-				   PL_blob_t *type);
+				   PL_blob_t *type, int *new);
 COMMON(word) 		pl_atom_hashstat(term_t i, term_t n);
 COMMON(void) 		initAtoms(void);
 COMMON(void) 		cleanupAtoms(void);

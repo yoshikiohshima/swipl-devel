@@ -2358,7 +2358,8 @@ _PL_copy_atomic(term_t t, PL_atomic_t arg) /* internal one */
 int
 PL_unify_blob(term_t t, void *blob, unsigned int len, PL_blob_t *type)
 { GET_LD
-  atom_t a = lookupBlob(blob, len, type);
+  int new;
+  atom_t a = lookupBlob(blob, len, type, &new);
   int rval = unifyAtomic(t, a PASS_LD);
 
   PL_unregister_atom(a);
@@ -2367,13 +2368,16 @@ PL_unify_blob(term_t t, void *blob, unsigned int len, PL_blob_t *type)
 }
 
 
-void
+int
 PL_put_blob(term_t t, void *blob, unsigned int len, PL_blob_t *type)
 { GET_LD
-  atom_t a = lookupBlob(blob, len, type);
+  int new;
+  atom_t a = lookupBlob(blob, len, type, &new);
 
   setHandle(t, a);
   PL_unregister_atom(a);
+
+  return new;
 }
 
 

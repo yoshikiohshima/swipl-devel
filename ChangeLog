@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: return value for PL_put_blob() to indicate new/reused blob
+    identifier.  Salvador Fandiño.
+
+
 VERSION 5.3.21 (September 14, 2004)
 ===================================
 

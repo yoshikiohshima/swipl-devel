@@ -302,7 +302,7 @@ registerAtom(Atom a)
 		 *******************************/
 
 word
-lookupBlob(const char *s, unsigned int length, PL_blob_t *type)
+lookupBlob(const char *s, unsigned int length, PL_blob_t *type, int *new)
 { int v0, v;
   ulong oldheap;
   Atom a;
@@ -327,6 +327,7 @@ lookupBlob(const char *s, unsigned int length, PL_blob_t *type)
 	  a->references++;
 #endif
           UNLOCK();
+	  *new = FALSE;
 	  return a->atom;
 	}
       }
@@ -342,6 +343,7 @@ lookupBlob(const char *s, unsigned int length, PL_blob_t *type)
 	  a->references++;
 #endif
           UNLOCK();
+	  *new = FALSE;
 	  return a->atom;
 	}
       }
@@ -387,13 +389,16 @@ lookupBlob(const char *s, unsigned int length, PL_blob_t *type)
 
   UNLOCK();
   
+  *new = TRUE;
   return a->atom;
 }
 
 
 word
 lookupAtom(const char *s, unsigned int length)
-{ return lookupBlob(s, length, &text_atom);
+{ int new;
+
+  return lookupBlob(s, length, &text_atom, &new);
 }
 
 

@@ -1472,7 +1472,13 @@ associated to the given type.  See also PL_unify_atom_nchars().
 
     \cfunction{int}{PL_put_blob}{term_t t, void *blob, unsigned int len,
 				 PL_blob_t *type}
-Store the described blob in \arg{t}.  See also PL_put_atom_nchars().
+Store the described blob in \arg{t}.  The return value indicates whether
+a new blob was allocated (\const{FALSE}) or the blob is a reference to
+an existing blob (\const{TRUE}).  Reporting new/existing can be used to
+deal with external objects having their own reference counts.  If the
+return is \const{TRUE} this reference count must be incremented and it
+must be decremented on blob destruction callback.  See also
+PL_put_atom_nchars().
 
     \cfunction{int}{PL_get_blob}{term_t t, void **blob, unsigned int *len,
 				 PL_blob_t **type}
