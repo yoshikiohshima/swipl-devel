@@ -570,6 +570,7 @@ structeql(Word t1, Word t2, TmpBuffer buf ARG_LD)
 
     switch(tag(w1))
     { case TAG_VAR:
+      case TAG_ATTVAR:
       case TAG_ATOM:
 	fail;
       case TAG_INTEGER:
@@ -1374,6 +1375,10 @@ end_analysis:
   return PL_unify(to, copy);
 }
 
+
+		 /*******************************
+		 *	       ATOMS		*
+		 *******************************/
 
 word
 pl_atom_length(term_t w, term_t n)
