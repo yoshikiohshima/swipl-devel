@@ -157,6 +157,12 @@ Section "Constraint Handling Rules"
   File /r pl\doc\packages\examples\chr
 SectionEnd
 
+Section "CLP"
+  SectionIn 1 3
+  SetOutPath $INSTDIR\library\clp
+  File pl\library\clp\bounds.pl
+SectionEnd
+
 Section "Demo files"
   SectionIn 1 3
   SetOutPath $INSTDIR
