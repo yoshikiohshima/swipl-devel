@@ -237,7 +237,7 @@ In order to use the CHR debugging facilities for a CHR file,
 it is necessary to enable the \texttt{debug} option by
 writing:
 \begin{verbatim}
-	:- option(debug,on).
+	option(debug,on).
 \end{verbatim}
 in the \fileext{chr} file.
 
