@@ -111,6 +111,7 @@ static atom_t	ATOM_subPropertyOf;
 static int match(int how, atom_t search, atom_t label);
 static int update_duplicates_add(triple *t);
 static void update_duplicates_del(triple *t);
+static void unlock_atoms(triple *t);
 
 
 		 /*******************************
@@ -291,6 +292,7 @@ static triple **tail[INDEX_TABLES];
 static int	table_size[INDEX_TABLES];
 static long	created;		/* #triples created */
 static long	erased;			/* #triples erased */
+static long	freed;			/* #triples actually erased */
 static long	subjects;		/* subjects (unique first) */
 static long	indexed[8];		/* Count calls */
 static predicate **pred_table;		/* Hash-table of predicates */
@@ -1067,12 +1069,14 @@ rehash_triples()
 Relink the triples in the hash-chains after the hash-keys for properties
 have changed or the tables have  been   resized.  The caller must ensure
 there are no active queries and the tables are of the proper size.
+
+At the same time, this predicate actually removes erased triples.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
 rehash_triples()
 { int i;
-  triple *t;
+  triple *t, *t2;
 
   for(i=1; i<INDEX_TABLES; i++)
   { if ( table[i] )
@@ -1083,12 +1087,35 @@ rehash_triples()
     }
   }
 
-  for(t=by_none; t; t = t->next[BY_NONE])
-  { for(i=1; i<INDEX_TABLES; i++)
+					/* delete leading erased triples */
+  for(t=by_none; t && t->erased; t=t2)
+  { t2 = t->next[BY_NONE];
+
+    unlock_atoms(t);
+    PL_free(t);
+    freed++;
+
+    by_none = t2;
+  }
+
+  for(t=by_none; t; t = t2)
+  { triple *t3;
+
+    t2 = t->next[BY_NONE];
+
+    for(i=1; i<INDEX_TABLES; i++)
       t->next[i] = NULL;
 
-    if ( t->erased == FALSE )
-      link_triple_hash(t);
+    assert(t->erased == FALSE);
+    link_triple_hash(t);
+
+    for( ; t2 && t2->erased; t2=t3 )
+    { t3 = t2->next[BY_NONE];
+
+      unlock_atoms(t2);
+      PL_free(t);
+      freed++;
+    }
   }
 }
 
@@ -1097,14 +1124,25 @@ rehash_triples()
 update_hash()
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+#define WANT_GC ((erased-freed) > 1000 && (erased-freed) > (created-erased))
+
 static int
 update_hash()
-{ if ( need_update )
+{ int want_gc = WANT_GC;
+
+  if ( want_gc )
+    DEBUG(1, Sdprintf("rdf_db: want GC\n"));
+
+  if ( need_update || want_gc )
   { LOCK();
 
     if ( active_queries )
     { UNLOCK();
-      return permission_error("rdf_db", "update", "db", "Active queries");
+
+      if ( need_update )
+	return permission_error("rdf_db", "update", "db", "Active queries");
+      else
+	return TRUE;			/* only GC, no worries */
     }
 
     if ( need_update )			/* check again */
@@ -1114,7 +1152,12 @@ update_hash()
 	DEBUG(1, Sdprintf("ok\n"));
       }
       need_update = 0;
+    } else if ( WANT_GC )
+    { DEBUG(1, Sdprintf("rdf_db: GC ..."));
+      rehash_triples();
+      DEBUG(1, Sdprintf("ok\n"));
     }
+
     UNLOCK();
   }
 
@@ -3408,6 +3451,7 @@ erase_triples()
 
     unlock_atoms(t);
     PL_free(t);
+    freed++;
   }
   by_none = by_none_tail = NULL;
 

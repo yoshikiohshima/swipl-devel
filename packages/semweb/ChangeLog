@@ -1,6 +1,9 @@
 Jul 15, 2004
 
-  * FIXED: rdf_safe_header/2 implementation and documentation.  Sandro Hawke.
+  * ENHANCED: Added triple garbage collector.  After Bug#161 by Sandro Hawke.
+
+  * FIXED: Bug#160: rdf_safe_header/2 implementation and documentation.
+    Sandro Hawke.
 
 Jun 29, 2004
 
