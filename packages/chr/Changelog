@@ -1,3 +1,7 @@
+Apr 2, 2004
+
+  * JW: fixed Undefined procedure: chr_runtime:run_suspensions_loop_d/1
+
 Mar 29, 2004
 
   * JW: Use \+ \+ in chr_compile/3 to undo changes to the constraint

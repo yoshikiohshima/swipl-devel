@@ -171,7 +171,7 @@ run_suspensions([S|Next] ) :-
 'chr run_suspensions_loop_d'([]).
 'chr run_suspensions_loop_d'([L|Ls]) :-
 	run_suspensions_d(L),
-	'run_suspensions_loop_d'(Ls).
+	'chr run_suspensions_loop_d'(Ls).
 
 run_suspensions_d([]).
 run_suspensions_d([S|Next] ) :-
