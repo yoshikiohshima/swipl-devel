@@ -474,6 +474,12 @@ Runtime translation between \arg{Alias} and \arg{Local} and a
 predicate is often used to turn a global URL into a more readable
 term.
 
+    \predicate{rdf_global_object}{2}{?Object, ?NameExpandedObject}
+As rdf_global_id/2, but also expands the type field if the object
+is of the form \term{literal}{\term{type}{Type, Value}}.  This predicate
+is used for goal expansion of the object fields in rdf/3 and similar
+goals.
+
     \predicate{rdf_global_term}{2}{+Term0, -Term}
 Expands all \arg{Alias}:\arg{Local} in \arg{Term0} and return the
 result in \arg{Term}.  Use infrequently for runtime expansion of

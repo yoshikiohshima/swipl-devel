@@ -107,22 +107,22 @@ user:goal_expansion(rdfe_assert(Subj0, Pred0, Obj0),
 		    rdfe_assert(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdfe_assert(Subj0, Pred0, Obj0, PayLoad),
 		    rdfe_assert(Subj, Pred, Obj, PayLoad)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdfe_retractall(Subj0, Pred0, Obj0),
 		    rdfe_retractall(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdfe_update(Subj0, Pred0, Obj0, Action0),
 		    rdfe_update(Subj, Pred, Obj, Action)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj),
+	rdf_global_object(Obj0, Obj),
 	(   compound(Action0)
 	->  Action0 =.. [Name,Res0],
 	    rdf_global_id(Res0, Res),

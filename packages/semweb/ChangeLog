@@ -1,5 +1,8 @@
 Jul 22, 2004
 
+  * ADDED: Namespace expansion in rdf(S,P,literal(type(xsd:int, 5))).
+    Bug#170.  Sandro Hawke.
+
   * FIXED: rdf(X,X,X) and similar queries.
 
 Jul 15, 2004

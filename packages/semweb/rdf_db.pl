@@ -82,6 +82,7 @@
 
 	    rdf_register_ns/2,		% +Alias, +URI
 	    rdf_global_id/2,		% ?NS:Name, ?Global
+	    rdf_global_object/2,	% ?Object, ?NSExpandedObject
 	    rdf_global_term/2,		% Term, WithExpandedNS
 
 	    rdf_match_label/3,		% +How, +String, +Label
@@ -138,19 +139,35 @@ rdf_register_ns(Alias, URI) :-
 %	Convert between NS:Local and global atomic identifier.
 %	To be completed.
 
-rdf_global_id(Global, Global) :-
-	var(Global), !.
 rdf_global_id(NS:Local, Global) :-
-	atom(Global),
-	ns(NS, Full),
-	atom_concat(Full, Local, Global), !.
-rdf_global_id(NS:Local, Global) :-
-	atom(NS), atom(Local), !,
-	(   ns(NS, Full)
-	*-> atom_concat(Full, Local, Global)
-	;   atom_concat(NS, Local, Global)
-	).
+	global(NS, Local, Global), !.
 rdf_global_id(Global, Global).
+
+
+%	rdf_global_object(?Object, ?GlobalObject)
+%	
+%	Same as rdf_global_id/2,  but  intended   for  dealing  with the
+%	object part of a  triple,  in   particular  the  type  for typed
+%	literals.
+
+rdf_global_object(NS:Local, Global) :-
+	global(NS, Local, Global), !.
+rdf_global_object(literal(type(NS:Local, Value)),
+		  literal(type(Global, Value))) :-
+	global(NS, Local, Global), !.
+rdf_global_object(Global, Global).
+	    
+global(NS, Local, Global) :-
+	(   atom(Global)
+	->  ns(NS, Full),
+	    atom_concat(Full, Local, Global)
+	;   atom(NS), atom(Local)
+	->  (   ns(NS, Full)
+	    *-> atom_concat(Full, Local, Global)
+	    ;   atom_concat(NS, Local, Global)
+	    )
+	).
+
 
 
 %	rdf_global_term(+TermIn, -GlobalTerm)
@@ -185,53 +202,53 @@ user:goal_expansion(rdf(Subj0, Pred0, Obj0),
 		    rdf(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_has(Subj0, Pred0, Obj0, RP0),
 		    rdf_has(Subj, Pred, Obj, RP)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj),
+	rdf_global_object(Obj0, Obj),
 	rdf_global_id(RP0, RP).
 user:goal_expansion(rdf_has(Subj0, Pred0, Obj0),
 		    rdf_has(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_assert(Subj0, Pred0, Obj0),
 		    rdf_assert(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_retractall(Subj0, Pred0, Obj0),
 		    rdf_retractall(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf(Subj0, Pred0, Obj0, PayLoad),
 		    rdf(Subj, Pred, Obj, PayLoad)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_reachable(Subj0, Pred0, Obj0),
 		    rdf_reachable(Subj, Pred, Obj)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_assert(Subj0, Pred0, Obj0, PayLoad),
 		    rdf_assert(Subj, Pred, Obj, PayLoad)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_retractall(Subj0, Pred0, Obj0, PayLoad),
 		    rdf_retractall(Subj, Pred, Obj, PayLoad)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj).
+	rdf_global_object(Obj0, Obj).
 user:goal_expansion(rdf_update(Subj0, Pred0, Obj0, Action0),
 		    rdf_update(Subj, Pred, Obj, Action)) :-
 	rdf_global_id(Subj0, Subj),
 	rdf_global_id(Pred0, Pred),
-	rdf_global_id(Obj0, Obj),
+	rdf_global_object(Obj0, Obj),
 	rdf_global_term(Action0, Action).
 user:goal_expansion(rdf_equal(SubjA0, SubjB0),
 		    rdf_equal(SubjA, SubjB)) :-
