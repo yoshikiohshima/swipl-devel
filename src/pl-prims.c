@@ -84,21 +84,64 @@ PRED_IMPL("atomic", 1, atomic, 0)
   return PL_is_atomic(A1);
 }
 
+
+#if O_CYCLIC
+
 static int
-_pl_ground(Word p ARG_LD)
+visited(Functor f ARG_LD)
+{ Word p = (Word)&f->definition;
+
+  if ( is_marked(p) )
+    succeed;
+  set_marked(p);
+  requireStack(argument, sizeof(Word));
+  *aTop++ = p;
+  fail;
+}
+
+
+static void
+unvisit(Word *base ARG_LD)
+{ Word *p = aTop;
+
+  while(p>base)
+  { p--;
+    clear_marked(*p);
+  }
+
+  aTop = base;
+}
+
+#else
+
+static inline visited(Functor f ARG_LD) { fail; }
+static inline unvisit(Word *base ARG_LD) { }
+
+#endif /*O_CYCLIC*/
+
+static int
+ground(Word p ARG_LD)
 { int arity;
+  Functor f;
 
 last:
   deRef(p);
 
-  if (canBind(*p) )
+  if ( canBind(*p) )		/* attributed variables are not ground */
     fail;
-  if (!isTerm(*p) )
+  if ( !isTerm(*p) )
     succeed;
 
-  arity = arityFunctor(functorTerm(*p));
-  for(p = argTermP(*p, 0); --arity > 0; p++)
-    TRY( _pl_ground(p PASS_LD) );
+  f = valueTerm(*p);
+  arity = arityFunctor(f->definition);
+  p = f->arguments;
+  if ( visited(f PASS_LD) )	/* already been here, so it must be ground */
+    succeed;
+
+  for(; --arity > 0; p++)
+  { if ( !ground(p PASS_LD) )
+      fail;
+  }
 
   goto last;
 }
@@ -107,7 +150,13 @@ last:
 static
 PRED_IMPL("ground", 1, ground, 0)
 { PRED_LD
-  return _pl_ground(valTermRef(A1) PASS_LD);
+  Word *m = aTop;
+  int rc;
+
+  rc = ground(valTermRef(A1) PASS_LD);
+  unvisit(m PASS_LD);
+
+  return rc;
 }
 
 

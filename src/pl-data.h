@@ -149,6 +149,8 @@ be kept consistent.
 #define MARK_MASK	(0x1<<5)	/* GC mark */
 #define FIRST_MASK	(0x2<<5)	/* GC first mark */
 
+#define set_marked(p)	do { *(p) |= MARK_MASK; } while(0)
+#define clear_marked(p)	do { *(p) &= ~MARK_MASK; } while(0)
 #define is_marked(p)	(*(p) & MARK_MASK)
 #define is_first(p)	(*(p) & FIRST_MASK)
 
