@@ -120,9 +120,20 @@ lang(3) :-
 	X = lang(_,_),
 	findall(X, rdf(x, a, literal(X)), Xs),
 	Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ].
-		
-
-
+lang(save) :-
+	tmp_file(rdf, File),
+	lang_data,
+	rdf_save_db(File),
+	rdf_reset_db,
+	rdf_load_db(File),
+	delete_file(File),
+	X = lang(_,_),
+	findall(X, rdf(x, a, literal(X)), Xs),
+	(   Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ]
+	->  true
+	;   format(user_error, 'Xs = ~w~n', [Xs]),
+	    fail
+	).
 
 
 		 /*******************************

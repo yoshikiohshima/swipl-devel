@@ -1403,6 +1403,11 @@ write_triple(IOSTREAM *out, triple *t)
   save_atom(out, t->subject);
   save_atom(out, t->predicate->name);
 
+  if ( t->type_or_lang )
+  { Sputc(t->has_lang ? 'l' : 't', out);
+    save_atom(out, t->type_or_lang);
+  }
+
   switch(t->objtype)
   { case OBJ_RESOURCE:
       Sputc('R', out);
@@ -1632,6 +1637,7 @@ load_triple(IOSTREAM *in, ld_context *ctx)
   memset(t, 0, sizeof(*t));
   t->subject   = load_atom(in, ctx);
   t->predicate = lookup_predicate(load_atom(in, ctx));
+value:
   switch(Sgetc(in))
   { case 'R':
       t->objtype = OBJ_RESOURCE;
@@ -1661,6 +1667,11 @@ load_triple(IOSTREAM *in, ld_context *ctx)
 
       break;
     }
+    case 'l':
+      t->has_lang = TRUE;
+    case 't':
+      t->type_or_lang = load_atom(in, ctx);
+      goto value;
     default:
       assert(0);
   }
