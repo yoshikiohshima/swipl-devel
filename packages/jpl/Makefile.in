@@ -48,7 +48,19 @@ all:		$(TARGETS)
 libjpl.@SO@:	$(OBJ)
 		$(LD) $(LDFLAGS) -o $@ $(OBJ) -ljava -lverify -ljvm
 
-check::
+################################################################
+# Verify the package
+################################################################
+
+check::		TestJPL.class
+		$(PL) -q -f check.pl -g test,halt -t 'halt(1)'
+
+TestJPL.class:	TestJPL.java
+		$(JAVAC) -classpath jpl.jar TestJPL.java
+
+################################################################
+# Installation
+################################################################
 
 install:	$(TARGETS) $(LIBPL)
 		mkdir -p $(PLBASE)/lib/$(PLARCH)
@@ -107,7 +119,8 @@ $(TEX):		$(DOCTOTEX)
 
 clean:
 		rm -f $(OBJ) *~ *.o *% a.out core config.log
-		(cd src/java/jpl && $(MAKE) clean)
+		rm -f TestJPL.class
+		(cd src/java && $(MAKE) clean)
 
 distclean:	clean
 		rm -f $(TARGETS) config.cache config.h config.status Makefile

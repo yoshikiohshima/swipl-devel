@@ -4081,6 +4081,16 @@ prolog:error_message(java_exception(Ex)) -->
 
 
 		 /*******************************
+		 *	       PATHS		*
+		 *******************************/
+
+:- multifile user:file_search_path/2.
+:- dynamic   user:file_search_path/2.
+
+user:file_search_path(jar, swi(lib)).
+
+
+		 /*******************************
 		 *         LOAD THE JVM		*
 		 *******************************/
 
@@ -4158,7 +4168,9 @@ library_search_path(Path, 'PATH') :-
 %	Add jpl.jar to $CLASSPATH to facilitate callbacks
 
 add_jpl_to_classpath :-
-	absolute_file_name(swi('lib/jpl.jar'), [access(read)], JplJAR),
+	absolute_file_name(jar('jpl.jar'),
+			   [ access(read)
+			   ], JplJAR), !,
 	(   getenv('CLASSPATH', Old)
 	->  true
 	;   Old = '.'
