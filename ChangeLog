@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.14 (July 1, 2004)
+=============================
+
   * MODIFIED: Merged backtrackable and non-backtrackable global variables.
     Tom Schrijvers.
 
