@@ -176,17 +176,17 @@ initialise(T, Window:window=[window], Name:name=[name]) :->
 	->  true
 	;   Decor = Window
 	),
+	send(Decor, lock_object, @on),
 	(   get(Decor, slot, frame, Frame),
 	    Frame \== @nil
-	->  send(Decor, lock_object, @on),
-	    send(Frame, delete, Decor),
-	    get(Decor, unlock, _)
+	->  send(Frame, delete, Decor)
 	;   true
 	),
 	send(Decor, slot, tile, @nil),
 	send_super(T, initialise, TheName),
 	send(T, border, size(0,0)),
 	send_super(T, display, Decor),
+	get(Decor, unlock, _),
 	send(T, slot, window, W),
 	new(_, mutual_dependency_hyper(T, W, window, tab)).
 
