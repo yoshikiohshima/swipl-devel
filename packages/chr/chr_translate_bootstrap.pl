@@ -322,7 +322,7 @@ check_head_constraints([Constr|Rest],Decls,PragmaRule,N) :-
 		check_head_constraints(Rest,Decls,PragmaRule,N)
 	;
 		format('CHR compiler ERROR: Undeclared constraint ~w in head of ~@.\n',
-		       [F/A,chr_pp:format_rule(PragmaRule,N)]),
+		       [F/A,format_rule(PragmaRule,N)]),
 		format('    `--> Constraint should be on of ~w.\n',[Decls]),
 		fail
 	).
@@ -335,7 +335,7 @@ check_pragmas([Pragma|Pragmas],PragmaRule,N) :-
 check_pragma(Pragma,PragmaRule,N) :-
 	var(Pragma), !,
 	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',
-               [Pragma,chr_pp:format_rule(PragmaRule,N)]),
+               [Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma should not be a variable!\n',[]),
 	fail.
 
@@ -348,30 +348,30 @@ check_pragma(passive(ID), PragmaRule, N) :-
 		true
 	;
 		format('CHR compiler ERROR: invalid identifier ~w in pragma passive in ~@.\n',
-                       [ID,chr_pp:format_rule(PragmaRule,N)]),
+                       [ID,format_rule(PragmaRule,N)]),
 		fail
 	).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = unique(_,_),
 	!,
-	format('CHR compiler WARNING: undocument pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: undocument pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Only use this pragma if you know what you are doing.\n',[]).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = already_in_heads,
 	!,
-	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = already_in_head(_),
 	!,
-	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
 	
 check_pragma(Pragma,PragmaRule,N) :-
-	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma should be one of passive/1!\n',[]),
 	fail.
 
@@ -408,7 +408,7 @@ handle_option(Name,Value) :-
 
 handle_option(Name,Value) :- 
 	\+ option_definition(Name,_,_), !,
-	setof(N,_V ^ _F ^ (chr_pp:option_definition(N,_V,_F)),Ns),
+	setof(N,_V ^ _F ^ (option_definition(N,_V,_F)),Ns),
 	format('CHR compiler ERROR: ~w.\n',[option(Name,Value)]),
 	format('    `--> Invalid option name ~w: should be one of ~w.\n',[Name,Ns]),
 	fail.

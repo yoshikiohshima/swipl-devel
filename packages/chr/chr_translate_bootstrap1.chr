@@ -410,7 +410,7 @@ check_pragmas([Pragma|Pragmas],PragmaRule,N) :-
 check_pragma(Pragma,PragmaRule,N) :-
 	var(Pragma), !,
 	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',
-               [Pragma,chr_pp:format_rule(PragmaRule,N)]),
+               [Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma should not be a variable!\n',[]),
 	fail.
 
@@ -423,30 +423,30 @@ check_pragma(passive(ID), PragmaRule, N) :-
 		true
 	;
 		format('CHR compiler ERROR: invalid identifier ~w in pragma passive in ~@.\n',
-                       [ID,chr_pp:format_rule(PragmaRule,N)]),
+                       [ID,format_rule(PragmaRule,N)]),
 		fail
 	).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = unique(_,_),
 	!,
-	format('CHR compiler WARNING: undocument pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: undocument pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Only use this pragma if you know what you are doing.\n',[]).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = already_in_heads,
 	!,
-	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
 
 check_pragma(Pragma, PragmaRule, N) :-
 	Pragma = already_in_head(_),
 	!,
-	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
 	
 check_pragma(Pragma,PragmaRule,N) :-
-	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',[Pragma,format_rule(PragmaRule,N)]),
 	format('    `--> Pragma should be one of passive/1!\n',[]),
 	fail.
 
