@@ -62,6 +62,7 @@ static atom_t ATOM_locking;
 static atom_t ATOM_logging;
 static atom_t ATOM_transactions;
 static atom_t ATOM_create;
+static atom_t ATOM_type;
 static atom_t ATOM_database;
 static atom_t ATOM_key;
 static atom_t ATOM_value;
@@ -116,6 +117,7 @@ initConstants()
   ATOM_logging	      =	PL_new_atom("logging");
   ATOM_transactions   =	PL_new_atom("transactions");
   ATOM_create	      =	PL_new_atom("create");
+  ATOM_type	      =	PL_new_atom("type");
   ATOM_database	      =	PL_new_atom("database");
   ATOM_key	      =	PL_new_atom("key");
   ATOM_value	      =	PL_new_atom("value");
@@ -451,10 +453,12 @@ db_options(term_t t, dbh *dbh, char **subdb)
 	} else if ( name == ATOM_value )
 	{ if ( !get_dtype(a0, &dbh->value_type) )
 	    return FALSE;
-	} else
-	  return pl_error(ERR_DOMAIN, "db_option", head);
+	} else if ( name == ATOM_type )
+	    ;  /* skip [ ... type(_) ... ]  because it's handled by db_type */
+	else
+	    return pl_error(ERR_DOMAIN, "db_option", head);
       } else
-	return pl_error(ERR_DOMAIN, "db_option", head);
+	  return pl_error(ERR_DOMAIN, "db_option", head);
     }
   }
 
