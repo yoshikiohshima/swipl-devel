@@ -1,8 +1,11 @@
-SWI-Prolog 5.3.2/XPCE 6.2.13 development snapshot
+SWI-Prolog 5.3.3/XPCE 6.2.14 development snapshot
 
 Status
 ======
   
+  * Variosu users have reported their old programs to run fine on
+    this experimental version.
+
   * Be careful on production systems.  Should be fine for running normal
     Prolog code for development.  Especially =/2, ==/2, @>/2, copy_term/2,
     recorda and friends have been modified significantly to deal with
@@ -23,27 +26,29 @@ Features relative to stable 5.2.x release
 =========================================
 
   * Attributed variables
-  * Freeze/2
+  * Corouting: freeze/2 and dif/2
   * Global variables
   * Partial support for infinite trees (cyclic terms)
   * CHR constraint language support
 
 
-Brief summary of changes since 5.3.1
+Brief summary of changes since 5.3.2
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Cleanup issues around nb_setval/2
-  * More support for cyclic terms
-  * Added CHR package to the standard distribution
-  * Various patches
+  * Integrated bugfixes from the stable release
+  * Added dif/2 implementation by Tom Schrijvers
+  * Included enhanced CHR compiler by Tom Schrijvers
+  * Added support for various modes to print attributes
+    of variables.  See write_term/2, option `attributes'.
 
 Packages
 --------
 
-  (none)
+  * XPCE: avoid relying on a connection to an X-server while building
+    and installing this package.
 
 Development environment
 -----------------------
