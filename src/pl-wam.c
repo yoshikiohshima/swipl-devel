@@ -23,7 +23,7 @@
 */
 
 /*#define O_SECURE 1*/
-/*#define O_DEBUG 1*/
+#define O_DEBUG 1
 #include "pl-incl.h"
 
 #define	     BFR (LD->choicepoints)	/* choicepoint registration */
@@ -4007,6 +4007,11 @@ increase lTop too to prepare for asynchronous interrupts.
 	    if ( rval )
 	    { assert(rval == TRUE);
 	      Profile(profExit(FR->prof_node PASS_LD));
+
+#ifdef O_ATTVAR
+	      if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+		goto wakeup;
+#endif
 	      NEXT_INSTRUCTION;
 	    }
 
