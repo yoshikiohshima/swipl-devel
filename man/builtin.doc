@@ -2193,6 +2193,19 @@ to set the file for error-locations if \arg{Stream} corresponds to
 \arg{FileName} and is not optained by opening the file directly but,
 for example, through a network service.
 \end{description}
+
+    \predicate{set_prolog_IO}{3}{+In, +Out, +Error}
+Prepare the given streams for interactive behaviour normally associated
+to the terminal. \arg{In} becomes the \const{user_input} and
+\const{current_input} of the calling thread. \arg{Out} becomes
+\const{user_output} and \const{current_output}. If \arg{Error} equals
+\arg{Out} an unbuffered stream is associated to the same destination and
+linked to \const{user_error}. Otherwise \arg{Error} is used for
+\const{user_error}. Output buffering for \arg{Out} is set to
+\const{line} and buffering on \arg{Error} is disabled.
+See also prolog/0 and set_stream/2.  The \emph{clib} package
+provides the library \pllib{prolog_server} creating a TCP/IP
+server for creating an interactive session to Prolog.
 \end{description}
 
 \subsection{Edinburgh-style I/O}	\label{sec:edinburghIO}

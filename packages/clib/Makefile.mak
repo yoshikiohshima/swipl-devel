@@ -55,6 +55,7 @@ idll::
 
 ilib::
 		copy socket.pl "$(PLBASE)\library"
+		copy prolog_server.pl "$(PLBASE)\library"
 		copy streampool.pl "$(PLBASE)\library"
 		copy cgi.pl "$(PLBASE)\library"
 		copy memfile.pl "$(PLBASE)\library"
