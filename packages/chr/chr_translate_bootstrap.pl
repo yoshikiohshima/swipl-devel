@@ -137,7 +137,7 @@ chr_translate(Declarations,NewDeclarations) :-
 	partition_clauses(Declarations,Decls,Rules,OtherClauses,Mod),
 	default(Mod,user),
 	( Decls == [] ->
-		insert_declarations(OtherClauses, NewDeclarations)
+		NewDeclarations = OtherClauses
 	;
 		check_rules(Rules,Decls),
 		unique_analyse_optimise(Rules,1,[],NRules),
@@ -153,27 +153,9 @@ chr_translate(Declarations,NewDeclarations) :-
 			       AttrUnifyHookClauses,
 			       ConstraintClauses
 			     ],
-			     Clauses),
-	  	insert_declarations(Clauses, NewDeclarations)
+			     NewDeclarations)
 	).
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-insert_declarations(Clauses0, Clauses) :-
-	(   Clauses0 = [:- module(M,E)|FileBody]
-	->  Clauses = [ :- module(M,E),
-			:- use_module('chr_runtime'),
-			:- style_check(-singleton),
-			:- style_check(-discontiguous)
-		      | FileBody
-		      ]
-	;   Clauses = [ :- use_module('chr_runtime'),
-			:- style_check(-singleton),
-			:- style_check(-discontiguous)
-		      | Clauses0
-		      ]
-	).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

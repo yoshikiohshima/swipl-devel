@@ -1,3 +1,7 @@
+Apr 4, 2004
+
+  * JW: Moved insert_declarations/2 to chr_swi.pl
+
 Apr 2, 2004
 
   * JW: fixed Undefined procedure: chr_runtime:run_suspensions_loop_d/1

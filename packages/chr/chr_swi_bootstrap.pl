@@ -58,10 +58,27 @@ chr_compile(From, To, MsgLevel) :-
 	% 		   [ module(chr) 	% get operators from here
 	%		   ]),
 	print_message(silent, chr(translate(From))),
-	chr_translate(Declarations,NewDeclarations),
+	chr_translate(Declarations, Declarations1),
+	insert_declarations(Declarations1, NewDeclarations),
 	print_message(silent, chr(write(To))),
 	writefile(To, From, NewDeclarations),
 	print_message(MsgLevel, chr(end(From, To))).
+
+
+insert_declarations(Clauses0, Clauses) :-
+	(   Clauses0 = [:- module(M,E)|FileBody]
+	->  Clauses = [ :- module(M,E),
+			:- use_module('chr_runtime'),
+			:- style_check(-singleton),
+			:- style_check(-discontiguous)
+		      | FileBody
+		      ]
+	;   Clauses = [ :- use_module('chr_runtime'),
+			:- style_check(-singleton),
+			:- style_check(-discontiguous)
+		      | Clauses0
+		      ]
+	).
 
 %	writefile(+File, +From, +Desclarations)
 %	
