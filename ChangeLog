@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: first integration of JPL with the normal Prolog tree.
+
+  * ADDED: [=format] to -dump-runtime-variables to dump them in CMD.EXE
+    compatible format.
+
   * PORT: Added a few NetBSD patches (incomplete, ongoing work).
     Hubert Feyrer.
 
