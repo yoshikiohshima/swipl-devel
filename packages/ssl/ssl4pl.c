@@ -636,4 +636,7 @@ install_ssl4pl()
   (void) ssl_lib_init();
 }
 
-
+install_t
+uninstall_ssl4pl()
+{ ssl_lib_exit();
+}

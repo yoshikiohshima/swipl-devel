@@ -53,6 +53,11 @@ test(N) :-
 	;   true
 	).
 
+
+server :-
+	make_server(SSL),
+        server_loop(SSL).
+
 		 /*******************************
 		 *	       SERVER		*
 		 *******************************/

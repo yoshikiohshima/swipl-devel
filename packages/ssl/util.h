@@ -53,6 +53,7 @@ char *          util_cb_pem_passwd   ( PL_SSL *config
                                      ) ;
 BOOL            util_cb_cert_verify  ( PL_SSL *config
                                      , const char *certificate
+                                     , long nbytes
                                      , const char *error
                                      ) ;
 

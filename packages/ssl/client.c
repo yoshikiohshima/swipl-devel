@@ -15,8 +15,12 @@ main()
 {
     PL_SSL          *config    = NULL;
     PL_SSL_INSTANCE *instance  = NULL;
-    int              sock      = -1;
     int              sock_inst = -1;
+
+    /*
+     * Initialize ssllib
+     */
+    (void) ssl_lib_init();
 
     /*
      * SSL preliminaries, creating context and handle for this session.
@@ -49,14 +53,14 @@ main()
      */
     ssl_set_host       (config, TEST_HOST);
     ssl_set_port       (config, TEST_PORT);
-    if ((sock = ssl_socket(config)) < 0) {
+    if ((config->sock = ssl_socket(config)) < 0) {
         exit(EXIT_FAILURE);
     }
 
     /*
      * Start up the client
      */
-    if ((sock_inst = ssl_connect(config, sock)) < 0) {
+    if ((sock_inst = ssl_connect(config)) < 0) {
         exit(EXIT_FAILURE);
     }
     if ((instance = ssl_ssl(config, sock_inst)) == NULL) {

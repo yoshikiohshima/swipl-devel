@@ -15,8 +15,12 @@ main()
 {
     PL_SSL          *config    = NULL;
     PL_SSL_INSTANCE *instance  = NULL;
-    int              sock      = -1;
     int              sock_inst = -1;
+
+    /*
+     * Initialize ssllib
+     */
+    (void) ssl_lib_init();
 
     /*
      * SSL preliminaries, creating context and handle for this session.
@@ -49,11 +53,9 @@ main()
     /*
      * Establish TCP layer with SSL layer on top of it
      */
-#if 1
     ssl_set_host       (config, NULL);
-#endif
     ssl_set_port       (config, TEST_PORT);
-    if ((sock = ssl_socket(config)) < 0) {
+    if ((config->sock = ssl_socket(config)) < 0) {
         exit(EXIT_FAILURE);
     }
 
@@ -61,7 +63,7 @@ main()
      * Start up the server
      */
     while (1) {
-        if ((sock_inst = ssl_accept(config, sock, NULL, 0)) < 0) {
+        if ((sock_inst = ssl_accept(config, NULL, 0)) < 0) {
             exit(EXIT_FAILURE);
         }
         ssl_deb("ssl_accept() succeeded\n");

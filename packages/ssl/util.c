@@ -68,7 +68,11 @@ util_cb_pem_passwd(PL_SSL *config, char *buf, int size)
 }
 
 BOOL
-util_cb_cert_verify(PL_SSL *config, const char *certificate, const char *error)
+util_cb_cert_verify( PL_SSL *config
+                   , const char *certificate
+                   , long n
+                   , const char *error
+                   )
 /*
  * Example of a cert_verify callback function.
  *

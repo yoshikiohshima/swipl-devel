@@ -35,7 +35,6 @@
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
-#  define closesocket(fd)	close(fd)
 #endif
 
 #include "ssllib.h"
@@ -45,14 +44,34 @@
 #include <SWI-Prolog.h>
 
 #define perror(x) Sdprintf("%s: %s\n", x, strerror(errno));
-#else
+
+/*
+ * Remap socket related calls to nonblockio library
+ */
+#include "../clib/nonblockio.h"
+#define socket          nbio_socket
+#define connect         nbio_connect
+#define bind            nbio_bind
+#define listen          nbio_listen
+#define accept          nbio_accept
+#define closesocket     nbio_closesocket
+#else   /* __SWI_PROLOG__ */
 #define Soutput         stdout
 #define Serror          stderr
 #define Svfprintf       vfprintf
 static int PL_handle_signals(void) { return 0; }
+#ifndef WIN32
+#define closesocket	close
 #endif
+#endif  /* __SWI_PROLOG__ */
 
 #include <openssl/rsa.h>
+
+typedef enum
+{ SSL_SOCK_OK
+, SSL_SOCK_RETRY
+, SSL_SOCK_ERROR
+} SSL_SOCK_STATUS;
 
 #define SSL_CERT_VERIFY_MORE 0
 #define SSL_WAIT_CHILD       1
@@ -63,6 +82,88 @@ static int PL_handle_signals(void) { return 0; }
  */
 static int ssl_idx;
 static int ctx_idx;
+
+
+static void
+ssl_error(SSL *ssl, int ssl_ret)
+/*
+ * Report about errors occuring in the SSL layer
+ */
+{
+    char  buf[256];
+    char *component[5];
+    char *colon;
+    int   n;
+
+    (void) ERR_error_string(ERR_get_error(), buf);
+
+    /*
+     * Disect the following error string:
+     *
+     * error:[error code]:[library name]:[function name]:[reason string]
+     */
+    for (colon = buf, n = 0; n < 5; n++) {
+        component[n] = colon;
+        if ((colon = strchr(colon, ':')) == NULL) break;
+        *colon++ = 0;
+    }
+
+    ssl_deb( "SSL error report:\n\t%8s: %s\n\t%8s: %s\n\t%8s: %s\n"
+           ,  "library", component[2]
+           , "function", component[3]
+           ,   "reason", component[4]
+           ) ;
+}
+
+static SSL_SOCK_STATUS
+ssl_inspect_status(SSL *ssl, int sock, int ssl_ret)
+{
+    if (ssl_ret > 0) {
+        return SSL_SOCK_OK;
+    }
+
+    if (ssl_ret == 0) {
+        /* SSL controlled failure, see below */
+        switch (SSL_get_error(ssl, ssl_ret)) {
+            case SSL_ERROR_WANT_READ:
+                if (nbio_wait(sock, REQ_READ) == 0) {
+                    return SSL_SOCK_RETRY;
+                }
+                break;
+
+            case SSL_ERROR_WANT_WRITE:
+                if (nbio_wait(sock, REQ_WRITE) == 0) {
+                    return SSL_SOCK_RETRY;
+                }
+                break;
+
+#ifdef SSL_ERROR_WANT_CONNECT
+            case SSL_ERROR_WANT_CONNECT:
+                if (nbio_wait(sock, REQ_CONNECT) == 0) {
+                    return SSL_SOCK_RETRY;
+                }
+                break;
+#endif
+
+#ifdef SSL_ERROR_WANT_ACCEPT
+            case SSL_ERROR_WANT_ACCEPT:
+                if (nbio_wait(sock, REQ_ACCEPT) == 0) {
+                    return SSL_SOCK_RETRY;
+                }
+                break;
+#endif
+
+            case SSL_ERROR_ZERO_RETURN:
+                return SSL_SOCK_OK;
+
+            default:
+                break;
+        }
+    }
+
+    ssl_error(ssl, ssl_ret);
+    return SSL_SOCK_ERROR;
+}
 
 static char *
 ssl_strdup(const char *s)
@@ -628,37 +729,6 @@ ssl_init(PL_SSL_ROLE role)
     return config;
 }
 
-static void
-ssl_error(SSL *ssl, int ssl_ret)
-/*
- * Report about errors occuring in the SSL layer
- */
-{
-    char  buf[256];
-    char *component[5];
-    char *colon;
-    int   n;
-
-    (void) ERR_error_string(ERR_get_error(), buf);
-
-    /*
-     * Disect the following error string:
-     *
-     * error:[error code]:[library name]:[function name]:[reason string]
-     */
-    for (colon = buf, n = 0; n < 5; n++) {
-        component[n] = colon;
-        if ((colon = strchr(colon, ':')) == NULL) break;
-        *colon++ = 0;
-    }
-
-    ssl_deb( "SSL error report:\n\t%8s: %s\n\t%8s: %s\n\t%8s: %s\n"
-           ,  "library", component[2]
-           , "function", component[3]
-           ,   "reason", component[4]
-           ) ;
-}
-
 int
 ssl_debug(PL_SSL *config)
 /*
@@ -790,6 +860,28 @@ ssl_lib_init(void)
      */
     ssl_idx = SSL_get_ex_new_index(0, "config", NULL, NULL, NULL);
 
+#ifdef __SWI_PROLOG__
+    /*
+     * Initialize the nonblockio library
+     */
+    nbio_init();
+#ifdef DEBUG
+    nbio_debug(10);
+#endif
+#endif
+
+    return 0;
+}
+
+int
+ssl_lib_exit(void)
+/*
+ * One-time library exit calls
+ */
+{
+#ifdef __SWI_PROLOG__
+    nbio_cleanup();
+#endif
     return 0;
 }
 
@@ -800,7 +892,6 @@ ssl_ssl(PL_SSL *config, int sock_inst)
  */
 {
     PL_SSL_INSTANCE * instance = NULL;
-    int               ssl_ret  = 0;
 
     if ((instance = ssl_instance_new(config, sock_inst)) == NULL) {
         ssl_deb("ssl instance malloc failed\n");
@@ -835,33 +926,44 @@ ssl_ssl(PL_SSL *config, int sock_inst)
     switch (config->pl_ssl_role) {
         case PL_SSL_SERVER:
             ssl_deb("setting up SSL server side\n");
-            switch (ssl_ret = SSL_accept(instance->ssl)) {
-                case 1:  break;
-                case 0:
-                         /* FALLTHROUGH */
-                default:
-                         ssl_error(instance->ssl, ssl_ret);
-                         return NULL;
-            }
+            do {
+                int ssl_ret = SSL_accept(instance->ssl);
+                switch(ssl_inspect_status(instance->ssl, sock_inst, ssl_ret)) {
+                    case SSL_SOCK_OK:
+                        /* success */
+                        ssl_deb("established ssl client side\n");
+                        return instance;
+
+                    case SSL_SOCK_RETRY:
+                        continue;
+
+                    case SSL_SOCK_ERROR:
+                        return NULL;
+                }
+            } while (1);
             break;
 
         case PL_SSL_NONE:
         case PL_SSL_CLIENT:
             ssl_deb("setting up SSL client side\n");
-            switch (ssl_ret = SSL_connect(instance->ssl)) {
-                case 1:  break;
-                case 0:
-                         /* FALLTHROUGH */
-                default:
-                         ssl_error(instance->ssl, ssl_ret);
-                         return NULL;
-            }
+            do {
+                int ssl_ret = SSL_connect(instance->ssl);
+                switch(ssl_inspect_status(instance->ssl, sock_inst, ssl_ret)) {
+                    case SSL_SOCK_OK:
+                        /* success */
+                        ssl_deb("established ssl client side\n");
+                        return instance;
+
+                    case SSL_SOCK_RETRY:
+                        continue;
+
+                    case SSL_SOCK_ERROR:
+                        return NULL;
+                }
+            } while (1);
             break;
     }
-
-    ssl_deb("established ssl layer\n");
-
-    return instance;
+    return NULL;
 }
 
 static struct sockaddr_in *
@@ -923,6 +1025,8 @@ ssl_tcp_listen(PL_SSL *config)
         perror("socket");
         return -1;
     }
+    nbio_setopt(sock, TCP_NONBLOCK);
+
 
     if ( config->pl_ssl_reuseaddr )
     { int sockopt = 1;
@@ -1080,23 +1184,24 @@ ssl_read(PL_SSL_INSTANCE *instance, char *buf, int size)
  * Perform read on SSL socket, establish it first if necessary.
  */
 {
-    SSL *ssl    = instance->ssl;
-    int  rbytes = 0;
+    SSL *ssl = instance->ssl;
 
     assert(ssl != NULL);
 
-    if ((rbytes = SSL_read(ssl, buf, size)) <= 0) {
-        /*
-         * Code below only works when client runs SSLv3_client_method
-         */
-        if (!rbytes && SSL_get_shutdown(ssl) == SSL_RECEIVED_SHUTDOWN) {
-            return 0;
+    do {
+        int rbytes = SSL_read(ssl, buf, size);
+        switch(ssl_inspect_status(ssl, instance->sock, rbytes)) {
+            case SSL_SOCK_OK:
+                /* success */
+                return rbytes;
+
+            case SSL_SOCK_RETRY:
+                continue;
+
+            case SSL_SOCK_ERROR:
+                return -1;
         }
-
-        SSL_get_error(ssl, rbytes);
-    }
-
-    return rbytes;
+    } while (1);
 }
 
 int
@@ -1105,17 +1210,24 @@ ssl_write(PL_SSL_INSTANCE *instance, const char *buf, int size)
  * Perform write on SSL socket, establish it first if necessary.
  */
 {
-    SSL *ssl    = instance->ssl;
-    int  wbytes = 0;
+    SSL *ssl = instance->ssl;
 
     assert(ssl != NULL);
 
-    if ((wbytes = SSL_write(ssl, buf, size)) <= 0) {
-        SSL_get_error(ssl, wbytes);
-        return -1;
-    }
+    do {
+        int wbytes = SSL_write(ssl, buf, size);
+        switch(ssl_inspect_status(ssl, instance->sock, wbytes)) {
+            case SSL_SOCK_OK:
+                /* success */
+                return wbytes;
 
-    return wbytes;
+            case SSL_SOCK_RETRY:
+                continue;
+
+            case SSL_SOCK_ERROR:
+                return -1;
+        }
+    } while (1);
 }
 
 

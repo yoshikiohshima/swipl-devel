@@ -109,6 +109,7 @@ typedef struct ssl_instance {
  * The PL-SSL API
  */
 int              ssl_lib_init    (void);
+int              ssl_lib_exit    (void);
 PL_SSL *         ssl_init        (PL_SSL_ROLE role);
 int              ssl_socket      (PL_SSL *config);
 PL_SSL_INSTANCE *ssl_ssl         (PL_SSL *config, int sock);
