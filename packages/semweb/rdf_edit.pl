@@ -37,6 +37,7 @@
 	    rdfe_update/4,		% Sub, Pred, Obj, +Action
 	    rdfe_update/5,		% Sub, Pred, Obj, +PayLoad, +Action
 	    rdfe_load/1,		% +File
+	    rdfe_load/2,		% +File, +Options
 	    rdfe_delete/1,		% +Resource
 
 	    rdfe_register_ns/2,		% +Id, +URI
@@ -226,6 +227,10 @@ delete(Subject) :-
 %	to facilitate reliable reload.
 
 rdfe_load(File) :-
+	rdfe_load(File, []).
+
+
+rdfe_load(File, Options) :-
 	rdfe_current_transaction(TID),
 	absolute_file_name(File,
 			   [ access(read),
@@ -235,6 +240,7 @@ rdfe_load(File) :-
 	rdf_load(Path,
 		 [ base_uri(BaseURI),
 		   result(Action, Triples, MD5)
+		 | Options
 		 ]),
 	(   Action == none		% load, reload, none
 	->  true

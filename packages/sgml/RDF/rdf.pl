@@ -162,20 +162,23 @@ process_rdf(File, OnObject, Options0) :-
 	set_sgml_parser(Parser, file(Source)),
 	set_sgml_parser(Parser, dialect(xmlns)),
 	set_sgml_parser(Parser, space(sgml)),
-	call_cleanup(sgml_parse(Parser,
-				[ source(In),
-				  call(begin, rdf:on_begin),
-				  call(end,   rdf:on_end),
-				  call(xmlns, rdf:on_xmlns)
-				]),
-		     rdf:cleanup_process(Close, Cleanup)),
-	exit_ns_collect(NSList).
-
+	do_process_rdf(Parser, In, NSList, Close, Cleanup).
 process_rdf(File, BaseURI, OnObject) :-
 %	print_message(warning,
 %		      format('process_rdf(): new argument order', [])),
 	process_rdf(File, OnObject, [base_uri(BaseURI)]).
 
+
+do_process_rdf(Parser, In, NSList, Close, Cleanup) :-
+	call_cleanup((   sgml_parse(Parser,
+				    [ source(In),
+				      call(begin, rdf:on_begin),
+				      call(end,   rdf:on_end),
+				      call(xmlns, rdf:on_xmlns)
+				    ]),
+			 exit_ns_collect(NSList)
+		     ),
+		     cleanup_process(Close, Cleanup)).
 
 cleanup_process(In, Cleanup) :-
 	(   var(In)
@@ -228,7 +231,8 @@ init_ns_collect(Options, NSList) :-
 	(   option(namespaces(NSList), Options, -),
 	    NSList \== (-)
 	->  nb_setval(rdf_nslist, list([]))
-	;   NSList = (-)
+	;   nb_setval(rdf_nslist, -),
+	    NSList = (-)
 	).
 
 exit_ns_collect(NSList) :-
