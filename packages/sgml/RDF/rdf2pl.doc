@@ -203,6 +203,38 @@ either a plain atom or a parsed XML term (list of atoms and elements).
 \end{description}
 
 
+\subsection{RDF Object representation}		\label{sec:rdfobject}
+
+The \emph{Object} (3rd) part of a triple can have several different
+types.  If the object is a resource it is returned as either a plain
+atom or a term \mbox{\arg{NameSpace}{\bf :}\arg{Name}}.  If it is a
+literal it is returned as \term{literal}{Value}, where \arg{Value}
+takes one of the formats defined below.
+
+\begin{itemlist}
+    \item [An atom]
+If the literal \arg{Value} is a plain atom is a literal value not
+subject to a datatype or \const{xml:lang} qualifier.
+
+    \item [\term{lang}{LanguageID, Atom}]
+If the literal is subject to an \const{xml:lang} qualifier
+\arg{LanguageID} specifies the language and \arg{Atom} the
+actual text.
+
+    \item [A list]
+If the literal is an XML literal as created by
+\mbox{parseType="Literal"}, the raw output of the XML parser for the
+content of the element is returned. This content is a list of
+\term{element}{Name, Attributes, Content} and atoms for CDATA parts as
+described with the SWI-Prolog \url[SGML/XML
+parser]{http://www.swi-prolog.org/packages/sgml2pl.html}
+
+    \item [\term{type}{Type, StringValue}]
+If the literal has an \verb$rdf:dataType=$\arg{Type} a term of this
+format is returned.
+\end{itemlist}
+
+
 \subsection{Name spaces}
 
 XML name spaces are identified using a URI. Unfortunately various URI's

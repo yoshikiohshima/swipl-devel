@@ -47,15 +47,20 @@ load_rdf(File, Triples, Options) :-
 		       ]),
 	set_anon_prefix(BaseURI, Refs),
 	rdf_start_file(Options),
-	call_cleanup(xml_to_rdf(RDFElement, BaseURI, Triples0),
+	call_cleanup(xml_to_rdf(RDFElement, Triples0, Options),
 		     cleanup_load(Refs)),
 	post_process(Options, Triples0, Triples).
 	
-%	xml_to_rdf(+XML, +BaseURI, -Triples)
+%	xml_to_rdf(+XML, -Triples, +Options)
 
-xml_to_rdf(XML, BaseURI, Triples) :-
-	xml_to_plrdf(XML, BaseURI, RDF),
+xml_to_rdf(XML, Triples, Options) :-
+	is_list(Options), !,
+	xml_to_plrdf(XML, RDF, Options),
 	rdf_triples(RDF, Triples).
+xml_to_rdf(XML, BaseURI, Triples) :-
+	atom(BaseURI), !,
+	xml_to_rdf(XML, Triples, [base_uri(BaseURI)]).
+
 
 set_anon_prefix([], []) :- !.
 set_anon_prefix(BaseURI, [Ref]) :-
@@ -112,10 +117,6 @@ member_attribute(A) :-
 		 *	     BIG FILES		*
 		 *******************************/
 
-:- thread_local
-	in_rdf/1,			% BaseURI
-	object_handler/2.
-
 %	process_rdf(+Input, :OnObject, +Options)
 %	
 %	Process RDF from Input. Input is either an atom or a term of the
@@ -129,10 +130,11 @@ member_attribute(A) :-
 process_rdf(File, OnObject, Options) :-
 	is_list(Options), !,
 	option(base_uri(BaseURI), Options, []),
-	retractall(rdf:in_rdf),
 	rdf_start_file(Options),
 	'$strip_module'(OnObject, Module, Pred),
-	asserta(rdf:object_handler(BaseURI, Module:Pred), Ref),
+	nb_setval(rdf_object_handler, Module:Pred),
+	nb_setval(rdf_options, Options),
+	nb_setval(rdf_state, -),
 	(   File = stream(In)
 	->  Source = BaseURI
 	;   File = '$stream'(_)
@@ -152,7 +154,7 @@ process_rdf(File, OnObject, Options) :-
 				  call(begin, rdf:on_begin),
 				  call(end, rdf:on_end)
 				]),
-		     rdf:cleanup_process(Close, [Ref|Refs])).
+		     rdf:cleanup_process(Close, Refs)).
 process_rdf(File, BaseURI, OnObject) :-
 %	print_message(warning,
 %		      format('process_rdf(): new argument order', [])),
@@ -164,33 +166,51 @@ cleanup_process(In, Refs) :-
 	->  true
 	;   close(In)
 	),
+	nb_delete(rdf_options),
+	nb_delete(rdf_object_handler),
+	nb_delete(rdf_state),
 	erase_refs(Refs),
 	rdf_end_file.
 
 on_end(NS:'RDF', _) :-
 	rdf_name_space(NS),
-	retractall(in_rdf(_)).
+	nb_setval(rdf_description_options, -).
 
 on_begin(NS:'RDF', Attr, _) :-
-	rdf_name_space(NS),
-	object_handler(Base0, _),
-	(   memberchk(xml:base = Base, Attr)
-	->  rdf_parser:canonical_uri(Base, Base0, TheBase),
-	    assert(in_rdf(TheBase))
-	;   assert(in_rdf(Base0))
-	).		   
+	rdf_name_space(NS), !,
+	nb_getval(rdf_options, Options0),
+	modify_state(Attr, Options0, Options),
+	nb_setval(rdf_state, Options).
 on_begin(Tag, Attr, Parser) :-
-	in_rdf(BaseURI), !,
+	nb_getval(rdf_state, Options),
+	Options \== (-), !,
 	get_sgml_parser(Parser, line(Start)),
 	get_sgml_parser(Parser, file(File)),
 	sgml_parse(Parser,
 		   [ document(Content),
 		     parse(content)
 		   ]),
-	object_handler(_, OnTriples),
-	element_to_plrdf(element(Tag, Attr, Content), BaseURI, Objects),
+	nb_getval(rdf_object_handler, OnTriples),
+	element_to_plrdf(element(Tag, Attr, Content), Objects, Options),
 	rdf_triples(Objects, Triples),
 	call(OnTriples, Triples, File:Start).
+
+
+modify_state([], Options, Options).
+modify_state([H|T], Options0, Options) :-
+	modify_state1(H, Options0, Options1),
+	modify_state(T, Options1, Options).
+
+modify_state1(xml:base = Base, Options0, Options) :- !,
+	set_option(base_uri(Base), Options0, Options).
+modify_state1(xml:lang = Lang, Options0, Options) :- !,
+	set_option(lang(Lang), Options0, Options).
+modify_state1(_, Options, Options).
+
+set_option(Opt, Options0, [Opt|Options]) :-
+	functor(Opt, F, A),
+	functor(VO, F, A),
+	delete(Options0, VO, Options).
 
 
 		 /*******************************
@@ -232,7 +252,7 @@ prolog:message(rdf(shared_blank_nodes(N))) -->
 prolog:message(rdf(not_a_name(Name))) -->
 	[ 'RDF: argument to rdf:ID is not an XML name: ~p'-[Name] ].
 prolog:message(rdf(redefined_id(Id))) -->
-	[ 'RDF: rdf:IS ~p: multiple definitions'-[Id] ].
+	[ 'RDF: rdf:ID ~p: multiple definitions'-[Id] ].
 
 
 		 /*******************************

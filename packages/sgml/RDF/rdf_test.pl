@@ -128,8 +128,7 @@ test(How, File) :-
 		;   assert(failed(File)),
 		    format('~N~w: WRONG ANSWER~n', [File])
 		)
-	    ;	assert(failed(File)),
-	        format('~N~w: (no .ok file)~n', [File])
+	    ;	format('~N~w: (no .ok file)~n', [File])
 	    )
 	;   assert(failed(File)),
 	    format('~N~w: PARSE FAILED~n', [File])

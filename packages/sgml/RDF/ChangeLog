@@ -1,3 +1,10 @@
+Apr 21, 2004
+
+  * ADDED: Support for xml:lang and rdf:dataType attributes.
+
+  * INTERNAL: Use global variables rather than assert/retract for
+    keeping track of the state for process_rdf/3.
+
 Nov 29, 2003
 
   * ADDED: warning for incorrect and multiple definitions of rdf:ID.
