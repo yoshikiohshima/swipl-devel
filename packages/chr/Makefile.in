@@ -28,8 +28,9 @@ INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 
-LIBPL=		assoc.pl chr.pl chr_pp.pl hprolog.pl pairlist.pl \
-		plugin.pl
+LIBPL=		chr.pl chr_pp.pl chr_op.pl chr_translate.pl \
+		chr_swi.pl \
+		hprolog.pl pairlist.pl assoc.pl
 
 all:		
 		@echo "Nothing to do for this package"
@@ -54,6 +55,7 @@ uninstall:
 		$(PL) -f none -g make -t halt
 
 check::
+		rm -f Tests/*.pl
 		$(PL) -f chr_test.pl -g test,halt -t 'halt(1)'
 
 
