@@ -31,8 +31,8 @@ server(Port, Options) :-
 		    [ port(Port),
 %		      timeout(20),		% does not (yet) work
 		      ssl([ host('localhost'),
-%			    cert(1),
-%			    peer_cert(1),
+%			    cert(true),
+%			    peer_cert(true),
 			    cacert_file('etc/demoCA/cacert.pem'),
 			    certificate_file('etc/server/server-cert.pem'),
 			    key_file('etc/server/server-key.pem'),

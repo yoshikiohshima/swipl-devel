@@ -177,6 +177,18 @@ get_int_arg(int a, term_t t, int *i)
 
 
 static int
+get_bool_arg(int a, term_t t, int *i)
+{ term_t t2 = PL_new_term_ref();
+
+  PL_get_arg(a, t, t2);
+  if ( !PL_get_bool(t2, i) )
+    return type_error(t2, "boolean");
+
+  return TRUE;
+}
+
+
+static int
 get_file_arg(int a, term_t t, char **f)
 { term_t t2 = PL_new_term_ref();
 
@@ -426,17 +438,17 @@ pl_ssl_init(term_t config, term_t role, term_t options)
     } else if ( name == ATOM_cert && arity == 1 )
     { int val;
 
-      if ( !get_int_arg(1, head, &val) )
+      if ( !get_bool_arg(1, head, &val) )
 	return FALSE;
       
-      ssl_set_cert(conf, (val != 0));
+      ssl_set_cert(conf, val);
     } else if ( name == ATOM_peer_cert && arity == 1 )
     { int val;
 
-      if ( !get_int_arg(1, head, &val) )
+      if ( !get_bool_arg(1, head, &val) )
 	return FALSE;
       
-      ssl_set_peer_cert(conf, (val != 0));
+      ssl_set_peer_cert(conf, val);
     } else if ( name == ATOM_cacert_file && arity == 1 )
     { char *file;
 
