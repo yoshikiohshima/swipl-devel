@@ -52,6 +52,8 @@ typedef struct pl_ssl {
      */
     PL_SSL_ROLE         pl_ssl_role;
 
+    int			sock;		/* the listening/connected socket */
+
     /*
      * Context, Certificate, SSL info
      */
@@ -77,6 +79,7 @@ typedef struct pl_ssl {
     char *              pl_ssl_password;
     BOOL                pl_ssl_cert_required;
     BOOL                pl_ssl_peer_cert_required;
+    BOOL		pl_ssl_reuseaddr;
 
     /*
      * Application defined handlers
@@ -128,6 +131,7 @@ char *          ssl_set_cacert   (PL_SSL *config, const char *cacert);
 char *          ssl_set_certf    (PL_SSL *config, const char *certf);
 char *          ssl_set_keyf     (PL_SSL *config, const char *keyf);
 char *          ssl_set_password (PL_SSL *config, const char *password);
+BOOL		ssl_set_reuseaddr(PL_SSL *config, BOOL reuse);
 BOOL            ssl_set_cert     (PL_SSL *config, BOOL required);
 BOOL            ssl_set_peer_cert(PL_SSL *config, BOOL required);
 

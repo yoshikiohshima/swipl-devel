@@ -48,6 +48,8 @@ LIBPL=		@PLTARGETS@
 TARGETS=	@TARGETS@
 
 SSLOBJ=		ssl4pl.o ssllib.o
+SRC=		ssl4pl.c ssllib.c ssllib.h
+
 
 all:		$(TARGETS)
 
@@ -120,6 +122,13 @@ $(TEX):		$(DOCTOTEX)
 
 check::
 		$(PL) -q -f ssl_test.pl -F none -g test,halt -t "halt(1)"
+
+################################################################
+# Tags
+################################################################
+
+tags::
+		etags $(SRC)
 
 ################################################################
 # Clean

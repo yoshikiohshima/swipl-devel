@@ -1,5 +1,7 @@
 Jun 24, 2004
  
+  * FIXED: close socket on ssl_exit/1 on server site.
+
   * ADDED: ssl_thread_setup() to allow for multi-threaded apps.
 
   * Started

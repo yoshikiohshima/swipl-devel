@@ -35,6 +35,7 @@
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
+#  define closesocket(fd)	close(fd)
 #endif
 
 #include "ssllib.h"
@@ -143,6 +144,8 @@ ssl_new(void)
     if ((new = malloc(sizeof(*new))) != NULL) {
         new->pl_ssl_role                = PL_SSL_NONE;
 
+	new->sock			= -1;
+
         new->pl_ssl_peer_cert           = NULL;
         new->pl_ssl_ctx                 = NULL;
         new->pl_ssl_idx                 = -1;
@@ -150,6 +153,7 @@ ssl_new(void)
 
         new->pl_ssl_host                = NULL;
         new->pl_ssl_port                = -1;
+	new->pl_ssl_reuseaddr		= TRUE;
 
         new->pl_ssl_cacert              = NULL;
         new->pl_ssl_cert_required       = FALSE;
@@ -313,6 +317,12 @@ ssl_set_cert(PL_SSL *config, BOOL required)
 {
     return config->pl_ssl_cert_required = required;
 }
+
+BOOL
+ssl_set_reuseaddr(PL_SSL *config, BOOL reuse)
+{ return config->pl_ssl_reuseaddr = reuse;
+}
+
 
 BOOL
 ssl_set_peer_cert(PL_SSL *config, BOOL required)
@@ -479,7 +489,7 @@ ssl_close(PL_SSL_INSTANCE *instance)
 
     if (instance) {
         if (instance->sock >= 0) {
-            ret = close(instance->sock);
+            ret = closesocket(instance->sock);
         }
 
         if (instance->config->pl_ssl_role != PL_SSL_SERVER) {
@@ -508,11 +518,16 @@ ssl_exit(PL_SSL *config)
  * Clean up all allocated resources.
  */
 {
-    if (config) {
-        if (config->pl_ssl_ctx) {
-            SSL_CTX_free(config->pl_ssl_ctx);
-        }
-        free(config);
+    if (config)
+    { if ( config->pl_ssl_role == PL_SSL_SERVER && config->sock >= 0 )
+      { closesocket(config->sock);
+	config->sock = -1;
+      }
+
+      if (config->pl_ssl_ctx)
+      { SSL_CTX_free(config->pl_ssl_ctx);
+      }
+      free(config);
     }
 
     ssl_deb("Controlled exit\n");
@@ -848,25 +863,33 @@ ssl_tcp_listen(PL_SSL *config)
 {
     struct sockaddr_in sa_server;
     int                sock    = -1;
-    int                sockopt = -1;
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("socket");
         return -1;
     }
-    if (setsockopt( sock
-                  , SOL_SOCKET, SO_REUSEADDR, (const void *) &sockopt, sizeof(sockopt)) < 0) {
-        perror("setsockopt");
+
+    if ( config->pl_ssl_reuseaddr )
+    { int sockopt = 1;
+
+      if (setsockopt( sock
+		    , SOL_SOCKET, SO_REUSEADDR,
+		      (const void *) &sockopt, sizeof(sockopt)) < 0)
+      { perror("setsockopt");
+	closesocket(sock);
         return -2;
+      }
     }
 
     if (!ssl_hostaddr(&sa_server, config->pl_ssl_host, config->pl_ssl_port)) {
+	closesocket(sock);
         return -1;
     }
 
     if (bind( sock
             , (struct sockaddr *) &sa_server
             , sizeof (sa_server)) < 0) {
+	closesocket(sock);
         perror("bind");
         return -3;
     }
@@ -876,11 +899,14 @@ ssl_tcp_listen(PL_SSL *config)
      */
 
     if (listen(sock, SSL_TCP_QUEUE_MAX) < 0) {
+	closesocket(sock);
         perror("listen");
         return -4;
     }
 
     ssl_deb("established tcp server socket\n");
+
+    config->sock = sock;
 
     return sock;
 }
@@ -897,6 +923,7 @@ ssl_tcp_connect(PL_SSL *config)
         perror("socket");
         return -1;
     }
+    config->sock = sock;
 
     ssl_deb("established tcp client socket\n");
 
@@ -1039,6 +1066,11 @@ ssl_write(PL_SSL_INSTANCE *instance, const char *buf, int size)
 		 /*******************************
 		 *	      THREADING		*
 		 *******************************/
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+OpenSSL is not thread-safe, unless  you   install  the hooks below. This
+code is based on mttest.c distributed with the OpenSSL library.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #ifdef _REENTRANT
 static pthread_mutex_t *lock_cs;
