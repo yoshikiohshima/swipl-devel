@@ -24,7 +24,7 @@
 
 /*#define O_DEBUG 1*/
 
-#define GLOBAL				/* allocate global variables here */
+#define GLOBAL SO_LOCAL			/* allocate global variables here */
 #include "pl-incl.h"
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H

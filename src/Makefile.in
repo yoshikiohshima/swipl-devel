@@ -176,7 +176,7 @@ $(RUNTIME):	$(RUNTIMEDIR) $(OBJ) $(RCOBJ) $(XOBJ)
 		$(RANLIB) $@
 
 $(RUNTIMEDIR)/$(SHAREDV):	$(RUNTIMEDIR) $(OBJ) $(RCOBJ) $(XOBJ)
-		$(CC) -shared -o $@ $(SONAMEOPT) \
+		$(CC) -shared $(COFLAGS) -o $@ $(SONAMEOPT) \
 			$(OBJ) $(RCOBJ) $(XOBJ) $(LIBS)
 
 $(RUNTIMEDIR)/$(SHARED):	$(RUNTIMEDIR)/$(SHAREDV)
