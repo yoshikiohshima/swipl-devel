@@ -122,6 +122,17 @@ typed(save_db) :-
 	X = type(T,V),
 	findall(X, rdf(x, a, literal(X)), TV2),
 	TV2 == TVs.
+typed(save) :-
+	findall(type(T,V), (data(T, V), T \== term), TVs),
+	forall(member(Value, TVs),
+	       rdf_assert(x, a, literal(Value))),
+	save_reload,
+	findall(X, rdf(x, a, literal(X)), TV2),
+	(   same_set(TV2, TVs)
+	->  true
+	;   format('TV2 = ~w~n', [TV2]),
+	    fail
+	).
 
 
 		 /*******************************

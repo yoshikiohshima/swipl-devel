@@ -961,8 +961,8 @@ save_attribute_value(Value, Out) :-	% strings
 	xml_quote_cdata(Value, QVal),
 	write(Out, QVal).
 save_attribute_value(Value, Out) :-	% numbers
-	atomic(Value), !,
-	write(Out, Value).
+	number(Value), !,
+	writeq(Out, Value).		% quoted: preserve floats
 save_attribute_value(Value, _Out) :-
 	throw(error(save_attribute_value(Value), _)).
 
