@@ -76,6 +76,9 @@
 
 	    'chr run_suspensions'/1,
 	    'chr run_suspensions_loop'/1,
+	    
+	    'chr run_suspensions_d'/1,
+	    'chr run_suspensions_loop_d'/1,
 
 	    'chr insert_constraint_internal'/5,
 	    'chr remove_constraint_internal'/2,
