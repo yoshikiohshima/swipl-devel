@@ -1,16 +1,21 @@
-@rem Set variables needed by the examples
 @echo off
 
-set SWI_PROLOG_HOME=C:\Program Files\pl
-set JAVA_HOME=C:\j2sdk1.4.2_04
-set PATH=%PATH%;%SWI_PROLOG_HOME%\bin;%JAVA_HOME%\bin
+REM Set variables needed by the examples
+REM This script assumes both the bin directories of SWI-Prolog and the Java
+REM SDK to be in %PATH%.  If this is not the case, you may wish to set %PATH%
+REM in this script.
 
-rem Find classpath for jpl.jar.  First case holds if we are in the source
-rem tree.
+REM Find the Prolog coordinates
+
+plcon.exe -dump-runtime-variables=cmd > %TEMP%\plrtvars.bat
+call %TEMP%\plrtvars.bat
+del %TEMP%\plrtvars.bat
+
+REM Find classpath for jpl.jar.  First case holds if we are in the source tree.
 
 if exist ..\..\..\jpl.jar (
   set CLASSPATH=.;..\..\..\jpl.jar
 ) else (
-  set CLASSPATH=.;%SWI_PROLOG_HOME%\lib\jpl.jar
+  set CLASSPATH=.;%PLBASE%\lib\jpl.jar
 )
 
