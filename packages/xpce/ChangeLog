@@ -1,7 +1,10 @@
 			   XPCE ChangeLog
 			   ==============
 
-* FIXEDL Bug#176.  Caused by allowing redefinition of `window<-popup'.
+VERSION 6.2.26, distributed with SWI-Prolog 5.3.20
+==================================================
+
+* FIXED: Bug#176.  Caused by allowing redefinition of `window<-popup'.
 
 * ADDED: `window->update_scroll_bar_values' as a hook to intercept update
   requests to the scrollbars.
