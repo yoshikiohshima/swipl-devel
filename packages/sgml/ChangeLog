@@ -1,3 +1,7 @@
+Apr 28, 2004
+
+  * ADDED: iso_639.pl: ISO-639 language identifiers.
+
 Apr 27, 2004
 
   * ADDED: first version of xsdp_types.pl, a module to do type checking
