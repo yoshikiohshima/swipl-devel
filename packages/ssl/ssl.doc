@@ -31,7 +31,7 @@
 This document describes the SWI-Prolog SSL library, a set of predicates
 which provides secure sockets to Prolog applications, for example to run
 a secure HTTPS server, or access websites using the \const{https}
-protocol.  It can also be used to provide authetification and secure
+protocol.  It can also be used to provide authentication and secure
 data exchange between Prolog processes over the network.
 \end{abstract}
 
