@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: error messages produced by load_foreign_library/1.
+
   * MAINTENANCE: Fixed incorrect assertion in O_SECURE mode.  Barry Evans.
 
   * ENHANCED: some Makefile cleanup.
