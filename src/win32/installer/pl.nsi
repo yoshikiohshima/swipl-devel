@@ -69,6 +69,7 @@ Section "Base system (required)"
   File pl\library\system.pl
   File pl\library\threadutil.pl
   File pl\library\tty.pl
+  File pl\library\dif.pl
 
 ; COMPATIBILITY
   File pl\library\backcomp.pl
