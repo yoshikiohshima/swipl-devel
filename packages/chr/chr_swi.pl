@@ -70,7 +70,10 @@ user:prolog_load_file(Spec, Options) :-
 	file_name_extension(Base, chr, CHRFile), !,
 	file_name_extension(Base, pl, PlFile),
 	ensure_chr_compiled(CHRFile, PlFile, Options),
-	load_files(Module:PlFile, Options).
+	load_files(Module:PlFile,
+		   [ derived_from(CHRFile)
+		   | Options
+		   ]).
 
 ensure_chr_compiled(CHRFile, PlFile, _) :-
 	time_file(CHRFile, CHRTime),

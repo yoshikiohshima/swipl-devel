@@ -194,7 +194,7 @@ allow inspecting and printing the content of the constraint store.
 Prints all suspended constraints of module \arg{Mod} to the
 standard output.
 
-    \predicate{suspended_chr_constraints}{2}{+Mod, -List)}
+    \predicate{suspended_chr_constraints}{2}{+Mod, -List}
 Returns the list of all suspended CHR constraints of the given module.
 \end{description}
 

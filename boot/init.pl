@@ -782,6 +782,19 @@ $substitute_atom(From, To, In, Out) :-
 	concat_atom([Before, To, After], Out).
 
 
+		 /*******************************
+		 *	    DERIVED FILES	*
+		 *******************************/
+
+:- dynamic
+	$derived_source/3.		% Loaded, DerivedFrom, Time
+
+'$register_derived_source'(Loaded, DerivedFrom) :-
+	retractall('$derived_source'(Loaded, _, _)),
+	time_file(DerivedFrom, Time),
+	assert('$derived_source'(Loaded, DerivedFrom, Time)).
+
+
 		/********************************
 		*       LOAD PREDICATES         *
 		*********************************/
@@ -903,6 +916,10 @@ $noload(true, _) :- !,
 	fail.
 $noload(not_loaded, FullFile) :-
 	source_file(FullFile), !.
+$noload(changed, Derived) :-
+	'$derived_source'(_FullFile, Derived, LoadTime),
+	time_file(Derived, Modified),
+        Modified @=< LoadTime, !.
 $noload(changed, FullFile) :-
 	$time_source_file(FullFile, LoadTime),
         time_file(FullFile, Modified),
@@ -963,6 +980,7 @@ $load_file(File, Module, Options) :-
 	flag($load_silent, _, Silent),
 	$get_option(if(If), Options, true),
 	$get_option(autoload(Autoload), Options, false),
+	$get_option(derived_from(DerivedFrom), Options, -),
 
 	(   Autoload == false
 	->  flag($autoloading, AutoLevel, AutoLevel)
@@ -1009,6 +1027,11 @@ $load_file(File, Module, Options) :-
 
 	    (	Level == 0
 	    ->	garbage_collect_clauses
+	    ;	true
+	    ),
+
+	    (	DerivedFrom \== -
+	    ->	'$register_derived_source'(Absolute, DerivedFrom)
 	    ;	true
 	    ),
 

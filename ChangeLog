@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: derived_from(File) option to load_files/2.
+
   * MODIFIED: renamed free_variables/2 into the more widely use name
     term_variables/2.  Added free_variables/2 to the library backcomp,
     so applications with autoloading enabled (default) do not have

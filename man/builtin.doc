@@ -197,6 +197,11 @@ well as remove all clauses if the data is re-consulted.
 
 This option is added to allow compiling from non-file locations such as
 databases, the web, the \jargon{user} (see consult/1) or other servers.
+
+    \termitem{derived_from}{File}
+Indicate that the loaded file is derived from \arg{File}.  Used by
+make/0 to time-check and load the original file rather than the derived
+file.
 \end{description}
 
 The load_files/2 predicate can be hooked to load other data or data from
