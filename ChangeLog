@@ -7,6 +7,13 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#138: Avoid trying to compile pl-xterm.c on Cygwin.
+    Shawn Legrand.
+
+  * FIXED: Bug in copy_term/2 when copying (sharing) ground terms with
+    nested compounds.  David Reitter.
+
+
 VERSION 5.3.4 (Mar 12, 2003)
 ============================
 

@@ -1394,13 +1394,6 @@ shifted rather than doing it.
 #define VAR_MARK (0x1<<LMASK_BITS|TAG_VAR)
 
 static inline void
-initCyclic(ARG1_LD)
-{ requireStack(argument, sizeof(Word));
-  *aTop++ = NULL;			/* marker */
-}
-
-
-static inline void
 TrailCyclic(Word p ARG_LD)
 { requireStack(argument, sizeof(Word));
   *aTop++ = p;
@@ -1408,11 +1401,13 @@ TrailCyclic(Word p ARG_LD)
 
 
 static inline void
-exitCyclicCopy(ARG1_LD)
-{ Word p, *sp = aTop;
+exitCyclicCopy(Word *m ARG_LD)
+{ Word *sp;
 
-  while((p = *--sp))
-  { if ( isRef(*p) )
+  for(sp = aTop; sp > m; )
+  { Word p = *--sp;
+
+    if ( isRef(*p) )
     { Word p2 = unRef(*p);
 
       if ( *p2 == VAR_MARK )		/* sharing variables */
@@ -1501,6 +1496,7 @@ again:
 	Word from0 = from;
 	Functor f2 = (Functor)allocGlobalNoShift(arity+1);
 	int ground = TRUE;
+	Word *am = aTop;
 
 	f2->definition = f1->definition;
 	f1->definition = makeRefG((Word)f2);
@@ -1514,7 +1510,8 @@ again:
 	if ( share )
 	{ ground &= do_copy_term(from, to, share PASS_LD);
 	  if ( ground )
-	  { gTop = oldtop;
+	  { exitCyclicCopy(am PASS_LD);
+	    gTop = oldtop;
 	    *to0 = *from0;
 	    DEBUG(2, Sdprintf("Shared\n"));
 	    return TRUE;
@@ -1535,10 +1532,10 @@ static
 PRED_IMPL("copy_term", 2, copy_term, 0)
 { PRED_LD
   term_t copy = PL_new_term_ref();
+  Word *m = aTop;
 
-  initCyclic(PASS_LD1);
   do_copy_term(valTermRef(A1), valTermRef(copy), TRUE PASS_LD);
-  exitCyclicCopy(PASS_LD1);
+  exitCyclicCopy(m PASS_LD);
   
   return PL_unify(copy, A2);
 }
@@ -1548,10 +1545,10 @@ static
 PRED_IMPL("duplicate_term", 2, duplicate_term, 0)
 { PRED_LD
   term_t copy = PL_new_term_ref();
+  Word *m = aTop;
 
-  initCyclic(PASS_LD1);
   do_copy_term(valTermRef(A1), valTermRef(copy), FALSE PASS_LD);
-  exitCyclicCopy(PASS_LD1);
+  exitCyclicCopy(m PASS_LD);
   
   return PL_unify(copy, A2);
 }

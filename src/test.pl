@@ -1133,6 +1133,12 @@ copy_term(av-3) :-
 	var(D2),
 	Y = ok,
 	D2  == true.
+copy_term(reset-1) :-			% reset cycle resetting for shared
+	A = [a:b,c:d|_],		% terms.
+	copy_term(A,_B),
+	A = [a:b,c:d|_].
+	
+
 
 
 		 /*******************************
