@@ -1282,7 +1282,7 @@ rehash_triples()
     { t3 = t2->next[BY_NONE];
 
       unlock_atoms(t2);
-      PL_free(t);
+      PL_free(t2);
       freed++;
     }
   }
