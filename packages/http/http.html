@@ -54,6 +54,9 @@ library</A>
 <LI><A HREF="#sec:3"><B>3 The HTTP server libraries</B></A>
 <UL>
 <LI><A HREF="#sec:3.1">3.1 The `Body'</A>
+<UL>
+<LI><A HREF="#sec:3.1.1">3.1.1 Returning special status codes</A>
+</UL>
 <LI><A HREF="#sec:3.2">3.2 Request format</A>
 <UL>
 <LI><A HREF="#sec:3.2.1">3.2.1 Handling POST requests</A>
@@ -476,6 +479,13 @@ print_request([H|T]) :-
         print_request(T).
 </PRE>
 </TABLE>
+
+<H4><A NAME="sec:3.1.1">3.1.1 Returning special status codes</A></H4>
+
+<P>To process requests with the header <CODE>If-Modified-Since</CODE>, 
+the wrapper allows the `Body' to throw an exception of the format
+<CODE>status(not_modified)</CODE>. This causes the server to respond 
+with a <CODE>304 Not Modified</CODE> page.
 
 <H3><A NAME="sec:3.2">3.2 Request format</A></H3>
 
