@@ -1013,10 +1013,16 @@ pl_db_getdel(term_t handle, term_t key, term_t value, control_t ctx, int del)
 	memset(&v, 0, sizeof(v));
 
 	if ( (rval=db->db->get(db->db, TheTXN, &k, &v, 0)) == 0 )
-	  return unify_dbt(value, db->value_type, &v);
+	{ int rc = unify_dbt(value, db->value_type, &v);
 
-	free_dbt(&k, db->key_type);
-	return db_status(rval);
+	  if ( rc && del )
+	  { int flags = 0;
+
+	    return db_status(db->db->del(db->db, TheTXN, &k, flags));
+	  } else
+	    return rc;
+	} else
+	  return db_status(rval);
       }
     case PL_REDO:
       c = PL_foreign_context_address(ctx);
