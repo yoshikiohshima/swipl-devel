@@ -9,6 +9,7 @@ PLBASE=@PLBASE@
 PLARCH=@PLARCH@
 PLINCL=@PLINCL@
 PKGDOC=$(PLBASE)/doc/packages
+EXDIR=$(PKGDOC)/examples/jpl
 PCEHOME=../xpce
 
 CC=@CC@
@@ -37,6 +38,7 @@ LDFLAGS=@LDSOFLAGS@
 INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
+INSTALL_SCRIPT=@INSTALL_SCRIPT@
 
 LIBPL=		jpl.pl
 TARGETS=	libjpl.@SO@
@@ -71,6 +73,17 @@ DOCDIRS=	. ./java_api ./java_api/javadoc ./java_api/javadoc/jpl \
 		./prolog_api/overview
 DOCFILES=	$(shell cd ./docs && find . -name '*.html' -o -name '*.gif' -o -name '*.jpg')
 
+EXPL=		$(EXDIR)/prolog
+EXPLS=		jpl_colour_choose_demo.pl \
+		jpl_jlist_demo.pl \
+		jpl_midi_demo.pl \
+		jpl_table_demo.pl \
+		jpl_text_entry_demo.pl \
+		jpl_versions_demo.pl
+EXJAVA=		$(EXDIR)/java
+EXJAVAS=	Exceptions Exceptions2 Family FamilyMT Test Test2 Time \
+		Versions Zahed
+
 
 install:	$(TARGETS) $(LIBPL)
 		mkdir -p $(PLBASE)/lib/$(PLARCH)
@@ -98,6 +111,29 @@ html-install::
 		    $(INSTALL_DATA) docs/$$f $(PKGDOC)/jpl/$$f; echo -n .; \
 		done
 		@echo "ok"
+
+expl-install::
+		echo "Installing Prolog examples"
+		mkdir -p $(EXPL)
+		@for f in $(EXPLS) README; do \
+		    $(INSTALL_DATA) examples/prolog/$$f $(EXPL)/$$f; \
+		done
+
+exjava-install::
+		echo "Installing Java examples"
+		mkdir -p $(EXJAVA)
+		$(INSTALL_DATA) examples/java/README $(EXJAVA)
+		$(INSTALL_DATA) examples/java/env.sh $(EXJAVA)
+		for d in $(EXJAVAS); do \
+		    mkdir -p $(EXJAVA)/$$d; \
+		    $(INSTALL_SCRIPT) examples/java/$$d/run.sh $(EXJAVA)/$$d ;\
+		    $(INSTALL_DATA) examples/java/$$d/README $(EXJAVA)/$$d ;\
+		    $(INSTALL_DATA) examples/java/$$d/$$d.java $(EXJAVA)/$$d ;\
+		    plfile=`echo $$d.pl | tr A-Z a-z`; \
+		    if [ -f examples/java/$$d/$$plfile ]; then \
+			$(INSTALL_DATA) examples/java/$$d/$$plfile $(EXJAVA)/$$d ;\
+		    fi; \
+		done
 
 pdf-install::
 		mkdir -p $(PKGDOC)

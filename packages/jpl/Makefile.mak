@@ -20,8 +20,7 @@ EXPLS=		jpl_colour_choose_demo.pl \
 		jpl_midi_demo.pl \
 		jpl_table_demo.pl \
 		jpl_text_entry_demo.pl \
-		jpl_versions_demo.pl \
-		README.TXT
+		jpl_versions_demo.pl
 
 CFLAGS =	$(CFLAGS) \
 		-I"$(JAVA_HOME)\include" \
@@ -64,6 +63,7 @@ install-examples::
 		if not exist "$(EXPL)/$(NULL)" $(MKDIR) "$(EXPL)"
 		cd examples\prolog & \
 			@for %f in ($(EXPLS)) do @copy %f "$(EXPL)"
+		copy examples\prolog\README "$(EXPL)\README.TXT"
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
