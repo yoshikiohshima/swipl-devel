@@ -1222,7 +1222,7 @@ pl_e_free_variables(V0^V1^t, vars) is used  by   setof/3  and bagof/3 to
 determine  the  free  variables  in  the    goal   that  have  not  been
 existentially bound.  The implementation is rather tricky:
 
-A backtract mark is pushed. Then  bind_existential_vars(t) will bind all
+A backtrack mark is pushed. Then  bind_existential_vars(t) will bind all
 variables in terms at the left-side  of   the  ^/2 operator to []. Next,
 free_variables() is used to  make  PL_term_refs   for  all  of  the free
 variables. The Undo() is used to free all []-bound variables and finally
@@ -1264,6 +1264,10 @@ bind_existential_vars(Word t, Word *plain ARG_LD)
   while ( isTerm(*t) )
   { Functor f = valueTerm(*t);
     int arity;
+
+    if ( visited(f PASS_LD) )
+      return;				/* cyclic term in existential */
+					/* defs.  Error?  How? */
 
     if ( f->definition == FUNCTOR_hat2 )
     { dobind_vars(&f->arguments[0], ATOM_nil PASS_LD);

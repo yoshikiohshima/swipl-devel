@@ -338,17 +338,6 @@ compile_term_to_heap(Word p, CompileInfo info ARG_LD)
 right_recursion:
   w = *p;
 
-#if O_CYCLIC
-  if ( is_marked(p) )
-  { addOpCode(info, PL_REC_CYCLE);
-    addSizeInt(info, valInt(w));
-    
-    DEBUG(1, Sdprintf("Added cycle for offset = %d\n", valInt(w)));
-
-    return;
-  }
-#endif
-
   switch(tag(w))
   { case TAG_VAR:
     { long n = info->nvars++;
@@ -435,7 +424,8 @@ right_recursion:
       { addOpCode(info, PL_REC_CYCLE);
 	addSizeInt(info, valInt(f->definition));
 
-	Sdprintf("Added cycle for offset = %d\n", valInt(f->definition));
+	DEBUG(1, Sdprintf("Added cycle for offset = %d\n",
+			  valInt(f->definition)));
 
 	return;
       } else
