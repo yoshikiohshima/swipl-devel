@@ -63,6 +63,7 @@ suggest predicates from a keyword.
 \predicatesummary{assertz}{2}{Add a clause to the database (last)}
 \predicatesummary{assume}{1}{Make assertions about your program}
 \predicatesummary{attach_console}{0}{Attach I/O console to thread}
+\predicatesummary{attr_unify_hook}{2}{Attributed variable unification hook}
 \predicatesummary{attvar}{1}{Type test for attributed variable}
 \predicatesummary{at_end_of_stream}{0}{Test for end of file on input}
 \predicatesummary{at_end_of_stream}{1}{Test for end of file on stream}
