@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.20/XPCE 6.2.26 development snapshot
+SWI-Prolog 5.3.21/XPCE 6.2.26 development snapshot
 
 Status
 ======
@@ -56,20 +56,18 @@ Brief summary of changes since 5.3.19
 SWI-Prolog
 ----------
 
-  * Minor stuff.  Crash in GC after prolog_frame_attribute(Frame, goal, Goal)
-    Added read_pending_input/3 to allow for efficient unbuffered
-    copying of data between (network) streams.
+  * Minor stuff
     
 Packages
 --------
 
-  * XPCE: minor enhancements and fix of recent change causing crashes
-    in popup menu handling.
+  * RDF Parser: allow getting the xmlns namespace declarations to get
+    access to user-provided short names.
 
-  * SGML/XML parser: fix in catalog handling.  Also made catalog
-    handling thread-safe.
-
-  * Semweb: allow saving converted typed literals.
+  * Semweb: Various patches involving data corruption and crashes, mostly
+    related to removing things from the database.  With many thanks to
+    Sandro Hawke.  Added various statistics which are being used in the
+    development of a query optimizer.
 
 Development environment
 -----------------------

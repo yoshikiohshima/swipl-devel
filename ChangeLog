@@ -7,10 +7,14 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.21 (September 14, 2004)
+===================================
+
   * FIXED/ENHANCED: license/[1,2] and eval_license/0 issues reported on
     the mailinglist.
 
   * FIXED: DCG translation of *->
+
 
 VERSION 5.3.20 (August 26, 2004)
 ================================
