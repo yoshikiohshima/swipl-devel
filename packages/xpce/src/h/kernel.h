@@ -177,15 +177,17 @@ different types when passed to a vararg function.
 #endif
 
 #ifdef __GNUC__
-#if !__STRICT_ANSI__			/* gcc -ansi */
-#ifndef O_INLINE
-#define O_INLINE 1
-#endif
-#define O_CONST_FUNCTION 1
-#endif
-#define Promote(type) int
+# if !__STRICT_ANSI__			/* gcc -ansi */
+#  ifndef O_INLINE
+#   define O_INLINE 1
+#  endif
+#  define O_CONST_FUNCTION 1
+# endif
+# define Promote(type) int
+# define SO_LOCAL __attribute__((visibility("hidden")))
 #else
-#define Promote(type) type
+# define Promote(type) type
+# define SO_LOCAL
 #endif
 
 #if !O_INLINE

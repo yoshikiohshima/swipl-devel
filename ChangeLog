@@ -7,7 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-  * Exploit GCC visibility("hidden") attribute.
+  * PORT: Cleanup of autoconf configuration (dropped acconfig.h)
+
+  * ENHANCED: Exploit GCC visibility("hidden") attribute.  Improves symbol
+    handling for embedded applications on ELF-based systems.
+
 
 VERSION 5.3.9 (Apr 15, 2004)
 ============================

@@ -339,7 +339,7 @@ A common basis for C keywords.
 #define volatile
 #endif
 
-#if defined(__GNUC__)
+#ifdef HAVE_HIDDEN_ATTRIBUTE
 #define SO_LOCAL __attribute__((visibility("hidden")))
 #else
 #define SO_LOCAL

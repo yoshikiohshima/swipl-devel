@@ -2365,7 +2365,8 @@ ARCH=`echo $host | sed 's/\([^-]*\)-[^-]*-\([^-]*\)/\1-\2/'`
 if test "${enable_runtime+set}" = set; then
   enableval="$enable_runtime"
   case "$enableval" in
-		   yes) cat >>confdefs.h <<\_ACEOF
+		   yes)
+cat >>confdefs.h <<\_ACEOF
 #define O_RUNTIME 1
 _ACEOF
 
@@ -2381,7 +2382,8 @@ if test "${enable_mt+set}" = set; then
   enableval="$enable_mt"
   case "$enableval" in
 		   yes) MT=yes
-		        cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define NO_SEGV_HANDLING 1
 _ACEOF
 
@@ -2932,6 +2934,7 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 cat >>confdefs.h <<_ACEOF
 #define PROG_CPP "$CPP"
@@ -4188,12 +4191,61 @@ presetting ac_cv_c_bigendian=no (or yes) will help" >&2;}
 esac
 
 
+echo "$as_me:$LINENO: checking \"Visibility attribute\"" >&5
+echo $ECHO_N "checking \"Visibility attribute\"... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+ int __attribute__((visibility("hidden"))) test;
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_HIDDEN_ATTRIBUTE 1
+_ACEOF
+
+   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+
 case "$ARCH" in
     *cygwin*)
 	echo "$as_me:$LINENO: checking \"Cygwin ...\"" >&5
 echo $ECHO_N "checking \"Cygwin ...\"... $ECHO_C" >&6
         configmmappedstacks=no
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_VIRTUALALLOC 1
 _ACEOF
 
@@ -4350,7 +4402,8 @@ fi
   fi
 
   if test "$pthread_ok" = "true"; then
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define O_PLMT 1
 _ACEOF
 
@@ -4832,7 +4885,8 @@ echo $ECHO_N "checking \"wether mutex support recursive locking\"... $ECHO_C" >&
   if test -s conftest && ./conftest; then
     echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define RECURSIVE_MUTEXES 1
 _ACEOF
 
@@ -5174,7 +5228,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   (exit $ac_status); }; }; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_ATOMIC_INC 1
 _ACEOF
 
@@ -7064,7 +7119,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
   ac_cv_func_dlopen=yes
-   cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_DLOPEN 1
 _ACEOF
 
@@ -10417,6 +10473,7 @@ _ACEOF
 echo "$as_me:$LINENO: checking \"Boot filename\"" >&5
 echo $ECHO_N "checking \"Boot filename\"... $ECHO_C" >&6;
 BOOTFILE=boot`expr ${ac_cv_sizeof_long} \* 8`.prc
+
 cat >>confdefs.h <<_ACEOF
 #define BOOTFILE "$BOOTFILE"
 _ACEOF
@@ -10462,7 +10519,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define FCNTL_LOCKS 1
 _ACEOF
 
@@ -10535,6 +10593,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 ( exit $ac_status )
 echo "$as_me:$LINENO: result: sizeof(double)" >&5
 echo "${ECHO_T}sizeof(double)" >&6
+
 cat >>confdefs.h <<\_ACEOF
 #define DOUBLE_ALIGNMENT sizeof(double)
 _ACEOF
@@ -10593,6 +10652,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   (exit $ac_status); }; }; then
   echo "$as_me:$LINENO: result: allowed" >&5
 echo "${ECHO_T}allowed" >&6
+
 cat >>confdefs.h <<\_ACEOF
 #define NON_ALIGNED_ACCESS 1
 _ACEOF
@@ -10645,7 +10705,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_RLIM_T 1
 _ACEOF
 
@@ -10700,7 +10761,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_RU_IDRSS 1
 _ACEOF
 
@@ -10757,7 +10819,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6;
-   cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define ASSERT_H_REQUIRES_STDIO_H 1
 _ACEOF
 
@@ -10809,6 +10872,7 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+
 cat >>confdefs.h <<\_ACEOF
 #define NO_SYS_IOCTL_H_WITH_SYS_TERMIOS_H 1
 _ACEOF
@@ -10853,7 +10917,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_SGTTYB 1
 _ACEOF
 
@@ -10903,7 +10968,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define NEED_UCHAR 1
 _ACEOF
 
@@ -10959,6 +11025,7 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
+
 cat >>confdefs.h <<\_ACEOF
 #define NEED_DECL_ERRNO 1
 _ACEOF
@@ -10971,7 +11038,8 @@ rm -f conftest.$ac_objext conftest.$ac_ext
 echo "$as_me:$LINENO: checking \"for symbolic links\"" >&5
 echo $ECHO_N "checking \"for symbolic links\"... $ECHO_C" >&6
 if touch conftest.x && ln -s conftest.x conftest.lns && cmp conftest.x conftest.lns; then
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_SYMLINKS 1
 _ACEOF
 
@@ -11086,7 +11154,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define BSD_SIGNALS 1
 _ACEOF
 
@@ -11198,7 +11267,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define O_PROFILE 1
 _ACEOF
 
@@ -11252,7 +11322,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (exit $ac_status); }; }; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-   cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define UNION_WAIT 1
 _ACEOF
 
@@ -11299,7 +11370,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define TAGGED_LVALUE 1
 _ACEOF
 
@@ -11362,7 +11434,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define O_LABEL_ADDRESSES 1
 _ACEOF
 
@@ -11411,7 +11484,8 @@ if test -s conftest && eval `./conftest`; then
     echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 else
-    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define NO_ASM_NOP 1
 _ACEOF
 
@@ -11486,7 +11560,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   (exit $ac_status); }; }; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define CAN_MMAP_FILES 1
 _ACEOF
 
@@ -11692,7 +11767,8 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_SIGINFO 1
 _ACEOF
 
@@ -11721,17 +11797,20 @@ if test -s conftest; then
     if test "$?" = 0 && eval $res; then
 	if test "$MMAP_STACK" = "1"; then
 	    if test "$HAVE_MAP_ANON" = "1"; then
-		cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define HAVE_MAP_ANON 1
 _ACEOF
 
 	    fi
-	    cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define MMAP_STACK 1
 _ACEOF
 
 	    if test "$mmap_tried" = "sgi"; then
-	      cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define SGIMMAP 1
 _ACEOF
 
@@ -11747,7 +11826,8 @@ echo $ECHO_N "checking \"if SA_SIGINFO is usable\"... $ECHO_C" >&6
 	    if test "$SIGNAL_HANDLER_PROVIDES_ADDRESS" = "1"; then
 	      echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-	      cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define USE_SIGINFO 1
 _ACEOF
 
@@ -11905,7 +11985,8 @@ SO_EXT="so"
 
 case "$ARCH" in
   *solaris* | *sunos5*)
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define SO_LD "/usr/ccs/bin/ld"
 _ACEOF
 
@@ -12011,15 +12092,18 @@ fi
   *darwin*)
 	PL=swipl
 	SO_pic="-fPIC"
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define USE_SEM_OPEN 1
 _ACEOF
 
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define LD_SYMBOL_PREFIX "_"
 _ACEOF
 
-	cat >>confdefs.h <<\_ACEOF
+
+cat >>confdefs.h <<\_ACEOF
 #define SO_FORMAT_LDFLAGS "-bundle -bundle_loader \"%s\" -o \"%s\"", plexe, soout
 _ACEOF
 
@@ -12041,6 +12125,7 @@ _ACEOF
 	;;
 esac
 
+
 cat >>confdefs.h <<_ACEOF
 #define SO_EXT "$SO_EXT"
 _ACEOF
@@ -12049,17 +12134,21 @@ cat >>confdefs.h <<_ACEOF
 #define SO_LD "$SO_LD"
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define SO_LDFLAGS "$SO_LDFLAGS"
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define SO_pic "$SO_pic"
 _ACEOF
 
+
 cat >>confdefs.h <<_ACEOF
 #define SO_PIC "$SO_PIC"
 _ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define PROG_PL "$PL"
