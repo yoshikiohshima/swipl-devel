@@ -41,7 +41,7 @@ fi
 EXTRAOBJ=""
 EXTRAHDR=""
 INSTALLTARGET=dv-install
-PL=pl
+if test -z "$PL"; then PL=pl; fi
 PLLIB=libpl.a
 MKLIBS=staticlib
 RT=""
