@@ -4787,6 +4787,9 @@ Name & Default & Description \\
                         together in the same source file. \\
 \const{string}     & off & Backward compatibility.  See the prolog-flag
 			\const{double_quotes} (current_prolog_flag/2). \\
+\const{charset}	   & off & Warn on atoms and variables holding non-ASCII
+			   characters that are not quoted. See also
+			   \secref{processorcharset}. \\
 \hline
 \end{tabular}
 \end{center}

@@ -125,6 +125,7 @@ $map_style_check(singleton, 	    2'0000010).
 $map_style_check(dollar,   	    2'0000100).
 $map_style_check((discontiguous),   2'0001000).
 $map_style_check(dynamic,	    2'0010000).
+$map_style_check(charset,	    2'0100000).
 
 style_check(+string) :- !,
 	set_prolog_flag(double_quotes, string).

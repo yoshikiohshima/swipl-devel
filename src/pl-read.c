@@ -1231,6 +1231,22 @@ get_number(cucharp in, ucharp *end, Number value, int escape)
 }
 
 
+static void
+checkASCII(const char *name, int len, const char *type)
+{ int i;
+
+  for(i=0; i<len; i++)
+  { if ( (name[i] & 0xff) >= 128 )
+    { printMessage(ATOM_warning,
+		   PL_FUNCTOR_CHARS, "non_ascii", 2,
+		     PL_NCHARS, len, name,
+		     PL_CHARS, type);
+      return;
+    }
+  }
+}
+
+
 static Token
 get_token__LD(bool must_be_op, ReadData _PL_rd ARG_LD)
 { unsigned int c;
@@ -1250,6 +1266,8 @@ get_token__LD(bool must_be_op, ReadData _PL_rd ARG_LD)
 		  while(isAlpha(*rdhere) )
 		    rdhere++;
 		  c = *rdhere;
+		  if ( _PL_rd->styleCheck & CHARSET_CHECK )
+		    checkASCII(start, rdhere-start, "atom");
 		  cur_token.value.atom = lookupAtom((char *)start,
 						    rdhere-start);
 		  cur_token.type = (c == '(' ? T_FUNCTOR : T_NAME);
@@ -1263,6 +1281,8 @@ get_token__LD(bool must_be_op, ReadData _PL_rd ARG_LD)
 		    rdhere++;
 		  c = *rdhere;
 		  *rdhere = EOS;
+		  if ( _PL_rd->styleCheck & CHARSET_CHECK )
+		    checkASCII(start, rdhere-start, "variable");
 		  if ( c == '(' && trueFeature(ALLOW_VARNAME_FUNCTOR) )
 		  { cur_token.value.atom = lookupAtom((char *)start,
 						      rdhere-start);
@@ -1330,6 +1350,8 @@ get_token__LD(bool must_be_op, ReadData _PL_rd ARG_LD)
 		    }
 		  }
 
+		  if ( _PL_rd->styleCheck & CHARSET_CHECK )
+		    checkASCII(start, rdhere-start, "symbol");
 		  cur_token.value.atom = lookupAtom((char *)start, rdhere-start);
 		  cur_token.type = (end == '(' ? T_FUNCTOR : T_NAME);
 		  DEBUG(9, Sdprintf("%s: %s\n",

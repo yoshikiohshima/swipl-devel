@@ -1944,6 +1944,7 @@ Tracer communication declarations.
 #define DOLLAR_STYLE	    0x04	/* dollar is lower case */
 #define DISCONTIGUOUS_STYLE 0x08	/* warn on discontiguous predicates */
 #define DYNAMIC_STYLE	    0x10	/* warn on assert/retract active */
+#define CHARSET_CHECK	    0x20	/* warn on unquoted characters */
 #define MAXNEWLINES	    5		/* maximum # of newlines in atom */
 #define SYSTEM_MODE	    (debugstatus.styleCheck & DOLLAR_STYLE)
 

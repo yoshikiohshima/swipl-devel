@@ -256,6 +256,8 @@ prolog_message(singletons(List)) -->
 	[ 'Singleton variables: ~w'-[List] ].
 prolog_message(profile_no_cpu_time) -->
 	[ 'No CPU-time info.  Check the SWI-Prolog manual for details' ].
+prolog_message(non_ascii(Text, Type)) -->
+	[ 'Unquoted ~w with non-portable characters: ~w'-[Type, Text] ].
 
 
 		 /*******************************

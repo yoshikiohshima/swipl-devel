@@ -10,6 +10,8 @@
 VERSION 5.3.4 (Mar 11, 2003)
 ============================
 
+  * ADDED: style_check(+charset) option.
+
   * FIXED: Bug#139 Trail-stack overflow after many assignments
     (using setarg/3) to the same location in deterministic code.
     Holger Kanwischer.
@@ -22,7 +24,8 @@ VERSION 5.3.4 (Mar 11, 2003)
     classified as lowercase letter.  Note that this may cause errors
     reading old code containing not-quoted atoms holding such characters.
     For example, Æab used to be read as an atom but is now read as a
-    Prolog variable.
+    Prolog variable.  Please use ?- style_check(+charset) to get warnings
+    in possible conflicts.
 
   * ENHANCED: Cleanup of dif/2 by Tom Schrijvers.
 
