@@ -21,8 +21,7 @@ LIBS=@LIBS@
 NETLIBS=@NETLIBS@
 
 JAVA_HOME=@JAVA_HOME@
-JAVA_CC=@JAVA_CC@
-JAVAC_OPTS=@JAVA_CC_OPTS@
+JAVAC=@JAVAC@
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
@@ -44,6 +43,7 @@ TARGETS=	libjpl.@SO@
 OBJ=		src/c/jpl.o
 
 all:		$(TARGETS)
+		(cd src/java/jpl && $(MAKE) all)
 
 libjpl.@SO@:	$(OBJ)
 		$(LD) $(LDFLAGS) -o $@ $(OBJ) -ljava -lverify -ljvm
@@ -106,6 +106,7 @@ $(TEX):		$(DOCTOTEX)
 
 clean:
 		rm -f $(OBJ) *~ *.o *% a.out core config.log
+		(cd src/java/jpl && $(MAKE) clean)
 
 distclean:	clean
 		rm -f $(TARGETS) config.cache config.h config.status Makefile

@@ -271,7 +271,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="install-sh"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PL PLLIBS PLBASE PLARCH PLINCL COFLAGS CWFLAGS CMFLAGS CIFLAGS ETAGS LD SO LDSOFLAGS JAVA_HOME PLLD MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os JAVA_CC JAVA_CC_FLAGS ac_ct_JAVA_CC GCJ_OPTS JAVA_CC_OPTS _ACJNI_JAVAC LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PL PLLIBS PLBASE PLARCH PLINCL COFLAGS CWFLAGS CMFLAGS CIFLAGS ETAGS LD SO LDSOFLAGS JAVA_HOME PLLD MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os JAVAC JAR _ACJNI_JAVAC LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -732,14 +732,6 @@ ac_env_CPP_set=${CPP+set}
 ac_env_CPP_value=$CPP
 ac_cv_env_CPP_set=${CPP+set}
 ac_cv_env_CPP_value=$CPP
-ac_env_JAVA_CC_set=${JAVA_CC+set}
-ac_env_JAVA_CC_value=$JAVA_CC
-ac_cv_env_JAVA_CC_set=${JAVA_CC+set}
-ac_cv_env_JAVA_CC_value=$JAVA_CC
-ac_env_JAVA_CC_FLAGS_set=${JAVA_CC_FLAGS+set}
-ac_env_JAVA_CC_FLAGS_value=$JAVA_CC_FLAGS
-ac_cv_env_JAVA_CC_FLAGS_set=${JAVA_CC_FLAGS+set}
-ac_cv_env_JAVA_CC_FLAGS_value=$JAVA_CC_FLAGS
 
 #
 # Report the --help message.
@@ -824,9 +816,6 @@ Some influential environment variables:
   CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
               headers in a nonstandard directory <include dir>
   CPP         C preprocessor
-  JAVA_CC     java compiler command
-  JAVA_CC_FLAGS
-              java compiler flags
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -1383,7 +1372,7 @@ fi
 
 CC=$PLLD
 LD=$PLLD
-LDSOFLAGS=-shared
+LDSOFLAGS=-embed-shared
 CMFLAGS=-fpic
 CIFLAGS=-I.
 
@@ -3023,12 +3012,9 @@ host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
 
-# AC_PROG_JAVA_CC([COMPILER ...])
-# --------------------------
-# COMPILER ... is a space separated list of java compilers to search for.
-# This just gives the user an opportunity to specify an alternative
-# search list for the java compiler.
-# AC_PROG_JAVA_CC
+
+
+
 
 
 
@@ -3037,6 +3023,8 @@ host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 # finally setting variable _ACJNI_FOLLOWED
 # --------------------
 # _ACJNI
+
+
 
 
 java_abs_paths=no
@@ -3052,60 +3040,20 @@ echo "${ECHO_T}Using /etc/java/java2.conf" >&6
   fi
 fi
 
-if test -n "$ac_tool_prefix"; then
-  for ac_prog in javac
-  do
-    # Extract the first word of "$ac_tool_prefix$ac_prog", so it can be a program name with args.
-set dummy $ac_tool_prefix$ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_JAVA_CC+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$JAVA_CC"; then
-  ac_cv_prog_JAVA_CC="$JAVA_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_JAVA_CC="$ac_tool_prefix$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
 
-fi
-fi
-JAVA_CC=$ac_cv_prog_JAVA_CC
-if test -n "$JAVA_CC"; then
-  echo "$as_me:$LINENO: result: $JAVA_CC" >&5
-echo "${ECHO_T}$JAVA_CC" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
 
-    test -n "$JAVA_CC" && break
-  done
-fi
-if test -z "$JAVA_CC"; then
-  ac_ct_JAVA_CC=$JAVA_CC
-  for ac_prog in javac
+if test "x$JAVAPREFIX" = x; then
+        test "x$JAVAC" = x && for ac_prog in "gcj$EXEEXT -C" guavac$EXEEXT jikes$EXEEXT javac$EXEEXT
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_ac_ct_JAVA_CC+set}" = set; then
+if test "${ac_cv_prog_JAVAC+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$ac_ct_JAVA_CC"; then
-  ac_cv_prog_ac_ct_JAVA_CC="$ac_ct_JAVA_CC" # Let the user override the test.
+  if test -n "$JAVAC"; then
+  ac_cv_prog_JAVAC="$JAVAC" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -3114,7 +3062,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_ac_ct_JAVA_CC="$ac_prog"
+    ac_cv_prog_JAVAC="$ac_prog"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -3123,36 +3071,189 @@ done
 
 fi
 fi
-ac_ct_JAVA_CC=$ac_cv_prog_ac_ct_JAVA_CC
-if test -n "$ac_ct_JAVA_CC"; then
-  echo "$as_me:$LINENO: result: $ac_ct_JAVA_CC" >&5
-echo "${ECHO_T}$ac_ct_JAVA_CC" >&6
+JAVAC=$ac_cv_prog_JAVAC
+if test -n "$JAVAC"; then
+  echo "$as_me:$LINENO: result: $JAVAC" >&5
+echo "${ECHO_T}$JAVAC" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 
-  test -n "$ac_ct_JAVA_CC" && break
+  test -n "$JAVAC" && break
 done
 
-  JAVA_CC=$ac_ct_JAVA_CC
+else
+        test "x$JAVAC" = x && for ac_prog in "gcj$EXEEXT -C" guavac$EXEEXT jikes$EXEEXT javac$EXEEXT
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_JAVAC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$JAVAC"; then
+  ac_cv_prog_JAVAC="$JAVAC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_JAVAC="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+JAVAC=$ac_cv_prog_JAVAC
+if test -n "$JAVAC"; then
+  echo "$as_me:$LINENO: result: $JAVAC" >&5
+echo "${ECHO_T}$JAVAC" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 
-
-if test "$JAVA_CC" = "gcj"; then
-   if test "$GCJ_OPTS" = ""; then
-      GCJ_OPTS=-C
-
-   fi
-   JAVA_CC_OPTS=@GCJ_OPTS@
+  test -n "$JAVAC" && break
+done
+test -n "$JAVAC" || JAVAC="$JAVAPREFIX"
 
 fi
-test -z "$JAVA_CC" && { { echo "$as_me:$LINENO: error: no acceptable java compiler found in \$PATH" >&5
-echo "$as_me: error: no acceptable java compiler found in \$PATH" >&2;}
+test "x$JAVAC" = x && { { echo "$as_me:$LINENO: error: no acceptable Java compiler found in \$PATH" >&5
+echo "$as_me: error: no acceptable Java compiler found in \$PATH" >&2;}
+   { (exit 1); exit 1; }; }
+
+echo "$as_me:$LINENO: checking if $JAVAC works" >&5
+echo $ECHO_N "checking if $JAVAC works... $ECHO_C" >&6
+if test "${ac_cv_prog_javac_works+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+JAVA_TEST=Test.java
+CLASS_TEST=Test.class
+cat << \EOF > $JAVA_TEST
+/* #line 3142 "configure" */
+public class Test {
+}
+EOF
+if { ac_try='$JAVAC $JAVACFLAGS $JAVA_TEST'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } >/dev/null 2>&1; then
+  ac_cv_prog_javac_works=yes
+else
+  { { echo "$as_me:$LINENO: error: The Java compiler $JAVAC failed (see config.log, check the CLASSPATH?)" >&5
+echo "$as_me: error: The Java compiler $JAVAC failed (see config.log, check the CLASSPATH?)" >&2;}
+   { (exit 1); exit 1; }; }
+  echo "configure: failed program was:" >&5
+  cat $JAVA_TEST >&5
+fi
+rm -f $JAVA_TEST $CLASS_TEST
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_prog_javac_works" >&5
+echo "${ECHO_T}$ac_cv_prog_javac_works" >&6
+
+
+
+if test "x$JAVAPREFIX" = x; then
+        test "x$JAR" = x && for ac_prog in jar$EXEEXT
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_JAR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$JAR"; then
+  ac_cv_prog_JAR="$JAR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_JAR="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+JAR=$ac_cv_prog_JAR
+if test -n "$JAR"; then
+  echo "$as_me:$LINENO: result: $JAR" >&5
+echo "${ECHO_T}$JAR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$JAR" && break
+done
+
+else
+        test "x$JAR" = x && for ac_prog in jar
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_JAR+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$JAR"; then
+  ac_cv_prog_JAR="$JAR" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_JAR="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+fi
+fi
+JAR=$ac_cv_prog_JAR
+if test -n "$JAR"; then
+  echo "$as_me:$LINENO: result: $JAR" >&5
+echo "${ECHO_T}$JAR" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$JAR" && break
+done
+test -n "$JAR" || JAR="$JAVAPREFIX"
+
+fi
+test "x$JAR" = x && { { echo "$as_me:$LINENO: error: no acceptable jar program found in \$PATH" >&5
+echo "$as_me: error: no acceptable jar program found in \$PATH" >&2;}
    { (exit 1); exit 1; }; }
 
 
-JAVAC="$JAVA_CC"
 
 
 JNI_INCLUDE_DIRS=""
@@ -3284,7 +3385,7 @@ if test "$java_abs_paths" = yes; then
   JAVA_CC="$JAVA_BINDIR/$JAVA_CC"
 fi
 
-          ac_config_files="$ac_config_files Makefile"
+                    ac_config_files="$ac_config_files Makefile src/java/jpl/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -3810,6 +3911,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+  "src/java/jpl/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/java/jpl/Makefile" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -3931,11 +4033,8 @@ s,@host@,$host,;t t
 s,@host_cpu@,$host_cpu,;t t
 s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
-s,@JAVA_CC@,$JAVA_CC,;t t
-s,@JAVA_CC_FLAGS@,$JAVA_CC_FLAGS,;t t
-s,@ac_ct_JAVA_CC@,$ac_ct_JAVA_CC,;t t
-s,@GCJ_OPTS@,$GCJ_OPTS,;t t
-s,@JAVA_CC_OPTS@,$JAVA_CC_OPTS,;t t
+s,@JAVAC@,$JAVAC,;t t
+s,@JAR@,$JAR,;t t
 s,@_ACJNI_JAVAC@,$_ACJNI_JAVAC,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

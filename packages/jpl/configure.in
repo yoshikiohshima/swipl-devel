@@ -79,8 +79,10 @@ dnl ================================================================
 
 AC_CANONICAL_HOST			dnl needed to get $host_os
 
-m4_include([ac/ac_prog_java_cc.m4])
+m4_include([ac/ac_prog_javac.m4])
+m4_include([ac/ac_prog_javac_works.m4])
 m4_include([ac/ac_jni_include_dirs.m4])
+m4_include([ac/ac_prog_jar.m4])
 
 java_abs_paths=no
 AC_CHECKING(Java configuration)
@@ -93,9 +95,9 @@ if test -r /etc/java/java2.conf; then
   fi
 fi
 
-AC_PROG_JAVA_CC(javac, gcj)
+AC_PROG_JAVAC(javac, gcj)
+AC_PROG_JAR(jar)
 
-JAVAC="$JAVA_CC"
 AC_JNI_INCLUDE_DIR
 for d in $JNI_INCLUDE_DIRS; do
   CIFLAGS="$CIFLAGS -I$d"
@@ -109,7 +111,7 @@ if test "$java_abs_paths" = yes; then
   JAVA_CC="$JAVA_BINDIR/$JAVA_CC"
 fi
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile src/java/jpl/Makefile)
 
 
 

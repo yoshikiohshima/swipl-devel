@@ -6,7 +6,7 @@
 
 JAVAC=@JAVAC@
 JAR=@JAR@
-JPL=../../jpl.jar
+JPL=../../../jpl.jar
 
 CLS=	Atom.class \
 	Compound.class \
@@ -46,7 +46,10 @@ CLASSES=$(CLS) $(FLI)
 all:	$(JPL)
 
 $(JPL):	$(CLASSES)
-	$(JAR) cvf $(JPL) $(CLASSES)
+	$(JAR) cf $(JPL) $(CLASSES)
 
 .java.class:
 	$(JAVAC) $*.java
+
+clean::
+	rm -f *~ $(CLASSES)
