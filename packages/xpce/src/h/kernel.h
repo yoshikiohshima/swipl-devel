@@ -245,6 +245,12 @@ cpdata(to, from, type, n)
 		 * OS-IDENTIFIERS (STRICT_ANSI) *
 		 *******************************/
 
+#ifndef __unix__
+#if defined(_AIX) || defined(__APPLE__) || defined(__unix) || defined(__BEOS__) || defined(__NetBSD__)
+#define __unix__ 1
+#endif
+#endif
+
 #if defined(__unix__) && !defined(unix)
 #define unix 1
 #endif
