@@ -207,7 +207,10 @@ parse_expression(Expr,Result) :-
 	; Expr = max(L,R) ->
 		parse_expression(L,RL),
 		parse_expression(R,RR),
-		mymax(L,R,Result,yes)
+		mymax(RL,RR,Result,yes)
+	; Expr = abs(E) ->
+		parse_expression(E,RE),
+		myabs(RE,Result)
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -681,6 +684,58 @@ mymax(X,Y,Z,New) :-
 			mymax(X,Y,Z,no)
 		)
 	).
+
+myabs(X,Y) :-
+	( nonvar(X) ->
+		Y is abs(X)
+	; nonvar(Y) ->
+		Y >= 0,
+		get(X,LX,UX,ExpX),
+		( UX < Y ->
+			X is (-Y)
+		; LX > (-Y) ->
+			X = Y
+		;
+			NLX is (-Y),
+			put(X,NLX,Y,[myabs(Y)|ExpX])
+		)
+	;
+		get(X,LX,UX,ExpX),
+		get(Y,LY,UY,ExpY),
+		UY > 0,
+		put(X,LX,UX,[myabs(Y)|ExpX]),
+		( LX =< 0, UX >= 0 ->
+			NLY is max(0,LY)
+		;
+			NLY is max(min(abs(LX),abs(UX)),max(LY,0))
+		),
+		NUY is min(UY,max(abs(LX),abs(UX))),
+		put(Y,NLY,NUY,[myabs2(X)|ExpY]),
+		( var(X) ->
+			get(X,LX2,UX2,ExpX2),
+			( LX2 == LX, UX2 == UX ->
+				( NLY == 0 ->
+					NLX is max(LX,(-NUY)),
+					NUX is min(UX,NUY)
+				; LX > (-NLY)  ->
+					NLX is max(LX,NLY),
+					NUX is min(UX,NUY)
+				;
+					NLX is max((-NUY),LX),
+					( UX < NLY ->
+						NUX is min((-NLY),UX)
+					;
+						NUX is min(NUY,UX)	
+					)
+				),
+				put(X,NLX,NUX,ExpX2)
+			;
+				true
+			)
+		;
+			true
+		)
+	).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO
 %	trigger reified constraints when geq is added
@@ -709,7 +764,7 @@ reified_geq(X,Y,B) :-
 		; nonvar(Y) ->
 			get(X,L,U,Expr),
 			( L >= Y ->
-				B = 1
+			B = 1
 			; U < Y ->
 				B = 0
 			;
@@ -1066,6 +1121,11 @@ trigger_exp(myxor(Y,Z),X) :-
 	myxor(X,Y,Z).
 trigger_exp(myxor2(X,Y),Z) :-
 	myxor(X,Y,Z).
+
+trigger_exp(myabs(Y),X) :-
+	myabs(X,Y).
+trigger_exp(myabs2(X),Y) :-
+	myabs(X,Y).
 
 memberchk_eq(X,[Y|Ys],Z) :-
    (   X == Y ->
