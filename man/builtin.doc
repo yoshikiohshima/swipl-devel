@@ -239,7 +239,12 @@ With the semantics, we hope to get as closely possible to the clear
 semantics without the presence of a module system.  Applications using
 modules should consider using use_module/[1,2].  
 
-Equivalent to load_files(Files, [if(changed)]).
+Equivalent to load_files(Files, [if(not_loaded)]).%
+	\footnote{On older versions the condition used to be
+		  if(changed).  Poor time management on some machines
+		  or due to copying often caused problems.  The make/0
+		  predicate deals with updating the running system
+		  after changing the sourcecode.}
 
     \predicate{include}{1}{+File}
 Pretend the terms in \arg{File} are in the source-file in which

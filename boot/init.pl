@@ -822,7 +822,7 @@ $substitute_atom(From, To, In, Out) :-
 %	module.
 
 ensure_loaded(Files) :-
-	load_files(Files, [if(changed)]).
+	load_files(Files, [if(not_loaded)]).
 
 %	use_module(+File|+ListOfFiles)
 %	
@@ -832,7 +832,7 @@ ensure_loaded(Files) :-
 %	so.
 
 use_module(Files) :-
-	load_files(Files, [ if(changed),
+	load_files(Files, [ if(not_loaded),
 			    must_be_module(true)
 			  ]).
 
@@ -842,7 +842,7 @@ use_module(Files) :-
 %	the specified predicates rather than all public predicates.
 
 use_module(Files, Import) :-
-	load_files(Files, [ if(changed),
+	load_files(Files, [ if(not_loaded),
 			    must_be_module(true),
 			    imports(Import)
 			  ]).

@@ -7,6 +7,15 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED/FIXED: ensure_loaded/1 and use_module/[1,2] now use 
+    load_files/2 with the option if(not_loaded) rather than if(changed).
+    This avoids time handling problems with quick-load files, especially
+    on Windows systems that base their time-stamp on local time rather
+    than universal time.
+
+    Use make/0 to update your project.  Applications that really need
+    the old semantics should use load_files/2 directly.
+
   * ADDED: Central "make check" to run regression tests in main system and
     all packages.
 
