@@ -29,20 +29,21 @@
     the GNU General Public License.
 */
 
-:- consult([ license,
-	     syspred,
-	     messages,
-	     toplevel,
-	     attvar,
-	     sort,
-	     bags,
-	     apply,
-	     writef,
-	     history,
-	     dwim,
-	     parms,
-	     autoload,
-	     qlf,
-	     rc,
-	     user:topvars
-	   ]).
+:- module($attvar,
+	  [ '$wakeup'/1			% +Wakeup list
+	  ]).
+
+%	'$wakeup'(+List)
+%	
+%	Called from the kernel if assignments have been made to
+%	attributed variables.
+
+'$wakeup'([]).
+'$wakeup'(wakeup(Attribute, Value, Rest)) :-
+	call_all_attr_uhooks(Attribute, Value),
+	'$wakeup'(Rest).
+
+call_all_attr_uhooks([], _).
+call_all_attr_uhooks(att(Module, AttVal, Rest), Value) :-
+	Module:attr_unify_hook(AttVal, Value),
+	call_all_attr_uhooks(Rest, Value).
