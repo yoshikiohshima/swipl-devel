@@ -12,6 +12,7 @@ PLHOME=..\..
 !include ..\..\src\rules.mk
 PKGDLL=ssl4pl
 EXDIR=		$(PKGDOC)\examples\ssl
+CFLAGS=		-D__SWI_PROLOG__ $(CFLAGS)
 
 #
 # Constants below are defined in rules.mk
@@ -21,7 +22,7 @@ INCLUDE=$(INCLUDE);$(OPENSSLINCDIR)
 
 EXAMPLES=	client.pl server.pl https.pl
 
-OBJ=		ssl4pl.obj ssllib.obj
+OBJ=		ssl4pl.obj ssllib.obj ..\clib\nonblockio.obj ..\clib\error.obj
 
 all:		$(PKGDLL).dll
 

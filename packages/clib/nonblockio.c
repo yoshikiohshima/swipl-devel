@@ -207,7 +207,7 @@ static plsocket   *lookupExistingSocket(int socket);
 static const char *WinSockError(unsigned long eno);
 #endif
 
-inline int
+static int
 need_retry(int error)
 { if ( error == EINTR || error == EAGAIN || error == EWOULDBLOCK )
     return TRUE;
