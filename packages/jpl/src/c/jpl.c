@@ -6101,16 +6101,16 @@ create_pool_engines()
     {
     int		i;
 
-    DEBUG(1, Sdprintf( "JPL creating %d engines:\n", JPL_NUM_POOL_ENGINES); fflush(stdout));
+    DEBUG(1, Sdprintf( "JPL creating %d engines:\n", JPL_NUM_POOL_ENGINES));
     if ( (engines=malloc(sizeof(PL_engine_t)*JPL_NUM_POOL_ENGINES)) == NULL )
 	{
 	return -1; /* malloc failed */
 	}
 
-    DEBUG(1, Sdprintf( "JPL stashing default engine as [0]\n"); fflush(stdout));
+    DEBUG(1, Sdprintf( "JPL stashing default engine as [0]\n"));
     // PL_set_engine( PL_ENGINE_CURRENT, engines[0]);
 
-    DEBUG(1, Sdprintf( "JPL detaching default engine\n"); fflush(stdout));
+    DEBUG(1, Sdprintf( "JPL detaching default engine\n"));
     // PL_set_engine( NULL, NULL);
 
     for ( i=0 ; i<JPL_NUM_POOL_ENGINES ; i++ )
@@ -6119,7 +6119,7 @@ create_pool_engines()
 	    {
 	    return -2; /* PL_create_engine failed */
 	    }
-	DEBUG(1, Sdprintf( "\tengine[%d]=%p created\n", i, engines[i]); fflush(stdout));
+	DEBUG(1, Sdprintf( "\tengine[%d]=%p created\n", i, engines[i]));
 	}
     return 0;
     }
@@ -6170,7 +6170,7 @@ Java_jpl_fli_Prolog_attach_1pool_1engine(
 		return NULL; // bad engine status: oughta throw exception
 		}
 	    }
-	    DEBUG(1, Sdprintf( "JPL no engines ready; waiting...\n"); fflush(stdout));
+	    DEBUG(1, Sdprintf( "JPL no engines ready; waiting...\n"));
 	while( pthread_cond_wait(&engines_cond,&engines_mutex) == EINTR )
 	    {
 	    ;
@@ -6329,7 +6329,7 @@ Java_jpl_fli_Prolog_release_1pool_1engine(
 	PL_engine_t e;
 
 	i = current_pool_engine_handle(&e);
-	DEBUG(1, Sdprintf( "JPL releasing engine[%d]=%p\n", i, e); fflush(stdout));
+	DEBUG(1, Sdprintf( "JPL releasing engine[%d]=%p\n", i, e));
 	PL_set_engine( NULL, NULL);
 	pthread_cond_signal( &engines_cond); // alert waiters to newly available engine
 	return i;
