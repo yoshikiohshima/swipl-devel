@@ -6,6 +6,7 @@
 %% ported to hProlog by Tom Schrijvers 
 
 :- module(leq,[leq/0]).
+:- use_module(library(chr)).
 
 :- constraints leq/2.
 

@@ -182,21 +182,31 @@ Options are specified with the \texttt{option/2} declaration:
 Available options are:
 \begin{description}
         \termitem{check_guard_bindings}{}
-This option controls whether guards should be checked for illegal variable bindings
-or not.
-Possible values for this option are \texttt{on}, to enable the checks, and \texttt{off}, 
-to disable the checks.
+This option controls whether guards should be checked for illegal
+variable bindings or not. Possible values for this option are
+\texttt{on}, to enable the checks, and \texttt{off}, to disable the
+checks.
+
         \termitem{optimize}{}
-This is an experimental option controlling the degree of optimization. Possible values are
-\texttt{full}, to enable all available optimizations, and \texttt{off}, to disable all optimizations.
+This is an experimental option controlling the degree of optimization.
+Possible values are \texttt{full}, to enable all available
+optimizations, and \texttt{off}, to disable all optimizations.  The
+default is derived from the SWI-Prolog flag \const{optimise}, where
+\const{true} is mapped to \const{full}.  Therefore the commandline
+option \cmdlineoption{-O} provides full CHR optimization.
+
 	\termitem{debug}{}
 This options enables or disables the possibility to debug the CHR code.
 Possible values are \texttt{on} and \texttt{off} (default). See
-\secref{debugging} for more details on debugging.
+\secref{debugging} for more details on debugging.  The default is
+derived from the prolog flag \const{generate_debug_info}, which
+is \const{true} by default.  See \cmdlineoption{-nodebug}.
+
 \end{description}
 
 \section{CHR in SWI-Prolog Programs}		\label{sec:practical}
 %===========================
+
 
 \subsection{Embedding in Prolog Programs}
 
@@ -204,45 +214,45 @@ The CHR constraints defined in a particulary \fileext{chr} file are
 associated with a module. The default module is \const{user}. One should
 never load different \fileext{chr} files with the same CHR module name.
 
+
 \subsection{Compilation}
 
-A \fileext{chr} file containing CHR rules can be compiled and loaded
-like any other \fileext{pl} file after loading the library module
-\pllib{chr}:
+The SWI-Prolog CHR compiler exploits term_expansion/2 rules to translate
+the constraint handling rules to plain Prolog. These rules are loaded
+from the library \pllib{chr}.   The are activated if the compiled file
+has the \fileext{chr} extension or after finding a declaration of the
+format below.
 
 \begin{code}
-:- use_module(library(chr)).
-:- ['Tests/zebra.chr'].
-% Translating CHR file zebra.chr
-% Written translation to zebra.pl
-% /staff/jan/src/pl/packages/chr/Tests/zebra.pl compiled into zebra 0.01 sec, 20,984 bytes
+:- constraints ...
 \end{code}
 
-\paragraph{Note}
+It is adviced to define CHR rules in a module file, where the module
+declaration is immediately followed by including the \pllib{chr}
+library as examplified below:
 
-When compiling a \fileext{chr} file, it is preprocessed and a
-\texttt{.pl} file is generated. This \fileext{pl} file should not be
-modified. All changes should be applied to the \fileext{chr} file.
+\begin{code}
+:- module(zebra, [ zebra/0 ]).
+:- use_module(library(chr)).
+
+:- constraints ...
+\end{code}
+
+Using this style CHR rules can be defined in ordinary Prolog
+\fileext{pl} files and the operator definitions required by CHR do not
+leak into modules where they might cause conflicts.
+
 
 \section{Debugging}			\label{sec:debugging}
 %=================
 
-The CHR debugging facilities are currently rather limited. Only
-tracing is currently available.
+The CHR debugging facilities are currently rather limited. Only tracing
+is currently available. To use the CHR debugging facilities for a CHR
+file it must be compiled for debugging. Generating debug info is
+controlled by the CHR option \const{debug}, whose default is derived
+from the SWI-Prolog flag \const{generate_debug_info}.  Therefore debug
+info is provided unless the \cmdlineoption{-nodebug} is used.
 
-\subsection{Requirement}
-%=====================
-
-In order to use the CHR debugging facilities for a CHR file,
-it is necessary to enable the \texttt{debug} option by
-writing:
-\begin{verbatim}
-	option(debug,on).
-\end{verbatim}
-in the \fileext{chr} file.
-
-When the \texttt{debug} option is not enabled, the debugging
-facilities are not available for that file.
 
 \subsection{Ports}
 %===============
@@ -352,6 +362,7 @@ The program below defines a solver with one constraint,
 
 \begin{code}
 :- module(leq,[cycle/3, leq/2]).
+:- use_module(library(chr)).
 
 :- constraints leq/2.
 reflexivity  @ leq(X,X) <=> true.
@@ -371,6 +382,7 @@ constraint solver.
 
 \begin{code}
 :- module(dom,[dom/2]).
+:- use_module(library(chr)).
 
 :- constraints dom/2. 
 
@@ -407,6 +419,11 @@ In SICStus every CHR it is possible to only enable a subset of the
 available rules through the \predref{rules}{1} declaration. The
 declaration is valid syntax in SWI-Prolog, but will have no effect. A
 warning will be given during compilation.
+
+	\item [Sourcefile naming]
+SICStus uses a two-step compiler, where \fileext{chr} files are
+first translated into \fileext{pl} files.  For SWI-Prolog CHR
+rules may be defined in a file with any extension.
 \end{itemlist}
 
 

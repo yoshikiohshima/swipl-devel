@@ -1,4 +1,5 @@
 :- module(zebra,[zebra/0]).
+:- use_module(library(chr)).
 
 %:- use_module(lib / lists).
 
@@ -28,7 +29,7 @@ zebra :-
 	cleanup,
 	Solution == [[yellow,norwegian,masserati,water,fox],[blue,ukranian,saab,tea,horse],[red,english,porsche,milk,snails],[ivory,spanish,honda,orange,dog],[green,japanese,jaguar,coffee,zebra]].	
 
-domain(X,[]) <=> fail.
+domain(_X,[]) <=> fail.
 domain(X,[V]) <=> X = V.
 domain(X,L1), domain(X,L2) <=> intersection(L1,L2,L3), domain(X,L3).
 

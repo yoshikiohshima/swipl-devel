@@ -5,8 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- module(fibonacci,[fibonacci/0]).
-
-%:- use_module(library(chr)).
+:- use_module(library(chr)).
 
 :- constraints fibonacci/2, cleanup/1.
 

@@ -791,7 +791,7 @@ generate_attr_unify_hook([Clause]) :-
 	).
 
 generate_attr_unify_hook_one(Clause) :-
-	Head = attr_unify_hook(Susps,Other),
+	Head = Mod:attr_unify_hook(Susps,Other),
 	get_target_module(Mod),
 	make_run_suspensions(NewSusps,WakeNewSusps),
 	make_run_suspensions(Susps,WakeSusps),
@@ -834,7 +834,7 @@ generate_attr_unify_hook_many(N,Clause) :-
 	list2conj(SortMergeGoalList,SortMergeGoals),
 	make_attr(N,MergedMask,MergedSuspsList,MergedAttr),
 	make_attr(N,Mask,SortedSuspsList,SortedAttr),
-	Head = attr_unify_hook(Attr,Other),
+	Head = Mod:attr_unify_hook(Attr,Other),
 	get_target_module(Mod),
 	make_run_suspensions_loop(MergedSuspsList,WakeMergedSusps),
 	make_run_suspensions_loop(SortedSuspsList,WakeSortedSusps),

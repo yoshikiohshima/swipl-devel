@@ -7,6 +7,7 @@
 %% ported to hProlog by Tom Schrijvers 
 
 :- module(primes,[primes/0]).
+:- use_module(library(chr)).
 
 :- constraints candidate/1.
 :- constraints prime/1.
@@ -17,7 +18,7 @@ candidate(N) <=> primes:prime(N), N1 is N - 1, primes:candidate(N1).
 
 absorb @ prime(Y) \ prime(X) <=> 0 =:= X mod Y | true.
 
-cleanup(L), candidate(X) <=> fail.
+cleanup(_L), candidate(_X) <=> fail.
 cleanup(L), prime(N) <=> L = [N|T], cleanup(T).
 cleanup(L) <=> L = [].
 

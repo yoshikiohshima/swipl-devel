@@ -1,5 +1,10 @@
 Apr 4, 2004
 
+  * JW: mapped -O --> option(optimize, full).
+  * JW: introduced file-search-path `chr' for clarity and to enable running
+    make check from the local environment instead of the public installation.
+  * JW: mapped prolog flag generate_debug_info --> option(debug, on)
+  * JW: Replaced the chr -> pl step with term_expansion/2.
   * JW: Moved insert_declarations/2 to chr_swi.pl
 
 Apr 2, 2004
