@@ -281,10 +281,13 @@ initDefaults()
   GD->io_initialised	     = FALSE;
   GD->initialised	     = FALSE;
   GD->bootsession	     = FALSE;
+
   if ( systemDefaults.notty )
     clearFeatureMask(TTY_CONTROL_FEATURE);
   else
     setFeatureMask(TTY_CONTROL_FEATURE);
+
+  setFeatureMask(DEBUGINFO_FEATURE);
 }
 
 
@@ -400,6 +403,9 @@ parseCommandLineOptions(int argc0, char **argv, int *compile)
       continue;
     } else if ( streq(s, "nosignals") )
     { clearFeatureMask(SIGNALS_FEATURE);
+      continue;
+    } else if ( streq(s, "nodebug") )
+    { clearFeatureMask(DEBUGINFO_FEATURE);
       continue;
     }
 
@@ -913,6 +919,7 @@ usage()
     "    -s file          Script source file\n",
     "    [+/-]tty         Allow tty control\n",
     "    -nosignals       Do not modify any signal handling\n",
+    "    -nodebug         Omit generation of debug info\n",
     "    -O               Optimised compilation\n",
     "    -q               Quiet operation\n",
     NULL
