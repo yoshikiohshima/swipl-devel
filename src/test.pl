@@ -105,6 +105,15 @@ unify(cycle-2) :-			% Kuniaki Mukai
 
 
 		 /*******************************
+		 *	       CYCLIC		*
+		 *******************************/
+
+cyclic(hash_term-1) :-
+	X = f(X), hash_term(X, T),
+	integer(T).
+
+
+		 /*******************************
 		 *      INTEGER ARITHMETIC	*
 		 *******************************/
 
@@ -1044,7 +1053,7 @@ test_wakeup(How) :-
 	u(How, X),
 	Y == ok.
 
-avar(access-1) :-				% very basic access
+avar(access-1) :-			% very basic access
 	put_attr(X, test, hello),
 	get_attr(X, test, H),
 	H == hello.
@@ -1101,6 +1110,10 @@ avar(type-4) :-
 avar(type-5) :-
 	put_attr(X, test, a),
 	\+ atomic(X).
+avar(hash_term-1) :-
+	freeze(X, write(a)),
+	hash_term(X, H),
+	var(H).
 
 
 		 /*******************************
@@ -1503,6 +1516,7 @@ testset(type_test).
 testset(meta).
 testset(avar).
 testset(copy_term).
+testset(cyclic).
 testset(cleanup).
 testset(term).
 testset(list).

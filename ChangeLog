@@ -10,6 +10,9 @@
 VERSION 5.3.11 (May 25, 2004)
 =============================
 
+  * FIXED: hash_term/2 to handle terms holding attributed variables
+    and cyclic terms.  David Reitter.
+
   * ADDED: first integration of JPL with the normal Prolog tree.
 
   * ADDED: [=format] to -dump-runtime-variables to dump them in CMD.EXE

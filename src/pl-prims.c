@@ -265,6 +265,7 @@ termHashValue(word term, long *hval ARG_LD)
 { for(;;)
   { switch(tag(term))
     { case TAG_VAR:
+      case TAG_ATTVAR:
 	fail;
       case TAG_ATOM:
 	*hval = atomValue(term)->hash_value;
@@ -286,13 +287,17 @@ termHashValue(word term, long *hval ARG_LD)
 	succeed;
       }
       case TAG_COMPOUND:
-      { functor_t fd = functorTerm(term);
-	int arity = arityFunctor(fd);
-	Word a, a2;
+      { Functor f = valueTerm(term);
+	int arity = arityFunctor(f->definition);
+	Word a = f->arguments;
 
-	*hval = atomValue(nameFunctor(fd))->hash_value + arity;
-	for(a = argTermP(term, 0); arity; arity--, a++)
+	if ( visited(f PASS_LD) )
+	  succeed;
+
+	*hval = atomValue(nameFunctor(f->definition))->hash_value + arity;
+	for(; arity; arity--, a++)
 	{ long av;
+	  Word a2;
 
 	  deRef2(a, a2);
 	  if ( termHashValue(*a2, &av PASS_LD) )
@@ -317,10 +322,15 @@ PRED_IMPL("hash_term", 2, hash_term, 0)
 { PRED_LD
   Word p = valTermRef(A1);
   long hraw;
+  Word *m = aTop;
+  int rc;
 
   deRef(p);
 
-  if ( termHashValue(*p, &hraw PASS_LD) )
+  rc = termHashValue(*p, &hraw PASS_LD);
+  unvisit(m PASS_LD);
+
+  if ( rc )
   { hraw = hraw & PLMAXTAGGEDINT;	/* ensure tagged */
 
     return PL_unify_integer(A2, hraw);
