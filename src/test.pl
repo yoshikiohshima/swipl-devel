@@ -619,6 +619,16 @@ proc(retract-2) :-
 proc(current_predicate-1) :-
 	setof(X, current_predicate(cpxx/X), L), % order is not defined!
 	L == [0, 2].
+proc(compile_predicate-1) :-		% Bug#152
+	cp_one, !, cp_one.
+
+cp_one :-
+	assert(cp_foo(a)),
+	assert(cp_foo(b)),
+	cp_foo(_),
+	compile_predicates([cp_foo/1]),
+	abolish(cp_foo/1).
+
 
 		 /*******************************
 		 *	       CLAUSE		*
