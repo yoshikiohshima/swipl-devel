@@ -54,7 +54,7 @@ module xsd_*, providing full  user-defined  XSD   types  on  top of this
 module.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-ns('http://www.w3.org/2000/10/XMLSchema#').
+ns('http://www.w3.org/2001/XMLSchema#').
 
 
 		 /*******************************
