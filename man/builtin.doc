@@ -3957,27 +3957,22 @@ Output text from a list of character codes or a string (see string/1 and
 \secref{strings}) from the next argument.
 
     \fmtchar{t}
-All remaining space between 2 tabs tops is distributed equally over
-\fmtseq{~t} statements between the tabs tops. This space is padded
+All remaining space between 2 tab stops is distributed equally over
+\fmtseq{~t} statements between the tab stops. This space is padded
 with spaces by default. If an argument is supplied this is taken to be
 the character code of the character used for padding. This can be
 used to do left or right alignment, centering, distributing, etc. See
-also \fmtseq{~|} and \fmtseq{~+} to set tab stops. A tabs top is assumed
-at the start of each line.
+also \fmtseq{~|} and \fmtseq{~+} to set tab stops. A tab stop is
+assumed at the start of each line.
 
     \fmtchar{|}
-Set a tabs top on the current position. If an argument is supplied set a
-tabs top on the position of that argument. This will cause all
-\fmtseq{~t}'s to be distributed between the previous and this tabs
-top.
-    \fmtchar{+}
-Set a tabs top relative to the current position. Further the same as
-\fmtseq{~|}.
-    \fmtchar{w}
-Give the next argument to write/1.
-    \fmtchar{W}
-Give the next two argument to write_term/2.  This option is SWI-Prolog
-specific.
+Set a tab stop on the current position. If an argument is supplied set
+a tab stop on the position of that argument. This will cause all
+\fmtseq{~t}'s to be distributed between the previous and this tab stop.
+\fmtchar{+} Set a tab stop relative to the current position. Further
+the same as \fmtseq{~|}. \fmtchar{w} Give the next argument to write/1.
+\fmtchar{W} Give the next two argument to write_term/2. This option is
+SWI-Prolog specific.
 \end{itemize}
 
 Example:
