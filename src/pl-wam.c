@@ -3523,15 +3523,22 @@ the result (a word) and the number holding the result.  For example:
 	if ( n->type == V_REAL && !trueFeature(ISO_FEATURE) )
 	  canoniseNumber(n);		/* whole real --> long */
 
-	if ( isVar(*k) )
-	{ Trail(k);
+	if ( canBind(*k) )
+	{ word c;
+
 	  if ( intNumber(n) )
 	  { if ( inTaggedNumRange(n->value.i) )
-	      *k = consInt(n->value.i);
+	      c = consInt(n->value.i);
 	    else
-	      *k = globalLong(n->value.i PASS_LD);
+	      c = globalLong(n->value.i PASS_LD);
 	  } else
-	    *k = globalReal(n->value.f);
+	    c = globalReal(n->value.f);
+
+	  bindConst(k, c);
+#ifdef O_ATTVAR
+	if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+	  goto wakeup;
+#endif
 	  NEXT_INSTRUCTION;
 	} else
 	{ if ( isInteger(*k) && intNumber(n) && valInteger(*k) == n->value.i )

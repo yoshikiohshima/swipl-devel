@@ -952,6 +952,150 @@ floatconv(float-3) :-
 	),
 	float(X).
 
+
+		 /*******************************
+		 *	ATTRIBUTED VARIABLES	*
+		 *******************************/
+
+test:attr_unify_hook(_Att, _Val).
+
+u_predarg(predarg).
+u_termarg(f(termarg)).
+u_nil([]).
+u_list([a]).
+u_args(X, X).
+
+u(predarg, X) :-
+	u_predarg(X).
+u(termarg, X) :-
+	u_termarg(f(X)).
+u(nil, X) :-
+	u_nil(X).
+u(list, X) :-
+	u_list(X).
+u(unify, X) :-
+	X = unify.
+u(arith, X) :-
+	X is 3.
+u(args, X) :-
+	u_args(X, args).
+
+test_wakeup(How) :-
+	freeze(X, Y=ok),
+	u(How, X),
+	Y == ok.
+
+avar(access-1) :-				% very basic access
+	put_attr(X, test, hello),
+	get_attr(X, test, H),
+	H == hello.
+avar(backtrack-1) :-			% test backtracking
+	retractall(mark(_)),
+	put_attr(X, test, hello),
+	(   put_attr(X, test, world),
+	    get_attr(X, test, A),
+	    A == world,
+	    assert(mark(1)),		% point must be reached
+	    fail
+	;   get_attr(X, test, A),
+	    A == hello
+	),
+	retract(mark(1)).
+avar(rec-1) :-
+	put_attr(X, test, hello),
+	recorda(x, x(X,X), Ref),
+	recorded(_, x(A,B), Ref),
+	erase(Ref),
+	A == B.
+avar(rec-2) :-
+	put_attr(X, test, hello),
+	recorda(x, X, Ref),
+	recorded(_, Y, Ref),
+	erase(Ref),
+	var(Y),
+	get_attr(Y, test, A),
+	A == hello.
+avar(wakeup-1) :-
+	test_wakeup(predarg).
+avar(wakeup-2) :-
+	test_wakeup(termarg).
+avar(wakeup-3) :-
+	test_wakeup(nil).
+avar(wakeup-4) :-
+	test_wakeup(unify).
+avar(wakeup-5) :-
+	test_wakeup(arith).
+avar(wakeup-6) :-
+	test_wakeup(args).
+avar(type-1) :-
+	put_attr(X, test, a),
+	avar(X).
+avar(type-2) :-
+	put_attr(X, test, a),
+	var(X).
+avar(type-3) :-
+	put_attr(X, test, a),
+	\+ nonvar(X).
+avar(type-4) :-
+	put_attr(X, test, a),
+	\+ ground(X).
+avar(type-5) :-
+	put_attr(X, test, a),
+	\+ atomic(X).
+
+
+		 /*******************************
+		 *	     COPY-TERM		*
+		 *******************************/
+
+copy_term(ct-1) :-
+	really_copy_term(a, X), X == a.
+copy_term(ct-2) :-
+	really_copy_term(X, Y), X \== Y.
+copy_term(ct-3) :-
+	really_copy_term(f(a), Y), Y == f(a).
+copy_term(ct-4) :-
+	really_copy_term(f(X), Y), Y = f(Z), X \== Z.
+copy_term(ct-5) :-
+	really_copy_term(f(X, X), Y), Y = f(A,B), A == B.
+copy_term(ct-5) :-
+	X = f(X),
+	really_copy_term(X, Y),
+	X = Y.
+copy_term(av-1) :-			% copy attributed variables
+	X = foo(V),
+	put_attr(V, test, y),
+	really_copy_term(X, Y),
+	Y = foo(Arg),
+	get_attr(Arg, test, A),
+	A == y,
+	put_attr(Arg, test, z),
+	get_attr(V, test, y).
+copy_term(av-2) :-
+	X = foo(V,V),
+	put_attr(V, test, y),
+	really_copy_term(X, Y),
+	Y = foo(A,B),
+	A == B,
+	get_attr(A, test, y).
+copy_term(av-3) :-
+	put_attr(X, test, f(X)),
+	really_copy_term(X, Y),
+	get_attr(Y, test, A),
+	A = f(Z),
+	Y == Z.
+copy_term(av-3) :-
+	freeze(X, true),
+	freeze(X, Done = true),
+	really_copy_term(X, Y),
+	X = ok,
+	Done == true,
+	get_attr(Y, freeze, (true, D2=true)),
+	var(D2),
+	Y = ok,
+	D2  == true.
+
+
 		 /*******************************
 		 *    BIG TERMS, ATOM-TO-TERM	*
 		 *******************************/
@@ -1283,6 +1427,8 @@ testset(depth_limit) :-
 	current_predicate(_, user:call_with_depth_limit(_,_,_)).
 testset(type_test).
 testset(meta).
+testset(avar).
+testset(copy_term).
 testset(cleanup).
 testset(term).
 testset(list).
