@@ -161,7 +161,7 @@ using an attributed variable associated with the module \const{freeze},
 so \exam{get_attr(Var, freeze, AttVal)} can be used to find out whether
 and which goals are delayed on \arg{Var}.
 
-    \predicate{frozen}{2}{@Var, -Goal)
+    \predicate{frozen}{2}{@{Var}, -Goal}
 Unify \arg{Goal} with the goal or conjunction of goals delayed on
 \arg{Var}.  If no goals are frozen on \arg{Var}, \arg{Goal} is unified
 to \const{true}.
