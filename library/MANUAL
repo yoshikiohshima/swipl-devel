@@ -4595,8 +4595,9 @@ ffllaagg((_+_K_e_y_, _-_O_l_d_, _+_N_e_w))
     associated  with _K_e_y.  If the key is used for the first  time _O_l_d is
     unified  with the integer  0.   Then store the  value of _N_e_w,  which
     should  be an integer, float,  atom or arithmetic expression,  under
-    _K_e_y.   flag/3 is a very  fast mechanism for storing simple  facts in
-    the database.  Example:
+    _K_e_y.   flag/3 is  a fast mechanism for  storing simple facts in  the
+    database.   The flag database is shared between threads  and updates
+    are atomic.  Example:
 
     :- module_transparent succeeds_n_times/2.
 
@@ -6018,7 +6019,23 @@ nnbb__sseettaarrgg((_+_A_r_g_, _+_T_e_r_m_, _+_V_a_l_u
     nb_setval/2.   We therefore refer to the  description of nb_setval/2
     for  details  on  non-backtrackable  assignment  of  terms.     This
     predicate is  compatible to GNU-Prolog setarg(_A_,_T_,_V_,_f_a_l_s_e), removing
-    the type-restriction on _V_a_l_u_e.  See also nb_linkarg/3.
+    the  type-restriction on _V_a_l_u_e.   See also  nb_linkarg/3.  Below  is
+    an  example for counting the  number of solutions of  a goal.   Note
+    that  this implementation is  thread-safe, reentrant and capable  of
+    handling  exceptions.  Realising  these features with a  traditional
+    implementation as discusses with flag/3 is much more complicated.
+
+    :- module_transparent succeeds_n_times/2.
+
+    succeeds_n_times(Goal, Times) :-
+            Counter = counter(0),
+            (   Goal,
+                arg(1, Counter, N0),
+                N is N0 + 1,
+                nb_setarg(1, Counter, N),
+                fail
+            ;   arg(1, Counter, Times)
+            ).
 
 
 nnbb__lliinnkkaarrgg((_+_A_r_g_, _+_T_e_r_m_, _+_V_a_l_u_e))
@@ -17074,7 +17091,7 @@ file_search_path/2,  36,  38,  58,     read_stream_to_codes/3, 1024
       979, 982                         read_clause/1, 346, 582
 fileerrors/2, 58, 291                  read_history/6, 349
 findall/3, 71, 123, 474, 652           read_line_to_codes/2, 1022
-flag/3, 58, 234, 249                   read_line_to_codes/3, 1021
+flag/3, 58, 234, 249, 363              read_line_to_codes/3, 1021
 flatten/2, 998                         read_stream_to_codes/2, 1024
 float/1, 148, 412, 430                 read_term/2,  47,  58,  345,  348,
 float_fractional_part/1, 431                 349, 377

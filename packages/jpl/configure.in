@@ -95,7 +95,7 @@ if test -r /etc/java/java2.conf; then
   fi
 fi
 
-AC_PROG_JAVAC(javac, gcj)
+AC_PROG_JAVAC(javac)
 AC_PROG_JAR(jar)
 
 AC_JNI_INCLUDE_DIR
