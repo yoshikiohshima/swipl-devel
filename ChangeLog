@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: listing/1 throws exception if the target cannot be
+    found (Enhancement#143).  Holger Kanwischer.
+
   * FIXED/MODIFIED: Syntax errors are now reported using a term
     file(Path, Line, LinePos, CharPos) or stream/4 if a stream is
     not associated to a file.  The LinePos element is added to this
