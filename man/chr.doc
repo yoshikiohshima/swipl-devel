@@ -180,7 +180,7 @@ Options are specified with the \texttt{option/2} declaration:
 
 Available options are:
 \begin{description}
-        \termitem{check\_guard\_bindings}{}
+        \termitem{check_guard_bindings}{}
 This option controls whether guards should be checked for illegal variable bindings
 or not.
 Possible values for this option are \texttt{on}, to enable the checks, and \texttt{off}, 
