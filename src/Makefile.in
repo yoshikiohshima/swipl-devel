@@ -61,6 +61,7 @@ RANLIB=@RANLIB@
 ARCH=@ARCH@
 INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_SCRIPT=@INSTALL_SCRIPT@
 INSTALL_DATA=@INSTALL_DATA@
 MKDIR=@MKDIR@
 REL_LN=$(srcdir)/rel-ln
@@ -347,7 +348,7 @@ idot::
 		$(INSTALL_DATA) ../dotfiles/dotplrc $(PLBASE)/dotfiles
 		$(INSTALL_DATA) ../dotfiles/dotxpcerc $(PLBASE)/dotfiles
 		$(INSTALL_DATA) ../dotfiles/README $(PLBASE)/dotfiles
-		$(INSTALL_PROGRAM) ../dotfiles/edit $(PLBASE)/dotfiles
+		$(INSTALL_SCRIPT) ../dotfiles/edit $(PLBASE)/dotfiles
 
 iinclude::
 		cd ../include; \
