@@ -1,3 +1,7 @@
+Jun 29, 2004
+
+  * FIXED: sharing code for blank nodes.  Broken in recent cleanup.
+
 Jun 17, 2004
 
   * CLEANUP: start/end of loading a file, use option/3 from library
