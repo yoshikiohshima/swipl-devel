@@ -1,3 +1,8 @@
+Aug 12, 2004
+
+  * ADDED: option reply_header(-Header) to get the full replied header for
+    GET and POST methods.  Also added decoding of the SetCookie field.
+
 Aug 5, 2004
 
   * ADDED: request_header(Name=Value) to http_open/3

@@ -191,6 +191,11 @@ name and value are added uninspected and literally to the request
 header. This may be used to specify accept encodings, languages, etc.
 Please check the RFC2616 (HTTP) document for available fields and their
 meaning.
+
+	\termitem{reply_header}{Header}
+Unify \arg{Header} with a list of \arg{Name}=\arg{Value} pairs
+expressing all header fields of the reply.  See http_read_request/2
+for the result format.
     \end{description}
 
 Remaining options are passed to http_read_data/3.
@@ -434,6 +439,12 @@ If the header contains a \const{Cookie} line, the value of the
 cookie is broken down in \arg{Name}=\arg{Value} pairs, where the
 \arg{Name} is the lowercase version of the cookie name as used
 for the HTTP fields.
+
+    \termitem{set_cookie}{set_cookie(Name, Value, Options)}
+If the header contains a \const{SetCookie} line, the cookie field
+is broken down into the \arg{Name} of the cookie, the \arg{Value}
+and a list of \arg{Name}=\arg{Value} pairs for additional options
+such as \const{expire}, \const{path}, \const{domain} or \const{secure}.
 \end{description}
 
 If the first line of the request is tagged with

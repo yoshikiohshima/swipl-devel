@@ -164,6 +164,10 @@ http_read_reply(In, Data, Options) :-
 	between(0, 1, _),
 	    http_read_reply_header(In, Fields),
 	\+ memberchk(status(continue, _), Fields), !,
+	(   memberchk(reply_header(Fields), Options)
+	->  true
+	;   true
+	),
 	http_read_data(In, Fields, Data, Options),
 	(   memberchk(connection(Connection), Fields),
 	    downcase_atom(Connection, 'keep-alive')

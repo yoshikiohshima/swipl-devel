@@ -466,11 +466,7 @@ header_field(Name, Value) -->
 	blanks,
 	string(ValueChars),
 	blanks_to_nl, !,
-	{   int_field(Name)
-	->  number_codes(Value, ValueChars)
-	;   Name == cookie
-	->  phrase(cookies(Value), ValueChars)
-	;   atom_codes(Value, ValueChars)
+	{ field_to_prolog(Name, ValueChars, Value)
 	}.
 header_field(Name, Value) -->
 	field_name(Name),
@@ -478,7 +474,14 @@ header_field(Name, Value) -->
 	atom(Value),
 	"\r\n".
 
-int_field(content_length).
+field_to_prolog(content_length, ValueChars, ContentLength) :- !,
+	number_codes(ContentLength, ValueChars).
+field_to_prolog(cookie, ValueChars, Cookies) :- !,
+	phrase(cookies(Cookies), ValueChars).
+field_to_prolog(set_cookie, ValueChars, SetCookie) :- !,
+	phrase(set_cookie(SetCookie), ValueChars).
+field_to_prolog(_, ValueChars, Atom) :-
+	atom_codes(Atom, ValueChars).
 
 %	Process a sequence of [Name(Value), ...] attributes for the
 %	header.
@@ -632,9 +635,7 @@ cookies([Name=Value|T]) -->
 cookie(Name, Value) -->
 	cookie_name(Name),
 	"=",
-	nonblanks(ValueCodes),
-	{ atom_codes(Value, ValueCodes)
-	}.
+	cookie_value(Value).
 
 cookie_name(Name) -->
 	{ var(Name)
@@ -642,6 +643,58 @@ cookie_name(Name) -->
 	rd_field_chars(0'=, Chars),
 	{ atom_codes(Name, Chars)
 	}.
+
+cookie_value(Value) -->
+	chars_to_semicolon_or_blank(Chars),
+	{ atom_codes(Value, Chars)
+	}.
+
+chars_to_semicolon_or_blank([]) -->
+	peek(0';), !.
+chars_to_semicolon_or_blank([]) -->
+	blank, !.
+chars_to_semicolon_or_blank([H|T]) -->
+	[H], !,
+	chars_to_semicolon_or_blank(T).
+chars_to_semicolon_or_blank([]) -->
+	[].
+
+peek(C, L, L) :-
+	L = [C|_].
+
+set_cookie(set_cookie(Name, Value, Options)) -->
+	blanks,
+	cookie(Name, Value),
+	cookie_options(Options).
+
+cookie_options([H|T]) -->
+	blanks,
+	";",
+	blanks,
+	cookie_option(H), !,
+	cookie_options(T).
+cookie_options([]) -->
+	blanks.
+
+
+cookie_option(secure=true) -->
+	"secure", !.
+cookie_option(Name=Value) -->
+	rd_field_chars(0'=, NameChars),
+	"=", blanks,
+	chars_to_semicolon(ValueChars),
+	{ atom_codes(Name, NameChars),
+	  atom_codes(Value, ValueChars)
+	}.
+
+chars_to_semicolon([]) -->
+	blanks,
+	peek(0';), !.
+chars_to_semicolon([H|T]) -->
+	[H], !,
+	chars_to_semicolon(T).
+chars_to_semicolon([]) -->
+	[].
 
 
 		 /*******************************
