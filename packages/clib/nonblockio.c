@@ -34,6 +34,24 @@ Besides dealing with nonblocking aspects,  an   important  facet of this
 library is to hide OS differences.
 
 
+API
+---
+
+The API is completely the same as for   blocking IO. It is however built
+on top of sockets used in non-blocking   mode which enables the layer to
+listen to Prolog events such  as   timeouts,  GUI  processing and thread
+interaction. The functions modelled after the POSIX socket API, prefixed
+with nbio_*:
+
+	
+
+
+
+
+
+
+
+
 Windows issues
 --------------
 
@@ -118,7 +136,7 @@ typedef enum
   REQ_CONNECT,
   REQ_READ,
   REQ_WRITE
-} tcp_request;
+} nbio_request;
 
 #define SOCK_MAGIC 0x38da3f2c
 
@@ -130,7 +148,7 @@ typedef struct _plsocket
   IOSTREAM *	    input;		/* input stream */
   IOSTREAM *	    output;		/* output stream */
 #ifdef WIN32
-  tcp_request	    request;		/* our request */
+  nbio_request	    request;		/* our request */
   DWORD		    thread;		/* waiting thread */
   DWORD		    error;		/* error while executing request */
   int		    done;		/* request completed */
@@ -170,7 +188,7 @@ static const char *WinSockError(unsigned long eno);
 static int debugging;
 
 int
-tcp_debug(int level)
+nbio_debug(int level)
 { int old = debugging;
 
   debugging = level;
@@ -183,7 +201,7 @@ tcp_debug(int level)
 #define DEBUG(l, g) (void)0
 
 int
-tcp_debug(int level)
+nbio_debug(int level)
 { return 0;
 }
 
@@ -203,7 +221,7 @@ tcp_debug(int level)
 #define O_NONBLOCK	0
 
 static int
-tcp_fcntl(int fd, int op, int arg)
+nbio_fcntl(int fd, int op, int arg)
 { switch(op)
   { case F_SETFL:
       switch(arg)
@@ -235,8 +253,8 @@ typedef struct
   DWORD  tid;				/* thread id */
 } local_state;
 
-static local_state tcp_state;
-#define State() (&tcp_state)
+static local_state nbio_state;
+#define State() (&nbio_state)
 
 static int
 doneRequest(plsocket *s)
@@ -283,7 +301,7 @@ waitRequest(plsocket *s)
 }
 
 static int
-placeRequest(plsocket *s, tcp_request request)
+placeRequest(plsocket *s, nbio_request request)
 { s->error   = 0;
   s->done    = FALSE;
   s->thread  = GetCurrentThreadId();
@@ -554,7 +572,7 @@ startSocketThread()
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 wait_socket() is the Unix way  to  wait   for  input  on  the socket. By
 default event-dispatching on behalf of XPCE is performed. If this is not
-desired, you can do tcp_setopt(Socket,   dispatch(false)), in which case
+desired, you can do nbio_setopt(Socket,   dispatch(false)), in which case
 this call returns immediately, assuming the   actual TCP call will block
 without dispatching if no input is available.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -569,14 +587,14 @@ wait_socket(plsocket *s, int fd)
 
 
 static int
-tcp_fcntl(int fd, int op, int arg)
+nbio_fcntl(int fd, int op, int arg)
 { int rc = fcntl(fd, op, arg);
 
   if ( rc == 0 )
   { if ( op == F_SETFL && arg == O_NONBLOCK )
       lookupSocket(fd)->flags |= SOCK_NONBLOCK;
   } else
-    tcp_error(errno, TCP_ERRNO);
+    nbio_error(errno, TCP_ERRNO);
 
   return rc;
 }
@@ -822,7 +840,7 @@ typedef void * error_codes;
 #endif /*HAVE_H_ERRNO*/
 
 int
-tcp_error(int code, tcp_error_map mapid)
+nbio_error(int code, nbio_error_map mapid)
 { const char *msg;
   term_t except = PL_new_term_ref();
   error_codes *map;
@@ -870,7 +888,7 @@ tcp_error(int code, tcp_error_map mapid)
 		 *******************************/
 
 int
-tcp_init(void)
+nbio_init(void)
 { LOCK();
   if ( initialised )
   { UNLOCK();
@@ -886,7 +904,7 @@ tcp_init(void)
 
   if ( WSAStartup(MAKEWORD(2,0), &WSAData) )
   { UNLOCK();
-    return PL_warning("tcp_init() - WSAStartup failed.");
+    return PL_warning("nbio_init() - WSAStartup failed.");
   }
   startSocketThread();
 }
@@ -898,7 +916,7 @@ tcp_init(void)
 	
 
 int
-tcp_cleanup(void)
+nbio_cleanup(void)
 { if ( initialised )
   {
 #ifdef WIN32
@@ -917,15 +935,15 @@ socket(-Socket)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
-tcp_socket(void)
+nbio_socket(void)
 { int sock;
   plsocket *s;
 	
-  if ( !tcp_init() )
+  if ( !nbio_init() )
     return FALSE;
 
   if ( (sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-  { tcp_error(errno, TCP_ERRNO);
+  { nbio_error(errno, TCP_ERRNO);
     return -1;
   }
 
@@ -944,7 +962,7 @@ tcp_socket(void)
 
 
 int
-tcp_closesocket(int socket)
+nbio_closesocket(int socket)
 { plsocket *s;
 
   s = lookupSocket(socket);
@@ -975,7 +993,7 @@ tcp_closesocket(int socket)
 
 
 int
-tcp_setopt(int socket, tcp_option opt, ...)
+nbio_setopt(int socket, nbio_option opt, ...)
 { va_list args;
   int rc;
 
@@ -983,14 +1001,14 @@ tcp_setopt(int socket, tcp_option opt, ...)
 
   switch(opt)
   { case TCP_NONBLOCK:
-      rc = tcp_fcntl(socket, F_SETFL, O_NONBLOCK);
+      rc = nbio_fcntl(socket, F_SETFL, O_NONBLOCK);
       break;
     case TCP_REUSEADDR:
     { int val = va_arg(args, int);
 
       if( setsockopt(socket, SOL_SOCKET, SO_REUSEADDR,
 		     (const char *)&val, sizeof(val)) == -1)
-      { tcp_error(h_errno, TCP_HERRNO);
+      { nbio_error(h_errno, TCP_HERRNO);
 	rc = -1;
       } else
 	rc = 0;
@@ -1044,7 +1062,7 @@ tcp_setopt(int socket, tcp_option opt, ...)
 
 
 int
-tcp_get_flags(int socket)
+nbio_get_flags(int socket)
 { plsocket *s = lookupSocket(socket);
   
   if ( s )
@@ -1059,14 +1077,14 @@ Translate a host + port-number into a sockaddr structure.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-tcp_get_port(term_t Port, int *port)
+nbio_get_port(term_t Port, int *port)
 { char *name;
 
   if ( PL_get_atom_chars(Port, &name) )
   { struct servent *service;
     
     if ( !(service = getservbyname(name, "tcp")) )
-      return tcp_error(errno, TCP_ERRNO);
+      return nbio_error(errno, TCP_ERRNO);
 
     *port = ntohs(service->s_port);
     return TRUE;
@@ -1085,7 +1103,7 @@ or the name of a registered port (e.g. 'smtp').
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
-tcp_get_sockaddr(term_t Address, struct sockaddr_in *addr)
+nbio_get_sockaddr(term_t Address, struct sockaddr_in *addr)
 { struct hostent *host;
   char           *hostName = NULL;
   int		  port;
@@ -1100,16 +1118,16 @@ tcp_get_sockaddr(term_t Address, struct sockaddr_in *addr)
       return pl_error(NULL, 0, NULL, ERR_ARGTYPE, 1, arg, "atom");
 
     PL_get_arg(2, Address, arg);
-    if ( !tcp_get_port(arg, &port) )
+    if ( !nbio_get_port(arg, &port) )
       return FALSE;
   } else if ( PL_is_variable(Address) )
   { port = 0;
-  } else if ( !tcp_get_port(Address, &port) )
+  } else if ( !nbio_get_port(Address, &port) )
     return FALSE;
 
   if ( hostName )
   { if( !(host = gethostbyname(hostName)) )
-      return tcp_error(h_errno, TCP_HERRNO);
+      return nbio_error(h_errno, TCP_HERRNO);
     if ( (int)sizeof(addr->sin_addr) < host->h_length )
       return PL_warning("Oops, host address too long!");
     memcpy(&addr->sin_addr, host->h_addr, host->h_length);
@@ -1123,7 +1141,7 @@ tcp_get_sockaddr(term_t Address, struct sockaddr_in *addr)
 
 
 int
-tcp_get_ip(term_t ip4, struct in_addr *ip)
+nbio_get_ip(term_t ip4, struct in_addr *ip)
 { unsigned long hip = 0;
 
   if ( PL_is_functor(ip4, FUNCTOR_ip4) )
@@ -1148,7 +1166,7 @@ tcp_get_ip(term_t ip4, struct in_addr *ip)
 
 
 int
-tcp_unify_ip4(term_t Ip, unsigned long hip)
+nbio_unify_ip4(term_t Ip, unsigned long hip)
 { return PL_unify_term(Ip,
 		       PL_FUNCTOR, FUNCTOR_ip4,
 		         IntArg((hip >> 24) & 0xff),
@@ -1159,9 +1177,9 @@ tcp_unify_ip4(term_t Ip, unsigned long hip)
 
 
 int
-tcp_bind(int socket, struct sockaddr *my_addr, size_t addrlen)
+nbio_bind(int socket, struct sockaddr *my_addr, size_t addrlen)
 { if ( bind(socket, my_addr, addrlen) )
-  { tcp_error(errno, TCP_ERRNO);
+  { nbio_error(errno, TCP_ERRNO);
     return -1;
   }
 
@@ -1172,7 +1190,7 @@ tcp_bind(int socket, struct sockaddr *my_addr, size_t addrlen)
 
 
 int
-tcp_connect(int socket,
+nbio_connect(int socket,
 	    const struct sockaddr *serv_addr,
 	    size_t addrlen)
 { plsocket *s;
@@ -1191,7 +1209,7 @@ tcp_connect(int socket,
     }
 
     if ( s->error )
-    { tcp_error(s->error, TCP_ERRNO);
+    { nbio_error(s->error, TCP_ERRNO);
       return -1;
     }
   }
@@ -1203,7 +1221,7 @@ tcp_connect(int socket,
 	  return -1;
 	continue;
       }
-      tcp_error(errno, TCP_ERRNO);
+      nbio_error(errno, TCP_ERRNO);
       return -1;
     } else
       break;
@@ -1217,7 +1235,7 @@ tcp_connect(int socket,
 
 
 int
-tcp_accept(int master, struct sockaddr *addr, size_t *addrlen)
+nbio_accept(int master, struct sockaddr *addr, size_t *addrlen)
 { int slave;
   plsocket *m;
 	
@@ -1235,12 +1253,12 @@ tcp_accept(int master, struct sockaddr *addr, size_t *addrlen)
       if ( !waitRequest(m) )
 	return FALSE;
       if ( m->error )
-	return tcp_error(m->error, TCP_ERRNO);
+	return nbio_error(m->error, TCP_ERRNO);
       slave    = m->rdata.accept.slave;
       *addrlen = m->rdata.accept.addrlen;
       memcpy(addr, &m->rdata.accept.addr, m->rdata.accept.addrlen);
     } else
-    { tcp_error(m->error, TCP_ERRNO);
+    { nbio_error(m->error, TCP_ERRNO);
       return -1;
     }
   }
@@ -1260,7 +1278,7 @@ tcp_accept(int master, struct sockaddr *addr, size_t *addrlen)
 
 	continue;
       } else
-      { tcp_error(errno, TCP_ERRNO);
+      { nbio_error(errno, TCP_ERRNO);
 	return -1;
       }
     } else
@@ -1278,9 +1296,9 @@ tcp_accept(int master, struct sockaddr *addr, size_t *addrlen)
 
 
 int
-tcp_listen(int socket, int backlog)
+nbio_listen(int socket, int backlog)
 { if( listen(socket, backlog) == -1 )
-  { tcp_error(errno, TCP_ERRNO);
+  { nbio_error(errno, TCP_ERRNO);
     return -1;
   }
 
@@ -1297,13 +1315,13 @@ tcp_listen(int socket, int backlog)
 #define fdFromHandle(p) ((int)((long)(p)))
 
 int
-tcp_read(int socket, char *buf, int bufSize)
+nbio_read(int socket, char *buf, int bufSize)
 { plsocket *s = lookupSocket(socket);
   int n;
 
   if ( !s || s->magic != SOCK_MAGIC )
   { errno = EINVAL;
-    DEBUG(1, Sdprintf("tcp_read(): Invalid socket: %d\n", socket));
+    DEBUG(1, Sdprintf("nbio_read(): Invalid socket: %d\n", socket));
     return -1;
   }
 
@@ -1356,7 +1374,7 @@ tcp_read(int socket, char *buf, int bufSize)
 }
 
 int
-tcp_write(int socket, char *buf, int bufSize)
+nbio_write(int socket, char *buf, int bufSize)
 { int len = bufSize;
   char *str = buf;
 
@@ -1421,11 +1439,11 @@ tcp_write(int socket, char *buf, int bufSize)
 
 
 int
-tcp_close_input(int socket)
+nbio_close_input(int socket)
 { int rc = 0;
   plsocket *s = lookupSocket(socket);
 
-  DEBUG(2, Sdprintf("[%d]: tcp_close_input(%d)\n", PL_thread_self(), socket));
+  DEBUG(2, Sdprintf("[%d]: nbio_close_input(%d)\n", PL_thread_self(), socket));
   s->input = NULL;
   s->flags &= ~SOCK_INSTREAM;
 #ifdef WIN32
@@ -1446,11 +1464,11 @@ tcp_close_input(int socket)
 
 
 int
-tcp_close_output(int socket)
+nbio_close_output(int socket)
 { int rc = 0;
   plsocket *s = lookupSocket(socket);
 
-  DEBUG(2, Sdprintf("[%d]: tcp_close_output(%d)\n", PL_thread_self(), socket));
+  DEBUG(2, Sdprintf("[%d]: nbio_close_output(%d)\n", PL_thread_self(), socket));
   if ( s->output )
   { s->output = NULL;
     s->flags &= ~SOCK_OUTSTREAM;

@@ -94,7 +94,7 @@ pl_close_socket(term_t socket)
   if ( !tcp_get_socket(socket, &sock) )
     return FALSE;
 
-  if ( tcp_closesocket(sock) < 0 )
+  if ( nbio_closesocket(sock) < 0 )
     return FALSE;
 
   return TRUE;
@@ -111,16 +111,16 @@ pl_host_to_address(term_t Host, term_t Ip)
   { if ( (host = gethostbyname(host_name)) )
     { if ( sizeof(ip) == host->h_length )
       { memcpy(&ip, host->h_addr, host->h_length);
-	return tcp_unify_ip4(Ip, ntohl(ip.s_addr));
+	return nbio_unify_ip4(Ip, ntohl(ip.s_addr));
       } else
 	return PL_warning("tcp_host_to_address/2: length mismatch in address");
     } else
-      return tcp_error(h_errno, TCP_HERRNO);
-  } else if ( tcp_get_ip(Ip, &ip) )
+      return nbio_error(h_errno, TCP_HERRNO);
+  } else if ( nbio_get_ip(Ip, &ip) )
   { if ( (host = gethostbyaddr((char *)&ip, sizeof(ip), AF_INET)) )
       return PL_unify_atom_chars(Host, host->h_name);
     else
-      return tcp_error(h_errno, TCP_HERRNO);
+      return nbio_error(h_errno, TCP_HERRNO);
   }
 
   return FALSE;
@@ -138,7 +138,7 @@ pl_setopt(term_t Socket, term_t opt)
 
   if ( PL_get_name_arity(opt, &a, &arity) )
   { if ( a == ATOM_reuseaddr && arity == 0 )
-    { if ( tcp_setopt(socket, TCP_REUSEADDR, TRUE) == 0 )
+    { if ( nbio_setopt(socket, TCP_REUSEADDR, TRUE) == 0 )
 	return TRUE;
 
       return FALSE;
@@ -147,12 +147,12 @@ pl_setopt(term_t Socket, term_t opt)
       term_t a1 = PL_new_term_ref();
 
       if ( PL_get_arg(1, opt, a1) && PL_get_bool(a1, &val) )
-      { if ( tcp_setopt(socket, TCP_DISPATCH, val) == 0 )
+      { if ( nbio_setopt(socket, TCP_DISPATCH, val) == 0 )
 	  return TRUE;
 	return FALSE;
       }
     } else if ( a == ATOM_nonblock && arity == 0 )
-    { if ( tcp_setopt(socket, TCP_NONBLOCK) == 0 )
+    { if ( nbio_setopt(socket, TCP_NONBLOCK) == 0 )
 	return TRUE;
       return FALSE;
     }
@@ -172,7 +172,7 @@ static int
 tcp_read_handle(void *handle, char *buf, int bufSize)
 { int sock = fdFromHandle(handle);
 
-  return tcp_read(sock, buf, bufSize);
+  return nbio_read(sock, buf, bufSize);
 }
 
 
@@ -180,7 +180,7 @@ static int
 tcp_write_handle(void *handle, char *buf, int bufSize)
 { int sock = fdFromHandle(handle);
 
-  return tcp_write(sock, buf, bufSize);
+  return nbio_write(sock, buf, bufSize);
 }
 
 
@@ -194,7 +194,7 @@ static int
 tcp_close_input_handle(void *handle)
 { int socket = fdFromHandle(handle);
 
-  return tcp_close_input(socket);
+  return nbio_close_input(socket);
 }
 
 
@@ -202,7 +202,7 @@ static int
 tcp_close_output_handle(void *handle)
 { int socket = fdFromHandle(handle);
 
-  return tcp_close_output(socket);
+  return nbio_close_output(socket);
 }
 
 
@@ -235,13 +235,13 @@ pl_open_socket(term_t Socket, term_t Read, term_t Write)
   in  = Snew(handle, SIO_FILE|SIO_INPUT|SIO_RECORDPOS,  &readFunctions);
   if ( !PL_open_stream(Read, in) )
     return FALSE;
-  tcp_setopt(socket, TCP_INSTREAM, in);
+  nbio_setopt(socket, TCP_INSTREAM, in);
 
-  if ( !(tcp_get_flags(socket) & SOCK_LISTEN) )
+  if ( !(nbio_get_flags(socket) & SOCK_LISTEN) )
   { out = Snew(handle, SIO_FILE|SIO_OUTPUT|SIO_RECORDPOS, &writeFunctions);
     if ( !PL_open_stream(Write, out) )
       return FALSE;
-    tcp_setopt(socket, TCP_OUTSTREAM, out);
+    nbio_setopt(socket, TCP_OUTSTREAM, out);
   }
 
   return TRUE;
@@ -254,7 +254,7 @@ pl_open_socket(term_t Socket, term_t Read, term_t Write)
 
 static foreign_t
 pl_socket(term_t socket)
-{ int sock = tcp_socket();
+{ int sock = nbio_socket();
 
   if ( sock < 0 )
     return FALSE;
@@ -269,10 +269,10 @@ pl_connect(term_t Socket, term_t Address)
   struct sockaddr_in sockaddr;
 
   if ( !tcp_get_socket(Socket, &sock) ||
-       !tcp_get_sockaddr(Address, &sockaddr) )
+       !nbio_get_sockaddr(Address, &sockaddr) )
     return FALSE;
   
-  if ( tcp_connect(sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) == 0 )
+  if ( nbio_connect(sock, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) == 0 )
     return TRUE;
 
   return FALSE;
@@ -285,10 +285,10 @@ pl_bind(term_t Socket, term_t Address)
   int socket;
        
   if ( !tcp_get_socket(Socket, &socket) ||
-       !tcp_get_sockaddr(Address, &sockaddr) )
+       !nbio_get_sockaddr(Address, &sockaddr) )
     return FALSE;
 
-  if ( tcp_bind(socket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0 )
+  if ( nbio_bind(socket, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0 )
     return FALSE;
 
   if ( PL_is_variable(Address) )
@@ -296,7 +296,7 @@ pl_bind(term_t Socket, term_t Address)
     int len = sizeof(addr);
 
     if ( getsockname(socket, (struct sockaddr *) &addr, &len) )
-      return tcp_error(errno, TCP_ERRNO);
+      return nbio_error(errno, TCP_ERRNO);
     PL_unify_integer(Address, ntohs(addr.sin_port));
   }
 
@@ -315,7 +315,7 @@ pl_listen(term_t Sock, term_t BackLog)
   if ( !PL_get_integer(BackLog, &backlog) ) 
     return pl_error(NULL, 0, NULL, ERR_ARGTYPE, -1, BackLog, "integer");
 
-  if ( tcp_listen(socket, backlog) < 0 )
+  if ( nbio_listen(socket, backlog) < 0 )
     return FALSE;
 
   return TRUE;
@@ -331,10 +331,10 @@ pl_accept(term_t Master, term_t Slave, term_t Peer)
   if ( !tcp_get_socket(Master, &master) )
     return FALSE;
 
-  if ( (slave = tcp_accept(master, (struct sockaddr*)&addr, &addrlen)) < 0 )
+  if ( (slave = nbio_accept(master, (struct sockaddr*)&addr, &addrlen)) < 0 )
     return FALSE;
 					/* TBD: close on failure */
-  if ( tcp_unify_ip4(Peer, ntohl(addr.sin_addr.s_addr)) &&
+  if ( nbio_unify_ip4(Peer, ntohl(addr.sin_addr.s_addr)) &&
        tcp_unify_socket(Slave, slave) )
     return TRUE;
 
@@ -347,7 +347,7 @@ static foreign_t
 pl_gethostname(term_t name)
 { char buf[256];
 
-  if ( !tcp_init() )
+  if ( !nbio_init() )
     return FALSE;
 
   if ( gethostname(buf, sizeof(buf)) == 0 )
@@ -359,7 +359,7 @@ pl_gethostname(term_t name)
       return PL_unify_atom_chars(name, buf);
   }
 
-  return tcp_error(h_errno, TCP_HERRNO);
+  return nbio_error(h_errno, TCP_HERRNO);
 }
 
 
@@ -369,7 +369,7 @@ pl_debug(term_t val)
 { int dbg;
 
   PL_get_integer(val, &dbg);
-  tcp_debug(dbg);
+  nbio_debug(dbg);
 
   return TRUE;
 }
@@ -402,5 +402,5 @@ install_socket()
 
 install_t
 uninstall_socket()
-{ tcp_cleanup();
+{ nbio_cleanup();
 }

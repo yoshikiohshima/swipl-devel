@@ -76,17 +76,17 @@ extern int h_errno;
 typedef enum
 { TCP_ERRNO,
   TCP_HERRNO
-} tcp_error_map;
+} nbio_error_map;
 
-typedef enum				/* tcp_setopt() commands */
+typedef enum				/* nbio_setopt() commands */
 { TCP_NONBLOCK,
   TCP_REUSEADDR,
   TCP_DISPATCH,
   TCP_INSTREAM,
   TCP_OUTSTREAM
-} tcp_option;
+} nbio_option;
 
-					/* tcp_get_flags() mask */
+					/* nbio_get_flags() mask */
 #define SOCK_INSTREAM	0x01
 #define SOCK_OUTSTREAM	0x02
 #define SOCK_BIND	0x04		/* What have we done? */
@@ -103,41 +103,41 @@ typedef enum				/* tcp_setopt() commands */
 		 *	 BASIC FUNCTIONS	*
 		 *******************************/
 
-extern int	tcp_init(void);
-extern int	tcp_cleanup(void);
-extern int	tcp_debug(int level);
+extern int	nbio_init(void);
+extern int	nbio_cleanup(void);
+extern int	nbio_debug(int level);
 
-extern int	tcp_socket(void);
-extern int	tcp_closesocket(int socket);
-extern int	tcp_connect(int socket,
+extern int	nbio_socket(void);
+extern int	nbio_connect(int socket,
 			    const struct sockaddr *serv_addr,
 			    size_t addrlen);
-extern int	tcp_bind(int socket,
+extern int	nbio_bind(int socket,
 			 struct sockaddr *my_addr,
 			 size_t addrlen);
-extern int	tcp_listen(int socket, int backlog);
-extern int	tcp_accept(int master,
+extern int	nbio_listen(int socket, int backlog);
+extern int	nbio_accept(int master,
 			   struct sockaddr *addr,
 			   size_t *addrlen);
 
-extern int	tcp_read(int socket, char *buf, int bufSize);
-extern int 	tcp_write(int socket, char *buf, int bufSize);
-extern int 	tcp_close_input(int socket);
-extern int 	tcp_close_output(int socket);
+extern int	nbio_read(int socket, char *buf, int bufSize);
+extern int 	nbio_write(int socket, char *buf, int bufSize);
+extern int	nbio_closesocket(int socket);
+extern int 	nbio_close_input(int socket);
+extern int 	nbio_close_output(int socket);
 
-extern int	tcp_unify_ip4(term_t ip4, unsigned long hip);
-extern int	tcp_get_ip(term_t ip4, struct in_addr *ip);
+extern int	nbio_unify_ip4(term_t ip4, unsigned long hip);
+extern int	nbio_get_ip(term_t ip4, struct in_addr *ip);
 
-extern int	tcp_error(int code, tcp_error_map map);
-extern int	tcp_setopt(int socket, tcp_option opt, ...);
-extern int	tcp_get_flags(int socket);
+extern int	nbio_error(int code, nbio_error_map map);
+extern int	nbio_setopt(int socket, nbio_option opt, ...);
+extern int	nbio_get_flags(int socket);
 
 
 		 /*******************************
 		 *	    CONVERSION		*
 		 *******************************/
 
-extern int	tcp_get_sockaddr(term_t Address, struct sockaddr_in *addr);
-extern int	tcp_get_ip4(term_t ip4, struct in_addr *ip);
+extern int	nbio_get_sockaddr(term_t Address, struct sockaddr_in *addr);
+extern int	nbio_get_ip4(term_t ip4, struct in_addr *ip);
 
 #endif /*H_NONBLOCKIO_INCLUDED*/
