@@ -322,7 +322,8 @@ ilib:		iclp
 			$(INSTALL_DATA) $$f $(PLBASE)/library; \
 		done
 
-iclp::		cd ../library/clp; \
+iclp::
+		cd ../library/clp; \
 		for f in $(CLP); do \
 			$(INSTALL_DATA) $$f $(PLBASE)/library/clp; \
 		done
