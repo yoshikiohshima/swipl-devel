@@ -104,7 +104,7 @@ print_frame(Stream, frame(Level, foreign(Name/Arity), _)) :-
 	       [Level, Name, Arity]).
 print_frame(Stream, frame(Level, Clause, PC)) :-
 	subgoal_position(Clause, PC, File, CharA, _CharZ),
-	File \== @(_),			% Pce Object
+	File \= @(_),			% Pce Object
 	lineno(File, CharA, Line),
 	nth_clause(Head, _N, Clause), !,
 	predicate_name(Head, PredName),
