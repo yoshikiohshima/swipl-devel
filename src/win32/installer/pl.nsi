@@ -149,6 +149,7 @@ Section "Constraint Handling Rules"
   File pl\library\chr\chr_translate.pl
   File pl\library\chr\hprolog.pl
   File pl\library\chr\pairlist.pl
+  File pl\library\chr\README.TXT
   SetOutPath $INSTDIR\doc\packages\examples
   File /r pl\doc\packages\examples\chr
 SectionEnd
