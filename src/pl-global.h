@@ -333,6 +333,12 @@ typedef struct PL_local_data
   } attvar;
 #endif
 
+#ifdef O_GVAR
+  struct
+  { term_t	table;			/* global variables table */
+  } gvar;
+#endif
+
   struct
   { ulong	inferences;		/* inferences in this thread */
     ulong	last_cputime;		/* milliseconds last CPU time */

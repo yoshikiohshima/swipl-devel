@@ -147,58 +147,6 @@ make_new_attvar(Word p ARG_LD)
 }
 
 
-
-static int
-PL_make_new_attvar(term_t var)
-{ GET_LD
-  Word p;
-
-  requireStack(global, 2*sizeof(word));		/* worsed case */
-
-  p = valTermRef(var);
-  deRef(p);
-
-  if ( isVar(*p) )
-  { make_new_attvar(p PASS_LD);
-    succeed;
-  }
-
-  fail;
-}
-
-
-static int
-PL_put_attr(term_t var, term_t att)
-{ GET_LD
-
-  Word p = valTermRef(var);
-  deRef(p);
-
-  if ( isAttVar(*p) )
-  { Word v = valTermRef(att);
-    Word av = valPAttVar(*p);
-
-    TrailAssignment(av);		/* See setarg/3 implementation */
-    deRef(v);				/* for comments */
-
-    if ( isVar(*v) )
-    { if ( v < av )
-      { *av = makeRef(v);
-      } else if ( av < v )
-      { setVar(*av);
-	*v = makeRef(av);
-      } else
-	setVar(*av);
-    } else
-      *av = *v;
-
-    succeed;
-  }
-
-  fail;
-}
-
-
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int find_attr(Word av, atom_t name, Word *vp)
 
@@ -309,6 +257,46 @@ get_attr(term_t list, atom_t name, term_t value)
 }
 
 
+static int
+del_attr(Word av, atom_t name ARG_LD)
+{ Word l, prev;
+
+  deRef(av);
+  assert(isAttVar(*av));
+  l = valPAttVar(*av);
+  deRef(l);
+  prev = l;
+
+  for(;;)
+  { if ( isNil(*l) )
+    { fail;
+    } else if ( isTerm(*l) )
+    { Functor f = valueTerm(*l);
+
+      if ( f->definition == FUNCTOR_att3 )
+      { Word n;
+
+	deRef2(&f->arguments[0], n);
+	if ( *n == name )
+	{ TrailAssignment(prev);
+
+	  *prev = f->arguments[2];
+	  succeed;
+	} else
+	{ l = &f->arguments[2];
+	  deRef(l);
+	  prev = l;
+	}
+      } else
+      { fail;
+      }
+    } else
+    { fail;
+    }
+  }
+}
+
+
 		 /*******************************
 		 *	     PREDICATES		*
 		 *******************************/
@@ -364,6 +352,34 @@ PRED_IMPL("put_attr", 3, put_attr3, 0)	/* +Var, +Name, +Value */
   } else
   { return PL_error("put_attr", 3, NULL, ERR_TYPE, ATOM_var, A1);
   }
+}
+
+
+static
+PRED_IMPL("del_attr", 2, del_attr2, 0)	/* +Var, +Name */
+{ PRED_LD
+  Word av;
+  atom_t name;
+
+  if ( !PL_get_atom_ex(A2, &name) )
+    fail;
+
+  av = valTermRef(A1);
+  deRef(av);
+
+  if ( isAttVar(*av) )
+  { if ( del_attr(av, name PASS_LD) )
+    { Word l = valPAttVar(*av);
+
+      deRef(l);
+      if ( isNil(*l) )
+      { TrailAssignment(av);
+	setVar(*av);
+      }
+    }
+  }
+
+  succeed;
 }
 
 
@@ -436,7 +452,6 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
   fail;
 }
 
-
 		 /*******************************
 		 *	    REGISTRATION	*
 		 *******************************/
@@ -445,6 +460,7 @@ BeginPredDefs(attvar)
   PRED_DEF("attvar", 1, attvar, 0)
   PRED_DEF("put_attr", 3, put_attr3, 0)
   PRED_DEF("get_attr", 3, get_attr3, 0)
+  PRED_DEF("del_attr", 2, del_attr2, 0)
   PRED_DEF("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 EndPredDefs
 

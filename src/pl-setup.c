@@ -940,6 +940,9 @@ emptyStacks()
   LD->attvar.head	= PL_new_term_ref();
   LD->attvar.tail       = PL_new_term_ref();
 #endif
+#ifdef O_GVAR
+  LD->gvar.table	= PL_new_term_ref();
+#endif
 
   LD->mark_bar          = gLimit;
 }

@@ -610,6 +610,9 @@ DECL_PLIST(wic);
 #ifdef O_ATTVAR
 DECL_PLIST(attvar);
 #endif
+#ifdef O_GVAR
+DECL_PLIST(gvar);
+#endif
 
 void
 initBuildIns(void)
@@ -631,6 +634,9 @@ initBuildIns(void)
   REG_PLIST(wic);
 #ifdef O_ATTVAR
   REG_PLIST(attvar);
+#endif
+#ifdef O_GVAR
+  REG_PLIST(gvar);
 #endif
 
   PROCEDURE_garbage_collect0 = lookupProcedure(FUNCTOR_dgarbage_collect1, m);
