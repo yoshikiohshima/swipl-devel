@@ -73,6 +73,7 @@ user:file_search_path(chr, library(chr)).
 %	is named *.chr
 
 chr_expandable((:- constraints _)).
+chr_expandable((constraints _)).
 chr_expandable((handler _)) :-
 	is_chr_file.
 chr_expandable((rules _)) :-
@@ -152,22 +153,12 @@ add_optimise_decl(CHR, CHR).
 
 %	call_chr_translate(+File, +In, -Out)
 %	
-%	There  are  two  reasons  for  this   predicate.  First  of  all
-%	chr_translate/2 leaves the CHR constraint store initialised, and
-%	we  need  to  backtrack  to  restore  it  with  the  unfortunate
-%	consequence that we have to copy the  result once more. Can this
-%	be fixed in chr_translate/2? Should we use nb_setval/2?
-%
-%	Second the entire translation may  fail,   in  which we'd better
+%	The entire chr_translate/2 translation may  fail,   in  which we'd better
 %	issue  a  warning  rather   than    simply   ignoring   the  CHR
 %	declarations.
 
-call_chr_translate(File, In, Out) :-
-	chr_translate(In, Out),
-	assert(chr_term(File, Out)),
-	fail.
-call_chr_translate(File, _, Out) :-
-	retract(chr_term(File, Out)), !.
+call_chr_translate(_, In, Out) :-
+	chr_translate(In, Out).
 call_chr_translate(File, _, []) :-
 	print_message(error, chr(compilation_failed(File))).
 

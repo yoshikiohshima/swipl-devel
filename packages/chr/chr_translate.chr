@@ -139,7 +139,8 @@
 	target_module/1,
 	get_target_module/1,
 	attached/2,
-	is_attached/1. 
+	is_attached/1,
+	chr_clear/0. 
 
 constraint(FA,Number) \ constraint(FA,Query) 
 	<=> Query = Number.
@@ -180,6 +181,21 @@ attached(Constr,Type) # ID \ is_attached(Constr)
 	    )
 	pragma passive(ID).
 is_attached(C) <=> true.
+
+chr_clear \ constraint(_,_) # ID
+	<=> true pragma passive(ID).
+chr_clear \ constraint_count(_) # ID
+	<=> true pragma passive(ID).
+chr_clear \ constraint_index(_,_) # ID
+	<=> true pragma passive(ID).
+chr_clear \ max_constraint_index(_) # ID
+	<=> true pragma passive(ID).
+chr_clear \ target_module(_) # ID
+	<=> true pragma passive(ID).
+chr_clear \ attached(_,_) # ID
+	<=> true pragma passive(ID).
+chr_clear
+	<=> true.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -203,7 +219,8 @@ chr_translate(Declarations,NewDeclarations) :-
 			      ConstraintClauses
 			     ],
 			     NewDeclarations)
-	).
+	),
+	chr_clear.
 
 store_management_preds(Constraints,Clauses) :-
 		generate_attach_detach_a_constraint_all(Constraints,AttachAConstraintClauses),
