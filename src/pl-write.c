@@ -291,15 +291,15 @@ writeQuoted(IOSTREAM *stream, const char *text, int len, int quote,
 static bool
 writeAttVar(term_t av, write_options *options)
 { char buf[32];
-  fid_t fid = PL_open_foreign_frame();
-  term_t a = PL_new_term_ref();
 
   TRY(PutToken(varName(av, buf), options->out));
 
   if ( (options->flags & PL_WRT_ATTVAR_DOTS) )
   { return PutString("{...}", options->out);
   } else if ( (options->flags & PL_WRT_ATTVAR_WRITE) )
-  { visited v;
+  { fid_t fid = PL_open_foreign_frame();
+    term_t a = PL_new_term_ref();
+    visited v;
 
     v.address = address_of(av);
     if ( has_visited(options->visited, v.address) )
@@ -311,7 +311,7 @@ writeAttVar(term_t av, write_options *options)
     if ( !writeTerm(a, 1200, options) )
       goto error;
     Sputc('}', options->out);
-    PL_close_foreign_frame(fid);
+    PL_discard_foreign_frame(fid);
 
     options->visited = v.next;
     succeed;
@@ -319,8 +319,21 @@ writeAttVar(term_t av, write_options *options)
   error:
     options->visited = v.next;
     fail;
-  } else if ( (options->flags & PL_WRT_ATTVAR_PORTRAY) )
-  { /*TBD*/
+  } else if ( (options->flags & PL_WRT_ATTVAR_PORTRAY) &&
+	      GD->cleaning <= CLN_PROLOG )
+  { fid_t fid   = PL_open_foreign_frame();
+    predicate_t pred;
+    IOSTREAM *old;
+
+    pred = _PL_predicate("portray_attvar", 1, "$attvar",
+			 &GD->procedures.portray_attvar1);
+    
+    old = Scurout;
+    Scurout = options->out;
+    PL_call_predicate(NULL, PL_Q_NODEBUG, pred, av);
+    Scurout = old;
+
+    PL_discard_foreign_frame(fid);
   }
 
   succeed;
@@ -487,7 +500,7 @@ callPortray(term_t arg, write_options *options)
     int rval;
 
     Scurout = options->out;
-    rval = PL_call_predicate(NULL, FALSE, portray, arg);
+    rval = PL_call_predicate(NULL, PL_Q_NODEBUG, portray, arg);
     Scurout = old;
 
     PL_discard_foreign_frame(fid);

@@ -226,6 +226,7 @@ typedef struct
     Procedure	undefinterc4;		/* $undefined_procedure/4 */
 #ifdef O_ATTVAR
     Procedure	dwakeup1;		/* system:$wakeup/1 */
+    Procedure	portray_attvar1;	/* $attvar:portray_attvar/1 */
 #endif
 
     SourceFile  reloading;		/* source file we are re-loading */

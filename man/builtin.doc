@@ -2546,9 +2546,13 @@ The predicate write_term/2 is the generic form of all Prolog term-write
 predicates.  Valid options are:
 
 \begin{description}
-    \termitem{quoted}{Bool}
-If \const{true}, atoms and functors that needs quotes will be quoted.
-The default is \const{false}.
+    \termitem{attributes}{Atom}
+Define how attributed variables (see \secref{attvar}) are written. The
+default is determined by the prolog flag \const{write_attributes}.
+Defined values are \const{ignore} (ignore the attribute), \const{dots}
+(write the attributes as \verb${...}$), \const{write} (simply hand
+the attributes recursively to write_term/2) and \const{portray}
+(hand the attributes to attr_portray_hook/2).
 
     \termitem{backquoted_string}{Bool}
 If \const{true}, write a string object (see \secref{strings}) as
@@ -2566,6 +2570,22 @@ If \const{true}, the generic term-representation (<functor>(<args>
 list-notation and \verb${}$/1 will be written using their special
 syntax.
 
+    \termitem{max_depth}{Integer}
+If the term is nested deeper than \arg{Integer}, print the remainder
+as eclipse (\ldots).  A 0 (zero) value (default) imposes no depth limit.
+This option also delimits the number of printed for a list.  Example:
+
+\begin{code}
+?- write_term(a(s(s(s(s(0)))), [a,b,c,d,e,f]), [max_depth(3)]).
+a(s(s(...)), [a, b|...])
+
+Yes
+\end{code}
+
+Used by the toplevel and debugger to limit screen output.  See also
+the prolog-flags \const{toplevel_print_options} and
+\const{debugger_print_options}.
+
     \termitem{module}{Module}
 Define the reference module (default \const{user}).  This defines
 the default value for the \const{character_escapes} option as well
@@ -2582,21 +2602,9 @@ that is not a variable.  If portray/1 succeeds, the term is considered
 printed.  See also print/1.  The default is \const{false}.  This option
 is an extension to the ISO write_term options.
 
-    \termitem{max_depth}{Integer}
-If the term is nested deeper than \arg{Integer}, print the remainder
-as eclipse (\ldots).  A 0 (zero) value (default) imposes no depth limit.
-This option also delimits the number of printed for a list.  Example:
-
-\begin{code}
-?- write_term(a(s(s(s(s(0)))), [a,b,c,d,e,f]), [max_depth(3)]).
-a(s(s(...)), [a, b|...])
-
-Yes
-\end{code}
-
-Used by the toplevel and debugger to limit screen output.  See also
-the prolog-flags \const{toplevel_print_options} and
-\const{debugger_print_options}.
+    \termitem{quoted}{Bool}
+If \const{true}, atoms and functors that needs quotes will be quoted.
+The default is \const{false}.
 \end{description}
 
     \predicate{write_term}{3}{+Stream, +Term, +Options}

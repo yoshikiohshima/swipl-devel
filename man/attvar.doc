@@ -113,8 +113,13 @@ Normally this predicate fails to veto binding the variable to
 \arg{VarValue} is another attributed variable the hook often combines
 the two attribute and associates the combined attribute with 
 \arg{VarValue} using put_attr/3.
-\end{description}
 
+    \predicate{attr_portray_hook}{2}{+AttValue, +Var}
+Called by write_term/2 and friends for each attribute if the option
+\term{attributes}{portray} is in effect.  If the hook succeeds the
+attribute is considered printed.  Otherwise \exam{Module = ...} is
+printed to indicate the existence of a variable.
+\end{description}
 
 \subsection{Accessing all attributes}
 

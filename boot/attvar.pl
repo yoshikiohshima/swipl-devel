@@ -117,3 +117,44 @@ frozen(_, true).
 make_conjunction('$and'(A, B0), (A, B)) :- !,
 	make_conjunction(B0, B).
 make_conjunction(G, G).
+
+
+		 /*******************************
+		 *	       PORTRAY		*
+		 *******************************/
+
+%	portray_attvar(@Var)
+%	
+%	Called from write_term/3 using the option attributes(portray) or
+%	when the prolog flag write_attributes   equals portray. Its task
+%	is the write the attributes in a human readable format.
+
+portray_attvar(Var) :-
+	write('{'),
+	get_attrs(Var, Attr),
+	portray_attrs(Attr, Var),
+	write('}').
+
+portray_attrs([], _).
+portray_attrs(att(Name, Value, Rest), Var) :-
+	portray_attr(Name, Value, Var),
+	(   Rest == []
+	->  true
+	;   write(', '),
+	    portray_attrs(Rest, Var)
+	).
+	
+portray_attr(freeze, Goal, _Var) :- !,
+	format('freeze = ~W', [ Goal,
+				[ portray(true),
+				  quoted(true),
+				  attributes(ignore)
+				]
+			      ]).
+portray_attr(Name, Value, Var) :-
+	G = Name:attr_portray_hook(Value, Var),
+	(   '$c_current_predicate'(_, G),
+	    G
+	->  true
+	;   format('~w = ...', [Name])
+	).

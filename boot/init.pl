@@ -359,7 +359,7 @@ $set_debugger_print_options(print) :- !,
 			[ quoted(true),
 			  portray(true),
 			  max_depth(10),
-			  attributes(dots)
+			  attributes(portray)
 			]).
 $set_debugger_print_options(Depth) :-
 	current_prolog_flag(debugger_print_options, Options0),

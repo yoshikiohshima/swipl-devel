@@ -581,10 +581,12 @@ answer_respons(-1, show_again) :- !,
 answer_respons(Char, again) :-
 	print_message(query, no_action(Char)).
 
-print_predicate(0'w, [write], [quoted(true)]).
+print_predicate(0'w, [write], [ quoted(true),
+				attributes(write)
+			      ]).
 print_predicate(0'p, [print], [ quoted(true),
 				portray(true),
-				attributes(dots),
+				attributes(portray),
 				max_depth(10)
 			      ]).
 

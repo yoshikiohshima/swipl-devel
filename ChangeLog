@@ -10,7 +10,7 @@
 VERSION 5.3.3 (Mar 5, 2003)
 ===========================
 
-  * ADDED: Initial version to control the output of attributed variables.
+  * ADDED: Initial version to control printing attributed variables.
     With input from Tom Schrijvers.
 
   * FIXED: Bug#127 (partially), system slowing down after Control-C
