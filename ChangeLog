@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: perform goal expansion relative to indicated module for
+    goals of the format Module:Goal where Module is known at compiletime.
+
+
 VERSION 5.3.17 (August 2, 2004)
 ===============================
 
