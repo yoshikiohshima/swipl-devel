@@ -33,7 +33,7 @@ domain(_X,[]) <=> fail.
 domain(X,[V]) <=> X = V.
 domain(X,L1), domain(X,L2) <=> intersection(L1,L2,L3), domain(X,L3).
 
-diff(X,Y), domain(X,L) <=> nonvar(Y) | delete(L,Y,NL), domain(X,NL).
+diff(X,Y), domain(X,L) <=> nonvar(Y) | select(Y,L,NL), domain(X,NL).
 diff(X,Y) <=> nonvar(X), nonvar(Y) | X \== Y.
 
 cleanup, domain(_,_) <=> writeln(a), fail.
