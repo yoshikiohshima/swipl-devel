@@ -457,15 +457,13 @@ div(X,Y,Z) :-
 
 mytimes(X,Y,Z,New) :-
 	( nonvar(X) ->
-		( nonvar(Y) ->
+		( X == 0 ->
+			Z = 0
+		; nonvar(Y) ->
 			Z is X * Y
 		; nonvar(Z) ->
-			( X \== 0 -> 
-				0 is Z mod X,
-				Y is Z / X
-			;
-				true
-			)		
+			0 is Z mod X,
+			Y is Z / X
 		;
 			get(Y,YL,YU,YExp),
 			get(Z,ZL,ZU,ZExp),
@@ -505,15 +503,16 @@ mytimes(X,Y,Z,New) :-
 		),
 		( get(Y,YL2,YU2,YExp2) ->
 			min_divide(Z,Z,NXL,NXU,NYLT),
+			max_divide(Z,Z,NXL,NXU,NYUT),
 			NYL is max(YL2,ceiling(NYLT)),
-			NYU is min(YU2,floor(max(div(Z,NXL),div(Z,NXU)))),
+			NYU is min(YU2,floor(NYUT)),
 			put(Y,NYL,NYU,YExp2)
 		;
 			( Y \== 0 ->
 				0 is Z mod Y,
 				X is Z / Y
 			;
-				true
+				Z = 0
 			)
 		)
 	;
