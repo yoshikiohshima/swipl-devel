@@ -36,6 +36,7 @@
 	  ]).
 :- use_module(library('trace/clause')).
 :- use_module(library(debug)).
+:- use_module(library(lists)).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 This module defines more high-level primitives for examining the Prolog
@@ -106,8 +107,11 @@ print_frame(Stream, frame(Level, Clause, PC)) :-
 	subgoal_position(Clause, PC, File, CharA, _CharZ),
 	File \= @(_),			% Pce Object
 	lineno(File, CharA, Line),
-	nth_clause(Head, _N, Clause), !,
-	predicate_name(Head, PredName),
+	(   user:prolog_clause_name(Clause, PredName)
+	->  true
+	;   nth_clause(Head, _N, Clause),
+	    predicate_name(Head, PredName)
+	), !,
 	format(Stream, '   [~D] ~w at ~w:~d~n',
 	       [Level, PredName, File, Line]).
 print_frame(Stream, frame(Level, Clause, _PC)) :-
