@@ -31,8 +31,9 @@
 
 
 :- module(prolog_operator,
-	[ push_operators/1
-	, pop_operators/0
+	[ push_operators/1,
+	  pop_operators/0,
+	  push_op/3			% Precedence, Type, Name
 	]).
 
 
@@ -66,19 +67,67 @@ to the generic SWI-Prolog library in version 5.3.9.
 :- thread_local
 	operator_stack/1.
 
+:- module_transparent
+	push_operators/1,
+	push_op/3.
+
+%	push_operators(+New)
+%	
+%	Installs the operators from New, where New is a list of op(Prec,
+%	Type, :Name). The modifications to the operator table are undone
+%	in a matching call to pop_operators/0.
+
 push_operators(New) :-
-	undo_operators(New, Undo),
-	set_operators(New),
-	asserta(operator_stack(Undo)).
+	'$strip_module'(New, Module, Ops0),
+	tag_ops(Ops0, Module, Ops),
+	assert_op(mark),
+	undo_operators(Ops, Undo),
+	set_operators(Ops),
+	assert_op(Undo).
+
+%	push_op(+Precedence, +Type, :Name)
+%	
+%	As op/3, but this call must  appear between push_operators/1 and
+%	pop_operators/0.  The  change  is   undone    by   the  call  to
+%	pop_operators/0
+
+push_op(P, T, A0) :-
+	(   A0 = _:_
+	->  A = A0
+	;   context_module(M),
+	    A = M:A0
+	),
+	undo_operator(op(P,T,A), Undo),
+	assert_op(Undo),
+	op(P, T, A).
+
+%	pop_operators
+%	
+%	Revert all changes to the operator table realised since the last
+%	push_operators/1.
 
 pop_operators :-
-	retract(operator_stack(Undo)), !,
-	set_operators(Undo).
+	retract_op(Undo),
+	(   Undo == mark
+	->  !
+	;   set_operators(Undo),
+	    fail
+	).
+
+tag_ops([], _, []).
+tag_ops([op(P,Tp,N0)|T0], M, [op(P,Tp,N)|T]) :-
+	(   N0 = _:_
+	->  N = N0
+	;   N = M:N0
+	),
+	tag_ops(T0, M, T).
 
 set_operators([]).
-set_operators([op(P,T,A)|R]) :-
-	op(P, T, A),
+set_operators([H|R]) :-
+	set_operators(H),
 	set_operators(R).
+set_operators(op(P,T,A)) :-
+	op(P, T, A).
 
 undo_operators([], []).
 undo_operators([O0|T0], [U0|T]) :-
@@ -106,3 +155,16 @@ op_type(yfx, infix).
 op_type(yfy, infix).
 op_type(xf,  postfix).
 op_type(yf,  postfix).
+
+%	assert_op(+Term)
+%	retract_op(-Term)
+%	
+%	Force local assert/retract.
+
+assert_op(Term) :-
+	asserta(operator_stack(Term)).
+
+retract_op(Term) :-
+	retract(operator_stack(Term)).
+
+

@@ -72,10 +72,19 @@ pce_ifhostproperty(prolog(swi), (:- index(attribute(1,1,0)))).
 		 *******************************/
 
 %	push_compile_operators.
-%	Push the current 
+%	
+%	Push operator definitions  that  are   specific  to  XPCE  class
+%	definitions.
+
+:- module_transparent
+	push_compile_operators/0.
 
 push_compile_operators :-
-	push_operators(
+	context_module(M),
+	push_compile_operators(M).
+
+push_compile_operators(M) :-
+	push_operators(M:
 		[ op(1200, xfx, :->)
 		, op(1200, xfx, :<-)
 		, op(910,  xfy, ::)	% above \+
@@ -633,7 +642,8 @@ push_class(ClassName) :-
 	pce_error(recursive_loading_class(ClassName)),
 	fail.
 push_class(ClassName) :-
-	push_compile_operators,
+	prolog_load_context(module, M),
+	push_compile_operators(M),
 	(   source_location(Path, _Line)
 	->  true
 	;   Path = []

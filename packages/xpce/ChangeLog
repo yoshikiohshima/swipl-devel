@@ -1,6 +1,10 @@
 			   XPCE ChangeLog
 			   ==============
 
+* MODIFIED: class compiler operator issues to exploit the new
+  library(operators).
+
+
 VERSION 6.2.16, distributed with SWI-Prolog 5.3.7
 =================================================
 
