@@ -486,7 +486,7 @@ right_recursion:
     }
   }
 
-  if ( ci->subclausearg && isString(*head) )
+  if ( ci->subclausearg && (isString(*head) || isAttVar(*head)) )
     ci->argvars++;
 
   return nvars;
