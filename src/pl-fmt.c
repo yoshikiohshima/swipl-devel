@@ -41,10 +41,9 @@ source should also use format() to produce error messages, etc.
 			{ Sunlock(fd); \
 			  return PL_error(NULL, 0, NULL, ERR_FORMAT, fmt); \
 			} while(0)
-#define FMT_ARG(c, a)	{ Sunlock(fd); \
-			  return PL_error(NULL, 0, NULL, \
-					  ERR_FORMAT_ARG, c, a); \
-			}
+#define FMT_ARG(c, a)	return Sunlock(fd), \
+			       PL_error(NULL, 0, NULL, \
+					ERR_FORMAT_ARG, c, a)
 #define OUTSTRING(s, n)	{ int _i; char *q = s; \
 			  for(_i=0; _i++<(int)(n); q++) OUTCHR(*q); \
 			}
