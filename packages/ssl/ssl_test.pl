@@ -151,7 +151,9 @@ client_loop(SSL) :-
 	    sleep(Wait)
 	;   true
 	),
-	write_server(Message, In, Out),
+	numlist(1, 10000, L),
+	term_to_atom(L, Long),
+	write_server(Long, In, Out),
 	write_server(bye, In, Out),
 	close(In),
 	close(Out).
