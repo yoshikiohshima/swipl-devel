@@ -30,13 +30,14 @@ implementation. For a more thorough review of CHR we refer the reader to
 \cite{chrSite}.
 
 In \secref{SyntaxAndSemantics} we present the syntax of CHR in Prolog and
-explain informally its operational semantics. Next, \secref{practical} deals
-with practical issues of writing and compiling hProlog programs containing
-CHR. \Secref{predicates} provides a few useful predicates to inspect the
-constraint store and \secref{examples} illustrates CHR with two example
-programs. In \secref{sicstus-chr} some compatibility issues with SICStus
-CHR are listed. Finally, \secref{guidelines} concludes with a few practical
-guidelines for using CHR.
+explain informally its operational semantics. Next, \secref{practical}
+deals with practical issues of writing and compiling hProlog programs
+containing CHR. \Secref{debugging} explains the currently primitive CHR
+debugging facilities. \Secref{predicates} provides a few useful predicates
+to inspect the constraint store and \secref{examples} illustrates CHR with
+two example programs. In \secref{sicstus-chr} some compatibility issues with
+SICStus CHR are listed. Finally, \secref{guidelines} concludes with a few
+practical guidelines for using CHR.
 
 
 \section{Syntax and Semantics} 		\label{sec:SyntaxAndSemantics}
@@ -188,6 +189,10 @@ to disable the checks.
         \termitem{optimize}{}
 This is an experimental option controlling the degree of optimization. Possible values are
 \texttt{full}, to enable all available optimizations, and \texttt{off}, to disable all optimizations.
+	\termitem{debug}{}
+This options enables or disables the possibility to debug the CHR code.
+Possible values are \texttt{on} and \texttt{off} (default). See
+\secref{debugging} for more details on debugging.
 \end{description}
 
 \section{CHR in SWI-Prolog Programs}		\label{sec:practical}
@@ -218,6 +223,103 @@ like any other \fileext{pl} file after loading the library module
 When compiling a \fileext{chr} file, it is preprocessed and a
 \texttt{.pl} file is generated. This \fileext{pl} file should not be
 modified. All changes should be applied to the \fileext{chr} file.
+
+\section{Debugging}			\label{sec:debugging}
+%=================
+
+The CHR debugging facilities are currently rather limited. Only
+tracing is currently available.
+
+\subsection{Requirement}
+%=====================
+
+In order to use the CHR debugging facilities for a CHR file,
+it is necessary to enable the \texttt{debug} option by
+writing:
+\begin{verbatim}
+	:- option(debug,on).
+\end{verbatim}
+in the \fileext{chr} file.
+
+When the \texttt{debug} option is not enabled, the debugging
+facilities are not available for that file.
+
+\subsection{Ports}
+%===============
+
+For CHR constraints the four standard ports are defined:
+
+\begin{itemlist}
+	\termitem{call}{}
+A new constraint is called and becomes active.
+	\termitem{exit}{}
+An active constraint exits: it has either been inserted in the store after
+trying all rules or has been removed from the constraint store.
+	\termitem{fail}{}
+An active constraint fails.
+	\termitem{redo}{}
+An active constraint starts looking for an alternative solution.
+\end{itemlist}
+
+In addition to the above ports, CHR constraints have five additional
+ports:
+
+\begin{itemlist}
+	\termitem{wake}{}
+A suspended constraint is woken and becomes active.
+	\termitem{insert}{}
+An active constraint has tried all rules and is suspended in
+the constraint store.
+	\termitem{remove}{}
+An active or passive constraint is removed from the constraint
+store, if it had been inserted.
+\termitem{try}{}
+	An active constraints tries a rule with possibly
+	some passive constraints. The try port is entered
+	just before committing to the rule.
+\termitem{apply}{}
+	An active constraints commits to a rule with possibly
+	some passive constraints. The apply port is entered
+	just after committing to the rule.
+\end{itemlist}
+
+\subsection{Tracing}
+%=================
+
+Tracing is enabled with the \predref{chr_trace}{0} predicate
+and disabled with the \predref{chr_notrace}{0} predicate.
+
+When enabled the tracer will step through
+the \texttt{call}, \texttt{exit}, \texttt{fail}, \texttt{wake}
+and \texttt{apply} ports, accepting debug commands,
+and simply write out the other ports.
+
+The following debug commans are currently supported:
+
+\begin{verbatim}
+        CHR debug options:
+
+                <cr>    creep           c       creep
+                n       nodebug
+                a       abort
+                f       fail
+                ?       help            h       help
+\end{verbatim}
+
+Their meaning is:
+
+\begin{itemlist}
+	\termitem{creep}{}
+Step to the next port.
+	\termitem{nodebug}{}
+Disable the tracer.
+	\termitem{abort}{}
+Exit to the toplevel.
+	\termitem{fail}{}
+Insert failure in execution.
+	\termitem{help}{}
+Print the above available debug options.
+\end{itemlist}
 
 \section{Useful Predicates} 		\label{sec:predicates}
 %=========================
