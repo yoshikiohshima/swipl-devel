@@ -17,7 +17,7 @@ Demo using the threaded HTTP library with SSL.
 URL:	https://localhost:1443/env
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-:- load_files([ '../http/examples/demo_body',
+:- load_files([ '../http/demo_body',
 		library('http/thread_httpd')
 	      ],
 	      [ silent(true)
