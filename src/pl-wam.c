@@ -829,7 +829,7 @@ __do_undo(mark *m ARG_LD)
   }
 
   tTop = mt;
-  gTop = m->globaltop;
+  gTop = (LD->frozen_bar > m->globaltop ? LD->frozen_bar : m->globaltop);
 }
 
 

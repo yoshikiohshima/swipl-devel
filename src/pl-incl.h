@@ -1567,7 +1567,8 @@ struct alloc_pool
 			    setVar(*tt->address); \
 			  } \
 			  tTop = tt; \
-			  gTop = (b).globaltop; \
+			  gTop = (LD->frozen_bar > (b).globaltop ? \
+				  LD->frozen_bar : (b).globaltop); \
 			}
 #endif /*O_DESTRUCTIVE_ASSIGNMENT*/
 

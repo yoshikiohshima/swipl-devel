@@ -164,8 +164,21 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
 		 *******************************/
 
 static void
-freezeGlobal()
-{ Sdprintf("freezeGlobal(): to be implemented\n");
+freezeGlobal(ARG1_LD)
+{ LD->frozen_bar = LD->mark_bar = gTop;  
+}
+
+
+void
+destroyGlobalVars()
+{ GET_LD
+
+  if ( LD->gvar.nb_vars )
+  { destroyHTable(LD->gvar.nb_vars);
+    LD->gvar.nb_vars = NULL;
+  }
+
+  LD->frozen_bar = NULL;		/* unless used otherwise! */
 }
 
 
@@ -198,7 +211,7 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
        isString(*p) ||
        isAttVar(*p) ||
        isBignum(*p) )
-    freezeGlobal();
+    freezeGlobal(PASS_LD1);
 
   succeed;
 }

@@ -942,6 +942,7 @@ emptyStacks()
 #endif
 #ifdef O_GVAR
   LD->gvar.b_vars	= PL_new_term_ref();
+  destroyGlobalVars();
 #endif
 
   LD->mark_bar          = gLimit;

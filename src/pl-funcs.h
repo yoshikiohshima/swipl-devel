@@ -58,6 +58,10 @@ void *		xrealloc(void *mem, size_t size);
 /* pl-attvar.c */
 int		assignAttVar(Word av, Word value ARG_LD);
 
+/* pl-gvar.c */
+
+void		destroyGlobalVars();
+
 /* pl-wam.c */
 word		pl_count(void);
 bool		unify_ptrs(Word t1, Word t2 ARG_LD);

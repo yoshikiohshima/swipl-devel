@@ -283,6 +283,9 @@ typedef struct PL_local_data
   Choice	choicepoints;		/* Choice-point chain */
   FliFrame      foreign_environment;	/* Current foreign context */
   Word		mark_bar;		/* Mark globals > this one */
+#ifdef O_GVAR
+  Word		frozen_bar;		/* Frozen part of the global stack */
+#endif
   pl_stacks_t   stacks;			/* Prolog runtime stacks */
   ulong		bases[STG_MASK+1];	/* area base addresses */
 #ifdef O_PLMT
