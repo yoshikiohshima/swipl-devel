@@ -97,9 +97,9 @@ install:	$(TARGETS) $(LIBPL)
 		$(INSTALL_DATA) jpl.jar $(PLBASE)/lib
 		$(PL) -f none -g make -t halt
 
-rpm-install:	install
+rpm-install:	install html-install
 
-html-install::
+html-install::	expl-install exjava-install
 		mkdir -p $(PKGDOC)/jpl
 		@echo -n "Creating directories "
 		@for d in $(DOCDIRS); do \

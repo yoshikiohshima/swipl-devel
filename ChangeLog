@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.11 (May 25, 2004)
+=============================
+
   * ADDED: first integration of JPL with the normal Prolog tree.
 
   * ADDED: [=format] to -dump-runtime-variables to dump them in CMD.EXE

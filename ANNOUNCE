@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.10/XPCE 6.2.18 development snapshot
+SWI-Prolog 5.3.11/XPCE 6.2.18 development snapshot
 
 Status
 ======
@@ -8,8 +8,8 @@ Status
     appear to run stable.
   
 
-Anticipated features relative to stable 5.2.x release and their status
-======================================================================
+Features anticipated in 5.4.x relative to 5.2.x and their status
+================================================================
 
   * Attributed variables
     Complete.
@@ -41,33 +41,28 @@ Anticipated features relative to stable 5.2.x release and their status
     least the popular solvers compatible to at least one other major
     implementation.
 
+  * JPL: Integrated Java/Prolog interface package
+    First integration for Windows and Linux.  There are still many
+    configuration issues, documentation integration, some technical
+    issues (engine-pool handling in Java --> Prolog, performance and
+    API detailsin Prolog --> Java, using the new blob type for Java
+    object-references.
 
-Brief summary of changes since 5.3.9
-====================================
+
+Brief summary of changes since 5.3.10
+=====================================
 
 SWI-Prolog
 ----------
 
-  * Minor patches and cleanup
+  * Integrated JPL into the main source
 
-  * Hide ELF symbols to reduce risc for accidental override, reduce
-    startup time, especially when used as embedded shared object.
-    ELF-systems compiled with GCC only.
+  * Minor patches
 
 Packages
 --------
 
-  * XPCE: Hide ELF symbols.  See above.
-
-  * SGML/XML parser: Fixed buffer overflow.  Added xsdp_types.pl
-    (partial support for XSD Primitive Types) and iso_639.pl
-    (ISO-639 language codes).
-
-  * RDF: Added support for xml:lang and rdf:dataType
-
-  * Semweb (rdf_db): Added support for xml:lang and rdf:dataType.
-    Fixes to rdf_save/2.
-
+  * Semweb: Fixed literal matching (broken in 5.3.10).
 
 Development environment
 -----------------------
