@@ -4347,18 +4347,7 @@ be able to access these!
 	  LOAD_REGISTERS(qid);
 
 	  if ( rval )
-	  {
-#ifdef O_ATTVAR
-	    if ( *valTermRef(LD->attvar.head) ) /* can be faster */
-	    { static code exit;
-
-	      exit = encode(I_EXIT);
-	      PC = &exit;
-	      goto wakeup;
-	    }
-#endif
 	    goto exit_builtin;
-	  }
 
 #if O_CATCHTHROW
 	  if ( exception_term )
@@ -4474,6 +4463,19 @@ plain I_EXIT is first of all that the actual sequence should be I_ENTER,
 I_EXIT,  and  just  optimising   to    I_EXIT   looses   the  unify-port
 interception. Second, there should be some room for optimisation here.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    exit_builtin:
+#ifdef O_ATTVAR
+      if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+      { static code exit;
+
+	exit = encode(I_EXIT);
+	PC = &exit;
+	goto wakeup;
+      }
+#endif
+      goto exit_builtin_cont;
+
+
     VMI(I_EXITFACT) MARK(EXITFACT);
 #if O_DEBUGGER
 	if ( debugstatus.debugging )
@@ -4508,7 +4510,7 @@ bit more careful.
 	}
 #endif /*O_DEBUGGER*/
 
-    exit_builtin:			/* tracer already by callForeign() */
+    exit_builtin_cont:			/* tracer already by callForeign() */
 	if ( (void *)BFR <= (void *)FR ) /* deterministic */
 	{ if ( false(DEF, FOREIGN) )
 	    leaveDefinition(DEF);

@@ -3,7 +3,8 @@ Realising attributed variables
 Places dealt with:
 
 	* Implemented attvar/1, make_new_attvar/1, get_attr/2 and put_attr/2.
-	* Adjusted write/1 to write AttVar{L,G}<N>{Attribute}
+	* Adjusted write/1 to write AttVar{L,G}<N>{Attribute}.  Also deals with
+	  looping.
 	* Adjusted recorded database (recorda, recorded, findall, ...)
 	* checkData to deal with recursive structures.
 	* Adjusted the garbage collector
@@ -11,7 +12,7 @@ Places dealt with:
 Places to deal with them
 
 	* se_record(): structural equivalence of records
-	* Garbage collector
+	* shared variables in recorded?  May not be a problem?
 
 
 		 /*******************************

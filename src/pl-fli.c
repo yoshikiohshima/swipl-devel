@@ -242,9 +242,8 @@ unifyAtomic(term_t t, word w ARG_LD)
 { Word p = valHandleP(t);
 
   for(;;)
-  { if ( isVar(*p) )
-    { *p = w;
-      Trail(p);  
+  { if ( canBind(*p) )
+    { bindConst(p, w);
       succeed;
     }
 
@@ -1336,7 +1335,7 @@ int
 PL_is_variable__LD(term_t t ARG_LD)
 { word w = valHandle(t);
 
-  return isVar(w) ? TRUE : FALSE;
+  return canBind(w) ? TRUE : FALSE;
 }
 
 
@@ -1346,7 +1345,7 @@ PL_is_variable(term_t t)
 { GET_LD
   word w = valHandle(t);
 
-  return isVar(w) ? TRUE : FALSE;
+  return canBind(w) ? TRUE : FALSE;
 }
 #define PL_is_variable(t) PL_is_variable__LD(t PASS_LD)
 
