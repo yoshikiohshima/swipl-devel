@@ -3109,6 +3109,7 @@ doThreadLocalData(int sig)
   { DEBUG(1, Sdprintf("\n\tDone work on %d; suspending ...",
 		      info->pl_tid));
     
+    info->status = PL_THREAD_SUSPENDED;
     sem_post(sem_mark_ptr);
     wait_resume(info);
   } else
