@@ -43,7 +43,7 @@ TARGETS=	libjpl.@SO@
 OBJ=		src/c/jpl.o
 
 all:		$(TARGETS)
-		(cd src/java/jpl && $(MAKE) all)
+		(cd src/java && $(MAKE) all)
 
 libjpl.@SO@:	$(OBJ)
 		$(LD) $(LDFLAGS) -o $@ $(OBJ) -ljava -lverify -ljvm

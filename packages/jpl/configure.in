@@ -111,7 +111,7 @@ if test "$java_abs_paths" = yes; then
   JAVA_CC="$JAVA_BINDIR/$JAVA_CC"
 fi
 
-AC_OUTPUT(Makefile src/java/jpl/Makefile)
+AC_OUTPUT(Makefile src/java/Makefile)
 
 
 
