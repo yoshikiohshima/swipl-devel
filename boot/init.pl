@@ -1469,17 +1469,9 @@ $do_expand_body(V^G, V^EG) :- !,
         $do_expand_body(G, EG).
 $do_expand_body(M:G, M:EG) :-
 	atom(M),
-	(   $c_current_predicate(_, M:goal_expansion(_,_)),
-	    M:goal_expansion(G, G1),
-	    G1 \== G
-	->  !,
-	    $do_expand_body(G1, EG)
-	;   $c_current_predicate(_, user:goal_expansion(_,_)),
-	    user:goal_expansion(G, G1),
-	    G1 \== G
-	->  !,
-	    $do_expand_body(G1, EG)
-	).
+	$set_source_module(Old, M),
+	call_cleanup($do_expand_body(G, EG),
+		     $set_source_module(_, Old)), !.
 $do_expand_body(A, B) :-
         $goal_expansion_module(M),
         M:goal_expansion(A, B0),
