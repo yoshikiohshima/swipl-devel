@@ -77,6 +77,8 @@ suggest predicates from a keyword.
 \predicatesummary{atom_to_term}{3}{Convert between atom and term}
 \predicatesummary{atomic}{1}{Type check for primitive}
 \predicatesummary{autoload}{0}{Autoload all predicates now}
+\predicatesummary{b_getval}{2}{Fetch backtrackable global variable}
+\predicatesummary{b_setval}{2}{Assign backtrackable global variable}
 \predicatesummary{bagof}{3}{Find all solutions to a goal}
 \predicatesummary{between}{3}{Integer range checking/generating}
 \predicatesummary{block}{3}{Start a block (`catch'/`throw')}
@@ -151,6 +153,7 @@ suggest predicates from a keyword.
 \predicatesummary{debugging}{0}{Show debugger status}
 \predicatesummary{debugging}{1}{Test where we are debugging topic}
 \predicatesummary{default_module}{2}{Get the default modules of a module}
+\predicatesummary{del_attr}{2}{Delete attribute from variable}
 \predicatesummary{delete_directory}{1}{Remove a folder from the file system}
 \predicatesummary{delete_file}{1}{Remove a file from the file system}
 \predicatesummary{delete_import_module}{2}{Remove module from import list}
