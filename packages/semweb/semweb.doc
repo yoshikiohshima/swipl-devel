@@ -353,11 +353,18 @@ to be saved or exchange RDF descriptions over an open network link. The
 predicates in this section provide for this.
 
 \begin{description}
-    \predicate{rdf_save_header}{2}{+Stream, ?FileRef}
+    \predicate{rdf_save_header}{2}{+Stream, +Options}
 Save an RDF header, with the XML header, \const{DOCTYPE},
 \const{ENTITY} and opening the \const{rdf:RDF} element with appropriate
 namespace declarations.  It uses the primitives from \secref{rdfns} to
-generate the required namespaces and desired short-name.
+generate the required namespaces and desired short-name.  \arg{Options}
+is one of:
+
+    \begin{description}
+	\termitem{db}{+FileRef}
+    Only search for namespaces used in triples labeled with
+    \arg{FileRef}.
+    \end{description}
 
     \predicate{rdf_save_footer}{1}{+Stream}
 Close the work opened with rdf_save_header/2.

@@ -687,10 +687,11 @@ db(Options, DB) :-
 
 %	rdf_save_header(+Fd, +Options)
 %
-%	Save XML documentheader, doctype and open the RDF environment.
+%	Save XML document header, doctype and open the RDF environment.
 %	This predicate also sets up the namespace notation.
 
 rdf_save_header(Out, Options) :-
+	is_list(Options), !,
 	db(Options, DB),
 	format(Out, '<?xml version=\'1.0\' encoding=\'ISO-8859-1\'?>~n', []),
 	format(Out, '<!DOCTYPE rdf:RDF [', []),
@@ -709,6 +710,10 @@ rdf_save_header(Out, Options) :-
 	;   true
 	),
 	format(Out, '>~n', []).
+rdf_save_header(Out, FileRef) :-	% compatibility
+	atom(FileRef),
+	rdf_save_header(Out, [db(FileRef)]).
+	
 
 %	used_namespaces(-List)
 %

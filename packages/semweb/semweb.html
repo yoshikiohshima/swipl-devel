@@ -457,11 +457,20 @@ link. The predicates in this section provide for this.
 
 <P>
 <DT><A NAME="rdf_save_header/2"><STRONG>rdf_save_header</STRONG>(<VAR>+Stream, 
-?FileRef</VAR>)</A><DD>
++Options</VAR>)</A><DD>
 Save an RDF header, with the XML header, <CODE>DOCTYPE</CODE>,
 <CODE>ENTITY</CODE> and opening the <CODE>rdf:RDF</CODE> element with 
 appropriate namespace declarations. It uses the primitives from <A HREF="#sec:rdfns">section 
-3.4</A> to generate the required namespaces and desired short-name.
+3.4</A> to generate the required namespaces and desired short-name. <VAR>Options</VAR> 
+is one of:
+
+<DL>
+
+<P>
+<DT><STRONG>db</STRONG>(<VAR>+FileRef</VAR>)<DD>
+Only search for namespaces used in triples labeled with
+<VAR>FileRef</VAR>.
+</DL>
 
 <P>
 <DT><A NAME="rdf_save_footer/1"><STRONG>rdf_save_footer</STRONG>(<VAR>+Stream</VAR>)</A><DD>
