@@ -237,12 +237,17 @@ update(object-3) :-
 	rdf_assert(x, a, v),
 	rdf_update(x, a, v, object(literal(lang(nl, hallo)))),
 	rdf(x, a, literal(lang(nl, hallo))).
-update(object-4) :-			% only change lang
+update(object-4) :-			% add lang
+	rdf_assert(x, a, literal(hallo)),
+	rdf_update(x, a, literal(hallo),
+		   object(literal(lang(nl, hallo)))),
+	rdf(x, a, literal(lang(nl, hallo))).
+update(object-5) :-			% only change lang
 	rdf_assert(x, a, literal(lang(en, hallo))),
 	rdf_update(x, a, literal(lang(en, hallo)),
 		   object(literal(lang(nl, hallo)))),
 	rdf(x, a, literal(lang(nl, hallo))).
-update(object-5) :-			% drop lang
+update(object-6) :-			% drop lang
 	rdf_assert(x, a, literal(lang(en, hallo))),
 	rdf_update(x, a, literal(lang(en, hallo)),
 		   object(literal(hallo))),

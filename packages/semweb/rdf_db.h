@@ -40,6 +40,10 @@
 #define OBJ_DOUBLE	0x4
 #define OBJ_TERM	0x5
 
+#define Q_NONE		0x0
+#define Q_LANG		0x1
+#define Q_TYPE		0x2
+
 #define BY_NONE	0x00			/* 0 */
 #define BY_S	0x01			/* 1 */
 #define BY_P	0x02			/* 2 */
@@ -118,7 +122,7 @@ typedef struct triple
   struct triple*next[INDEX_TABLES];	/* hash-table next links */
   unsigned	objtype : 3;
   unsigned	indexed : 3;		/* Partials: BY_* */
-  unsigned	has_lang : 1;		/* string with language specifier */
+  unsigned	qualifier : 2;		/* Lang/Type qualifier */
   unsigned	erased  : 1;		/* If TRUE, triple is erased */
   unsigned	first   : 1;		/* I'm the first on subject */
   unsigned	match   : 3;		/* How to match literals */

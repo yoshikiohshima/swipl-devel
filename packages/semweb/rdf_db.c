@@ -1165,7 +1165,9 @@ match_object(triple *t, triple *p)
       case OBJ_STRING:
 	if ( p->object.string && t->object.string != p->object.string )
 	  return FALSE;
-        if ( p->type_or_lang && t->type_or_lang != p->type_or_lang )
+        if ( p->qualifier && t->qualifier && t->qualifier != p->qualifier )
+	  return FALSE;
+	if ( p->type_or_lang && t->type_or_lang != p->type_or_lang )
 	  return FALSE;
         if ( p->match && t->object.string != p->object.string )
 	  return match(p->match, p->object.string, t->object.string);
@@ -1402,8 +1404,9 @@ write_triple(IOSTREAM *out, triple *t)
   save_atom(out, t->subject);
   save_atom(out, t->predicate->name);
 
-  if ( t->type_or_lang )
-  { Sputc(t->has_lang ? 'l' : 't', out);
+  if ( t->qualifier )
+  { assert(t->type_or_lang);
+    Sputc(t->qualifier == Q_LANG ? 'l' : 't', out);
     save_atom(out, t->type_or_lang);
   }
 
@@ -1669,8 +1672,11 @@ value:
       break;
     }
     case 'l':
-      t->has_lang = TRUE;
+      t->qualifier = Q_LANG;
+      t->type_or_lang = load_atom(in, ctx);
+      goto value;
     case 't':
+      t->qualifier = Q_TYPE;
       t->type_or_lang = load_atom(in, ctx);
       goto value;
     default:
@@ -1809,8 +1815,9 @@ md5_triple(triple *t, md5_byte_t *digest)
       assert(0);
   }
   md5_append(&state, (const md5_byte_t *)s, len);
-  if ( t->type_or_lang )
-  { md5_append(&state, t->has_lang ? "l" : "t", 1);
+  if ( t->qualifier )
+  { assert(t->type_or_lang);
+    md5_append(&state, t->qualifier == Q_LANG ? "l" : "t", 1);
     s = PL_atom_nchars(t->type_or_lang, &len);
     md5_append(&state, (const md5_byte_t *)s, len);
   }
@@ -1984,7 +1991,7 @@ get_literal(term_t lit, triple *t, int flags)
     if ( !get_lit_atom_ex(a, &t->object.string, flags) )
       return FALSE;
 
-    t->has_lang = TRUE;
+    t->qualifier = Q_LANG;
     t->objtype = OBJ_STRING;
   } else if ( PL_is_functor(lit, FUNCTOR_type2) &&
 	      !(flags & LIT_TYPED) )	/* avoid recursion */
@@ -1993,7 +2000,7 @@ get_literal(term_t lit, triple *t, int flags)
     PL_get_arg(1, lit, a);
     if ( !get_lit_atom_ex(a, &t->type_or_lang, flags) )
       return FALSE;
-    t->has_lang = FALSE;
+    t->qualifier = Q_TYPE;
     PL_get_arg(2, lit, a);
 
     return get_literal(a, t, LIT_TYPED|flags);
@@ -2252,10 +2259,12 @@ unify_object(term_t object, triple *t)
     else if ( PL_is_functor(object, FUNCTOR_literal2) )
       PL_get_arg(2, object, lit);
 
-    if ( t->type_or_lang )
+    if ( t->qualifier )
     { functor_t qf;
 
-      if ( t->has_lang )
+      assert(t->type_or_lang);
+
+      if ( t->qualifier == Q_LANG )
 	qf = FUNCTOR_lang2;
       else
 	qf = FUNCTOR_type2;
@@ -2642,13 +2651,13 @@ update_triple(term_t action, triple *t)
     memset(&t2, 0, sizeof(t2));
     if ( !get_object(a, &t2) )
       return FALSE;
-    if ( match_object(&t2, &tmp) )
+    if ( match_object(&t2, &tmp) && t2.qualifier == tmp.qualifier )
       return TRUE;
 
     tmp.objtype = t2.objtype;
     tmp.object = t2.object;		/* Union copy.  Portable? */
     tmp.type_or_lang = t2.type_or_lang;
-    tmp.has_lang = t2.has_lang;
+    tmp.qualifier = t2.qualifier;
   } else if ( PL_is_functor(action, FUNCTOR_source1) )
   { triple t2;
 
@@ -2681,7 +2690,7 @@ update_triple(term_t action, triple *t)
   new->object	    = tmp.object;
   new->objtype	    = tmp.objtype;
   new->type_or_lang = tmp.type_or_lang;
-  new->has_lang	    = tmp.has_lang;
+  new->qualifier    = tmp.qualifier;
   new->source	    = tmp.source;
   new->line	    = tmp.line;
 
