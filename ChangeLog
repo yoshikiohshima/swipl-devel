@@ -7,7 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: option processing in read_line_to_codes/3.  David Reitter.
+
   * ADDED: library(prolog_stack) to get and print stack-traces from Prolog.
+
 
 VERSION 5.3.11 (May 25, 2004)
 =============================

@@ -125,7 +125,7 @@ read_file_to_codes(Spec, Codes, Options) :-
 	;   Tail = [],
 	    Options1 = Options
 	),
-	split_options(Options1, file_options, FileOptions, OpenOptions),
+	split_options(Options1, file_option, FileOptions, OpenOptions),
 	absolute_file_name(Spec,
 			   [ access(read)
 			   | FileOptions
