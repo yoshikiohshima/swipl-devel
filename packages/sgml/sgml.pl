@@ -274,7 +274,8 @@ load_html_file(File, Term) :-
 	dtd(html, DTD),
 	load_structure(File, Term,
 		       [ dtd(DTD),
-			 dialect(sgml)
+			 dialect(sgml),
+			 shorttag(false)
 		       ]).
 
 

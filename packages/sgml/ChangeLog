@@ -1,3 +1,8 @@
+Sep 13, 2004
+
+  * ENHANCED: load_html_file/2: add shorttag(false) to the load_structure/3
+    options for better parsing of common errornous HTML pages.
+
 Aug 26, 2004
 
   * FIXED: Bug#177: catalog files from $SGML_CATALOG_FILES were not
