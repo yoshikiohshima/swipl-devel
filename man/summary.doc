@@ -278,6 +278,7 @@ suggest predicates from a keyword.
 \predicatesummary{line_count}{2}{Line number on stream}
 \predicatesummary{line_position}{2}{Character position in line on stream}
 \predicatesummary{list_debug_topics}{0}{List registered topics for debugging}
+\predicatesummary{list_to_set}{2}{Remove duplicates from a list}
 \predicatesummary{listing}{0}{List program in current module}
 \predicatesummary{listing}{1}{List predicate}
 \predicatesummary{load_files}{2}{Load source files with options}
