@@ -596,6 +596,15 @@ pl_db_closeall()
 		 *	   TRANSACTIONS		*
 		 *******************************/
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+NOTE: as of 4.2 txn_begin(), txn_commit()  and txn_abort() are no longer
+available as functions but as memberfunctions of DB_ENV. If I understand
+the docs correctly this was already possible for older versions as well.
+
+If there are troubles  with  older  versions   we  must  handle  this in
+configure.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 typedef struct _transaction
 { DB_TXN *tid;				/* transaction id */
   struct _transaction *parent;		/* parent id */
@@ -615,7 +624,7 @@ begin_transaction()
     else
       pid = NULL;
   
-    if ( (rval=txn_begin(db_env, pid, &tid, 0)) )
+    if ( (rval=db_env->txn_begin(db_env, pid, &tid, 0)) )
       return db_status(rval);
   
     t = malloc(sizeof(*t));
@@ -642,7 +651,7 @@ commit_transaction()
     transaction_stack = t->parent;
     free(t);
 
-    if ( (rval=txn_commit(tid, 0)) )
+    if ( (rval=tid->commit(tid, 0)) ) /* was txn_commit(tid, 0) */
       return db_status(rval);
 
     return TRUE;
@@ -663,7 +672,7 @@ abort_transaction()
     transaction_stack = t->parent;
     free(t);
 
-    if ( (rval=txn_abort(tid)) )
+    if ( (rval=tid->abort(tid)) )	/* was txn_abort(tid) */
       return db_status(rval);
 
     return TRUE;
@@ -1161,6 +1170,11 @@ get_server(term_t options, server_info *info)
 }
 
 
+#if defined(DB_CLIENT) && !defined(DB_RPCCLIENT)
+#define DB_RPCCLIENT DB_CLIENT
+#endif
+
+
 #define MAXCONFIG 20
 
 static foreign_t
@@ -1181,7 +1195,7 @@ pl_db_init(term_t option_list)
   config[0] = NULL;
 
   if ( get_server(option_list, &si) )
-  { if ( (rval=db_env_create(&db_env, DB_CLIENT)) )
+  { if ( (rval=db_env_create(&db_env, DB_RPCCLIENT)) )
       return db_status(rval);
 #ifdef HAVE_SET_RPC_SERVER		/* >= 4.0 */
     rval = db_env->set_rpc_server(db_env, 0, si.host,
