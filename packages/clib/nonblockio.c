@@ -596,7 +596,7 @@ startSocketThread()
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 wait_socket() is the Unix way  to  wait   for  input  on  the socket. By
 default event-dispatching on behalf of XPCE is performed. If this is not
-desired, you can do nbio_setopt(Socket,   dispatch(false)), in which case
+desired, you can use tcp_setopt(Socket,  dispatch(false)), in which case
 this call returns immediately, assuming the   actual TCP call will block
 without dispatching if no input is available.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
