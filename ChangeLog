@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: read_pending_input/3, fetching pending input from a stream.
+
   * ENHANCED: On Windows-NT, use Waitable Timers to realise sleep/1,
     resulting in improved handling of events and timeouts as well as
     better timer resolution.  Uses old Sleep() based version on older

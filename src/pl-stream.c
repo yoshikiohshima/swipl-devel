@@ -605,6 +605,38 @@ Sfwrite(const void *data, int size, int elms, IOSTREAM *s)
 
 
 		 /*******************************
+		 *	       PENDING		*
+		 *******************************/
+
+int
+Sread_pending(IOSTREAM *s, char *buf, int limit, int flags)
+{ int done = 0;
+  int n;
+
+  if ( s->bufp >= s->limitp && (flags & SIO_RP_BLOCK) )
+  { int c = S__fillbuf(s);
+
+    if ( c < 0 )
+      return c;
+
+    buf[0] = c;
+    limit--;
+    done = 1;
+  }
+
+  n = s->limitp - s->bufp;
+  Sdprintf("Pending: %d\n", n);
+  if ( n > limit )
+    n = limit;
+  memcpy(&buf[done], s->bufp, n);
+  s->bufp += n;
+
+  return done+n;
+}
+
+
+
+		 /*******************************
 		 *               FLAGS		*
 		 *******************************/
 

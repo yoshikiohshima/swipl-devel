@@ -1380,6 +1380,53 @@ pl_wait_for_input(term_t Streams, term_t Available,
 		*      PROLOG CONNECTION        *
 		*********************************/
 
+#define MAX_PENDING SIO_BUFSIZE		/* 4096 */
+
+PRED_IMPL("read_pending_input", 3, read_pending_input, 0)
+{ PRED_LD
+  IOSTREAM *s;
+
+  if ( getInputStream(A1, &s) )
+  { char buf[MAX_PENDING];
+    int n, i;
+    Word gstore, lp, tp;
+
+    if ( Sferror(s) )
+      return streamStatus(s);
+
+    n = Sread_pending(s, buf, sizeof(buf), 0);
+    if ( n < 0 )			/* should not happen */
+      return streamStatus(s);
+
+    gstore = allocGlobal(n*3);
+    lp = valTermRef(A2);
+    deRef(lp);
+    tp = valTermRef(A3);
+    deRef(tp);
+
+    if ( !isVar(*lp) )
+      return PL_error(NULL, 0, NULL, ERR_INSTANTIATION, A2);
+    *lp = consPtr(gstore, TAG_COMPOUND|STG_GLOBAL);
+
+    for(i=0; i<n; )
+    { *gstore++ = FUNCTOR_dot2;
+      *gstore++ = consInt(buf[i]&0xff);
+      if ( ++i < n )
+      { *gstore = consPtr(&gstore[1], TAG_COMPOUND|STG_GLOBAL);
+        gstore++;
+      }
+    }
+
+    setVar(*gstore);
+    unify_ptrs(gstore, tp PASS_LD);
+    
+    return streamStatus(s);
+  }
+
+  fail;
+}
+
+
 int
 PL_get_char(term_t c, int *p, int eof)
 { GET_LD
@@ -3601,4 +3648,5 @@ pl_copy_stream_data2(term_t in, term_t out)
 
 BeginPredDefs(file)
   PRED_DEF("set_prolog_IO", 3, set_prolog_IO, 0)
+  PRED_DEF("read_pending_input", 3, read_pending_input, 0)
 EndPredDefs

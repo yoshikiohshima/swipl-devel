@@ -164,7 +164,8 @@ tab(W, Name:name, Tab:tab) :<-
 :- pce_begin_class(window_tab(name), tab,
 		   "Tab displaying a window").
 
-variable(window,	window*, get, "Displayed window").
+variable(window,	window*,      get, "Displayed window").
+variable(closing,	bool := @off, get, "We are about to close").
 delegate_to(window).
 
 initialise(T, Window:window=[window], Name:name=[name]) :->
@@ -209,8 +210,11 @@ initialise(T, Window:window=[window], Name:name=[name]) :->
 
 size(T, Size:size) :->
 	"Adjust size of tab and window"::
-	in_pce_thread(send(T, resize_window)),
-	send_super(T, size, Size).
+	(   get(T, closing, @on)
+	->  true
+	;   in_pce_thread(send(T, resize_window)),
+	    send_super(T, size, Size)
+	).
 
 resize_window(T) :->
 	get(T, size, size(W, H)),
@@ -307,6 +311,22 @@ untab(Tab) :->
 	get(Tab, untab, Window),
 	send(new(window_tab_frame(Window, Name, Rank)), open, point(X, Y+20)),
 	new(_, partof_hyper(TabbedWindow, Window, toplevel, tab)).
+
+%	->close_other_tabs
+%	
+%	Close all tabs but be. To work   around scheduled resize for the
+%	subwindows we first indicate we are about to close the tabs. See
+%	also ->size.
+
+close_other_tabs(Tab) :->
+	"Destroy all tabs except for me"::
+	get(Tab, device, Stack),
+	send(Stack?graphicals, for_all,
+	     if(@arg1 \== Tab,
+		message(@arg1, slot, closing, @on))),
+	send(Stack?graphicals, for_all,
+	     if(@arg1 \== Tab,
+		message(@arg1, destroy))).
 
 :- pce_end_class(window_tab).
 

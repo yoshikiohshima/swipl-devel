@@ -417,6 +417,7 @@ suggest predicates from a keyword.
 \predicatesummary{read_clause}{2}{Read clause from stream}
 \predicatesummary{read_history}{6}{Read using history substitution}
 \predicatesummary{read_link}{3}{Read a symbolic link}
+\predicatesummary{read_pending_input}{3}{Fetch buffered input from a stream}
 \predicatesummary{read_term}{2}{Read term with options}
 \predicatesummary{read_term}{3}{Read term with options from stream}
 \predicatesummary{recorda}{2}{Record term in the database (first)}

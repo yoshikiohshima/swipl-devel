@@ -2237,6 +2237,7 @@
   BUILTIN_NAME("update_link_attributes")
   BUILTIN_NAME("update_message")
   BUILTIN_NAME("update_pointed")
+  BUILTIN_NAME("update_scroll_bar_values")
   BUILTIN_NAME("update_tile_adjusters")
   BUILTIN_NAME("upper")
   BUILTIN_NAME("uppercase")

@@ -2604,6 +2604,34 @@ Copy \arg{Len} bytes from stream \arg{StreamIn} to \arg{StreamOut}.
     \predicate{copy_stream_data}{2}{+StreamIn, +StreamOut}
 Copy data all (remaining) data from stream \arg{StreamIn} to
 \arg{StreamOut}.
+
+    \predicate{read_pending_input}{3}{+StreamIn, -Codes, ?Tail}
+Read input pending in the input buffer of \arg{StreamIn} and return
+it in the difference list \arg{Codes}-\arg{Tail}. I.e.\ the
+available characters codes are used to create the list \arg{Codes}
+ending in the tail \arg{Tail}.  This predicate is intended for 
+efficient unbuffered copying and filtering of input comming from
+network connections or devices.
+
+The following code fragment realises effient non-blocking copy of data
+from an input- to an output stream. The at_end_of_stream/1 call checks
+for end-of-stream and fills the input buffer.  Note that the use of
+a get_code/2 and put_code/2 based loop requires a flush_output/1 call
+after \emph{each} put_code/2.  The copy_stream_data/2 does not allow
+for inspection of the copied data and suffers from the same buffering
+issues.
+
+\begin{code}
+copy(In, Out) :-
+	repeat,
+	    (	at_end_of_stream(In)
+	    ->	!
+	    ;	read_pending_input(In, Chars, []),
+		format(Out, '~s', [Chars]),
+		flush_output(Out),
+		fail
+	    ).
+\end{code}
 \end{description}
 
 \section{Term reading and writing}		\label{sec:termrw}

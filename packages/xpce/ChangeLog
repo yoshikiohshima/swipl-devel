@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ADDED: `window->update_scroll_bar_values' as a hook to intercept update
+  requests to the scrollbars.
+
 * ADDED: `tabbed_window->append': optional `expose' argument to make the
   new tab the topmost one.
 
@@ -13,8 +16,8 @@
 * FIXED: Class connect gesture to reset <-device in ->terminate.
   Petter Egesund.
 
-VERSION 6.2.25, distributed with SWI-Prolog 5.3.18
-==================================================
+VERSION 6.2.25, distributed with SWI-Prolog 5.3.18/5.3.19
+=========================================================
 
 * FIXED: Buffer overrun-by-one in menu->selection.  Caused crashes on Windows
   version.  Christophe Costa Florencio.
