@@ -901,6 +901,14 @@ finish their jobs (i.e. no worker is abandoned while serving a client).
 <P>This can be used to tune the number of workers for performance. 
 Another possible application is to reduce the pool to one worker to 
 facilitate easier debugging.
+
+<P>
+<DT><A NAME="http_current_worker/2"><STRONG>http_current_worker</STRONG>(<VAR>?Port, 
+?ThreadID</VAR>)</A><DD>
+True if <VAR>ThreadID</VAR> is the identifier of a Prolog thread serving
+<VAR>Port</VAR>. This predicate is motivated to allow for the use of 
+arbitrary interaction with the worker thread for development and 
+statistics.
 </DL>
 
 <H4><A NAME="sec:3.3.4">3.3.4 From (Unix) inetd</A></H4>
@@ -1584,6 +1592,7 @@ Currently atom-garbage collection is activated after the creation of
 <DT><A HREF="#html_write:expand/1">html_write:expand/1</A><DD>
 <DT><A HREF="#html_write:layout/3">html_write:layout/3</A><DD>
 <DT><A HREF="#http_current_server/2">http_current_server/2</A><DD>
+<DT><A HREF="#http_current_worker/2">http_current_worker/2</A><DD>
 <DT><A HREF="#http_get/3">http_get/3</A><DD>
 <A HREF="#idx:httpget3:5">2.2</A> <A HREF="#idx:httpget3:7">2.2</A>
 <DT><A HREF="#http_open/3">http_open/3</A><DD>

@@ -708,6 +708,12 @@ in the queue, discarding the excess workers as they finish their jobs
 This can be used to tune the number of workers for performance.  Another
 possible application is to reduce the pool to one worker to facilitate
 easier debugging.
+
+    \predicate{http_current_worker}{2}{?Port, ?ThreadID}
+True if \arg{ThreadID} is the identifier of a Prolog thread serving
+\arg{Port}. This predicate is motivated to allow for the use of
+arbitrary interaction with the worker thread for development and
+statistics.
 \end{description}
 
 

@@ -32,7 +32,8 @@
 :- module(thread_httpd,
 	  [ http_current_server/2,	% ?:Goal, ?Port
 	    http_server/2,		% :Goal, +Options
-	    http_workers/2		% +Port, ?WorkerCount
+	    http_workers/2,		% +Port, ?WorkerCount
+	    http_current_worker/2	% ?Port, ?ThreadID
 	  ]).
 :- use_module(library(debug)).
 :- use_module(http_wrapper).
@@ -53,7 +54,8 @@ is not elegant.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 :- meta_predicate
-	http_server(:, +).
+	http_server(:, +),
+	http_current_server(:, ?).
 
 :- dynamic
 	current_server/3,		% Port, Goal, Queue
@@ -130,7 +132,8 @@ create_server(Socket, Goal, Port, Queue, Options) :-
 %	Enumerate the created servers.
 
 http_current_server(Goal, Port) :-
-	current_server(Port, Goal, _).
+	'$strip_module'(Goal, Module, G),
+	current_server(Port, Module:G, _).
 
 
 %	http_workers(+Port, ?Workers)
@@ -144,6 +147,18 @@ http_workers(Port, Workers) :-
 	;   findall(W, queue_worker(Queue, W), WorkerIDs),
 	    length(WorkerIDs, Workers)
 	).
+
+
+%	http_current_worker(?Port, ?ThreadID)
+%	
+%	True if ThreadID is the identifier   of  a Prolog thread serving
+%	Port. This predicate is  motivated  to   allow  for  the  use of
+%	arbitrary interaction with the worker thread for development and
+%	statistics.
+
+http_current_worker(Port, ThreadID) :-
+	current_server(Port, _, Queue),
+	queue_worker(Queue, ThreadID).
 
 
 %	accept_server(+Socket, :Goal, +Options)
