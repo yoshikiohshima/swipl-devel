@@ -28,7 +28,7 @@ INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 
-LIBPL=		chr.pl chr_pp.pl chr_op.pl chr_translate.pl \
+LIBPL=		chr.pl chr_op.pl chr_translate.pl \
 		chr_swi.pl \
 		hprolog.pl pairlist.pl assoc.pl
 
