@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* FIXED: Busy cursor handling for MS-Windows (Cursor was not properly
+  updated).  Holger Kanwischer.
+
 * FIXED: Class connect gesture to reset <-device in ->terminate.
   Petter Egesund.
 
