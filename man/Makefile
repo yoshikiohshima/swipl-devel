@@ -160,6 +160,10 @@ install::
 		tar zcvf $(FTPDIR)/refman/HTMLmanual.tar.gz Manual
 		cp -a $(PDF) $(FTPDIR)/refman/refman.pdf
 
+beta-install::
+		install -m 644 MANUAL.pdf $(FTPDIR)/BETA/Manual.pdf
+		tar zcvf $(FTPDIR)/BETA/Manual.html.tgz Manual
+
 ################################################################
 # Windows readme
 ################################################################

@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#129: dummy bagof/setof choicepoint.  Holger Kanwischer.
+
   * FIXED: Bug#125: rename_file/2 if source and destination are the same.
     Dr. Werner Wolff.
 

@@ -1711,7 +1711,11 @@ $split([H|T0], Split, [H|T], Tail) :-
 		*       LIST PROCESSING         *
 		*********************************/
 
-$member(X, [X|_]).
+$member(X, [X|T]) :-
+	(   T == []
+	->  !
+	;   true
+	).
 $member(X, [_|T]) :-
 	$member(X, T).
 
