@@ -1,3 +1,8 @@
+Aug 31, 2004
+
+  * ADDED: rdf_predicate_property/2 new properties object_branch_factor
+    and subject_branch_factor.
+
 Aug 27, 2004
 
   * FIXED: module problem in rdf_db.pl

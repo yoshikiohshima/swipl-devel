@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include "atom_set.h"
 #ifdef WITH_MD5
 #include "md5.h"
 
@@ -91,6 +92,8 @@ static functor_t FUNCTOR_like1;
 static functor_t FUNCTOR_symmetric1;
 static functor_t FUNCTOR_inverse_of1;
 static functor_t FUNCTOR_transitive1;
+static functor_t FUNCTOR_subject_branch_factor1; /* S --> BF*O */
+static functor_t FUNCTOR_object_branch_factor1;	/* O --> BF*S */
 
 static functor_t FUNCTOR_searched_nodes1;
 static functor_t FUNCTOR_lang2;
@@ -114,6 +117,9 @@ static int match(int how, atom_t search, atom_t label);
 static int update_duplicates_add(triple *t);
 static void update_duplicates_del(triple *t);
 static void unlock_atoms(triple *t);
+static int  update_hash(void);
+static int  triple_hash(triple *t, int which);
+static unsigned long object_hash(triple *t);
 
 
 		 /*******************************
@@ -729,6 +735,83 @@ isSubPropertyOf(predicate *sub, predicate *p)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Branching  factors  are  crucial  in  ordering    the  statements  of  a
+conjunction. 
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static int
+update_predicate_counts(predicate *p)
+{ long changed = abs(p->triple_count - p->distinct_updated);
+
+  if ( !update_hash() )
+    return FALSE;
+
+  if ( changed > p->distinct_updated )
+  { avl_tree subject_set;
+    avl_tree object_set;
+    triple t;
+    triple *byp;
+
+    memset(&t, 0, sizeof(t));
+    t.predicate = p;
+    t.indexed |= BY_P;
+
+    avl_init(&subject_set);
+    avl_init(&object_set);
+    for(byp = table[t.indexed][triple_hash(&t, t.indexed)];
+	byp;
+	byp = byp->next[t.indexed])
+    { if ( byp->predicate == p && !byp->is_duplicate )
+      { avl_insert(&subject_set, byp->subject);
+	avl_insert(&object_set, object_hash(byp)); /* NOTE: not exact! */
+      }
+    }
+
+    avl_destroy(&subject_set);
+    avl_destroy(&object_set);
+
+    p->distinct_updated  = p->triple_count;
+    p->distinct_subjects = subject_set.size;
+    p->distinct_objects  = object_set.size;
+
+    DEBUG(1, Sdprintf("%s: distinct subjects: %ld, objects: %ld\n",
+		      PL_atom_chars(p->name),
+		      p->distinct_subjects,
+		      p->distinct_objects));
+  }
+
+  return TRUE;
+}
+
+
+static double
+subject_branch_factor(predicate *p)
+{ if ( !update_predicate_counts(p) )
+    return FALSE;
+
+  if ( p->distinct_subjects == 0 )
+    return 0.0;				/* 0 --> 0 */
+
+  return (double)p->triple_count / (double)p->distinct_subjects;
+}
+
+
+static double
+object_branch_factor(predicate *p)
+{ if ( !update_predicate_counts(p) )
+    return FALSE;
+
+  if ( p->distinct_objects == 0 )
+    return 0.0;				/* 0 --> 0 */
+
+  return (double)p->triple_count / (double)p->distinct_objects;
+}
+
+
+
+
 		 /*******************************
 		 *	     SOURCE FILES	*
 		 *******************************/
@@ -1167,7 +1250,7 @@ update_hash()
 #define WANT_GC ((erased-freed) > 1000 && (erased-freed) > (created-erased))
 
 static int
-update_hash()
+update_hash(void)
 { int want_gc = WANT_GC;
 
   if ( want_gc )
@@ -3010,7 +3093,7 @@ rdf_set_predicate(term_t pred, term_t option)
 }
 
 
-#define PRED_PROPERTY_COUNT 5
+#define PRED_PROPERTY_COUNT 7
 static functor_t predicate_key[PRED_PROPERTY_COUNT];
 
 static int
@@ -3030,6 +3113,12 @@ unify_predicate_property(predicate *p, term_t option, functor_t f)
   } else if ( f == FUNCTOR_triples1 )
   { return PL_unify_term(option, PL_FUNCTOR, f,
 			 PL_INTEGER, p->triple_count);
+  } else if ( f == FUNCTOR_subject_branch_factor1 )
+  { return PL_unify_term(option, PL_FUNCTOR, f,
+			 PL_FLOAT, subject_branch_factor(p));
+  } else if ( f == FUNCTOR_object_branch_factor1 )
+  { return PL_unify_term(option, PL_FUNCTOR, f,
+			 PL_FLOAT, object_branch_factor(p));
   } else
   { assert(0);
     return FALSE;
@@ -3049,6 +3138,8 @@ rdf_predicate_property(term_t pred, term_t option, control_t h)
     predicate_key[i++] = FUNCTOR_inverse_of1;
     predicate_key[i++] = FUNCTOR_transitive1;
     predicate_key[i++] = FUNCTOR_triples1;
+    predicate_key[i++] = FUNCTOR_subject_branch_factor1;
+    predicate_key[i++] = FUNCTOR_object_branch_factor1;
     assert(i < PRED_PROPERTY_COUNT);
   }
 
@@ -3899,6 +3990,8 @@ install_rdf_db()
   MKFUNCTOR(inverse_of, 1);
   MKFUNCTOR(lang, 2);
   MKFUNCTOR(type, 2);
+  MKFUNCTOR(subject_branch_factor, 1);
+  MKFUNCTOR(object_branch_factor, 1);
 
   FUNCTOR_colon2 = PL_new_functor(PL_new_atom(":"), 2);
 

@@ -265,6 +265,21 @@ True if this predicate is transitive.
 Unify \arg{Triples} with the number of existing triples using
 this predicate as second argument.  Reporting the number of 
 triples is intended to support query optimization.
+
+	\termitem{subject_branch_factor}{-Float}
+Unify \arg{Float} with the average number of triples associated with
+each unique value for the subject-side of this relation.  If there
+are no triples the value 0.0 is returned.  This value is cached with
+the predicate and recomputed only after substantial changes to the
+triple set associated to this relation.  This property is indented
+for path optimalisation when solving conjunctions of rdf/3 goals.
+
+	\termitem{object_branch_factor}{-Float}
+Unify \arg{Float} with the average number of triples associated with
+each unique value for the object-side of this relation.  In addition
+to the comments with the subject_branch_factor property, uniqueness
+of the object value is computed from the hash key rather than the
+actual values.
     \end{description}
 \end{description}
 
