@@ -140,6 +140,7 @@ initPrologLocalData(void)
   environment_frame = (LocalFrame) NULL;
   LD->statistics.inferences = 0;
   LD->float_format = "%g";
+  LD->feature.write_attributes = PL_WRT_ATTVAR_IGNORE;
 }
 
 

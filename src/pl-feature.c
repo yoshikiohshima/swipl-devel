@@ -247,6 +247,22 @@ setUnknown(atom_t a, unsigned int *flagp)
 }
 
 
+static int
+setWriteAttributes(atom_t a)
+{ int mask = writeAttributeMask(a);
+
+  if ( mask )
+  { LD->feature.write_attributes = mask;
+    succeed;
+  } else
+  { term_t value = PL_new_term_ref();
+
+    PL_put_atom(value, a);
+    return PL_error(NULL, 0, NULL, ERR_DOMAIN, ATOM_write_attributes, value);
+  }
+}
+
+
 word
 pl_set_feature(term_t key, term_t value)
 { atom_t k;
@@ -384,10 +400,9 @@ pl_set_feature(term_t key, term_t value)
       } else if ( k == ATOM_double_quotes )
       { rval = setDoubleQuotes(a, &m->flags);
       } else if ( k == ATOM_unknown )
-      { if ( !setUnknown(a, &m->flags) )
-	{ UNLOCK();
-	  fail;
-	}
+      { rval = setUnknown(a, &m->flags);
+      } else if ( k == ATOM_write_attributes )
+      { rval = setWriteAttributes(a);
       }
       break;
     }
@@ -749,6 +764,7 @@ initFeatures()
   defFeature("character_escapes", FT_BOOL, TRUE, CHARESCAPE_FEATURE);
   defFeature("char_conversion", FT_BOOL, FALSE, CHARCONVERSION_FEATURE);
   defFeature("backquoted_string", FT_BOOL, FALSE, BACKQUOTED_STRING_FEATURE);
+  defFeature("write_attributes", FT_ATOM, "ignore");
   defFeature("double_quotes", FT_ATOM, "codes");
   defFeature("unknown", FT_ATOM, "error");
   defFeature("debug", FT_BOOL, FALSE, 0);

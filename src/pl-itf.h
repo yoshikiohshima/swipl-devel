@@ -551,6 +551,16 @@ PL_EXPORT(IOSTREAM *)*_PL_streams(void);	/* base of streams */
 #define PL_WRT_PORTRAY		0x08	/* call portray */
 #define PL_WRT_CHARESCAPES	0x10	/* Output ISO escape sequences */
 #define PL_WRT_BACKQUOTED_STRING 0x20	/* Write strings as `...` */
+					/* Write attributed variables */
+#define PL_WRT_ATTVAR_IGNORE	0x040	/* Default: just write the var */
+#define PL_WRT_ATTVAR_DOTS	0x080	/* Write as Var{...} */
+#define PL_WRT_ATTVAR_WRITE	0x100	/* Write as Var{Attributes} */
+#define PL_WRT_ATTVAR_PORTRAY	0x200	/* Use Module:portray_attrs/2 */
+#define PL_WRT_ATTVAR_MASK \
+	(PL_WRT_ATTVAR_IGNORE | \
+	 PL_WRT_ATTVAR_DOTS | \
+	 PL_WRT_ATTVAR_WRITE | \
+	 PL_WRT_ATTVAR_PORTRAY)
 
 PL_EXPORT(int) PL_write_term(IOSTREAM *s,
 			      term_t term,

@@ -814,6 +814,7 @@ word		pl_print(term_t term);
 word		pl_write2(term_t stream, term_t term);
 word		pl_writeq2(term_t stream, term_t term);
 word		pl_print2(term_t stream, term_t term);
+int		writeAttributeMask(atom_t name);
 
 /* pl-term.c */
 void		resetTerm(void);

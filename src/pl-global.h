@@ -397,6 +397,7 @@ typedef struct PL_local_data
   struct
   { Table	  table;		/* Feature table */
     pl_features_t mask;			/* Masked access to booleans */
+    int		  write_attributes;	/* how to write attvars? */
   } feature;
 
   struct

@@ -291,29 +291,39 @@ writeQuoted(IOSTREAM *stream, const char *text, int len, int quote,
 static bool
 writeAttVar(term_t av, write_options *options)
 { char buf[32];
-  visited v;
   fid_t fid = PL_open_foreign_frame();
   term_t a = PL_new_term_ref();
 
   TRY(PutToken(varName(av, buf), options->out));
-  v.address = address_of(av);
-  if ( has_visited(options->visited, v.address) )
+
+  if ( (options->flags & PL_WRT_ATTVAR_DOTS) )
+  { return PutString("{...}", options->out);
+  } else if ( (options->flags & PL_WRT_ATTVAR_WRITE) )
+  { visited v;
+
+    v.address = address_of(av);
+    if ( has_visited(options->visited, v.address) )
+      succeed;
+    v.next = options->visited;
+    options->visited = &v;
+    Sputc('{', options->out);
+    PL_get_attr(av, a);
+    if ( !writeTerm(a, 1200, options) )
+      goto error;
+    Sputc('}', options->out);
+    PL_close_foreign_frame(fid);
+
+    options->visited = v.next;
     succeed;
-  v.next = options->visited;
-  options->visited = &v;
-  Sputc('{', options->out);
-  PL_get_attr(av, a);
-  if ( !writeTerm(a, 1200, options) )
-    goto error;
-  Sputc('}', options->out);
-  PL_close_foreign_frame(fid);
 
-  options->visited = v.next;
+  error:
+    options->visited = v.next;
+    fail;
+  } else if ( (options->flags & PL_WRT_ATTVAR_PORTRAY) )
+  { /*TBD*/
+  }
+
   succeed;
-
-error:
-  options->visited = v.next;
-  fail;
 }
 #endif
 
@@ -697,6 +707,22 @@ writeTerm2(term_t t, int prec, write_options *options)
   }
 }
 
+
+int
+writeAttributeMask(atom_t a)
+{ if ( a == ATOM_ignore )
+  { return PL_WRT_ATTVAR_IGNORE;
+  } else if ( a == ATOM_dots )
+  { return PL_WRT_ATTVAR_DOTS;
+  } else if ( a == ATOM_write )
+  { return PL_WRT_ATTVAR_WRITE;
+  } else if ( a == ATOM_portray )
+  { return PL_WRT_ATTVAR_PORTRAY;
+  } else
+    return 0;
+}
+
+
 static const opt_spec write_term_options[] = 
 { { ATOM_quoted,	    OPT_BOOL },
   { ATOM_ignore_ops,	    OPT_BOOL },
@@ -706,6 +732,7 @@ static const opt_spec write_term_options[] =
   { ATOM_max_depth,	    OPT_INT  },
   { ATOM_module,	    OPT_ATOM },
   { ATOM_backquoted_string, OPT_BOOL },
+  { ATOM_attributes,	    OPT_ATOM },
   { NULL_ATOM,	     	    0 }
 };
 
@@ -718,6 +745,7 @@ pl_write_term3(term_t stream, term_t term, term_t opts)
   bool bqstring   = trueFeature(BACKQUOTED_STRING_FEATURE);
   bool charescape = -1;			/* not set */
   atom_t mname    = ATOM_user;
+  atom_t attr     = ATOM_nil;
   IOSTREAM *s;
   write_options options;
 
@@ -726,8 +754,19 @@ pl_write_term3(term_t stream, term_t term, term_t opts)
   if ( !scan_options(opts, 0, ATOM_write_option, write_term_options,
 		     &quoted, &ignore_ops, &numbervars, &portray,
 		     &charescape, &options.max_depth, &mname,
-		     &bqstring) )
+		     &bqstring, &attr) )
     fail;
+
+  if ( attr == ATOM_nil )
+  { options.flags |= LD->feature.write_attributes;
+  } else
+  { int mask = writeAttributeMask(attr);
+
+    if ( !mask )
+      return PL_error(NULL, 0, NULL, ERR_DOMAIN, ATOM_write_option, opts);
+    
+    options.flags |= mask;
+  }
 
   if ( !getOutputStream(stream, &s) )
     fail;
