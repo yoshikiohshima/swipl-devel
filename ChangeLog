@@ -7,7 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-  * ADDED: experimental	predicate unifyable/3.
+  * ADDED: experimental	predicate unifyable/3.  New versions of dif/2
+    and when/2 based on this predicate by Tom Schrijvers.
 
   * ADDED: when/2
 
