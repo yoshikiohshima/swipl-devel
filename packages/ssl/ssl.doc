@@ -14,13 +14,16 @@
 
 \begin{document}
 
+%\urldef{\diff}\url[Diff Automatisering v.o.f]{http://www.diff.nl}
+
 \title{SWI-Prolog SSL Interface}
-\author{Jan Wielemaker \\
-	SWI, University of Amsterdam \\
-	The Netherlands \\
-	E-mail: \email{jan@swi-prolog.org} \\[5pt]
-	Jan van der Steen \\
-	Diff Automatisering v.o.f}
+\author{Jan van der Steen \\
+	\url[Diff Automatisering v.o.f]{http://www.diff.nl} \\[5pt]
+	Jan Wielemaker \\
+        SWI, University of Amsterdam \\
+        The Netherlands \\
+        E-mail: \email{jan@swi-prolog.org}
+       }
 	
 \maketitle
 
@@ -44,15 +47,17 @@ An SSL server and client can be built with the following (abstracted)
 predicate calls:
 
 \begin{center}
-\begin{tabular}{ll}
+\begin{tabular}{|l|l|}
+\hline \\
     SSL server    &     SSL client \\
-\hline
+\hline \\
     ssl_init      &     ssl_init \\
     ssl_socket    &     ssl_socket \\
     ssl_accept    &     ssl_connect \\
     ssl_open      &     ssl_open \\
     \ldots        &     \ldots \\
-    ssl_exit      &     ssl_exit
+    ssl_exit      &     ssl_exit \\
+\hline
 \end{tabular}
 \end{center}
 
@@ -137,10 +142,8 @@ Clean up all resources related to the SSL + TCP/IP socket layers.
 
 \section{Acknowledgments}
 
-The SWI-Prolog ODBC interface started from a partial interface by
-Stefano De Giorgi. Mike Elston suggested programmable
-null-representation with many other suggestions while doing the first
-field-tests with this package.
+The development of the SWI-Prolog SSL interface has been sponsored by
+\url[Scientific Software and Systems Limited]{http://www.sss.co.nz}.
 
 \bibliographystyle{plain}
 \bibliography{odbc}

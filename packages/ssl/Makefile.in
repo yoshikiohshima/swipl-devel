@@ -31,7 +31,7 @@ NETLIBS=@NETLIBS@
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
-DOC=odbc
+DOC=ssl
 TEX=$(DOC).tex
 DVI=$(DOC).dvi
 PDF=$(DOC).pdf
