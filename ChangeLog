@@ -12,6 +12,7 @@
   * ADDED: Exporting operators from modules.
 
   * ADDED: flag called generate_debug_info and commandline option -nodebug.
+    Fixed/cleanup of various tracing options.
 
   * FIXED: Bug#140, various problems with complicated reload of files.
     Hans van de Koot.

@@ -497,12 +497,17 @@ sbag_merge([X | Xs],YL,R) :-
   ).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:- multifile
+	chr:debug_event/2.
+
 'chr debug_event'(Event) :-
 	nb_getval(chr_debug,mutable(State)),
 	( State == off ->
 		true
-	;
-		debug_event(State,Event)
+	; chr:debug_event(State, Event) ->
+		true
+	; 	debug_event(State,Event)
 	).
 
 chr_trace :-

@@ -2067,12 +2067,17 @@ pl_set_predicate_attribute(term_t pred,
   }
 
   if ( rc && val &&
-       (att & (DYNAMIC|METAPRED|DISCONTIGUOUS|VOLATILE|P_THREAD_LOCAL)) &&
+       (att & PROC_DEFINED) &&
        false(def, FILE_ASSIGNED) &&
        ReadingSource )
   { DEBUG(2, Sdprintf("Associating %s to %s\n",
 		      predicateName(def), PL_atom_chars(source_file_name)));
     addProcedureSourceFile(lookupSourceFile(source_file_name), proc);
+
+    if ( trueFeature(DEBUGINFO_FEATURE) )
+      clear(def, HIDE_CHILDS);
+    else
+      set(def, HIDE_CHILDS);
   }
 
   return rc;

@@ -45,6 +45,7 @@
 	    chr_trace/0,
 	    chr_notrace/0
 	  ]).
+:- set_prolog_flag(generate_debug_info, false).
 
 :- multifile user:file_search_path/2.
 :- dynamic   user:file_search_path/2.
@@ -170,8 +171,11 @@ call_chr_translate(File, _, []) :-
 		 *      SYNCHRONISE TRACER	*
 		 *******************************/
 
-:- multifile user:message_hook/3.
-:- dynamic   user:message_hook/3.
+:- multifile
+	user:message_hook/3,
+	chr:debug_event/2.
+:- dynamic
+	user:message_hook/3.
 
 user:message_hook(trace_mode(OnOff), _, _) :-
 	(   OnOff == on
@@ -179,6 +183,15 @@ user:message_hook(trace_mode(OnOff), _, _) :-
 	;   chr_notrace
 	),
 	fail.				% backtrack to other handlers
+
+chr:debug_event(_State, _Event) :-
+	prolog_skip_level(Skip, Skip),
+	Skip \== very_deep,
+	prolog_current_frame(Me),
+	prolog_frame_attribute(Me, level, Level),
+	Level > Skip, !.
+
+
 
 
 		 /*******************************
