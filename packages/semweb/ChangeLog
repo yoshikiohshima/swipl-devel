@@ -1,5 +1,9 @@
 Sep 14, 2004
 
+  * ENHANCED: Actually start of with small tables and resize them if the
+    triple count increases.  Reduces memory usage and improves speed on
+    erasing and re-hashing small datasets.
+
   * FIXED: Bug#183: memory corruption due to invalid free.  Sandro Hawke.
     Same test also provided other consistency errors.
 

@@ -244,15 +244,6 @@ get_bool_arg_ex(int a, term_t t, int *val)
 #define PRT_SRC	0x1
 
 static void
-print_triple_source(triple *t)
-{ if ( t->line == NO_LINE )
-    Sdprintf("[%s]: ", PL_atom_chars(t->source));
-  else
-    Sdprintf("%s:%ld: ", PL_atom_chars(t->source), t->line);
-}
-  
-
-static void
 print_object(triple *t)
 { switch(t->objtype)
   { case OBJ_RESOURCE:
@@ -1249,15 +1240,34 @@ there are no active queries and the tables are of the proper size.
 At the same time, this predicate actually removes erased triples.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+static long
+tbl_size(long triples)
+{ long s0 = 1024;
+
+  while(s0 < triples)
+    s0 *= 2;
+
+  return s0;
+}
+
+
+
 static void
 rehash_triples()
 { int i;
   triple *t, *t2;
+  long count = created - freed;
+  long tsize = tbl_size(count);
 
   for(i=1; i<INDEX_TABLES; i++)
   { if ( table[i] )
-    { long bytes = sizeof(triple*) * table_size[i];
-      long cbytes = sizeof(int)    * table_size[i];
+    { long bytes  = sizeof(triple*) * tsize;
+      long cbytes = sizeof(int)    * tsize;
+
+      table_size[i] = tsize;
+      table[i]  = PL_realloc(table[i], bytes);
+      tail[i]   = PL_realloc(tail[i], bytes);
+      counts[i] = PL_realloc(counts[i], cbytes);
 
       memset(table[i], 0, bytes);
       memset(tail[i], 0, bytes);
@@ -1309,11 +1319,23 @@ rehash_triples()
 update_hash()
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define WANT_GC ((erased-freed) > 1000 && (erased-freed) > (created-erased))
+static int
+WANT_GC()
+{ long dirty = erased-freed;
+  long count = created-erased;
+
+  if ( dirty > 1000 && dirty > count )
+    return TRUE;
+  if ( count > table_size[1]*4 )
+    return TRUE;
+
+  return FALSE;
+}
+
 
 static int
 update_hash(void)
-{ int want_gc = WANT_GC;
+{ int want_gc = WANT_GC();
 
   if ( want_gc )
     DEBUG(1, Sdprintf("rdf_db: want GC\n"));
@@ -1339,7 +1361,7 @@ update_hash(void)
 	DEBUG(1, Sdprintf("ok\n"));
       }
       need_update = 0;
-    } else if ( WANT_GC )
+    } else if ( WANT_GC() )
     { DEBUG(1, Sdprintf("rdf_db: GC ..."));
       rehash_triples();
       DEBUG(1, Sdprintf("ok\n"));
