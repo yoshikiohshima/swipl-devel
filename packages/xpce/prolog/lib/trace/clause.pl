@@ -39,11 +39,8 @@
 	  ]).
 
 
-:- pce_global(@dynamic_source_buffer, make_dynamic_source_buffer).
-
-make_dynamic_source_buffer(G) :-
-	start_emacs,
-	new(G, emacs_buffer(@nil, '*dynamic code*')).
+:- pce_global(@dynamic_source_buffer,
+	      new(emacs_buffer(@nil, '*dynamic code*'))).
 
 debug(_, _).
 %debug(Fmt, Args) :- format(Fmt, Args), flush.
@@ -102,6 +99,7 @@ clause_info(ClauseRef, S, TermPos, NameOffset) :-
 	->  Clause = Head
 	;   Clause = (Head :- Body)
 	),
+	start_emacs,
 	S = @dynamic_source_buffer,
 	clause_name(ClauseRef, ClauseName),
 	send(S, attribute, comment,
@@ -157,8 +155,9 @@ unify_args(I, Arity, T1, T2) :-
 
 alternate_syntax(prolog,    true,
 			    true).
-alternate_syntax(pce_class, pce_expansion:push_compile_operators,
-			    pce_expansion:pop_compile_operators).
+alternate_syntax(pce_class, pce_expansion:push_compile_operators(SM),
+			    pce_expansion:pop_compile_operators) :-
+	'$set_source_module'(SM, SM).
 alternate_syntax(system,    style_check(+dollar),
 			    style_check(-dollar)).
 
