@@ -325,7 +325,7 @@ Their meaning is:
 Step to the next port.
 	\termitem{skip}{}
 Skip to exit port of this call or wake port.
-	\termitem{ancestors}
+	\termitem{ancestors}{}
 Print list of ancestor call and wake ports.
 	\termitem{nodebug}{}
 Disable the tracer.
