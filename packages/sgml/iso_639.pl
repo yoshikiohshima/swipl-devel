@@ -503,7 +503,7 @@ l2(be, 'Byelorussian').
 l2(bg, 'Bulgarian').
 l2(bh, 'Bihari').
 l2(bi, 'Bislama').
-l2(bn, 'Bengali" "Bangla').
+l2(bn, 'Bengali, Bangla').
 l2(bo, 'Tibetan').
 l2(br, 'Breton').
 l2(ca, 'Catalan').
@@ -514,7 +514,7 @@ l2(da, 'Danish').
 l2(de, 'German').
 l2(dz, 'Bhutani').
 l2(el, 'Greek').
-l2(en, 'English" "American').
+l2(en, 'English, American').
 l2(eo, 'Esperanto').
 l2(es, 'Spanish').
 l2(et, 'Estonian').
@@ -526,7 +526,7 @@ l2(fo, 'Faeroese').
 l2(fr, 'French').
 l2(fy, 'Frisian').
 l2(ga, 'Irish').
-l2(gd, 'Gaelic" "Scots Gaelic').
+l2(gd, 'Gaelic, Scots Gaelic').
 l2(gl, 'Galician').
 l2(gn, 'Guarani').
 l2(gu, 'Gujarati').
@@ -558,7 +558,7 @@ l2(la, 'Latin').
 l2(ln, 'Lingala').
 l2(lo, 'Laothian').
 l2(lt, 'Lithuanian').
-l2(lv, 'Latvian" "Lettish').
+l2(lv, 'Latvian, Lettish').
 l2(mg, 'Malagasy').
 l2(mi, 'Maori').
 l2(mk, 'Macedonian').
@@ -574,11 +574,11 @@ l2(ne, 'Nepali').
 l2(nl, 'Dutch').
 l2(no, 'Norwegian').
 l2(oc, 'Occitan').
-l2(om, 'Oromo" "Afan').
+l2(om, 'Oromo, Afan').
 l2(or, 'Oriya').
 l2(pa, 'Punjabi').
 l2(pl, 'Polish').
-l2(ps, 'Pashto" "Pushto').
+l2(ps, 'Pashto, Pushto').
 l2(pt, 'Portuguese').
 l2(qu, 'Quechua').
 l2(rm, 'Rhaeto-Romance').
