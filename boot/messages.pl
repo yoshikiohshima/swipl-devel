@@ -87,6 +87,9 @@ term_message(Term) -->
 
 iso_message(type_error(evaluable, Actual)) -->
 	[ 'Arithmetic: `~p'' is not a function'-[Actual] ].
+iso_message(type_error(free_of_attvar, Actual)) -->
+	[ 'Type error: `~W'' contains attributed variables'-
+	  [Actual,[portray(true), attributes(portray)]] ].
 iso_message(type_error(Expected, Actual)) -->
 	[ 'Type error: `~w'' expected, found `~p'''-[Expected, Actual] ].
 iso_message(domain_error(Domain, Actual)) -->
