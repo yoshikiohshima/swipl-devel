@@ -1,3 +1,7 @@
+Apr 6, 2004
+
+  * TS: added chr_expandable/2 clause for pragma/2
+
 Apr 5, 2004
 
   * JW: fixed reference to format_rule/2.

@@ -84,6 +84,8 @@ chr_expandable((_ @ _)) :-
 	is_chr_file.
 chr_expandable((_ ==> _)) :-
 	is_chr_file.
+chr_expandable((_ pragma _)) :-
+	is_chr_file.
 chr_expandable(option(_, _)) :-
 	is_chr_file.
 
