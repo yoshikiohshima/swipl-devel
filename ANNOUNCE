@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.15/XPCE 6.2.22 development snapshot
+SWI-Prolog 5.3.16/XPCE 6.2.22 development snapshot
 
 Status
 ======
@@ -49,40 +49,29 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
     object-references.
 
 
-Brief summary of changes since 5.3.14
+Brief summary of changes since 5.3.15
 =====================================
 
 SWI-Prolog
 ----------
 
-  * Fixed .QLF loading leading to "ERROR: Failed to import ... into ..."
-
-  * Added open(pipe(Command), ...) for MS-Windows
-
-  * Report on detached threads terminating on failure or exception.
-
-  * Various minor issues
-
 
 Packages
 --------
 
-  * Semweb: Added triple GC to support applications using rdf_retractall
-    often.
-
-  * HTTP library: gracefully handle a large number of exceptions that
-    may happen in the server.
+  * CHR: Synchronised with research version by Tom Schrijvers:
+    "The new version of the compiler contains several new optimizations, both
+    fully automatic, such as the antimonotny-based delay avoidance (see
+    http://www.cs.kuleuven.ac.be/publicaties/rapporten/cw/CW385.abs.html for
+    the technical report), and enabled by mode declarations (see CHR
+    documentation), such as hashtable-based constraint indexes."
 
 
 Development environment
 -----------------------
 
-  * Make the GUI tracer handle threads more elegant.  Still, only
-    one thread can have the tracer attached at any time.
 
 
 INCOMPATIBILITIES
 =================
 
-  * Detached threads must succeed or call thread_exit/1.  Failure to
-    do so results in a warning message.
