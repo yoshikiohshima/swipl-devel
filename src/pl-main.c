@@ -905,7 +905,7 @@ usage()
     "    1) %s -help      Display this message\n",
     "    2) %s -v         Display version information\n",
     "    3) %s -arch      Display architecture\n",
-    "    4) %s -dump-runtime-variables\n"
+    "    4) %s -dump-runtime-variables[=format]\n"
     "                     Dump link info in sh(1) format\n",
     "    5) %s [options]\n",
     "    6) %s [options] [-o output] -c file ...\n",
@@ -952,39 +952,69 @@ arch()
   return TRUE;
 }
 
+#define FMT_SH 1			/* Unix sh: name="value" */
+#define FMT_CMD 2			/* Windows cmd.exe: set name=value */
+
+static void
+printvar(const char *name, const char *value, int format)
+{ switch(format)
+  { case FMT_SH:
+      Sprintf("%s=\"%s\";\n", name, value);
+      break;
+    case FMT_CMD:
+      Sprintf("SET %s=%s\n", name, value);
+      break;
+    default:
+      assert(0);
+  }
+}
+
+
 static int
-runtime_vars()
-{ Sprintf("CC=\"%s\";\n"
-	  "PLBASE=\"%s\";\n"
-	  "PLARCH=\"%s\";\n"
-	  "PLLIBS=\"%s\";\n"
-	  "PLLIB=\"%s\";\n"
-	  "PLLDFLAGS=\"%s\";\n"
-#ifdef SO_EXT
-	  "PLSOEXT=\"%s\";\n"
+runtime_vars(int format)
+{ char *home;
+#ifdef O_XOS
+  char base[MAXPATHLEN];
 #endif
-	  "PLVERSION=\"%d\";\n"
-#if defined(HAVE_DLOPEN) || defined(HAVE_SHL_LOAD)
-	  "PLSHARED=\"yes\";\n"
+  char version[20];
+
+  if ( systemDefaults.home )
+  { 
+#ifdef O_XOS
+    if ( format == FMT_CMD )
+    { _xos_os_existing_filename(systemDefaults.home, base);
+      home = base;
+    } else
+      home = systemDefaults.home;
 #else
-	  "PLSHARED=\"no\";\n"
+    home = systemDefaults.home;
+#endif
+  } else
+  { home = "<no home>";
+  }
+
+  Ssprintf(version, "%d", PLVERSION);
+
+  printvar("CC",	C_CC, format);
+  printvar("PLBASE",	home, format);
+  printvar("PLARCH",	ARCH, format);
+  printvar("PLLIBS",	C_LIBS, format);
+  printvar("PLLIB",	C_PLLIB, format);
+  printvar("PLLDFLAGS", C_LDFLAGS, format);
+#ifdef SO_EXT
+  printvar("PLSOEXT",	SO_EXT, format);
+#endif
+  printvar("PLVERSION", version, format);
+#if defined(HAVE_DLOPEN) || defined(HAVE_SHL_LOAD) || defined(EMULATE_DLOPEN)
+  printvar("PLSHARED",	"yes", format);
+#else
+  printvar("PLSHARED",	"no", format);
 #endif
 #ifdef O_PLMT
-	  "PLTHREADS=\"yes\";\n"
+  printvar("PLTHREADS", "yes", format);
 #else
-	  "PLTHREADS=\"no\";\n"
+  printvar("PLTHREADS", "no", format);
 #endif
-	  ,
-	  C_CC,
-	  systemDefaults.home ? systemDefaults.home : "<no home>",
-	  ARCH,
-	  C_LIBS,
-	  C_PLLIB,
-	  C_LDFLAGS,
-#ifdef SO_EXT
-	  SO_EXT,
-#endif
-	  PLVERSION);
 
   return TRUE;
 }
@@ -999,7 +1029,11 @@ giveVersionInfo(const char *a)
   if ( streq(a, "-v") )
     return version();
   if ( streq(a, "-dump-runtime-variables") )
-    return runtime_vars();
+    return runtime_vars(FMT_SH);
+  if ( streq(a, "-dump-runtime-variables=sh") )
+    return runtime_vars(FMT_SH);
+  if ( streq(a, "-dump-runtime-variables=cmd") )
+    return runtime_vars(FMT_CMD);
 
   return FALSE;
 }
