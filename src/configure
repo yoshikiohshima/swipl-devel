@@ -13347,6 +13347,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
 		       chmod +x ../packages/configure
 		       chmod +x ../packages/plld.sh
 		     fi
+		     chmod +x pl.sh
 		    ;;
   esac
 done

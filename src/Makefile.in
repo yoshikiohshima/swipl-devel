@@ -135,8 +135,9 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	checklast.pl checkselect.pl operators.pl
 CLP=	bounds.pl
 PLWIN=	wise.pl dde.pl progman.pl registry.pl
+builddirs = ../lib ../lib/$ARCH
 
-all:	banner \
+all:	banner dirs \
 	headers rc-lib $(MKLIBS) system startup index plld
 
 .c.o:
@@ -147,6 +148,7 @@ startup:	$(STARTUPPATH)
 headers:	parms.h $(CINCLUDE) $(STREAMH) $(STUBC) @EXTRAHDR@
 staticlib:	$(RUNTIME)
 sharedlib:	$(RUNTIMEDIR)/$(SHARED)
+index:		../library/INDEX.pl
 
 banner::
 		@echo "****************"
@@ -156,21 +158,19 @@ banner::
 		@echo "****************"
 
 
-$(PL):		$(MKLIBS) $(PLOBJ)
+$(PL):		$(PLOBJ)
 		$(LDEXE) $(LDFLAGS) -o $(PL) $(PLOBJ) -L../lib/$(ARCH) -lpl $(LNLIBS)
-		chmod +x pl.sh
-
 
 $(STARTUPPATH):	$(PLINIT) $(PLSRC) $(PL)
 		$(DEVPL) -O -o $(STARTUPPATH) -b $(PLINIT)
 
 
-$(RUNTIMEDIR):	
-		if [ ! -d ../lib ]; then $(MKDIR) ../lib; fi
-		$(MKDIR) $(RUNTIMEDIR)
+dirs::
+		@for d in $(builddirs); do \
+		  if [ ! -d $$d ]; then mkdir $$d; fi; \
+		done
 
-
-$(RUNTIME):	$(RUNTIMEDIR) $(OBJ) $(RCOBJ) $(XOBJ)
+$(RUNTIME):	$(OBJ) $(RCOBJ) $(XOBJ)
 		rm -f $@
 		$(AR) r $@ $(OBJ) $(RCOBJ) $(XOBJ)
 		$(RANLIB) $@
@@ -185,7 +185,7 @@ $(RUNTIMEDIR)/$(SHARED):	$(RUNTIMEDIR)/$(SHAREDV)
 rc-lib:
 		@(cd rc && $(MAKE) COFLAGS="$(COFLAGS)")
 
-index:
+../library/INDEX.pl:	../library ../library/[a-z]*.pl
 		$(DEVPL) -x $(STARTUPPATH) \
 			-f none -F none \
 			-g make_library_index\(\'../library\'\) \

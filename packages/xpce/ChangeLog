@@ -1,6 +1,11 @@
 			   XPCE ChangeLog
 			   ==============
 
+
+* ENHANCED: Exploit GCC visibility("hidden") attribute.  Improves symbol
+  handling for embedded applications on ELF-based systems.
+
+
 VERSION 6.2.17, distributed with SWI-Prolog 5.3.9
 =================================================
 

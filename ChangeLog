@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: some Makefile cleanup.
+
   * PORT: Cleanup of autoconf configuration (dropped acconfig.h)
 
   * ENHANCED: Exploit GCC visibility("hidden") attribute.  Improves symbol
