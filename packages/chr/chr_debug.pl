@@ -45,21 +45,25 @@ chr_show_store(Mod) :-
 	'chr global_term_ref_1'(Store),
 	(   get_attr(Store,Mod,Attr)
 	->  (   Attr =.. [v,_|Susps]
-	    ->  findall(_, ( member(L,Susps), 		% JW: Why findall!?
-		             member(S,L),
-			     S =.. [_,_,_,_,_,_,F|A],
-			     C =.. [F|A],
-			     write(C),
-			     nl
-			   ),
-			_)
-	    ;   findall(_, ( member(S,Attr),
-			     S =.. [_,_,_,_,_,_,F|A],
-			     C =.. [F|A],
-			     write(C),
-			     nl
-			   ),
-			_)
+	    ->  ( member(L,Susps),
+		  member(S,L),
+		  S =.. [_,_,_,_,_,_,F|A],
+		  C =.. [F|A],
+		  write(C),
+		  nl,
+                  fail
+                ;
+                  true
+                )
+	    ; ( member(S,Attr),
+	        S =.. [_,_,_,_,_,_,F|A],
+		C =.. [F|A],
+		write(C),
+		nl,
+                fail
+              ;
+                true
+	      )
 	    )
 	;   true
 	).
