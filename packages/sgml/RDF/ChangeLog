@@ -1,3 +1,8 @@
+Aug 13, 2004
+
+  * MODIFIED: load_rdf/3 no longer returns resources as Prefix:URI, but
+    instead returns the plain atoms.
+
 Jul 31, 2004
 
   * ADDED: converted rdf_nt.pl into public rdf_ntriples.pl library for
