@@ -1,3 +1,8 @@
+May 27, 2004
+
+  * CLEANUP: Made Test2 example stand-alone rather than relying on things
+    wired into jpl.jar and jpl.pl (removed support from there).
+
 May 26, 2004
 
   * ADDED: examples/java/SemWeb: Using the SWI-Prolog semantic web library

@@ -36,7 +36,6 @@
 	    jpl_call/4,
 	    jpl_get/3,
 	    jpl_set/3,
-	    jpl_test_fac/2,
 	    jpl_servlet_byref/3,
 	    jpl_servlet_byval/3,
 	    jpl_class_to_classname/2,
@@ -1386,19 +1385,6 @@ jpl_type_slashed_package_parts([]) -->
 
 jpl_type_void(void) -->
     "V".
-
-%------------------------------------------------------------------------------
-
-% jpl_test_fac(+N, -F) :-
-%   F is the factorial of the positive integer N
-
-jpl_test_fac(N, F) :-
-    (	N == 1
-    ->	F = 1
-    ;	N2 is N-1,
-	jpl_call('jpl.Test', fac, [N2], F2),	% call its Java counterpart, which does vice versa
-	F is N*F2
-    ).
 
 %------------------------------------------------------------------------------
 
