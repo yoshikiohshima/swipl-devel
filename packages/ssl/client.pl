@@ -18,13 +18,11 @@ client :-
 %		   password('apenoot2'),
 		   pem_password_hook(get_client_pwd)
 		 ]),
-	ssl_socket(SSL, Socket),
-	client_loop(SSL, Socket),
+	client_loop(SSL),
         ssl_exit(SSL).
 
-client_loop(SSL, Socket) :-
-	ssl_connect(SSL, Socket, SocketInst),
-	ssl_open(SSL, SocketInst, In, Out),
+client_loop(SSL) :-
+	ssl_open(SSL, In, Out),
 	write_server(In, Out),
 	write_server(In, Out),
 	write_server(In, Out),

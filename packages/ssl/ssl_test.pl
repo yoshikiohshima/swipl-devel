@@ -39,12 +39,19 @@
 %:- debug(_).
 
 test :-
-	thread_create(server, Id, []),
-	thread_get_message(Started),
-	Started == started,
+	make_server(SSL),
+	thread_create(server_loop(SSL), Id, []),
 	client,
 	thread_join(Id, Status),
 	Status == true.
+
+test(N) :-
+	(   between(1, N, _),
+	    test,
+	    put('.'), flush_output,
+	    fail
+	;   true
+	).
 
 		 /*******************************
 		 *	       SERVER		*
@@ -53,7 +60,7 @@ test :-
 :- dynamic
 	stop_server/0.
 
-server :-
+make_server(SSL) :-
 	ssl_init(SSL, server,
 		 [ host('localhost'),
                    port(1111),
@@ -65,10 +72,7 @@ server :-
                	   cert_verify_hook(get_cert_verify),
 %		   password('apenoot1'),
 		   pem_password_hook(get_server_pwd)
-		 ]),
-	thread_send_message(main, started),
-	server_loop(SSL),
-	ssl_exit(SSL).
+		 ]).
 
 server_loop(SSL) :-
 	ssl_accept(SSL, Socket, Peer),
@@ -78,7 +82,7 @@ server_loop(SSL) :-
 	close(In),
 	close(Out),
 	(   retract(stop_server)
-	->  true
+	->  ssl_exit(SSL)
 	;   server_loop(SSL)
 	).
 

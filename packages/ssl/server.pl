@@ -21,13 +21,12 @@ server :-
 %		   password('apenoot1'),
 		   pem_password_hook(get_server_pwd)
 		 ]),
-	ssl_socket(SSL, Socket),
-	thread_create(server_loop(SSL, Socket), _, []).
+	thread_create(server_loop(SSL), _, []).
 
-server_loop(SSL, Socket) :-
-	ssl_accept(SSL, Socket, SocketInst, Peer),
+server_loop(SSL) :-
+	ssl_accept(SSL, Socket, Peer),
 	debug(connection, 'Connection from ~p', [Peer]),
-	ssl_open(SSL, SocketInst, In, Out),
+	ssl_open(SSL, Socket, In, Out),
 	copy_client(In, Out),
 	close(In),
 	close(Out),
