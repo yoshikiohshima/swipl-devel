@@ -2164,6 +2164,41 @@ forms bitwise or'ed list of options for the installation. These are:
 \hline
 \end{tabular}
 
+Default calling (i.e.\ without \const{PL_FA_VARARGS}) \arg{function} is
+passed the same number of term_t arguments as the arity of the predicate
+and, if the predicate is non-deterministic, an extra argument of type
+\ctype{control_t} (see \secref{foreignnondet}). If \const{PL_FA_VARARGS}
+is provided, \arg{function} is called with three arguments. The first
+argument is a \ctype{term_t} handle to the first argument. Further
+arguments can be reached by adding the offset (see also
+PL_new_term_refs()). The second argument is the arity, which defines the
+number of valid term-references in the argument vector.  The last argument
+is used for non-deterministic calls.  It is currently undocument and should
+be defined of type \ctype{void*}.  Here is an example:
+
+\begin{code}
+static foreign_t
+atom_checksum(term_t a0, int arity, void* context)
+{ char *s;
+  
+  if ( PL_get_atom_chars(a0, &s) )
+  { int sum;
+    
+    for(sum=0; *s; s++)
+      sum += *s&0xff;
+
+    return PL_unify_integer(a0+1, sum&0xff);
+  }
+
+  return FALSE;
+}
+
+install_t
+install()
+{ PL_register_foreign("atom_checksum", 2, atom_checksum, PL_FA_VARARGS);
+}
+\end{code}
+
     \cfunction{void}{PL_load_extensions}{PL_extension *e}
 Register foreign predicates from a table of structures. This is an
 alternative to multiple calls to PL_register_foreign() and simplifies

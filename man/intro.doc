@@ -472,7 +472,9 @@ and many related modifications to the kernel.
 
 Version 5.3.x is a development series for adding coroutining,
 constraints, global variables, cyclic terms (infinite trees) and other
-goodies to the kernel.
+goodies to the kernel.  The package JPL, providing a bidirectional
+Java/Prolog interface is added to the common sourcetree and common
+binary packages.
 
 
 \section{Donate to the SWI-Prolog project}	\label{sec:sponsor}
