@@ -347,6 +347,9 @@ special('Scge', '#>=').
 special('Sclt', '#<').
 special('Scle', '#=<').
 special('Scne', '#\=').
+special('Sequiv', '#<=>').
+special('Slimpl', '#<=').
+special('Srimpl', '#=>').
 special('Scine', '#=\=').
 special('Scieq', '#=:=').
 special('Scut', !).

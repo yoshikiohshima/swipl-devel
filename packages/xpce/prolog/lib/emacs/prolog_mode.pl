@@ -730,6 +730,9 @@ insert_full_stop(M, Arg:[int]) :->
 	;   true
 	).
 
+:- multifile
+	alternate_syntax/3.
+
 alternate_syntax(prolog,    true,
 			    true).
 alternate_syntax(pce_class, pce_expansion:push_compile_operators,

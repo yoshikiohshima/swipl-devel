@@ -30,6 +30,9 @@ sub printTeX
   s/{#=<}/{\\Scle}/g;
   s/{#=}/{\\Sceq}/g;
   s/{#\\=}/{\\Scne}/g;
+  s/{#<=>}/{\\Sequiv}/g;
+  s/{#<=}/{\\Slimpl}/g;
+  s/{#=>}/{\\Srimpl}/g;
   s/{#=\\=}/{\\Scine}/g;
   s/{#=:=}/{\\Scieq}/g;
   s/{!}/{\\Scut}/g;

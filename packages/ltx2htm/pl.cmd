@@ -140,6 +140,9 @@
 \Sclt
 \Scle
 \Scne
+\Sequiv
+\Slimpl
+\Srimpl
 \Scine
 \Scieq
 \Scut

@@ -24,6 +24,9 @@ suggest predicates from a keyword.
 \oppredsummary{#=<}{2}{xfx}{700}{Less of equal constraint}
 \oppredsummary{#\=}{2}{xfx}{700}{Non-equal constraint}
 \oppredsummary{#=}{2}{xfx}{700}{Equality constraint}
+\oppredsummary{#<=>}{2}{xfx}{760}{Constraint equivalence}
+\oppredsummary{#<=}{2}{xfx}{750}{Constraint implication to the left}
+\oppredsummary{#=>}{2}{xfx}{750}{Constraint implication to the right}
 \oppredsummary{,}{2}{xfy}{1000}{Conjunction of goals}
 \oppredsummary{->}{2}{xfy}{1050}{If-then-else}
 \oppredsummary{*->}{2}{xfy}{1050}{Soft-cut}

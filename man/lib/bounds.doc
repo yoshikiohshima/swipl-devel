@@ -75,22 +75,51 @@ The following constraints are supported:
 
 The following constraint implication predicates are available:
 \begin{description}
-%	\infixop{#=>}{+P}{+Q}
-%		\arg{P} implies \arg{Q}, where \arg{P} and \arg{Q} are reifyable constraints.
-%	\infixop{#<=}{+Q}{+P}
-%		\arg{P} implies \arg{Q}, where \arg{P} and \arg{Q} are reifyable constraints.
-	\infixop{#=:=}{+P}{+Q}
+	\infixop{#=>}{+P}{+Q}
+		\arg{P} implies \arg{Q}, where \arg{P} and \arg{Q} are reifyable constraints.
+	\infixop{#<=}{+Q}{+P}
+		\arg{P} implies \arg{Q}, where \arg{P} and \arg{Q} are reifyable constraints.
+	\infixop{#<=>}{+P}{+Q}
 		\arg{P} and \arg{Q} are equivalent, where \arg{P} and \arg{Q} are reifyable constraints.
 \end{description}
 
 \noindent
 In addition, instead of being a reifyable constraint, either \arg{P} or
-\arg{Q} can be a boolean variable. 
+\arg{Q} can be a boolean variable that is the truth value of the corresponding constraint. 
 
 \noindent
 The following constraints are reifyable: \predref{#=}{2},
 \predref{#\=}{2}, \predref{#<}{2}, \predref{#>}{2}, \predref{#=<}{2},
-\predref{#>}{/2}.
+\predref{#>}{2}.
+
+For example, to count the number of occurrences of a particular value in a list of constraint variables:
+\begin{itemlist}
+	\item [Using constraint implication]
+
+\begin{code}
+occurrences(List,Value,Count) :-
+	occurrences(List,Value,0,Count).
+
+occurrences([],_,Count,Count).
+occurrences([X|Xs],Value,Acc,Count) :-
+	X #= Value  #=> NAcc #= Acc + 1,
+	X #\= Value #=> NAcc #= Acc,
+	occurrences(Xs,Value,NAcc,Count).
+\end{code}
+	\item [Using reified constraints]
+
+\begin{code}
+occurrences(List,Value,Count) :-
+	occurrences(List,Value,0,Count).
+
+occurrences([],_,Count,Count).
+occurrences([X|Xs],Value,Acc,Count) :-
+	X #= Value #=> B,
+	NAcc #= Acc + B,
+	occurrences(Xs,Value,NAcc,Count).
+\end{code}
+
+\end{itemlist}
 
 
 \subsection{Example}			%\label{sec:example}

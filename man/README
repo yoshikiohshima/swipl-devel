@@ -26,8 +26,8 @@ If you add such a sequence you must:
 
 	* Add it to doc2tex
 	* Add it to pl.sty
-	* Add it to ../packages/ltx2html/pl.cmd
-	* Add it to ../packages/ltx2html/pl.pl
+	* Add it to ../packages/ltx2htm/pl.cmd
+	* Add it to ../packages/ltx2htm/pl.pl
 	* Run "make install" in ../packages/ltx2html
 
 Summaries
