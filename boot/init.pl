@@ -1629,14 +1629,9 @@ $extend(More, OldT, NewT) :-
 phrase(RuleSet, Input) :-
 	phrase(RuleSet, Input, []).
 phrase(RuleSet, Input, Rest) :-
-	$strip_module(RuleSet, _, Head),
-	(   Head == []
-	->  Rest = Input
-	;   nonvar(Head),
-	    Head = [_|_]
-	->  $append(Head, Rest, Input)
-	;   call(RuleSet, Input, Rest)
-	).
+	$t_body(RuleSet, S0, S, Body),
+	Input = S0, Rest = S,
+	Body.
 
 
 		/********************************
