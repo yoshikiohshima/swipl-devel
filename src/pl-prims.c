@@ -1227,7 +1227,10 @@ pl_e_free_variables(term_t t, term_t vars)
   Mark(m);
   { Word t2   = bind_existential_vars(valTermRef(t) PASS_LD);
     term_t v0 = PL_new_term_refs(0);
+    Word *vm   = aTop;
     int i, n  = term_variables(t2, v0, 0 PASS_LD);
+
+    unvisit(vm PASS_LD);
     Undo(m);
 
     if ( PL_unify_functor(vars, PL_new_functor(ATOM_v, n)) )
