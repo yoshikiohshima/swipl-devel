@@ -2,6 +2,8 @@
 			   ==============
 
 
+* FIXED: Pass $(LDFLAGS) in generating Prolog interface.  Paulo Moura.
+
 VERSION 6.2.19, distributed with SWI-Prolog 5.3.12
 ==================================================
 
