@@ -29,52 +29,54 @@
     the GNU General Public License.
 */
 
-:- module(jpl, [
-    jpl_pl_lib_version/1,
-    jpl_c_lib_version/1,
-    jpl_new/3,
-    jpl_call/4,
-    jpl_get/3,
-    jpl_set/3,
-    jpl_test_fac/2,
-    jpl_servlet_byref/3,
-    jpl_servlet_byval/3,
-    jpl_class_to_classname/2,
-    jpl_class_to_type/2,
-    jpl_classname_to_class/2,
-    jpl_classname_to_type/2,
-    jpl_datum_to_type/2,
-    jpl_false/1,
-    jpl_is_class/1,
-    jpl_is_false/1,
-    jpl_is_null/1,
-    jpl_is_object/1,
-    jpl_is_object_type/1,
-    jpl_is_ref/1,
-    jpl_is_true/1,
-    jpl_is_type/1,
-    jpl_is_void/1,
-    jpl_null/1,
-    jpl_object_to_class/2,
-    jpl_object_to_type/2,
-    jpl_primitive_type/1,
-    jpl_ref_to_type/2,
-    jpl_true/1,
-    jpl_type_to_class/2,
-    jpl_type_to_classname/2,
-    jpl_void/1,
-    jpl_array_to_length/2,
-    jpl_array_to_list/2,
-    jpl_datums_to_array/2,
-    jpl_enumeration_element/2,
-    jpl_enumeration_to_list/2,
-    jpl_hashtable_pair/2,
-    jpl_iterator_element/2,
-    jpl_list_to_array/2,
-    jpl_map_element/2,
-    jpl_set_element/2]).
-
+:- module(jpl,
+	  [ jpl_pl_lib_version/1,
+	    jpl_c_lib_version/1,
+	    jpl_new/3,
+	    jpl_call/4,
+	    jpl_get/3,
+	    jpl_set/3,
+	    jpl_test_fac/2,
+	    jpl_servlet_byref/3,
+	    jpl_servlet_byval/3,
+	    jpl_class_to_classname/2,
+	    jpl_class_to_type/2,
+	    jpl_classname_to_class/2,
+	    jpl_classname_to_type/2,
+	    jpl_datum_to_type/2,
+	    jpl_false/1,
+	    jpl_is_class/1,
+	    jpl_is_false/1,
+	    jpl_is_null/1,
+	    jpl_is_object/1,
+	    jpl_is_object_type/1,
+	    jpl_is_ref/1,
+	    jpl_is_true/1,
+	    jpl_is_type/1,
+	    jpl_is_void/1,
+	    jpl_null/1,
+	    jpl_object_to_class/2,
+	    jpl_object_to_type/2,
+	    jpl_primitive_type/1,
+	    jpl_ref_to_type/2,
+	    jpl_true/1,
+	    jpl_type_to_class/2,
+	    jpl_type_to_classname/2,
+	    jpl_void/1,
+	    jpl_array_to_length/2,
+	    jpl_array_to_list/2,
+	    jpl_datums_to_array/2,
+	    jpl_enumeration_element/2,
+	    jpl_enumeration_to_list/2,
+	    jpl_hashtable_pair/2,
+	    jpl_iterator_element/2,
+	    jpl_list_to_array/2,
+	    jpl_map_element/2,
+	    jpl_set_element/2
+	  ]).
 :- use_module(library(lists)).
+% suppress debugging this library
+:- set_prolog_flag(generate_debug_info, false).
 
 %------------------------------------------------------------------------------
 
@@ -2737,8 +2739,8 @@ jpl_modifier_bit(public,	0x001).
 jpl_modifier_bit(private,	0x002).
 jpl_modifier_bit(protected,	0x004).
 jpl_modifier_bit(static,	0x008).
-jpl_modifier_bit(final,	0x010).
-jpl_modifier_bit(synchronized, 0x020).
+jpl_modifier_bit(final,		0x010).
+jpl_modifier_bit(synchronized,	0x020).
 jpl_modifier_bit(volatile,	0x040).
 jpl_modifier_bit(transient,	0x080).
 jpl_modifier_bit(native,	0x100).
@@ -2988,9 +2990,13 @@ jpl_servlet_byref(Config, Request, Response) :-
 %------------------------------------------------------------------------------
 
 jpl_servlet_byval(MM, CT, Ba) :-
-    CT = 'text/html',
-    multimap_to_atom(MM, MMa),
-    concat_atom(['<html><head></head><body><h2>jpl_servlet_byval/3 says:</h2><pre>',MMa,'</pre></body></html>'], Ba).
+	CT = 'text/html',
+	multimap_to_atom(MM, MMa),
+	concat_atom(['<html><head></head><body>',
+		     '<h2>jpl_servlet_byval/3 says:</h2><pre>',
+		     MMa,
+		     '</pre></body></html>'
+		    ], Ba).
 
 %------------------------------------------------------------------------------
 
@@ -4144,6 +4150,18 @@ library_search_path(Path, 'PATH') :-
 	;   Path = []
 	).
 
+%	add_jpl_to_classpath/0
+%	
+%	Add jpl.jar to $CLASSPATH to facilitate callbacks
+
+add_jpl_to_classpath :-
+	absolute_file_name(swi('lib/jpl.jar'), [access(read)], JplJAR),
+	(   getenv('CLASSPATH', Old)
+	->  concat_atom([JplJAR, Old], :, New)
+	;   New = JplJAR
+	),
+	setenv('CLASSPATH', New).
+
 %	libjpl(-Spec)
 %	
 %	Return the spec for loading the   JPL shared object. This shared
@@ -4164,6 +4182,7 @@ libjpl(File) :-
 setup_jvm :-
 	jvm_ready, !.
 setup_jvm :-
+	add_jpl_to_classpath,
 	libjpl(JPL),
 	catch(load_foreign_library(JPL), E, report_java_setup_problem(E)),
 	assert(jvm_ready).

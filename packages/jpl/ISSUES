@@ -26,3 +26,19 @@ choice is yours and depends on  the   performance  penalty  paid on your
 processor (approx. 7% on  an  AMD  Athon),   how  you  wish  to  arrange
 versioning and how keen you are on memory sharing.
 
+
+Installed components
+====================
+
+Make install installs the following components:
+
+	* $PLBASE/library/jpl.pl
+	* $PLBASE/lib/jpl.jar
+	* $PLBASE/lib/$ARCH/libjpl.so
+
+The  disadvantage  of  this  is  that    $PLBASE/lib/$ARCH  must  be  in
+$LD_LIBRARY_PATH to be able  to  call   Prolog  from  Java  (either when
+embedding Prolog in Java or using a  Prolog -> Java -> Prolog callback).
+Unfortunately all the other Prolog .so   files are loaded by explicitely
+searching for them.
+

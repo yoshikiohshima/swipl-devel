@@ -1,5 +1,13 @@
+May 14, 2004
+
+  * JW: Added Makefile for jpl.jar
+  * jpl.c: changed Sprintf() to DEBUG(level, Sdprintf())
+  * exceptions: generate error(java_exception(Ex), ClassName).  Provide
+    hook for normal readable error messages.
+
 May 12, 2004
  
   * JW: Removed jpl_demo/0
   * JW: Included library(lists) and removed list predicates
   * JW: Cleanup of is_pairs/1 and is_pair/1.
+  
