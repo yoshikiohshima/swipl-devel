@@ -96,18 +96,24 @@ on_top(W, Name:name) :->
 
 :- pce_group(members).
 
-%	->append: Window, Label
+%	->append: Window, Label, [Expose]
 %	
 %	Append a new tab using Window with the given tab label.
 %
 %	The call to ->'_compute_desired_size' should be properly delayed
 %	until the tabbed window is actually   created,  but this doesn't
-%	appear to work properly.
+%	appear to work properly. If Expose == @on the tab is immediately
+%	brought to the top.
 
-append(W, Window:window=window, Label:name=[name]) :->
+append(W, Window:window=window, Label:name=[name], Expose:expose=[bool]) :->
 	"Append a window to the tabs"::
 	send(Window, '_compute_desired_size'),
-	send(W, tab, window_tab(Window, Label)).
+	send(W, tab, new(Tab, window_tab(Window, Label))),
+	(   Expose == @on
+	->  get_super(W, member, tab_stack, TS),
+	    send(TS, on_top, Tab)
+	;   true
+	).
 
 member(W, Name:name, Window:window) :<-
 	"Get named window from tabbed window"::

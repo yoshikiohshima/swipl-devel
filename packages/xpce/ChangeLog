@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ADDED: `tabbed_window->append': optional `expose' argument to make the
+  new tab the topmost one.
+
 * ENHANCED: Allow redefinition of `window<-popup' for associating popups
   rather than using hardwired slot.
 
