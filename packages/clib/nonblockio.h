@@ -135,6 +135,11 @@ extern int 	nbio_close_input(int socket);
 extern int 	nbio_close_output(int socket);
 
 extern int	nbio_wait(int socket, nbio_request);
+extern int	nbio_select(int n,
+			    fd_set *readfds,
+			    fd_set *writefds,
+			    fd_set *exceptfds,
+			    struct timeval *timeout);
 
 extern int	nbio_unify_ip4(term_t ip4, unsigned long hip);
 extern int	nbio_get_ip(term_t ip4, struct in_addr *ip);

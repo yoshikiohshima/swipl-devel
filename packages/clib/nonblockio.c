@@ -374,6 +374,103 @@ nbio_wait(int socket, nbio_request request)
 }
 
 
+int
+nbio_select(int n,
+	    fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	    struct timeval *timeout)
+{ plsocket **sockets = alloca(n * sizeof(plsocket*));
+  int i;
+  DWORD t_end;
+
+  if ( !sockets )
+  { errno = ENOMEM;
+    return -1;
+  }
+  for(i=0; i<n; i++)
+    sockets[i] = NULL;
+
+  if ( readfds )
+  { for(i=0; i<n; i++)
+    { if ( FD_ISSET(i, readfds) )
+      { plsocket *s = lookupSocket(i);
+
+	s->flags  |= SOCK_WAITING;
+	s->done    = FALSE;
+	s->error   = 0;
+	s->thread  = GetCurrentThreadId();
+	s->request = (s->flags & SOCK_LISTEN) ? REQ_ACCEPT : REQ_READ;
+	sockets[i] = s;
+      }
+    }
+  }
+  if ( writefds )
+    return -1;				/* not yet implemented */
+  if ( exceptfds )
+    return -1;				/* idem (might never be) */
+
+  if ( timeout )
+  { t_end = GetTickCount();
+    t_end += timeout->tv_sec*1000;
+    t_end += timeout->tv_usec/1000;
+  }
+
+  FD_ZERO(readfds);
+  PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
+
+  for(;;)
+  { MSG msg;
+    plsocket *s;
+    int ready;
+
+    if ( PL_handle_signals() < 0 )
+    { DEBUG(1, Sdprintf("[%d]: Exception\n", PL_thread_self()));
+      return -1;
+    }
+    
+    for(ready=0, i=0, s=sockets; i<n; i++, s++)
+    { if ( s && s->done )
+      { ready++;
+	FD_SET(i, readfds);
+      }
+    }
+    if ( ready > 0 )
+      return ready;
+
+    if ( timeout )
+    { DWORD rc;
+      DWORD t = GetTickCount();
+      long msec = t_end - t;
+
+      if ( msec < 0 )
+	msec = -msec;			/* wrapped around */
+
+      rc = MsgWaitForMultipleObjects(0, NULL, FALSE, msec, QS_ALLINPUT);
+      if ( rc == WAIT_OBJECT_0 )
+      { if ( GetMessage(&msg, NULL, 0, 0) )
+	{ TranslateMessage(&msg);
+	  DispatchMessage(&msg);
+	} else
+	{ ExitProcess(0);		/* WM_QUIT received */
+	  return -1;			/* NOTREACHED */
+	}
+      } else if ( rc == WAIT_TIMEOUT )
+      { return 0;
+      } else
+      { assert(0);
+      }
+    } else
+    { if ( GetMessage(&msg, NULL, 0, 0) )
+      { TranslateMessage(&msg);
+	DispatchMessage(&msg);
+      } else
+      { ExitProcess(0);			/* WM_QUIT received */
+	return -1;			/* NOTREACHED */
+      }
+    }
+  }
+}
+
+
 static int
 placeRequest(plsocket *s, nbio_request request)
 { s->error   = 0;
