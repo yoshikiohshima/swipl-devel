@@ -494,6 +494,11 @@ Generate a unique blank node reference. The returned atom is guaranteed
 not to occur in the current database in any field of any triple and
 starts with '__bnode'.
 
+    \predicate{rdf_is_bnode}{1}{+Id}
+Succeeds if \arg{Id} is a blank node identifier (also called
+\jargon{anonymous resource}).  In the current implementation this
+implies it is an atom starting with a double underscore.
+
     \predicate{rdf_source_location}{2}{+Subject, -SourceRef}
 Return the source-location as \arg{File}:\arg{Line} of the first triple
 that is about \arg{Subject}.

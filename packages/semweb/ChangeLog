@@ -1,3 +1,7 @@
+Jun 2, 2004
+
+  * ADDED: rdf_is_bnode/1
+
 May 22, 2004
 
   * FIXED: Literal string matching broken with introduction of

@@ -57,6 +57,7 @@
 
 	    rdf_node/1,			% -Id
 	    rdf_bnode/1,		% -Id
+	    rdf_is_bnode/1,		% +Id
 
 	    rdf_load/1,			% +File
 	    rdf_load/2,			% +File, +Options
@@ -290,7 +291,8 @@ rdf_member_property(P, N) :-
 
 %	rdf_node(-Id)
 %
-%	Generate a unique identifier for a subject.
+%	Generate a unique identifier for a subject.  Obsolete.  New
+%	code should use rdf_bnode/1.
 
 rdf_node(Value) :-
 	repeat,
@@ -310,6 +312,16 @@ rdf_bnode(Value) :-
 	\+ rdf_subject(Value),
 	\+ rdf(_, _, Value),
 	\+ rdf(_, Value, _), !.
+
+
+%	rdf_is_bnode(+Id)
+%	
+%	Tests if a resource is a blank node (i.e. is an anonymous
+%	resource).
+
+rdf_is_bnode(Id) :-
+	atom(Id),
+	sub_atom(Id, 0, _, _, '__').
 
 
 		 /*******************************
