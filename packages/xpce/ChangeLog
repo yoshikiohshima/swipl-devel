@@ -2,6 +2,9 @@
 			   ==============
 
 
+* FIXED: PceEmacs: handle exported operators in colouring.
+
+
 VERSION 6.2.18, distributed with SWI-Prolog 5.3.10
 ==================================================
 
