@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: dif/2 in the library(dif).  Code contributed by Tom
+    Schrijvers.  Thanks!
+
   * FIXED: reconsult to lock other threads (Unix).  Sandro Hawke.
 
   * FIXED: http_open/3 problems using redirection to non-absolute URL.
