@@ -344,6 +344,11 @@ process(Head, Src) :-
 		 *           DIRECTIVES		*
 		 ********************************/
 
+process_directive(Var, _) :-
+	var(Var), !.			% error, but that isn't our business
+process_directive((A,B), Src) :- !,	% TBD: whta about other control
+	process_directive(A, Src),	% structures?
+	process_directive(B, Src).
 process_directive(List, Src) :-
 	is_list(List), !,
 	process_directive(consult(List), Src).

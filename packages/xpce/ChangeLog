@@ -2,6 +2,8 @@
 			   ==============
 
 
+* FIXED: cross-referencer: handle directives with conjunctions properly.
+
 VERSION 6.2.22, distributed with SWI-Prolog 5.3.15
 ==================================================
 
