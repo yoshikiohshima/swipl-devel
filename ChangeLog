@@ -7,7 +7,6 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-
   * FIXED: Bug#125: rename_file/2 if source and destination are the same.
     Dr. Werner Wolff.
 
@@ -31,6 +30,10 @@ VERSION 5.3.2 (Feb 4, 2003)
   * FIXED: Bug in unifying cyclic terms.  Kuniaki Mukai.
 
   * ADDED: Support for cyclic terms in ground/1
+
+  * FIXED: Bug#130: writeq('/*').  Holger Kanwischer.
+
+  * FIXED: win_shell/2.  Added win_shell/3.  Dmitry.
 
   * FIXED: allow for peek_byte(-1), etc.  Michael A. Covington.
 
