@@ -615,7 +615,8 @@ writeTerm2(term_t t, int prec, write_options *options)
 	  succeed;
 	}
   
-	if ( functor == ATOM_isovar )	/* $VAR/1 */
+	if ( functor == ATOM_isovar &&			/* $VAR/1 */
+	     true(options, PL_WRT_NUMBERVARS) )
 	{ int n;
   
 	  PL_get_arg(1, t, arg);
@@ -827,7 +828,7 @@ pl_write_term3(term_t stream, term_t term, term_t opts)
   if ( quoted )     options.flags |= PL_WRT_QUOTED;
   if ( ignore_ops ) options.flags |= PL_WRT_IGNOREOPS;
   if ( numbervars ) options.flags |= PL_WRT_NUMBERVARS;
-  if ( portray )    options.flags |= PL_WRT_PORTRAY;
+  if ( portray )    options.flags |= PL_WRT_PORTRAY|PL_WRT_NUMBERVARS;
   if ( bqstring )   options.flags |= PL_WRT_BACKQUOTED_STRING;
 
   options.out = s;
@@ -896,7 +897,8 @@ pl_writeq2(term_t stream, term_t term)
 
 word
 pl_print2(term_t stream, term_t term)
-{ return do_write2(stream, term, PL_WRT_QUOTED|PL_WRT_PORTRAY);
+{ return do_write2(stream, term,
+		   PL_WRT_QUOTED|PL_WRT_PORTRAY|PL_WRT_NUMBERVARS);
 }
 
 word

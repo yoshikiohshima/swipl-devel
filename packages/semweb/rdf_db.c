@@ -2260,9 +2260,12 @@ unify_object(term_t object, triple *t)
       else
 	qf = FUNCTOR_type2;
 
-      return PL_unify_term(lit, PL_FUNCTOR, qf,
-			     PL_ATOM, t->type_or_lang,
-			     PL_TERM, v);
+      if ( PL_unify_term(lit, PL_FUNCTOR, qf,
+			   PL_ATOM, t->type_or_lang,
+			   PL_TERM, v) )
+	return TRUE;
+
+      return PL_unify(lit, v);		/* allow rdf(X, Y, literal(foo)) */
     } else if ( PL_unify(lit, v) )
     { return TRUE;
     } else if ( PL_is_functor(lit, FUNCTOR_lang2) &&

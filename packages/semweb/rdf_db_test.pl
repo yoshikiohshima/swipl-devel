@@ -184,6 +184,10 @@ lang(3) :-
 		 lang(en, 'John'),
 		 lang(_,  'Johannes')
 	       ].
+lang(4) :-
+	lang_data,
+	rdf(S, P, literal('Jan')), S == x, P == a,
+	rdf(S, P, literal('Johannes')), S == x, P == a.
 lang(save_db) :-
 	lang_data,
 	save_reload_db,
