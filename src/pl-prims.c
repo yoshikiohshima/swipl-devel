@@ -1116,15 +1116,30 @@ pl_univ(term_t t, term_t list)
 
 
 static int
-do_number_vars(term_t t, functor_t functor, int n ARG_LD)
+do_number_vars(term_t t, functor_t functor, av_action on_av, int n ARG_LD)
 { Word p;
 
 start:
+  if ( n < 0 )
+    return n;				/* error */
+
   p = valTermRef(t);
   deRef(p);
 
-  if ( isVar(*p) )
+  if ( canBind(*p) )
   { Word a;
+    word v;
+
+    if ( isAttVar(*p) )
+    { switch(on_av)
+      { case AV_SKIP:
+	  return n;
+	case AV_ERROR:
+	  return -1;
+	case AV_BIND:
+	  break;
+      }
+    }
 
 #ifdef O_SHIFT_STACKS
     if ( roomStack(global) < 2 * (long)sizeof(word) )
@@ -1140,8 +1155,15 @@ start:
     a[0] = functor;
     a[1] = makeNum(n);
     gTop += 2;
-    *p = consPtr(a, TAG_COMPOUND|STG_GLOBAL);
-    Trail(p);
+    
+
+    v = consPtr(a, TAG_COMPOUND|STG_GLOBAL);
+    if ( isAttVar(*p) )
+    { assignAttVar(p, &v PASS_LD);
+    } else
+    { *p = v;
+      Trail(p);
+    }
     
     n++;
   } else if ( isTerm(*p) )
@@ -1166,7 +1188,7 @@ start:
 	  goto start;			/* right-recursion optimisation */
 	} else
 	{ _PL_get_arg(i, t, a);
-	  n = do_number_vars(a, functor, n PASS_LD);
+	  n = do_number_vars(a, functor, on_av, n PASS_LD);
 	}
       }
     }
@@ -1177,10 +1199,10 @@ start:
 
 
 int
-numberVars(term_t t, functor_t functor, int n ARG_LD)
+numberVars(term_t t, functor_t functor, av_action on_av, int n ARG_LD)
 { term_t h2 = PL_copy_term_ref(t);
   Word *m = aTop;
-  int rval = do_number_vars(h2, functor, n PASS_LD);
+  int rval = do_number_vars(h2, functor, on_av, n PASS_LD);
   unvisit(m PASS_LD);
 
   PL_reset_term_refs(h2);
@@ -1189,20 +1211,62 @@ numberVars(term_t t, functor_t functor, int n ARG_LD)
 }
 
 
-word
-pl_numbervars(term_t t, term_t f,
-	      term_t start, term_t end)
+static const opt_spec numbervar_options[] = 
+{ { ATOM_attvar,	    OPT_ATOM },
+  { ATOM_functor_name,	    OPT_ATOM },
+  { NULL_ATOM,	     	    0 }
+};
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+numbervars(+Term, +Start, -End, +Options)
+numbervars(+Term, +Functor, +Start, -End)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static
+PRED_IMPL("numbervars", 4, numbervars, 0)
 { GET_LD
   int n;
   functor_t functor;
-  atom_t name;
-  
-  if ( !PL_get_integer_ex(start, &n) ||
-       !PL_get_atom_ex(f, &name) )
+  atom_t name = ATOM_isovar;		/* '$VAR' */
+  atom_t av = ATOM_error;
+  term_t t, end, options;
+  av_action on_av;
+
+  t = PL_copy_term_ref(A1);
+
+  if ( !PL_get_integer(A2, &n) )
+  { if ( PL_get_atom(A2, &name) &&
+	 PL_get_integer(A3, &n)	)	/* old calling conventions */
+    { end = A4;
+      options = 0;
+    } else
+    { return PL_get_integer_ex(A2, &n);
+    }
+  } else
+  { end = A3;
+    options = A4;
+  }
+
+  if ( options &&
+       !scan_options(options, 0, ATOM_numbervar_option, numbervar_options,
+		     &av, &name) )
     fail;
 
+  if ( av == ATOM_error )
+    on_av = AV_ERROR;
+  else if ( av == ATOM_skip )
+    on_av = AV_SKIP;
+  else if ( av == ATOM_bind )
+    on_av = AV_BIND;
+  else
+    return PL_error(NULL, 0, NULL, ERR_DOMAIN, ATOM_numbervar_option, options);
+
   functor = PL_new_functor(name, 1);
-  n = numberVars(t, functor, n PASS_LD);
+  n = numberVars(t, functor, on_av, n PASS_LD);
+  if ( n == -1 )
+    return PL_error(NULL, 0, NULL,
+		    ERR_TYPE, ATOM_free_of_attvar, A1);
 
   return PL_unify_integer(end, n);
 }
@@ -3278,6 +3342,7 @@ BeginPredDefs(prims)
   PRED_DEF("\\=@=", 2, structural_neq, 0)
   PRED_DEF("?=", 2, can_compare, 0)
   PRED_DEF("functor", 3, functor, 0)
+  PRED_DEF("numbervars", 4, numbervars, 0)
   PRED_DEF("term_variables", 2, term_variables2, 0)
   PRED_DEF("term_variables", 3, term_variables3, 0)
   PRED_DEF("unifyable", 3, unifyable, 0)

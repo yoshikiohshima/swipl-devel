@@ -540,9 +540,8 @@ COMMON(word) 		pl_notunify(term_t t1, term_t t2);
 COMMON(int) 		compareStandard(Word t1, Word t2, int eq ARG_LD);
 COMMON(int) 		lengthList(term_t list, int errors);
 COMMON(word) 		pl_univ(term_t t, term_t l);
-COMMON(int) 		numberVars(term_t t, functor_t functor, int n ARG_LD);
-COMMON(word) 		pl_numbervars(term_t t, term_t atom,
-			      term_t start, term_t end);
+COMMON(int) 		numberVars(term_t t, functor_t functor,
+				   av_action on_av, int n ARG_LD);
 COMMON(word) 		pl_e_free_variables(term_t t, term_t l);
 COMMON(word) 		stringToList(char *s);
 COMMON(word) 		pl_atom_length(term_t w, term_t n);

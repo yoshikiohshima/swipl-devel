@@ -1799,10 +1799,15 @@ undo_while_saving_term(mark *m, Word term)
   info.external = FALSE;
 
   compile_term_to_heap(term, &info PASS_LD);
-  n = info.nvars;
-  p = (Word *)info.vars.base;
-  while(n-- > 0)
-    setVar(**p++);
+  p = topBuffer(&info.vars, Word);
+  while(p > baseBuffer(&info.vars, Word))
+  { p--;
+    if (isAttVarP(*p) )
+    { *valAttVarP(*p) = (word)p[-1];
+      p--;
+    } else
+      setVar(**p);
+  }
 
 #if O_CYCLIC
   unvisit(cycle_mark PASS_LD);
@@ -1818,11 +1823,19 @@ undo_while_saving_term(mark *m, Word term)
   assert(b.gstore == gTop);
   discardBuffer(&info.code);
 
-  for(n=0; n<info.nvars; n++)
-  { Word v = ((Word *)info.vars.base)[n];
-    
-    if ( onStack(local, v) || (v > gBase && v < m->globaltop) )
-      unify_ptrs(v, ((Word *)b.vars)[n] PASS_LD);
+  p = topBuffer(&info.vars, Word);
+  n = info.nvars;
+  while(p > baseBuffer(&info.vars, Word))
+  { p--;
+    n--;
+    if (isAttVarP(*p) )
+    { p--;				/* what to do? */
+    } else
+    { Word v = *p;
+
+      if ( onStack(local, v) || (v > gBase && v < m->globaltop) )
+	unify_ptrs(v, ((Word *)b.vars)[n] PASS_LD);
+    }
   }
 
   discardBuffer(&info.vars);

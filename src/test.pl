@@ -1140,7 +1140,17 @@ avar(streq-3) :-
 	freeze(X, write(X)), freeze(Y, write(Y)), X =@= Y.
 avar(streq-4) :-
 	freeze(X, write(X)), freeze(Y, write(_Z)), X \=@= Y.
-
+avar(throw-1) :-
+	freeze(X, write(X)),
+	T = x(X),
+	catch(throw(T), Ex, true),
+	Ex =@= T.			% should be ==
+avar(throw-2) :-
+	freeze(X, write(X)),
+	freeze(Y, write(Y)),
+	T = x(X,_,Y),
+	catch(throw(T), Ex, true),
+	Ex =@= T.
 
 
 		 /*******************************

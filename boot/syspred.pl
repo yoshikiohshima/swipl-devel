@@ -778,7 +778,7 @@ length2([_|List], N) :-
 %	will be given to the next variable.
 
 numbervars(Term, From, To) :-
-	numbervars(Term, '$VAR', From, To).
+	numbervars(Term, From, To, []).
 
 
 		 /*******************************

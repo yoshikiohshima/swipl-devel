@@ -543,6 +543,11 @@ A attributes		"attributes"
 A dots			"dots"
 A write_attributes	"write_attributes"
 A inf			"inf"
+A functor_name		"functor_name"
+A numbervar_option	"numbervar_option"
+A skip			"skip"
+A bind			"bind"
+A free_of_attvar	"free_of_attvar"
 
 F abs			1
 F access		1

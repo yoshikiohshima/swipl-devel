@@ -531,3 +531,8 @@
 #define ATOM_dots         MK_ATOM(530)
 #define ATOM_write_attributes MK_ATOM(531)
 #define ATOM_inf          MK_ATOM(532)
+#define ATOM_functor_name MK_ATOM(533)
+#define ATOM_numbervar_option MK_ATOM(534)
+#define ATOM_skip         MK_ATOM(535)
+#define ATOM_bind         MK_ATOM(536)
+#define ATOM_free_of_attvar MK_ATOM(537)

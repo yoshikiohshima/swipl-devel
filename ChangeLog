@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: throw/1 crashed on attributed variables in the ball.
+
+  * ADDED: option list to numbervars/4.
+
   * ADDED: return value for PL_put_blob() to indicate new/reused blob
     identifier.  Also added `acquire' hook to the blob type.
     Salvador Fandiño.

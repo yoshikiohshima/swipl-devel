@@ -1850,6 +1850,17 @@ typedef enum
 #endif
 
 
+		 /*******************************
+		 *	     NUMBERVARS		*
+		 *******************************/
+
+typedef enum
+{ AV_BIND,
+  AV_SKIP,
+  AV_ERROR
+} av_action;
+
+
 		/********************************
 		*       READ WARNINGS           *
 		*********************************/
