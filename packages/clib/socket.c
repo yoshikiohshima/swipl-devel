@@ -44,10 +44,14 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+#ifdef WIN32
+#include <malloc.h>
+#endif
 
 static atom_t ATOM_reuseaddr;		/* "reuseaddr" */
 static atom_t ATOM_dispatch;		/* "dispatch" */
 static atom_t ATOM_nonblock;		/* "nonblock" */
+static atom_t ATOM_infinite;		/* "infinite" */
 
 static functor_t FUNCTOR_socket1;	/* $socket(Id) */
 
@@ -363,6 +367,144 @@ pl_gethostname(term_t name)
 }
 
 
+		 /*******************************
+		 *	       SELECT		*
+		 *******************************/
+
+typedef struct fdentry
+{ int fd;
+  term_t stream;
+  struct fdentry *next;
+} fdentry;
+
+
+static term_t
+findmap(fdentry *map, int fd)
+{ for( ; map; map = map->next )
+  { if ( map->fd == fd )
+      return map->stream;
+  }
+  assert(0);
+  return 0;
+}
+
+
+static foreign_t
+tcp_select(term_t Streams, term_t Available, term_t timeout)
+{ fd_set fds;
+  struct timeval t, *to;
+  double time;
+  int n, max = 0, ret, min = 1000000;
+  fdentry *map     = NULL;
+  term_t head      = PL_new_term_ref();
+  term_t streams   = PL_copy_term_ref(Streams);
+  term_t available = PL_copy_term_ref(Available);
+  term_t ahead     = PL_new_term_ref();
+  int from_buffer  = 0;
+  atom_t a;
+
+  FD_ZERO(&fds);
+  while( PL_get_list(streams, head, streams) )
+  { IOSTREAM *s;
+    int fd;
+    fdentry *e;
+
+    if ( !PL_get_stream_handle(head, &s) )
+      return FALSE;
+    if ( (fd=Sfileno(s)) < 0 )
+    { PL_release_stream(s);
+      return pl_error("tcp_select", 3, NULL, ERR_DOMAIN,
+		      head, "file_stream");
+    }
+    PL_release_stream(s);
+					/* check for input in buffer */
+    if ( s->bufp < s->limitp )
+    { if ( !PL_unify_list(available, ahead, available) ||
+	   !PL_unify(ahead, head) )
+	return FALSE;
+      from_buffer++;
+    }
+
+    e         = alloca(sizeof(*e));
+    e->fd     = fd;
+    e->stream = PL_copy_term_ref(head);
+    e->next   = map;
+    map       = e;
+
+#ifdef WIN32
+    FD_SET((SOCKET)fd, &fds);
+#else
+    FD_SET(fd, &fds);
+#endif
+
+    if ( fd > max )
+      max = fd;
+    if( fd < min )
+      min = fd;
+  }
+  if ( !PL_get_nil(streams) )
+    return pl_error("tcp_select", 3, NULL, ERR_TYPE, Streams, "list");
+
+  if ( from_buffer > 0 )
+    return PL_unify_nil(available);
+
+  if ( PL_get_atom(timeout, &a) && a == ATOM_infinite )
+  { to = NULL;
+  } else
+  { if ( !PL_get_float(timeout, &time) )
+      return pl_error("tcp_select", 3, NULL,
+		      ERR_TYPE, timeout, "number");
+  
+    if ( time >= 0.0 )
+    { t.tv_sec  = (int)time;
+      t.tv_usec = ((int)(time * 1000000) % 1000000);
+    } else
+    { t.tv_sec  = 0;
+      t.tv_usec = 0;
+    }
+    to = &t;
+  }
+
+  while( (ret=nbio_select(max+1, &fds, NULL, NULL, to)) == -1 &&
+	 errno == EINTR )
+  { fdentry *e;
+
+    if ( PL_handle_signals() < 0 )
+      return FALSE;			/* exception */
+
+    FD_ZERO(&fds);			/* EINTR may leave fds undefined */
+    for(e=map; e; e=e->next)		/* so we rebuild it to be safe */
+    {
+#ifdef WIN32
+      FD_SET((SOCKET)e->fd, &fds);
+#else
+      FD_SET(e->fd, &fds);
+#endif
+    }
+  }
+
+  switch(ret)
+  { case -1:
+      return pl_error("tcp_select", 3, ERR_ERRNO, errno);
+
+    case 0: /* Timeout */
+      break;
+
+    default: /* Something happend -> check fds */
+      for(n=min; n <= max; n++)
+      { if ( FD_ISSET(n, &fds) )
+	{ if ( !PL_unify_list(available, ahead, available) ||
+	       !PL_unify(ahead, findmap(map, n)) )
+	    return FALSE;
+	}
+      }
+      break;
+  }
+
+  return PL_unify_nil(available);
+}
+
+
 #ifdef O_DEBUG
 static foreign_t
 pl_debug(term_t val)
@@ -381,6 +523,7 @@ install_socket()
 { ATOM_reuseaddr  = PL_new_atom("reuseaddr");
   ATOM_dispatch   = PL_new_atom("dispatch");
   ATOM_nonblock   = PL_new_atom("nonblock");
+  ATOM_infinite   = PL_new_atom("infinite");
 
   FUNCTOR_socket1 = PL_new_functor(PL_new_atom("$socket"), 1);
   
@@ -391,12 +534,13 @@ install_socket()
   PL_register_foreign("tcp_bind",             2, pl_bind,             0);
   PL_register_foreign("tcp_connect",          2, pl_connect,	      0);
   PL_register_foreign("tcp_listen",           2, pl_listen,           0);
-  PL_register_foreign("tcp_open_socket",      3, pl_open_socket,     0);
+  PL_register_foreign("tcp_open_socket",      3, pl_open_socket,      0);
   PL_register_foreign("tcp_socket",           1, pl_socket,           0);
   PL_register_foreign("tcp_close_socket",     1, pl_close_socket,     0);
   PL_register_foreign("tcp_setopt",           2, pl_setopt,           0);
-  PL_register_foreign("tcp_host_to_address",  2, pl_host_to_address, 0);
+  PL_register_foreign("tcp_host_to_address",  2, pl_host_to_address,  0);
   PL_register_foreign("gethostname",          1, pl_gethostname,      0);
+  PL_register_foreign("tcp_select",           3, tcp_select,          0);
 }
 
 

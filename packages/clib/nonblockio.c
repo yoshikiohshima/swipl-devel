@@ -75,6 +75,10 @@ Address Converstion
 	nbio_get_sockaddr()
 	nbio_get_ip4()
 
+Waiting
+
+	nbio_select()
+
 Alternative to nbio_read() and nbio_write(), the application program may
 call  the  low-level  I/O  routines  in    non-blocking  mode  and  call
 nbio_wait(int socket, nbio_request request). This  function returns 0 if
@@ -119,6 +123,9 @@ leave the details to this function.
 #include <sys/types.h>
 #include <assert.h>
 #include <string.h>
+#ifdef WIN32
+#include <malloc.h>
+#endif
 
 #ifndef WIN32
 #define closesocket(n) close((n))	/* same on Unix */
@@ -343,7 +350,7 @@ nbio_wait(int socket, nbio_request request)
   s->thread  = GetCurrentThreadId();
   s->request = request;
 
-  PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
+  PostMessage(State()->hwnd, WM_REQUEST, 1, (LPARAM)&s);
 
   DEBUG(2, Sdprintf("[%d] (%ld): Waiting ...",
 		    PL_thread_self(), s->thread));
@@ -415,11 +422,11 @@ nbio_select(int n,
   }
 
   FD_ZERO(readfds);
-  PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
+  PostMessage(State()->hwnd, WM_REQUEST, n, (LPARAM)sockets);
 
   for(;;)
   { MSG msg;
-    plsocket *s;
+    plsocket **s;
     int ready;
 
     if ( PL_handle_signals() < 0 )
@@ -428,9 +435,9 @@ nbio_select(int n,
     }
     
     for(ready=0, i=0, s=sockets; i<n; i++, s++)
-    { if ( s && s->done )
+    { if ( *s && (*s)->done )
       { ready++;
-	FD_SET(i, readfds);
+	FD_SET((unsigned)i, readfds);
       }
     }
     if ( ready > 0 )
@@ -479,7 +486,7 @@ placeRequest(plsocket *s, nbio_request request)
   s->request = request;
   clear(s, SOCK_WAITING);
 
-  PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
+  PostMessage(State()->hwnd, WM_REQUEST, 1, (LPARAM)&s);
   DEBUG(2, Sdprintf("%d (%ld): Placed request %d\n",
 		    PL_thread_self(), s->thread, request));
 
@@ -619,9 +626,13 @@ static int WINAPI
 socket_wnd_proc(HWND hwnd, UINT message, UINT wParam, LONG lParam)
 { switch( message )
   { case WM_REQUEST:
-    { plsocket *s = (plsocket *)lParam;
+    { plsocket **s = (plsocket **)lParam;
+      int i, n = (int)wParam;
 
-      doRequest(s);
+      for(i=0; i<n; i++)
+      { if ( s[i] )
+	  doRequest(s[i]);
+      }
 
       return 0;
     }
@@ -811,6 +822,13 @@ nbio_fcntl(int fd, int op, int arg)
     nbio_error(errno, TCP_ERRNO);
 
   return rc;
+}
+
+int
+nbio_select(int n,
+	    fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	    struct timeval *timeout)
+{ return select(n, readfds, writefds, exceptfds, timeout); 
 }
 
 #endif /*WIN32*/

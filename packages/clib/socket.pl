@@ -40,6 +40,7 @@
 	    tcp_fcntl/3,		% +Socket, +Command, ?Arg
 	    tcp_setopt/2,		% +Socket, +Option
 	    tcp_host_to_address/2,	% ?HostName, ?Ip-nr
+	    tcp_select/3,		% +Inputs, -Ready, +Timeout
 	    gethostname/1		% -HostName
 	  ]).
 :- use_module(library(shlib)).
