@@ -290,6 +290,8 @@ requires_library((:- draw_begin_shape(_,_,_,_)), library(pcedraw)).
 
 process((:- Directive), Src) :- !,
 	process_directive(Directive, Src), !.
+process((?- Directive), Src) :- !,
+	process_directive(Directive, Src), !.
 process((Head :- Body), Src) :- !,
 	assert_defined(Src, Head),
 	process_body(Body, Head, Src).
