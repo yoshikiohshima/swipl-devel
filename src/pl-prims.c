@@ -333,7 +333,7 @@ compareStrings(word w1, word w2 ARG_LD)
 
 /*  Rules:
 
-    Var @< Number @< Atom @< String < Term
+    Var @< AttVar @< Number @< Atom @< String < Term
     
     OldVar < NewVar	(not relyable)
     Atom:	alphabetically
@@ -387,6 +387,7 @@ tail_recursion:
 
   switch(t1)
   { case TAG_VAR:
+    case TAG_ATTVAR:
     cmpvars:
       return p1 < p2 ? LESS : p1 == p2 ? EQUAL : GREATER;
     case TAG_INTEGER:

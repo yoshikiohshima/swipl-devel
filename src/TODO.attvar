@@ -8,6 +8,7 @@ Places dealt with:
 	* Adjusted recorded database (recorda, recorded, findall, ...)
 	* checkData to deal with recursive structures.
 	* Adjusted the garbage collector
+	* standard order of terms
 
 Places to deal with them
 
