@@ -23,7 +23,7 @@
 */
 
 /*#define O_SECURE 1*/
-/*#define O_DEBUG 1*/
+#define O_DEBUG 1
 #include "pl-incl.h"
 
 #define	     BFR (LD->choicepoints)	/* choicepoint registration */
@@ -2473,9 +2473,13 @@ ARGP is pointing into the term on the global stack we are creating.
 	    NEXT_INSTRUCTION;
 	  }
 	  *ARGP++ = makeRefG(k);	/* both on global stack! */
-	  NEXT_INSTRUCTION;	  
+#ifdef O_ATTVAR
+	} else if ( isAttVar(*k) )
+	{ *ARGP++ = makeRefG(k);
+#endif
+	} else
+	{ *ARGP++ = *k;
 	}
-	*ARGP++ = *k;
 
 	NEXT_INSTRUCTION;
       }
@@ -2498,7 +2502,7 @@ above the stack.
     VMI(B_VAR2)						MARK(BVAR2);
       n = VAROFFSET(2);
       goto common_bvar;
-    VMI(B_VAR)					MARK(BVARN);
+    VMI(B_VAR)						MARK(BVARN);
       n = (int)*PC++;
     common_bvar:
     { Word k = varFrameP(FR, n);
