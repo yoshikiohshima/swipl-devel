@@ -2,6 +2,8 @@
 			   ==============
 
 
+* FIXED: PceEmacs: restore of syntax after processing a file.  Dmitry.
+
 * ENHANCED: Improve checking of arguments in pce_begin_class.  After
   message from Joao Mariz.
 

@@ -159,7 +159,7 @@ colourise_buffer(M) :-
 	),
 	save_settings(Fd, State),
 	call_cleanup(colourise_buffer(Fd, M),
-		     restore_settings(Fd, State)).
+		     restore_settings(State)).
 
 colourise_buffer(Fd, M) :-
 	get(M, text_buffer, TB),
@@ -187,7 +187,7 @@ save_settings(Fd, state(Fd, Style, Esc)) :-
 	current_prolog_flag(character_escapes, Esc),
 	'$style_check'(Style, Style).
 
-restore_settings(Fd, state(Style, Esc)) :-
+restore_settings(state(Fd, Style, Esc)) :-
 	set_prolog_flag(character_escapes, Esc),
 	'$style_check'(_, Style),
 	pop_operators,
