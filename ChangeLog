@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: http_open/3 problems using redirection to non-absolute URL.
+    Anjo Anjewierden.
+
   * FIXED: Bug#133: setarg/3 did not throw an exception.  Holger
     Kanwischer.
 

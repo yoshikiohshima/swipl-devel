@@ -116,10 +116,11 @@ do_open(200, _, Lines, Options, Parts, In, In) :- !,
 	set_stream(In, file_name(Id)),
 	set_stream(In, record_position(true)).
 					% Handle redirections
-do_open(302, _, Lines, Options, _Parts, In, Stream) :-
+do_open(302, _, Lines, Options, Parts, In, Stream) :-
 	location(Lines, Location), !,
+	parse_url(Location, Parts, Redirected),
 	close(In),
-	http_open(Location, Stream, Options).
+	http_open(Redirected, Stream, Options).
 					% report anything else as error
 do_open(Code, Comment, _, _, Parts, In, In) :-
 	close(In),
