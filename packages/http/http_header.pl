@@ -471,7 +471,7 @@ header_field(Name, Value) -->
 header_field(Name, Value) -->
 	field_name(Name),
 	": ",
-	atom(Value),
+	field_value(Value),
 	"\r\n".
 
 field_to_prolog(content_length, ValueChars, ContentLength) :- !,
@@ -483,6 +483,23 @@ field_to_prolog(set_cookie, ValueChars, SetCookie) :- !,
 field_to_prolog(_, ValueChars, Atom) :-
 	atom_codes(Atom, ValueChars).
 
+field_value(set_cookie(Name, Value, Options)) --> !,
+	atom(Name), "=", atom(Value),
+	set_cookie_options(Options).
+field_value(Atomic) -->
+	atom(Atomic).
+
+set_cookie_options([]) -->
+	[].
+set_cookie_options([secure=true|T]) --> !,
+	" ; secure",
+	set_cookie_options(T).
+set_cookie_options([Name=Value|T]) -->
+	" ; ", field_name(Name), "=",
+	atom(Value),
+	set_cookie_options(T).
+
+
 %	Process a sequence of [Name(Value), ...] attributes for the
 %	header.
 
@@ -493,7 +510,7 @@ header_fields([H|T]) -->
 	},
 	field_name(Name),
 	": ",
-	atom(Value),
+	field_value(Value),
 	"\r\n",
 	header_fields(T).
 
