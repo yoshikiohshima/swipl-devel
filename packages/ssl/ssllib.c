@@ -497,10 +497,6 @@ ssl_close(PL_SSL_INSTANCE *instance)
     int ret = 0;
 
     if (instance) {
-        if (instance->sock >= 0) {
-            ret = closesocket(instance->sock);
-        }
-
         if (instance->config->pl_ssl_role != PL_SSL_SERVER) {
             /*
              * Send SSL/TLS close_notify
@@ -510,6 +506,10 @@ ssl_close(PL_SSL_INSTANCE *instance)
 
         if (instance->ssl) {
             SSL_free(instance->ssl);
+        }
+
+        if (instance->sock >= 0) {
+            ret = closesocket(instance->sock);
         }
 
         free(instance);

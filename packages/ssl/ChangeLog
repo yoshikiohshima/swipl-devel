@@ -1,5 +1,7 @@
 Jun 28, 2004
 
+  * FIXED: Order of closing connection.
+
   * FIXED: pass length for certificate in callback.
 
   * ADDED: (JW) https.pl demoing a simple HTTPS server
