@@ -1,3 +1,8 @@
+Jul 19, 2004
+
+  * JW: Removed chr_pp: module prefixes
+  * JW: Updated Windows makefile.mak (more similar organisation, added check)
+
 Jul 17, 2004
 
   * TS: Added chr_hashtable_store library.

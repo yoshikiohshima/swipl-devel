@@ -28,18 +28,24 @@ all:		chr_translate.pl
 chr_translate_bootstrap1.pl: chr_translate_bootstrap1.chr 
 		$(PL) -q -f chr_swi_bootstrap.pl \
 		      -g "chr_compile_step1('chr_translate_bootstrap1.chr','chr_translate_bootstrap1.pl'),halt" \
-		      -t 'halt(1)'
+		      -t "halt(1)"
 		$(PL) -q -f chr_swi_bootstrap.pl \
 		      -g "chr_compile_step2('chr_translate_bootstrap1.chr','chr_translate_bootstrap1.pl'),halt" \
-		      -t 'halt(1)'
+		      -t "halt(1)"
 
 chr_translate.pl:	chr_translate.chr chr_translate_bootstrap1.pl
 		$(PL) -q -f chr_swi_bootstrap.pl \
-		      -g "chr_compile_step1('chr_translate.chr', 'chr_translate.pl' ), halt" \
-		      -t 'halt(1)'
+		      -g "chr_compile_step2('chr_translate.chr', 'chr_translate.pl' ), halt" \
+		      -t "halt(1)"
 		$(PL) -q -f chr_swi_bootstrap.pl \
-		      -g "chr_compile_step2('chr_translate.chr', 'chr_translate.pl'), halt" \
-		      -t 'halt(1)'
+		      -g "chr_compile_step3('chr_translate.chr', 'chr_translate.pl'), halt" \
+		      -t "halt(1)"
+
+chr.pl:		chr_swi.pl
+		copy chr_swi.pl chr.pl
+
+check:		chr.pl
+		$(PL) -q -f chr_test.pl -g test,halt -t 'halt(1)'
 
 
 !IF "$(CFG)" == "rt"
@@ -72,6 +78,7 @@ uninstall::
 
 clean::
 		if exist *~ del *~
+		-del chr.pl chr_translate.pl chr_translate_bootstrap1.pl
 
 distclean:	clean
 
