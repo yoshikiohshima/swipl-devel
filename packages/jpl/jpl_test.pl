@@ -24,3 +24,6 @@ tag_basename([], []).
 tag_basename([H|T0], [H:B|T]) :-
 	file_base_name(H, B),
 	tag_basename(T0, T).
+
+% PS was here :-)
+
