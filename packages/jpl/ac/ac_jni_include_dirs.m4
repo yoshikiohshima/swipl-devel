@@ -54,7 +54,7 @@ esac
 for d in $_JNI_LIBDIRS; do
 	echo "Trying $_JTOPDIR/jre/lib/$d/client"
 	if test -d $_JTOPDIR/jre/lib/$d/client; then
-		JNI_CLIENT_DIRS="$JNI_CLIENT_DIRS $_JTOPDIR/jre/lib/$d/client"
+		JNI_CLIENT_DIRS="$JNI_CLIENT_DIRS $_JTOPDIR/jre/lib/$d/client $_JTOPDIR/jre/lib/$d"
 	fi
 done
 
