@@ -10,6 +10,11 @@
 VERSION 5.3.9 (Apr 15, 2004)
 ============================
 
+  * MODIFIED: the library for embedded linking has been moved from
+    runtime/$ARCH to lib/$ARCH.  Installation scripts using plld work
+    without modification, but hand-crafted building of embedded executables
+    must be adapted.
+
   * ADDED: configure option --enable-shared to create the Prolog kernel
     as a shared object.  Works on ELF based systems using the GNU toolchain.
     MODOFIED: configure option --disable-shared is renamed to

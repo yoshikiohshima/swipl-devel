@@ -314,8 +314,10 @@ installdirs=	bin bin/$(ARCH) lib lib/$(ARCH) man boot library \
 iruntime::
 		$(INSTALL_DATA) $(RUNTIME) $(PLBASE)/lib/$(ARCH)
 		$(RANLIB) $(PLBASE)/lib/$(ARCH)/$(PLLIB)
-		$(INSTALL_DATA) $(RUNTIMEDIR)/$(SHAREDV) $(PLBASE)/lib/$(ARCH)
-		( cd $(PLBASE)/lib/$(ARCH) && rm -f $(SHARED) && ln -s $(SHAREDV) $(SHARED) )
+		if [ -e $(RUNTIMEDIR)/$(SHAREDV) ]; then \
+		  $(INSTALL_DATA) $(RUNTIMEDIR)/$(SHAREDV) $(PLBASE)/lib/$(ARCH) ; \
+		( cd $(PLBASE)/lib/$(ARCH) && rm -f $(SHARED) && ln -s $(SHAREDV) $(SHARED) ) ; \
+		fi
 
 install-implib::
 		$(INSTALL_DATA) libplimp.a $(PLBASE)/lib/$(ARCH)
