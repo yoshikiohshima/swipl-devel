@@ -1163,6 +1163,13 @@ do_copy_term() returns TRUE if the term can   be shared and FALSE if not
 (i.e. it is a variable or attributed variable). If, in sharing mode, the
 copying routine copied a shareable term it   discards the copy and links
 the original.
+
+NOTE: when using the stack-shifter, we cannot   affort  the stacks to be
+shifted during the execution of copy_term/2. I think the proper solution
+is to try and copy. If the copy   fails  we use exitCyclic() to undo the
+damage, reset gTop, get more space   and try again. allocGlobalNoShift()
+is a version of allocGlobal() that returns NULL if the stack needs to be
+shifted rather than doing it.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #define VAR_MARK (0x1<<LMASK_BITS|TAG_VAR)
@@ -1241,12 +1248,12 @@ again:
       { Word attr;			/* the new attributes */
 
 	if ( !onStackArea(global, to) )
-	{ Word t = allocGlobal(1);
+	{ Word t = allocGlobalNoShift(1);
 	  
 	  *to = makeRefG(t);
 	  to = t;
 	}
-	attr = allocGlobal(1);
+	attr = allocGlobalNoShift(1);
 	TrailCyclic(p PASS_LD);
 	TrailCyclic(from PASS_LD);
 	*from = consPtr(to, STG_GLOBAL|TAG_ATTVAR);
@@ -1267,12 +1274,13 @@ again:
 
       if ( isRef(f1->definition) )
       { *to = consPtr(unRef(f1->definition), TAG_COMPOUND|STG_GLOBAL);
+        return FALSE;
       } else
       { int arity = arityFunctor(f1->definition);
 	Word oldtop = gTop;
 	Word to0 = to;
 	Word from0 = from;
-	Functor f2 = (Functor)allocGlobal(arity+1);
+	Functor f2 = (Functor)allocGlobalNoShift(arity+1);
 	int ground = TRUE;
 
 	f2->definition = f1->definition;

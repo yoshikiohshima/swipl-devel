@@ -27,6 +27,7 @@ void		freeHeap__LD(void *mem, size_t n ARG_LD);
 word		outOfStack(Stack s, stack_overflow_action how);
 volatile void	outOfCore(void);
 Word		allocGlobal__LD(int words ARG_LD);
+Word		allocGlobalNoShift__LD(int words ARG_LD);
 void *		allocHeap__LD(size_t n ARG_LD);
 void		initMemAlloc(void);
 void		cleanupMemAlloc(void);

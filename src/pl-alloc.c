@@ -732,6 +732,21 @@ allocGlobal__LD(int n ARG_LD)
   return result;
 }
 
+Word
+allocGlobalNoShift__LD(int n ARG_LD)
+{ Word result;
+
+  if ( roomStack(global) < (long) (n * sizeof(word)) )
+  { assert(0);				/* TBD: see copy_term/2 */
+    return NULL;
+  }
+
+  result = gTop;
+  gTop += n;
+
+  return result;
+}
+
 #else
 
 static inline Word
