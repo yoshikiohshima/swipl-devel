@@ -1257,26 +1257,27 @@ right_recursion:
 }
 
 
-static Word
-bind_existential_vars(Word t ARG_LD)
+static void
+bind_existential_vars(Word t, Word *plain ARG_LD)
 { deRef(t);
 
-  if ( isTerm(*t) )
+  while ( isTerm(*t) )
   { Functor f = valueTerm(*t);
     int arity;
-    Word a;
 
     if ( f->definition == FUNCTOR_hat2 )
     { dobind_vars(&f->arguments[0], ATOM_nil PASS_LD);
-      return bind_existential_vars(&f->arguments[1] PASS_LD);
+      *plain = &f->arguments[1];
+      bind_existential_vars(&f->arguments[1], plain PASS_LD);
+      return;
     }
     
     arity = arityFunctor(f->definition);
-    for(a = f->arguments; arity > 0; arity--, a++)
-      bind_existential_vars(a PASS_LD);
-  }
+    for(t = f->arguments; --arity > 0; t++)
+      bind_existential_vars(t, plain PASS_LD);
 
-  return t;
+    deRef(t);				/* right recursion */
+  }
 }
 
 
@@ -1289,7 +1290,8 @@ pl_e_free_variables(term_t t, term_t vars)
 
   startCritical;
   vm = aTop;
-  t2 = bind_existential_vars(valTermRef(t) PASS_LD);
+  t2 = valTermRef(t);
+  bind_existential_vars(t2, &t2 PASS_LD);
   v0 = PL_new_term_refs(0);
   n  = term_variables_loop(t2, v0, 0 PASS_LD);
   unvisit(vm PASS_LD);

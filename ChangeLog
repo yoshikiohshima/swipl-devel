@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: use right-recursion optimisation in $e_free_variables/2
+    used by bagof/3 and setof/3.  Alan Baljeu.
+
   * FIXED: Avoid "Loading module ... abolished: ..." messages when
     reloading discontiguous predicates.
 
