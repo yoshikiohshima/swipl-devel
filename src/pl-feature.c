@@ -694,6 +694,7 @@ initFeatures()
   defFeature("pid", FT_INTEGER|FF_READONLY, getpid());
 #endif
   defFeature("optimise", FT_BOOL, GD->cmdline.optimise, OPTIMISE_FEATURE);
+  defFeature("generate_debug_info", FT_BOOL, TRUE, DEBUGINFO_FEATURE);
   defFeature("tail_recursion_optimisation", FT_BOOL,
 	     TRUE, TAILRECURSION_FEATURE);
 #ifdef O_PLMT

@@ -1990,6 +1990,7 @@ typedef struct debuginfo
 #define EX_ABORT_FEATURE	  0x20000 /* abort with exception */
 #define BACKQUOTED_STRING_FEATURE 0x40000 /* `a string` */
 #define SIGNALS_FEATURE		  0x80000 /* Handle signals */
+#define DEBUGINFO_FEATURE	  0x100000 /* generate debug info */
 
 typedef struct
 { unsigned long flags;			/* the feature flags */

@@ -561,7 +561,7 @@ registerBuiltins(const PL_extension *f)
 
     PL_unregister_atom(name);
     def = lookupProcedure(fdef, m)->definition;
-    set(def, FOREIGN|SYSTEM|LOCKED);
+    set(def, FOREIGN|SYSTEM|HIDE_CHILDS|LOCKED);
 
     if ( f->flags & PL_FA_NOTRACE )	     clear(def, TRACE_ME);
     if ( f->flags & PL_FA_TRANSPARENT )	     set(def, METAPRED);
