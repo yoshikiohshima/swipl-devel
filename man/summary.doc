@@ -566,6 +566,7 @@ suggest predicates from a keyword.
 \functionsummary{log10}{1}{10 base logarithm}
 \functionsummary{max}{2}{Maximum of two numbers}
 \functionsummary{min}{2}{Minimum of two numbers}
+\functionsummary{msb}{1}{Most significant bit}
 \opfuncsummary{mod}{2}{xfx}{300}{Remainder of division}
 \functionsummary{random}{1}{Generate random number}
 \functionsummary{rem}{2}{Remainder of division}

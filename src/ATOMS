@@ -537,6 +537,7 @@ A dwakeup		"$wakeup"
 A att			"att"
 A freeze		"freeze"
 A gvar			"gvar"
+A msb			"msb"
 
 F abs			1
 F access		1
@@ -703,3 +704,4 @@ F line_count		1
 F wakeup		3
 F dwakeup		1
 F att			3
+F msb			1

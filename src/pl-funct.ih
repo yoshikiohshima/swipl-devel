@@ -163,3 +163,4 @@
 #define FUNCTOR_wakeup3      MK_FUNCTOR(162, 3)
 #define FUNCTOR_dwakeup1     MK_FUNCTOR(163, 1)
 #define FUNCTOR_att3         MK_FUNCTOR(164, 3)
+#define FUNCTOR_msb1         MK_FUNCTOR(165, 1)

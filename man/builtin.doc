@@ -3519,6 +3519,10 @@ Bitwise `and' \arg{IntExpr1} and \arg{IntExpr2}.
 Bitwise `exclusive or' \arg{IntExpr1} and \arg{IntExpr2}.
 \prefixop{\}{+IntExpr}
 Bitwise negation.
+    \predicate{msb}{1}{+IntExpr}
+Position of the most significant bit in binary notation.  \arg{IntExpr}
+must evaluate to a positive integer.  The MSB of 1 is 0.%
+	\footnote{msb/1 is compatible to hProlog}
     \predicate{sqrt}{1}{+Expr}
 $\arg{Result} = \sqrt{\arg{Expr}}$
     \predicate{sin}{1}{+Expr}

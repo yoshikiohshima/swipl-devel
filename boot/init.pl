@@ -942,7 +942,7 @@ $spec_extension(Spec, Ext) :-
 
 $load_file(File, Module, Options) :-
 	\+ memberchk(stream(_), Options),
-	user:prolog_load_file(Module:File, Options).
+	user:prolog_load_file(Module:File, Options), !.
 $load_file(File, Module, Options) :-
 	statistics(heapused, OldHeap),
 	statistics(cputime, OldTime),

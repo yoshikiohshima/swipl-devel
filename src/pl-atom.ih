@@ -525,3 +525,4 @@
 #define ATOM_att          MK_ATOM(524)
 #define ATOM_freeze       MK_ATOM(525)
 #define ATOM_gvar         MK_ATOM(526)
+#define ATOM_msb          MK_ATOM(527)
