@@ -45,7 +45,7 @@ portability problems for users of the single-threaded version.
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <sys/stropts.h>
+#include <sys/stropts.h>	/* needed for ioctl(fd, I_PUSH, "..") */
 #include <termios.h>
 #include <signal.h>
  
