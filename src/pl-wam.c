@@ -913,6 +913,98 @@ getProcDefinedDefinition(LocalFrame fr, Code PC, Procedure proc ARG_LD)
 #endif
 }
 
+		 /*******************************
+		 *	   CYCLIC TERMS		*
+		 *******************************/
+
+#if O_CYCLIC
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Cyclic term unification. The algorithm has been  described to me by Bart
+Demoen. Here it is (translated from dutch):
+
+I created my own variation. You only need it during general unification.
+Here is a short description:  suppose  you   unify  2  terms  f(...) and
+f(...), which are represented on the heap (=global stack) as:
+
+     +-----+          and     +-----+
+     | f/3 |                  | f/3 |
+     +-----+                  +-----+
+      args                     args'
+
+Before working on args and args', change  this into the structure below,
+using a reference pointer pointing from functor  of the one to the other
+term.
+
+     +-----+          and      +-----+
+     | ----+----------------->| f/3 |
+     +-----+                  +-----+
+      args                     args'
+
+If, during this unification you  find  a   compound  whose  functor is a
+reference to the term at the right hand you know you hit a cycle and the
+terms are the same.
+
+Of course functor_t must be different from ref. Overwritten functors are
+collected in a stack and  reset   regardless  of whether the unification
+succeeded or failed. In SWI-Prolog we use   the  argument stack for this
+purpose.
+
+Initial measurements show a performance degradation for deep unification
+of approx. 30%. On the other hand,  if subterms appear multiple times in
+a term unification can be much faster. As only a small percentage of the
+unifications of a realistic program are   covered by unify() and involve
+deep unification the overall impact of performance is small (< 3%).
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
+static inline void
+initCyclic(ARG1_LD)
+{ requireStack(argument, sizeof(Word));
+  *aTop++ = NULL;			/* marker */
+}
+
+
+static inline void
+linkTermsCyclic(Functor f1, Functor f2 ARG_LD)
+{ Word p1 = (Word)&f1->definition;
+  Word p2 = (Word)&f2->definition;
+
+  *p1 = makeRefG(p2);
+  requireStack(argument, sizeof(Word));
+  *aTop++ = p1;
+}
+
+
+static inline void
+exitCyclic(ARG1_LD)
+{ Word p, *sp = aTop;
+
+  while((p = *--sp))
+  { Word p2 = unRef(*p);
+    *p = *p2;
+  }
+  aTop = sp;
+}
+
+
+static inline Functor
+linkedTermCyclic(Functor f ARG_LD)
+{ word w = f->definition;
+
+  if ( isRef(w) )			/* we found a cyclic term! */
+  { return (Functor)unRef(w);
+  }
+
+  return NULL;
+}
+
+#else /*O_CYCLIC*/
+static inline void initCyclic(ARG1_LD) {}
+static inline void exitCyclic(ARG1_LD) {}
+static inline void linkTermsCyclic(Functor f1, Functor f2 ARG_LD) {}
+static inline Functor linkedTermCyclic(Functor f ARG_LD) { return NULL; }
+#endif /*O_CYCLIC*/
 
 
 		/********************************
@@ -937,118 +1029,8 @@ are:
   - various builtin predicates. They should be flagged some way.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define NON_RECURSIVE_UNIFY 0
-#if NON_RECURSIVE_UNIFY
-typedef struct uchoice *UChoice;
-
-struct uchoice
-{ Word		alist1;
-  Word		alist2;
-  int		size;
-  UChoice	next;
-};
-
-#define deRefw(p, w) while(isRef(w=*p)) p = unRef(w)
-
 static bool
-unify(Word t1, Word t2 ARG_LD)
-{ Word p1, p2;
-  word w1, w2;
-  int todo = 1;
-  UChoice nextch = NULL, tailch = NULL;
-
-  for(;;)
-  { if ( !todo )
-    { if ( nextch )
-      { t1 = nextch->alist1;
-	t2 = nextch->alist2;
-	todo = nextch->size;
-	nextch = nextch->next;
-      } else
-	succeed;
-    }
-
-    todo--;
-    p1 = t1++; deRefw(p1, w1);
-    p2 = t2++; deRefw(p2, w2);
-    
-    if ( w1 == w2 )
-    { if ( isVar(w1) && p1 != p2 )
-      { if ( p1 < p2 )			/* always point downwards */
-	{ *p2 = makeRef(p1);
-	  Trail(p2);
-	} else
-	{ *p1 = makeRef(p2);
-	  Trail(p1);
-	}
-      }
-      continue;
-    } 
-
-    if ( tag(w1) != tag(w2) )
-    { if ( isVar(w1) )
-      { *p1 = w2;
-        Trail(p1);
-	continue;
-      }
-      if ( isVar(w2) )
-      { *p2 = w1;
-        Trail(p2);
-	continue;
-      }
-      fail;
-    }
-
-    switch(tag(w1))
-    { case TAG_ATOM:
-	fail;
-      case TAG_INTEGER:
-	if ( storage(w1) == STG_INLINE ||
-	     storage(w2) == STG_INLINE )
-	  fail;
-      case TAG_STRING:
-      case TAG_FLOAT:
-	if ( equalIndirect(w1, w2) )
-	  continue;
-        fail;
-      case TAG_COMPOUND:
-      { Functor f1, f2;
-	int arity;
-
-	f1 = valueTerm(w1);
-	f2 = valueTerm(w2);
-  
-	if ( f1->definition != f2->definition )
-	  fail;
-	arity = arityFunctor(f1->definition);
-
-	if ( todo == 0 )		/* right-most argument recursion */
-	{ todo = arity;
-	  t1 = f1->arguments;
-	  t2 = f2->arguments;
-	} else if ( arity > 0 )
-	{ UChoice next = alloca(sizeof(*next));
-
-	  next->size   = arity;
-	  next->alist1 = f1->arguments;
-	  next->alist2 = f2->arguments;
-	  next->next   = NULL;
-	  if ( !tailch )
-	    nextch = tailch = next;
-	  else
-	  { tailch->next = next;
-	    tailch = next;
-	  }
-	}
-      }
-    }
-  }
-}
-
-#else /*NON_RECURSIVE_UNIFY*/
-
-static bool
-unify(Word t1, Word t2 ARG_LD)
+do_unify(Word t1, Word t2 ARG_LD)
 { 
   word w1;
   word w2;
@@ -1125,15 +1107,19 @@ right_recursion:
       Functor f2 = valueTerm(w2);
       Word e;
 
+      if ( (f2 == linkedTermCyclic(f1 PASS_LD)) )
+	succeed;
+      
       if ( f1->definition != f2->definition )
 	fail;
 
       t1 = f1->arguments;
       t2 = f2->arguments;
       e  = t1+arityFunctor(f1->definition)-1; /* right-recurse on last */
+      linkTermsCyclic(f1, f2 PASS_LD);
 
       for(; t1 < e; t1++, t2++)
-      { if ( !unify(t1, t2 PASS_LD) )
+      { if ( !do_unify(t1, t2 PASS_LD) )
 	  fail;
       }
       goto right_recursion;
@@ -1143,7 +1129,17 @@ right_recursion:
   succeed;
 }
 
-#endif /*NON_RECURSIVE_UNIFY*/
+
+static bool
+unify(Word t1, Word t2 ARG_LD)
+{ bool rc;
+
+  initCyclic(PASS_LD1);
+  rc = do_unify(t1, t2 PASS_LD);
+  exitCyclic(PASS_LD1);
+
+  return rc;
+}
 
 
 static

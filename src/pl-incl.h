@@ -119,6 +119,8 @@ handy for it someone wants to add a data type to the system.
   O_GVAR
       Include support for backtrackable global variables.  This option
       requires O_DESTRUCTIVE_ASSIGNMENT.
+  O_CYCLIC
+      Provide support for cyclic terms.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #define PL_KERNEL		1
@@ -141,6 +143,7 @@ handy for it someone wants to add a data type to the system.
 #define O_CLAUSEGC		1
 #define O_ATTVAR		1
 #define O_GVAR			1
+#define O_CYCLIC		1
 
 #ifndef DOUBLE_TO_LONG_CAST_RAISES_SIGFPE
 #ifdef __i386__

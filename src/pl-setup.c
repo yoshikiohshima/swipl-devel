@@ -887,7 +887,7 @@ initPrologStacks(long local, long global, long trail, long argument)
   enforce_limit(&local,	   maxarea, "local");
   enforce_limit(&global,   maxarea, "global");
   enforce_limit(&trail,	   maxarea, "trail");
-  enforce_limit(&argument, 16 MB,   "argument");
+  enforce_limit(&argument, 64 MB,   "argument");
 
   if ( !allocStacks(local, global, trail, argument) )
     fail;
