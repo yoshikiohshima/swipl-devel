@@ -1092,12 +1092,11 @@ ws_busy_cursor_frame(FrameObj fr, CursorObj c)
 	c = getClassVariableValueObject(fr, NAME_busyCursor);
 
       if ( c )
-      { if ( setcursor )
-	{ HCURSOR hc = (HCURSOR)getXrefObject(c, fr->display);
+      { HCURSOR hc = (HCURSOR)getXrefObject(c, fr->display);
 
-	  r->hbusy_cursor = hc;
+	r->hbusy_cursor = hc;
+	if ( setcursor )
 	  set_cursor_now(hwnd, hc);
-	}
       }
     }
   }
