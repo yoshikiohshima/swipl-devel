@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: realised native Win32 guarding of thread message queues,
+    sponsored by SSS (www.sss.co.nz).
+
   * FIXED: Recorded database handling of attributed variables (could loose
     attributes on some terms).
 
