@@ -744,12 +744,12 @@ set_sighandler(int sig, handler_t func)
 
 main()
 { struct itimerval value, ovalue;
+  time_t t0 = time(NULL);
+  int i;
   value.it_interval.tv_sec  = 0;
   value.it_interval.tv_usec = 1;
   value.it_value.tv_sec  = 0;
   value.it_value.tv_usec = 1;
-  time_t t0 = time(NULL);
-  int i;
   
   set_sighandler(SIGPROF, prof);
 

@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: profile detection on older versions of gcc.  Tom Schrijvers.
+
   * FIXED: repetitive qsave_program/2 handling.  Dima.
 
   * FIXED: Buffer overflow asserting to predicates with a very long
