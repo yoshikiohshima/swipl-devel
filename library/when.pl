@@ -32,7 +32,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % This module implements the when/2 co-routine.
 %	
-%	when(+Condition,?Goal)
+%	when(+Condition, :Goal)
 %
 %		Condition should be one of 
 %			?=(X,Y)
@@ -47,15 +47,30 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+% History:
+% 
+%	Apr 9, 2004
+%	* JW: Supressed debugging this module
+%	* JW: Made when/2 module-aware.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 % Simple implementation. Does not clean up redundant attributes.
 % Now deals with cyclic terms.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-:- module(when,[when/2]).
+:- module(when,
+	  [ when/2			% +Condition, :Goal
+	  ]).
+:- set_prolog_flag(generate_debug_info, false).
+
+:- module_transparent
+	when/2.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-when(Condition,Goal) :-
-	trigger(Condition,Goal).
+when(Condition, Goal) :-
+	'$strip_module'(Goal, M, G),
+	trigger(Condition, M:G).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 trigger(nonvar(X),Goal) :-
