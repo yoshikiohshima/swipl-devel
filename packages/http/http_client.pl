@@ -184,6 +184,7 @@ http_read_reply(In, _Data, _Options) :-
 %		http_version(Major-Minor)
 %		connection(Connection)
 %		user_agent(Agent)
+%		request_header(Name=Value)
 %
 %	Remaining options are returned in RestOptions.
 
@@ -200,14 +201,30 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 	;   Connection = 'Keep-Alive',
 	    Options2 = Options1
 	),
-	(   select(user_agent(Agent), Options2, RestOptions)
+	(   select(user_agent(Agent), Options2, Options3)
 	->  true
 	;   user_agent(Agent),
 	    RestOptions = Options2
 	),
 	format(Out, 'User-Agent: ~w~n\
-		     Connection: ~w~n', [Agent, Connection]).
+		     Connection: ~w~n', [Agent, Connection]),
+	x_headers(Options3, Out, RestOptions).
 
+
+%	x_headers(+Options, +Out, -RestOptions)
+%	
+%	Pass additional request options.  For example:
+%	
+%		request_header('Accept-Language' = 'nl, en')
+%		
+%	No checking is performed on the fieldname or value. Both are
+%	copied literally and in the order of appearance to the request.
+
+x_headers(Options0, Out, Options) :-
+	select(request_header(Name=Value), Options0, Options1), !,
+	format(Out, '~w: ~w~n', [Name, Value]),
+	x_headers(Options1, Out, Options).
+x_headers(Options, _, Options).
 
 %	http_read_data(+In, +Fields, +Data, -Options)
 %

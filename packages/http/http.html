@@ -255,6 +255,14 @@ Use an HTTP proxy to connect to the outside world.
 <DT><STRONG>user_agent</STRONG>(<VAR>+Agent</VAR>)<DD>
 Defines the value of the <CODE>User-Agent</CODE> field of the HTTP 
 header. Default is <CODE>SWI-Prolog (http://www.swi-prolog.org)</CODE>.
+
+<P>
+<DT><STRONG>request_header</STRONG>(<VAR>Name = Value</VAR>)<DD>
+Add a line "<VAR>Name</VAR>: <VAR>Value</VAR>" to the HTTP request 
+header. Both name and value are added uninspected and literally to the 
+request header. This may be used to specify accept encodings, languages, 
+etc. Please check the RFC2616 (HTTP) document for available fields and 
+their meaning.
 </DL>
 
 <P>Remaining options are passed to <A NAME="idx:httpreaddata3:4"></A><A HREF="#http_read_data/3">http_read_data/3</A>.

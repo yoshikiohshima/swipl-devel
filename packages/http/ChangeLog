@@ -1,5 +1,8 @@
 Jun 15, 2004
 
+  * ADDED: request_header(Name=Value) option to the option list of
+    http_get/3 and http_post/4 for adding user request fields.
+
   * ADDED: Map body throw(status(not_modified)) onto a "304 Not Modified"
     page.  Mike Elston.
 
