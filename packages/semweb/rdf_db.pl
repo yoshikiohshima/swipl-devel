@@ -676,11 +676,18 @@ rdf_reset_db :-
 	meta_options/2.
 
 rdf_save(File) :-
-	rdf_save(File, []).
+	rdf_save2(File, []).
 
 rdf_save(File, Options0) :-
 	is_list(Options0), !,
 	meta_options(Options0, Options),
+	rdf_save2(File, Options).
+rdf_save(File, DB) :-
+	atom(DB), !,			% backward compatibility
+	rdf_save2(File, [db(DB)]).
+
+
+rdf_save2(File, Options) :-
 	open(File, write, Out),
 	flag(rdf_db_saved_subjects, OSavedSubjects, 0),
 	flag(rdf_db_saved_triples, OSavedTriples, 0),
@@ -691,9 +698,6 @@ rdf_save(File, Options0) :-
 				  OSavedSubjects,
 				  OSavedTriples,
 				  Out)).
-rdf_save(File, DB) :-
-	atom(DB), !,			% backward compatibility
-	rdf_save(File, [db(DB)]).
 
 
 cleanup_save(Reason,
