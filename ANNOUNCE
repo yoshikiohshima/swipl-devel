@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.11/XPCE 6.2.18 development snapshot
+SWI-Prolog 5.3.15/XPCE 6.2.22 development snapshot
 
 Status
 ======
@@ -49,31 +49,40 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
     object-references.
 
 
-Brief summary of changes since 5.3.10
+Brief summary of changes since 5.3.14
 =====================================
 
 SWI-Prolog
 ----------
 
-  * Merged non-backtrackable and backtrackable global variables.
+  * Fixed .QLF loading leading to "ERROR: Failed to import ... into ..."
+
+  * Added open(pipe(Command), ...) for MS-Windows
+
+  * Report on detached threads terminating on failure or exception.
+
+  * Various minor issues
+
 
 Packages
 --------
 
-  * XPCE: various improvement to the library class tabbed_window.
+  * Semweb: Added triple GC to support applications using rdf_retractall
+    often.
+
+  * HTTP library: gracefully handle a large number of exceptions that
+    may happen in the server.
+
 
 Development environment
 -----------------------
 
-  * Various minor patches
+  * Make the GUI tracer handle threads more elegant.  Still, only
+    one thread can have the tracer attached at any time.
 
 
 INCOMPATIBILITIES
 =================
 
-  * The nb_* and b_* predicates now operate on a single pool of
-    global variables.  This has two implications.  First of all,
-    backtracking over the b_setval/2 that created a variable no
-    longer deletes it, but resets its value to [].  Second,
-    applications using the same name for a backtrackable and
-    non-backtrackable variable must be changed.
+  * Detached threads must succeed or call thread_exit/1.  Failure to
+    do so results in a warning message.

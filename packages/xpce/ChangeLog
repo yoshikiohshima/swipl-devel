@@ -2,6 +2,9 @@
 			   ==============
 
 
+VERSION 6.2.22, distributed with SWI-Prolog 5.3.15
+==================================================
+
 * FIXED: class tabbed_window destroying the window.  Steve Moyle.
 
 VERSION 6.2.21, distributed with SWI-Prolog 5.3.14
