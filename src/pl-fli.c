@@ -2309,6 +2309,67 @@ _PL_copy_atomic(term_t t, PL_atomic_t arg) /* internal one */
 
 
 		 /*******************************
+		 *	       BLOBS		*
+		 *******************************/
+
+int
+PL_unify_blob(term_t t, void *blob, unsigned int len, PL_blob_t *type)
+{ GET_LD
+  atom_t a = lookupBlob(blob, len, type);
+  int rval = unifyAtomic(t, a PASS_LD);
+
+  PL_unregister_atom(a);
+
+  return rval;
+}
+
+
+void
+PL_put_blob(term_t t, void *blob, unsigned int len, PL_blob_t *type)
+{ GET_LD
+  atom_t a = lookupBlob(blob, len, type);
+
+  setHandle(t, a);
+  PL_unregister_atom(a);
+}
+
+
+int
+PL_get_blob(term_t t, void **blob, unsigned int *len, PL_blob_t **type)
+{ GET_LD
+  word w = valHandle(t);
+
+  if ( isAtom(w) )
+  { Atom a = atomValue(w);
+
+    if ( blob )
+      *blob = a->name;
+    if ( len )
+      *len  = a->length;
+    if ( type )
+      *type = a->type;
+
+    succeed;
+  }
+
+  fail;
+}
+
+
+void *
+PL_blob_data(atom_t a, unsigned int *len, PL_blob_t **type)
+{ Atom x = atomValue(a);
+
+  if ( len )
+    *len = x->length;
+  if ( type )
+    *type = x->type;
+
+  return x->name;
+}
+
+
+		 /*******************************
 		 *	       TYPE		*
 		 *******************************/
 

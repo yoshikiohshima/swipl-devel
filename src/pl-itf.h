@@ -426,6 +426,46 @@ PL_EXPORT(int)		PL_unify_term(term_t t, ...);
 PL_EXPORT(int)		PL_is_attvar(term_t t);
 PL_EXPORT(int)		PL_get_attr(term_t v, term_t a);
 
+
+		 /*******************************
+		 *	       BLOBS		*
+		 *******************************/
+
+#define PL_BLOB_MAGIC_B	0x75293a00	/* Magic to validate a blob-type */
+#define PL_BLOB_VERSION 1		/* Current version */
+#define PL_BLOB_MAGIC	(PL_BLOB_MAGIC_B|PL_BLOB_VERSION)
+
+typedef struct PL_blob_t
+{ unsigned long		magic;		/* PL_BLOB_MAGIC */
+  char *		name;		/* name of the type */
+  int			(*release)(atom_t a);
+  int			(*compare)(atom_t a, atom_t b);
+#ifdef SIO_MAGIC
+  int			(*write)(IOSTREAM *s, atom_t a, int flags);
+#else
+  int			(*write)(void *s, atom_t a);
+#endif
+					/* private */
+  void *		reserved[13];	/* for future extension */
+  int			registered;	/* Already registered? */
+  int			rank;		/* Rank for ordering atoms */
+  struct PL_blob_t *    next;		/* next in registered type-chain */
+  atom_t		atom_name;	/* Name as atom */
+} PL_blob_t;
+
+PL_EXPORT(int)		PL_unify_blob(term_t t, void *blob, unsigned int len,
+				      PL_blob_t *type);
+PL_EXPORT(void)		PL_put_blob(term_t t, void *blob, unsigned int len,
+				    PL_blob_t *type);
+PL_EXPORT(int)		PL_get_blob(term_t t, void **blob, unsigned int *len,
+				    PL_blob_t **type);
+
+PL_EXPORT(void*)	PL_blob_data(atom_t a,
+				     unsigned int *len,
+				     struct PL_blob_t **type);
+PL_EXPORT(void)		PL_unregister_blob_type(PL_blob_t *type);
+
+
 		 /*******************************
 		 *	  FILENAME SUPPORT	*
 		 *******************************/

@@ -326,13 +326,21 @@ static int
 compareAtoms(atom_t w1, atom_t w2)
 { Atom a1 = atomValue(w1);
   Atom a2 = atomValue(w2);
-  int l   = (a1->length <= a2->length ? a1->length : a2->length);
-  int v;
 
-  if ( (v=memcmp(a1->name, a2->name, l)) != 0 )
-    return v;
+  if ( a1->type == a2->type )
+  { if ( a1->type->compare )
+    { return (*a1->type->compare)(w1, w2);
+    } else
+    { int l   = (a1->length <= a2->length ? a1->length : a2->length);
+      int v;
 
-  return (int)a1->length - (int)a2->length;
+      if ( (v=memcmp(a1->name, a2->name, l)) != 0 )
+	return v;
+      return (int)a1->length - (int)a2->length;
+    }
+  } else
+  { return a1->type->rank - a2->type->rank;
+  }
 }
 
 

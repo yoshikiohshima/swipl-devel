@@ -76,6 +76,7 @@ fid_t		PL_open_signal_foreign_frame(void);
 
 /* pl-atom.c */
 word		lookupAtom(const char *s, unsigned int len);
+word		lookupBlob(const char *s, unsigned int len, PL_blob_t *type);
 word		pl_atom_hashstat(term_t i, term_t n);
 void		initAtoms(void);
 void		cleanupAtoms(void);

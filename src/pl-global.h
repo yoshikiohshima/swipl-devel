@@ -154,6 +154,7 @@ typedef struct
     PL_agc_hook_t gc_hook;		/* Current hook */
 #endif
     atom_t	for_code[256];		/* code --> one-char-atom */
+    PL_blob_t  *types;			/* registered atom types */
   } atoms;
 
 #ifdef O_PLMT

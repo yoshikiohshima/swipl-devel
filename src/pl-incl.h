@@ -1129,6 +1129,7 @@ struct atom
 #ifdef O_ATOMGC
   unsigned int	references;	/* reference-count */
 #endif
+  struct PL_blob_t *type;	/* blob-extension */
   unsigned int  length;		/* length of the atom */
   char *	name;		/* name associated with atom */
 };

@@ -1340,6 +1340,124 @@ call_chars(const char *goal)
 \end{description}
 
 
+\subsection{BLOBS: Using atoms to store arbitrary binary data}
+\label{sec:blob}
+
+\index{Java}\index{COM}
+SWI-Prolog atoms as well as strings can represent arbitrary binary data
+of arbitrary length.  This facility is attractive for storing foreign
+data such as images in an atom.  An atom is a unique handle to this
+data and the atom garbage collector is able to destroy atoms that
+are no longer referenced by the Prolog engine.  This property of atoms
+makes them attractive as a handle to foreign resources, such as
+Java atoms,  Microsoft's COM objects, etc., providing safe combined
+garbage collection.
+
+To exploit these features safely and in an organised manner the
+SWI-Prolog foreign interface allows for creating `atoms' with additional
+type information. The type is represented by a structure holding C
+function pointers that tell Prolog how to handle releasing the atom,
+writing it, sorting it, etc. Two atoms created with different types can
+represent the same sequence of bytes. Atoms are first ordered on the
+rank number of the type and then on the result of the
+\functref{compare}{} function.  Rank numbers are assigned when the
+type is registered.
+
+
+\subsubsection{Defining a BLOB type}
+\label{sec:blobtype}
+
+The type \ctype{PL_blob_t} represents a structure with the layout
+displayed above. The structure contains additional fields at the
+\ldots for internal bookkeeping as well as future extension. 
+
+\begin{code}
+typedef struct PL_blob_t
+{ unsigned long		magic;		/* PL_BLOB_MAGIC */
+  char *		name;		/* name of the type */
+  int			(*release)(atom_t a);
+  int			(*compare)(atom_t a, atom_t b);
+  int			(*write)(IOSTREAM *s, atom_t a, int flags);
+  ...
+} PL_blob_t;
+\end{code}
+
+For each type exactly one such structure should be allocated.  Its
+first field must be initialised to \const{PL_BLOB_MAGIC}.  The
+\arg{name} field represents the type name as available to Prolog.
+See also current_atom/2.  The other field are function pointers
+that must be initialised to proper functions or \const{NULL} to
+get the default behaviour of builtin atoms.  Below are the defined
+member functions:
+
+\begin{description}
+    \cfunction{int}{release}{atom_t a}
+The blob (atom) \arg{a} is about to be released.  This function
+can retrieve the data of the blob using PL_blob_data().  If it
+returns \const{FALSE} the atom garbage collector will \emph{not}
+reclaim the atom.
+
+    \cfunction{int}{compare}{atom_t a, atom_t b}
+Compare the blobs \arg{a} and \arg{b}, both of which are of the
+type associated to this blob-type.  Return values are, as memcmp(),
+$< 0$ if \arg{a} is less then \arg{b}, $= 0$ if both are equal and
+$> 0$ otherwise.
+
+    \cfunction{int}{write}{IOSTREAM *s, atom_t a, int flags}
+Write the content of the blob \arg{a} to the stream \arg{s}
+and respecting the \arg{flags}.  The \arg{flags} are a bitwise
+or of zero or more of the \const{PL_WRT_*} flags defined in
+\file{SWI-Prolog.h}. This prototype is available if the
+undocumented \file{SWI-Stream.h} is included \emph{before}
+\file{SWI-Prolog.h}.
+\end{description}
+
+
+If a blob type is registered from a loadable object (shared object
+or DLL) the blob-type must be deregistered before the object may be
+released.
+
+\begin{description}
+    \cfunction{void}{PL_unregister_blob_type}{PL_blob_t *type}
+Unlink the blob type from the registered type and transform the
+type of possible living blobs to \const{text}, avoiding further
+reference to the type structure and functions referred by it.
+\end{description}
+
+
+\subsubsection{Accessing blobs}
+\label{sec:blobaccess}
+
+The blob access functions are similar to the atom accessing functions.
+Blobs being atoms, the atom functions operate on blobs and visa versa.
+For clarity and possible future compatibility issues however it is not
+advised to rely on this.
+
+\begin{description}
+    \cfunction{int}{PL_unify_blob}{term_t t, void *blob, unsigned int len,
+				   PL_blob_t *type}
+Unify \arg{t} to a new blob constructed from the given data and
+associated to the given type.  See also PL_unify_atom_nchars().
+
+    \cfunction{int}{PL_put_blob}{term_t t, void *blob, unsigned int len,
+				 PL_blob_t *type}
+Store the described blob in \arg{t}.  See also PL_put_atom_nchars().
+
+    \cfunction{int}{PL_get_blob}{term_t t, void **blob, unsigned int *len,
+				 PL_blob_t **type}
+If \arg{t} holds a blob or atom get the data and type and return
+\const{TRUE}.  Otherwise return \const{FALSE}.  Each result pointer
+may be \const{NULL}, in which case the requested information is 
+ignored.
+
+    \cfunction{int}{PL_blob_data}{atom_t a,
+				  unsigned int *len,
+				  struct PL_blob_t **type}
+Get the data and type associated to a blob.  This function is mainly
+used from the callback functions described in \secref{blobtype}.
+\end{description}
+
+
 \subsection{Calling Prolog from C}
 
 The Prolog engine can be called from C. There are two interfaces for

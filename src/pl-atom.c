@@ -165,6 +165,73 @@ static void	rehashAtoms();
 #define LD LOCAL_LD
 
 		 /*******************************
+		 *	      TYPES		*
+		 *******************************/
+
+static PL_blob_t text_atom =
+{ PL_BLOB_MAGIC,
+  "text",
+  NULL,					/* GC hook */
+  NULL,					/* compare */
+  NULL					/* write */
+};
+
+
+static void
+PL_register_blob_type(PL_blob_t *type)
+{ PL_LOCK(L_MISC);			/* cannot use L_ATOM */
+
+  if ( !type->registered )
+  { if ( !GD->atoms.types )
+    { GD->atoms.types = type;
+      type->atom_name = ATOM_text;	/* avoid deadlock */
+      type->registered = TRUE;
+    } else
+    { PL_blob_t *t = GD->atoms.types;
+
+      while(t->next)
+	t = t->next;
+
+      t->next = type;
+      type->rank = t->rank+1;
+      type->registered = TRUE;
+      type->atom_name = PL_new_atom(type->name);
+    }
+
+  }
+
+  PL_UNLOCK(L_MISC);
+}
+
+
+void
+PL_unregister_blob_type(PL_blob_t *type)
+{ unsigned int i;
+  PL_blob_t **t;
+
+  PL_LOCK(L_MISC);
+  for(t = &GD->atoms.types; *t; t = &(*t)->next)
+  { if ( *t == type )
+    { *t = type->next;
+      type->next = NULL;
+    }
+  }
+  PL_UNLOCK(L_MISC);
+
+  LOCK();
+  for( ; i < entriesBuffer(&atom_array, Atom); i++ )
+  { Atom atom;
+
+    if ( (atom = baseBuffer(&atom_array, Atom)[i]) )
+    { if ( atom->type == type )
+	atom->type = &text_atom;
+    }
+  }
+  UNLOCK();
+}
+
+
+		 /*******************************
 		 *      BUILT-IN ATOM TABLE	*
 		 *******************************/
 
@@ -219,10 +286,13 @@ registerAtom(Atom a)
 		 *******************************/
 
 word
-lookupAtom(const char *s, unsigned int length)
+lookupBlob(const char *s, unsigned int length, PL_blob_t *type)
 { int v0, v;
   ulong oldheap;
   Atom a;
+
+  if ( !type->registered )		/* avoid deadlock */
+    PL_register_blob_type(type);
 
   LOCK();
   v0 = unboundStringHashValue(s, length);
@@ -232,6 +302,7 @@ lookupAtom(const char *s, unsigned int length)
   for(a = atomTable[v]; a; a = a->next)
   { DEBUG(0, cmps++);
     if ( length == a->length &&
+	 type == a->type &&
 	 memcmp(s, a->name, length) == 0 )
     { 
 #ifdef O_ATOMGC
@@ -246,6 +317,7 @@ lookupAtom(const char *s, unsigned int length)
     oldheap = GD->statistics.heap;
     a = allocHeap(sizeof(struct atom));
     a->length = length;
+    a->type = type;
     a->name = allocHeap(length+1);
     memcpy(a->name, s, length);
     a->name[length] = EOS;
@@ -276,6 +348,13 @@ lookupAtom(const char *s, unsigned int length)
   
   return a->atom;
 }
+
+
+word
+lookupAtom(const char *s, unsigned int length)
+{ return lookupBlob(s, length, &text_atom);
+}
+
 
 		 /*******************************
 		 *	      ATOM-GC		*
@@ -417,7 +496,10 @@ destroyAtom(Atom *ap, unsigned long mask ARG_LD)
 { Atom a = *ap;
   Atom *ap2 = &atomTable[a->hash_value & mask];
 
-  if ( GD->atoms.gc_hook )
+  if ( a->type->release )
+  { if ( !(*a->type->release)(a->atom) )
+      return;
+  } else if ( GD->atoms.gc_hook )
   { if ( !(*GD->atoms.gc_hook)(a->atom) )
       return;				/* foreign hooks says `no' */
   }
@@ -680,6 +762,7 @@ registerBuiltinAtoms()
 
     a->name       = (char *)*s;
     a->length     = len;
+    a->type       = &text_atom;
 #ifdef O_ATOMGC
     a->references = 0;
 #endif
@@ -717,6 +800,7 @@ initAtoms(void)
     GD->atoms.margin     = 10000;
     lockAtoms();
 #endif
+    PL_register_blob_type(&text_atom);
 
     DEBUG(0, PL_on_halt(exitAtoms, NULL));
   }
@@ -731,22 +815,19 @@ cleanupAtoms(void)
 
 
 word
-pl_current_atom2(term_t a, term_t refs, control_t h)
+pl_current_atom2(term_t a, term_t type, control_t h)
 { GET_LD
   unsigned int i;
+  atom_t type_name = 0;
 
   switch( ForeignControl(h) )
   { case FRG_FIRST_CALL:
       if ( PL_is_atom(a) )
-      {
-#ifdef O_ATOMGC
-	if ( refs )
+      { if ( type )
 	{ Atom ap = atomValue(a);
 
-	  return PL_unify_integer(refs,
-				  ap->references & ~ATOM_MARKED_REFERENCE);
+	  return PL_unify_atom(type, ap->type->atom_name);
 	}
-#endif
 	succeed;
       }
       if ( !PL_is_variable(a) )
@@ -762,16 +843,20 @@ pl_current_atom2(term_t a, term_t refs, control_t h)
       succeed;
   }
 
+  if ( type )
+  { if ( !PL_is_variable(type) &&
+	 !PL_get_atom_ex(type, &type_name) )
+      fail;
+  }
+
   for( ; i < entriesBuffer(&atom_array, Atom); i++ )
   { Atom atom;
 
     if ( (atom = baseBuffer(&atom_array, Atom)[i]) )
-    { 
-#ifdef O_ATOMGC
-      if ( refs &&
-	   !PL_unify_integer(refs, atom->references & ~ATOM_MARKED_REFERENCE) )
+    { if ( type_name && type_name != atom->type->atom_name )
 	continue;
-#endif
+
+      PL_unify_atom(type, atom->type->atom_name);
       PL_unify_atom(a, atom->atom);
       ForeignRedoInt(i+1);
     }
@@ -916,8 +1001,8 @@ pl_atom_completions(term_t prefix, term_t alternatives)
   term_t alts = PL_copy_term_ref(alternatives);
   term_t head = PL_new_term_ref();
 
-  if ( !PL_get_chars(prefix, &p, CVT_ALL) )
-    return warning("$atom_completions/2: instanstiation fault");
+  if ( !PL_get_chars_ex(prefix, &p, CVT_ALL) )
+    fail;
   strcpy(buf, p);
 
   extend_alternatives(buf, altv, &altn);

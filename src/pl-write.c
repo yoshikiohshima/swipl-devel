@@ -345,6 +345,9 @@ static bool
 writeAtom(atom_t a, write_options *options)
 { Atom atom = atomValue(a);
 
+  if ( atom->type->write )
+    return (*atom->type->write)(options->out, a, options->flags);
+
   if ( true(options, PL_WRT_QUOTED) )
   { switch( atomType(a) )
     { case AT_LOWER:
