@@ -66,15 +66,17 @@ read_1line_to_codes(C, Fd, [C|T]) :-
 
 %	read_line_to_codes(+Fd, -Line, ?Tail)
 %
-%	Read a line of input as a difference list.  This should be used
-%	to read multiple lines efficiently.
+%	Read a line of input as a   difference list. This should be used
+%	to read multiple lines  efficiently.   On  reaching end-of-file,
+%	Tail is bound to the empty list.
 
 read_line_to_codes(Fd, Codes, Tail) :-
 	get_code(Fd, C0),
 	read_line_to_codes(C0, Fd, Codes0, Tail),
 	Codes = Codes0.
 
-read_line_to_codes(-1, _, Tail, Tail) :- !.
+read_line_to_codes(-1, _, Tail, Tail) :- !,
+	Tail = [].
 read_line_to_codes(10, _, [10|Tail], Tail) :- !.
 read_line_to_codes(C, Fd, [C|T], Tail) :-
 	get_code(Fd, C2),
