@@ -56,7 +56,7 @@ uninstall:
 
 check::
 		rm -f Tests/*.pl
-		$(PL) -f chr_test.pl -g test,halt -t 'halt(1)'
+		$(PL) -q -f chr_test.pl -g test,halt -t 'halt(1)'
 
 
 ################################################################
@@ -87,6 +87,7 @@ $(TEX):		$(DOCTOTEX)
 
 clean:
 		rm -f *~ *% config.log
+		rm Tests/*.pl
 
 distclean:	clean
 		rm -f $(TARGETS) config.h config.cache config.status Makefile

@@ -79,10 +79,12 @@ run_scripts([H|T]) :-
 	run_scripts(T).
 
 script_failed(File, fail) :-
-	format('~NScript ~w failed~n', [File]).
+	format('~NScript ~w failed~n', [File]),
+	assert(failed(script(File))).
 script_failed(File, Except) :-
 	message_to_string(Except, Error),
-	format('~NScript ~w failed: ~w~n', [File, Error]).
+	format('~NScript ~w failed: ~w~n', [File, Error]),
+	assert(failed(script(File))).
 
 
 		 /*******************************
