@@ -423,7 +423,10 @@ the body of clauses analysed and the goals are handed to expand_goal/2,
 which uses the goal_expansion/2 hook to do user-defined expansion.
 
 The predicate goal_expansion/2 is first called in the module that is
-being compiled, and then on the \const{user} module.
+being compiled, and then on the \const{user} module.  If \arg{Goal} is
+of the form \arg{Module}:\arg{Goal} where \arg{Module} is instantiated,
+goal_expansion/2 is called on \arg{Goal} using rules from module
+\arg{Module} followed by \const{user}.
 
 Only goals apearing in the body of clauses when reading a source-file
 are expanded using mechanism, and only if they appear literally in the
