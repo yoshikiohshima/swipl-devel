@@ -1103,7 +1103,7 @@ static pthread_mutex_t *lock_cs;
 static long *lock_count;
 
 static void
-pthreads_locking_callback(int mode, int type, char *file, int line)
+pthreads_locking_callback(int mode, int type, const char *file, int line)
 { if (mode & CRYPTO_LOCK)
   { pthread_mutex_lock(&(lock_cs[type]));
     lock_count[type]++;
@@ -1133,8 +1133,8 @@ ssl_thread_setup(void)
     pthread_mutex_init(&(lock_cs[i]), NULL);
   }
 			       
-  CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
-  CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
+  CRYPTO_set_id_callback(pthreads_thread_id);
+  CRYPTO_set_locking_callback(pthreads_locking_callback);
 
   return TRUE;
 }
