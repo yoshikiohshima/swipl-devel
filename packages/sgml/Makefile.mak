@@ -43,6 +43,7 @@ idll::
 ilib::
 		copy sgml.pl "$(PLBASE)\library"
 		copy xsdp_types.pl "$(PLBASE)\library"
+		copy iso_639.pl "$(PLBASE)\library"
 		$(MAKEINDEX)
 
 idtd::
@@ -56,6 +57,7 @@ uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
 		del "$(PLBASE)\library\sgml.pl"
 		del "$(PLBASE)\library\xsdp_types.pl"
+		del "$(PLBASE)\library\iso_639.pl"
 		$(MAKEINDEX)
 
 html-install::
