@@ -2751,7 +2751,7 @@ Which(const char *program, char *fullname)
 	;
       if (*path)
 	path++;				/* skip : */
-      if (strlen(fullname) + strlen(program)+2 > MAXPATHLEN)
+      if ((dir-fullname) + strlen(program)+2 > MAXPATHLEN)
         continue;
       *dir++ = '/';
       strcpy(dir, program);
