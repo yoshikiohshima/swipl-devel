@@ -39,9 +39,10 @@ Anticipated features relative to stable 5.2.x release and their status
     Incomplete but useable.
 
     Supported: =/2, ==/2, @>/2 (and friends), copy_term/2, =../2,
-               duplicate_term/2, ground/2, dif/2, when/2
+               duplicate_term/2, ground/2, dif/2, when/2, term_variables/2,
+	       numbervars/3.
 
-    Unsupported: term_variables/2, recorda/2 (and friends), write/1
+    Unsupported: recorda/2 (and friends), write/1
 		 (and friends, partial support), asserta/1 (and friends).
 
   * CHR constraint language support
