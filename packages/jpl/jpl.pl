@@ -4057,6 +4057,21 @@ multimap_to_atom_1([K-V|KVs], T, Cs1, Cs0) :-
 
 
 		 /*******************************
+		 *	      MESSAGES		*
+		 *******************************/
+
+:- multifile
+	prolog:error_message/3.
+
+prolog:error_message(java_exception(Ex)) -->
+	(   { jpl_call(Ex, getMessage, [], Msg)
+	    }
+	->  [ 'Java exception: ~w'-[Msg] ]
+	;   [ 'Java exception: ~w'-[Ex] ]
+	).
+
+
+		 /*******************************
 		 *         LOAD THE JVM		*
 		 *******************************/
 

@@ -568,8 +568,9 @@ static functor_t   JNI_functor_jbuf_2;		    // jbuf(_,_)
 static functor_t   JNI_functor_jlong_2;	    // jlong(_,_)
 static functor_t   JNI_functor_jfieldID_1;	    // jfieldID(_)
 static functor_t   JNI_functor_jmethodID_1;	    // jmethodID(_)
-static functor_t   JNI_functor_java_exception_2;   // java_exception(_,_)
-static functor_t   JNI_functor_jpl_error_2;	    // jpl_error(_,_)
+static functor_t   JNI_functor_error_2;		    // error(_, _)
+static functor_t   JNI_functor_java_exception_1;    // java_exception(_)
+static functor_t   JNI_functor_jpl_error_1;	    // jpl_error(_)
 
 
 //=== JNI's static JVM references, lazily initialised by jni_init() ================================
@@ -1293,8 +1294,9 @@ jni_init()
     JNI_functor_jfieldID_1  = PL_new_functor( PL_new_atom("jfieldID"), 1);
     JNI_functor_jmethodID_1 = PL_new_functor( PL_new_atom("jmethodID"), 1);
 
-    JNI_functor_java_exception_2 = PL_new_functor( PL_new_atom("java_exception"), 2);
-    JNI_functor_jpl_error_2 = PL_new_functor( PL_new_atom("jpl_error"), 2);
+    JNI_functor_error_2 = PL_new_functor(PL_new_atom("error"), 2);
+    JNI_functor_java_exception_1 = PL_new_functor( PL_new_atom("java_exception"), 1);
+    JNI_functor_jpl_error_1 = PL_new_functor( PL_new_atom("jpl_error"), 1);
 
     (void)PL_agc_hook( jni_atom_freed); // link atom GC to object GC (cool:-)
 
@@ -1316,6 +1318,12 @@ jni_init()
     }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+jni_new_java_exception(char *comment, atom_t ex)
+
+Throw a java exception as error(java_exception(@ex), comment)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 static term_t
 jni_new_java_exception( // construct a Prolog exception structure java_exception/2
     const char	*m,	// to represent a caught Java exception
@@ -1324,16 +1332,21 @@ jni_new_java_exception( // construct a Prolog exception structure java_exception
     {
     term_t	e = PL_new_term_ref();
 
-    (void)PL_unify_term(
-	e,
-	PL_FUNCTOR, JNI_functor_java_exception_2,
-	  PL_CHARS, m,
-	  PL_FUNCTOR, JNI_functor_at_1,
-	    PL_ATOM, a
-	);
+    PL_unify_term(e,
+		  PL_FUNCTOR, JNI_functor_error_2,
+		    PL_FUNCTOR, JNI_functor_java_exception_1,
+		      PL_FUNCTOR, JNI_functor_at_1,
+		        PL_ATOM, a,
+		    PL_CHARS, m);
     return e;
     }
 
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+jni_new_jpl_error(char *comment, atom_t ex)
+
+As above, but used for internal JPL errors
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static term_t
 jni_new_jpl_error(  // construct a Prolog exception structure jpl_error/2
@@ -1343,13 +1356,12 @@ jni_new_jpl_error(  // construct a Prolog exception structure jpl_error/2
     {
     term_t	e = PL_new_term_ref();
 
-    (void)PL_unify_term(
-	e,
-	PL_FUNCTOR, JNI_functor_jpl_error_2,
-	  PL_CHARS, m,
-	  PL_FUNCTOR, JNI_functor_at_1,
-	    PL_ATOM, a
-	);
+    PL_unify_term(e,
+		  PL_FUNCTOR, JNI_functor_error_2,
+		    PL_FUNCTOR, JNI_functor_jpl_error_1,
+		      PL_FUNCTOR, JNI_functor_at_1,
+		        PL_ATOM, a,
+		  PL_CHARS, m);
     return e;
     }
 

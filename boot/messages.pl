@@ -36,7 +36,8 @@
 	  ]).
 
 :- multifile
-	prolog:message/3.
+	prolog:message/3,
+	prolog:error_message/3.
 :- discontiguous
 	prolog_message/3.
 
@@ -75,6 +76,8 @@ make_message_lines([L0|LT], ['~w'-[L0],nl|T0], T) :-
 term_message(Term) -->
 	{var(Term)}, !,
 	[ 'Unknown error term: ~p'-[Term] ].
+term_message(Term) -->
+	prolog:error_message(Term).
 term_message(Term) -->
 	iso_message(Term).
 term_message(Term) -->

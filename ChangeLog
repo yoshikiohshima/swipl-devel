@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: Hook prolog:error_message//1 to add new error types and print
+    them in readable format.
+
   * ADDED: plld: add -Wl,* options to the linker options.
 
   * MODIFIED: Renamed checklist/2 --> maplist/2 for compatibility reasons.
