@@ -91,7 +91,7 @@ _pl_ground(Word p ARG_LD)
 last:
   deRef(p);
 
-  if (isVar(*p) )
+  if (canBind(*p) )
     fail;
   if (!isTerm(*p) )
     succeed;
