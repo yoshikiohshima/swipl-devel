@@ -79,7 +79,6 @@ exjava-install::
 		copy examples\java\env.bat "$(EXJAVA)"
 		for %f in ($(EXJAVAS)) do if not exist "$(EXJAVA)\%f\$(NULL)" mkdir "$(EXJAVA)\%f"
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\run.bat "$(EXJAVA)\%f
-		for %f in ($(EXJAVAS)) do copy examples\java\%f\compile.bat "$(EXJAVA)\%f
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\README "$(EXJAVA)\%f\README.txt
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\%f.java "$(EXJAVA)\%f
 		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXJAVA)\%f
