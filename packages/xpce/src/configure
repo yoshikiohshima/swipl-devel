@@ -2933,8 +2933,11 @@ else
 fi
 
 
-echo "$as_me:$LINENO: checking \"Visibility attribute\"" >&5
-echo $ECHO_N "checking \"Visibility attribute\"... $ECHO_C" >&6
+if test "$GCC" = "yes"; then
+  ac_oldcflags="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror -shared"
+  echo "$as_me:$LINENO: checking \"GCC Visibility attribute\"" >&5
+echo $ECHO_N "checking \"GCC Visibility attribute\"... $ECHO_C" >&6
 
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
@@ -2943,12 +2946,12 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-
+ int __attribute__((visibility("hidden"))) test();
 
 int
 main ()
 {
- int __attribute__((visibility("hidden"))) test;
+
 
   ;
   return 0;
@@ -2971,7 +2974,7 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_HIDDEN_ATTRIBUTE 1
 _ACEOF
 
-   echo "$as_me:$LINENO: result: yes" >&5
+     echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 else
   echo "$as_me: failed program was:" >&5
@@ -2981,6 +2984,8 @@ echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$ac_oldcflags"
+fi
 
 
 

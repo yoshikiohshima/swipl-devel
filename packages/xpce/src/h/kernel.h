@@ -184,10 +184,14 @@ different types when passed to a vararg function.
 #  define O_CONST_FUNCTION 1
 # endif
 # define Promote(type) int
-# define SO_LOCAL __attribute__((visibility("hidden")))
 #else
 # define Promote(type) type
-# define SO_LOCAL
+#endif
+
+#ifdef HAVE_HIDDEN_ATTRIBUTE
+#define SO_LOCAL __attribute__((visibility("hidden")))
+#else
+#define SO_LOCAL
 #endif
 
 #if !O_INLINE
