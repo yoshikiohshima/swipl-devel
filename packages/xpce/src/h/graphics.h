@@ -788,7 +788,7 @@ NewClass(application)
   Name		name;			/* name of the application */
   Chain		members;		/* its member frames */
   Name		kind;			/* {user,service} */
-  FrameObj	modal;			/* Modal frame */
+  Chain		modal;			/* Stack of modal frames */
 End;
 
 

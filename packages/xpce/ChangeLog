@@ -2,6 +2,8 @@
 			   ==============
 
 
+* FIXED: Bug#154 Application modal frame handling.  Holger Kanwischer. 
+
 VERSION 6.2.23, distributed with SWI-Prolog 5.3.16
 ==================================================
 
