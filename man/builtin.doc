@@ -2845,7 +2845,13 @@ function symbol is determined by extra \arg{FunctionSymbol} argument.
 
     \predicate{term_variables}{2}{+Term, -List}
 Unify \arg{List} with a list of variables, each sharing with a unique variable
-of \arg{Term}. For example:
+of \arg{Term}.%
+	\footnote{This predicate used to be called free_variables/2. The
+		  name term_variables/2 is more widely used.  The old
+		  predicate is still available from the library
+		  \pllib{backcomp}.}
+For example:
+
 \begin{code}
 ?- term_variables(a(X, b(Y, X), Z), L).
 
@@ -2856,14 +2862,19 @@ Z = G371
 \end{code}
 
     \predicate{copy_term}{2}{+In, -Out}
-Make a copy of term \arg{In} and unify the result with \arg{Out}. Ground
-parts of \arg{In} are shared by \arg{Out}. Provided \arg{In} and
-\arg{Out} have no sharing variables before this call they will have no
-sharing variables afterwards. Attributed variables (see \secref{attvar})
-have their attributed copied. The SWI-Prolog implementation of
-copy_term/2 can copy cyclic terms. Note that because copy_term/2 does
-not create copies for ground terms setarg/3 affects both the copy and
-original.
+Create a version if \arg{In} with renamed (fresh) variables and unify it
+to \arg{Out}.  Attributed variables (see \secref{attvar}) have their
+attributed copied.  The implementation of copy_term/2 can deal with
+infinite trees (cyclic terms). As pure Prolog cannot distinguish a
+ground term from another ground term with exactly the same structure,
+ground sub-terms are \emph{shared} between \arg{In} and \arg{Out}.
+Sharing ground terms does affect setarg/3.  SWI-Prolog provides 
+duplicate_term/2 to create a true copy of a term.
+
+    \predicate{duplicate_term}{2}{+In, -Out}
+Version of copy_term/2 that also copies ground terms and therefore
+ensures destructive modification using setarg/3 does not affect the
+copy.  See also nb_setval/2.
 \end{description}
 
 \section{Analysing and Constructing Atoms}	\label{sec:manipatom}

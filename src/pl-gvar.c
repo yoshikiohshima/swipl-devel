@@ -184,7 +184,7 @@ destroyGlobalVars()
 
 
 static void
-free_nb_setval_symbol(Symbol s)
+free_nb_linkval_symbol(Symbol s)
 { word w = (word)s->value;
 
   if ( isAtom(w) )
@@ -195,7 +195,7 @@ free_nb_setval_symbol(Symbol s)
 
 
 static
-PRED_IMPL("nb_setval", 2, nb_setval, 0)
+PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
 { PRED_LD
   atom_t name;
   Word p;
@@ -207,7 +207,7 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
 
   if ( !LD->gvar.nb_vars )
   { LD->gvar.nb_vars = newHTable(32|TABLE_UNLOCKED);
-    LD->gvar.nb_vars->free_symbol = free_nb_setval_symbol;
+    LD->gvar.nb_vars->free_symbol = free_nb_linkval_symbol;
   }
 
   requireStack(global, sizeof(word));
@@ -284,7 +284,7 @@ PRED_IMPL("nb_delete", 1, nb_delete, 0)
   { Symbol s = lookupHTable(LD->gvar.nb_vars, (void*)name);
     
     if ( s )
-    { free_nb_setval_symbol(s);
+    { free_nb_linkval_symbol(s);
       deleteSymbolHTable(LD->gvar.nb_vars, s);
     }
   }
@@ -345,12 +345,12 @@ PRED_IMPL("nb_current", 2, nb_current, PL_FA_NONDETERMINISTIC)
 		 *******************************/
 
 BeginPredDefs(gvar)
-  PRED_DEF("b_setval", 2, b_setval, 0)
-  PRED_DEF("b_getval", 2, b_getval, 0)
-  PRED_DEF("nb_setval", 2, nb_setval, 0)
-  PRED_DEF("nb_getval", 2, nb_getval, 0)
+  PRED_DEF("b_setval",   2, b_setval,   0)
+  PRED_DEF("b_getval",   2, b_getval,   0)
+  PRED_DEF("nb_linkval", 2, nb_linkval, 0)
+  PRED_DEF("nb_getval",  2, nb_getval,  0)
   PRED_DEF("nb_current", 2, nb_current, PL_FA_NONDETERMINISTIC)
-  PRED_DEF("nb_delete", 1, nb_delete, 0)
+  PRED_DEF("nb_delete",  1, nb_delete,  0)
 EndPredDefs
 
 #endif /*O_ATTVAR*/

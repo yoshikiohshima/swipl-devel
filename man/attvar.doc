@@ -155,30 +155,10 @@ avoid the requirement to pass variables around in all intermediate
 predicates.  \jargon{Non-backtrackable} global variables are also
 associations between atoms and terms, but the assignment is retained
 over backtracking. Unifications performed on parts (\emph{inside}) the
-value however adhere to the normal backtracking rules. This applies
-to assignment \emph{after} the nb_setval/2 call, but also to assignment
-\emph{before} this call as illustrated by the following program:
-
-\begin{code}
-demo_nb_setval :-
-	T = nice(N),
-	(   N = world,
-	    nb_setval(myvar, T),
-	    fail
-	;   nb_getval(myvar, V),
-	    writeln(V)
-	).
-\end{code}
-
-\begin{code}
-?- demo_nb_setval.
-nice(_G283)
-
-Yes
-\end{code}
+value however adhere to the normal backtracking rules.
 
 In multi-threaded execution, both flavours of global variables are
-strickly local to the calling thread.  The two flavours of attributed
+strickly local to the calling thread.  The two flavours of global
 variables have their own namespace and therefore an atom may both
 have a backtrackable and non-backtrackable value associated.
 
@@ -200,12 +180,35 @@ is not an atom or the requested variable does not exist.
 
 \begin{description}
     \predicate{nb_setval}{2}{+Name, +Value}
-Associates \arg{Value} with the atom \arg{Name}.
+Associates a copy of \arg{Value} created with duplicate_term/2
+with the atom \arg{Name}.
 
     \predicate{nb_getval}{2}{+Name, -Value}
 Unify \arg{Value} with the non-backtrackable value associated to
 \arg{Name}.  The nb_getval/2 predicate generates errors if \arg{Name}
 is not an atom or the requested variable does not exist.
+
+    \predicate{nb_linkval}{2}{+Name, +Value}
+Associates the term \arg{Value} with the atom \arg{Name} without copying
+it. This is a fast special-purpose variation of nb_setval/2 intended for
+expert users only because the semantics on backtracking to a point
+before creating the link are poorly defined for compound terms. The
+principal term is always left untouched, but backtracking behaviour on
+arguments is undone if the orginal assignment was \jargon{trailed} and
+left alone otherwise, which implies that the history that created the
+term affects the behaviour on backtracking. Please consider the
+following example:
+
+\begin{code}
+demo_nb_linkval :-
+	T = nice(N),
+	(   N = world,
+	    nb_linkval(myvar, T),
+	    fail
+	;   nb_getval(myvar, V),
+	    writeln(V)
+	).
+\end{code}
 
     \predicate{nb_current}{2}{?Name, ?Value}
 Enumerate all defined non-backtrackable global variables with their
@@ -214,3 +217,28 @@ value.  The order of enumeration is undefined.
     \predicate{nb_delete}{1}{+Name}
 Delete the named non-backtrackable global variable.
 \end{description}
+
+
+\subsection{Compatibility of SWI-Prolog Global Variables}
+
+Global variables have been introduced by various Prolog implementations
+recently.  The implementation of them in SWI-Prolog is based on hProlog
+by Bart Demoen. In discussion with Bart it was decided that the
+semantics if hProlog nb_setval/2, which is equivalent to nb_linkval/2
+is not acceptable for normal Prolog users as the behaviour is influenced
+by how builtin predicates constructing terms (read/1, =../2, etc.) are
+implemented.
+
+GNU-Prolog provides a rich set of global variables, including arrays.
+Arrays can be implemented easily in SWI-Prolog using functor/3 and
+setarg/3 due to the unrestricted arity of compound terms.
+
+Both hProlog and GNU-Prolog use one namespace for the various types of
+global variables, where SWI-Prolog uses seperate namespaces.  We believe
+seperating the namespaces is desirable due to the different scoping of
+the two types.  Alternatively the variables should be declared using
+directives.
+
+
+
+

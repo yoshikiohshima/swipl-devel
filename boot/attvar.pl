@@ -68,14 +68,29 @@ call_all_attr_uhooks(att(Module, AttVal, Rest), Value) :-
 uhook(freeze, Goal, Y) :- !,
 	(   attvar(Y)
 	->  (   get_attr(Y, freeze, G2)
-	    ->	put_attr(Y, freeze, (G2, Goal))
+	    ->	put_attr(Y, freeze, '$and'(G2, Goal))
 	    ;	put_attr(Y, freeze, Goal)
 	    )
-	;   Goal
+	;   unfreeze(Goal)
 	).
 uhook(Module, AttVal, Value) :-
 	Module:attr_unify_hook(AttVal, Value).
 
+
+%	unfreeze(+ConjunctionOrGoal)
+%	
+%	Handle  unfreezing  of  conjunctions.  As  meta-calling  control
+%	structures is slower than meta-interpreting them   we do this in
+%	Prolog. Another advantage is that   having unfreeze/1 in between
+%	makes the stacktrace and profiling   easier  to intepret. Please
+%	note that we cannot use a direct conjunction as this would break
+%	freeze(X, (a, !, b)).
+
+unfreeze('$and'(A,B)) :- !,
+	unfreeze(A),
+	unfreeze(B).
+unfreeze(Goal) :-
+	Goal.
 
 %	freeze(+Var, :Goal)
 %	

@@ -7,11 +7,14 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * NEW: renamed nb_setval/2 to nb_linkval/2, giving nb_setval/2 a better
+    defined semantics.  Added duplicate_term/2 to really duplicate a term.
+
   * FIXED: module handling in flag/3
 
   * ADDED: derived_from(File) option to load_files/2.
 
-  * MODIFIED: renamed free_variables/2 into the more widely use name
+  * MODIFIED: renamed free_variables/2 into the more widely used name
     term_variables/2.  Added free_variables/2 to the library backcomp,
     so applications with autoloading enabled (default) do not have
     to be modified.

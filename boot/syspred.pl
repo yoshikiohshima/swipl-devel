@@ -75,6 +75,7 @@
 	, call_with_depth_limit/3
 	, length/2
 	, numbervars/3
+	, nb_setval/2				% +Var, +Value
 	]).	
 
 		/********************************
@@ -777,3 +778,14 @@ numbervars(Term, From, To) :-
 	numbervars(Term, '$VAR', From, To).
 
 
+		 /*******************************
+		 *	       GVAR		*
+		 *******************************/
+
+%	nb_setval(+Name, +Value)
+%	
+%	Bind the non-backtrackable variable Name with a copy of Value
+
+nb_setval(Name, Value) :-
+	duplicate_term(Value, Copy),
+	nb_linkval(Name, Copy).

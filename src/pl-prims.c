@@ -1326,7 +1326,7 @@ PRED_IMPL("copy_term", 2, copy_term, 0)
 
 
 static
-PRED_IMPL("really_copy_term", 2, really_copy_term, 0)
+PRED_IMPL("duplicate_term", 2, duplicate_term, 0)
 { PRED_LD
   term_t copy = PL_new_term_ref();
 
@@ -2919,7 +2919,7 @@ BeginPredDefs(prims)
   PRED_DEF("hash_term", 2, hash_term, 0)
 #endif
   PRED_DEF("copy_term", 2, copy_term, 0)
-  PRED_DEF("really_copy_term", 2, really_copy_term, 0)
+  PRED_DEF("duplicate_term", 2, duplicate_term, 0)
 #ifdef O_LIMIT_DEPTH
   PRED_DEF("$depth_limit_except", 3, depth_limit_except, 0)
   PRED_DEF("$depth_limit_false",  3, depth_limit_false, 0)
