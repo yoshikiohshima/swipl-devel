@@ -342,7 +342,6 @@ static const PL_extension foreigns[] = {
   FRG("$length",		2, pl_length,			0),
   FRG("memberchk",		2, pl_memberchk,		0),
   FRG("format",			2, pl_format,		     META),
-  FRG("$except_bag",		1, pl_except_bag, 		0),
 #ifdef O_DEBUG
   FRG("$check_definition",	1, pl_check_definition,      META),
 #endif

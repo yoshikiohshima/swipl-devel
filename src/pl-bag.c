@@ -174,15 +174,9 @@ findall/3, bagof/3 or setof/3. Reclaim  all   records  and  re-throw the
 exception.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-foreign_t
-pl_except_bag(term_t ex)
-{ GET_LD
-  Assoc a, next;
-
-  DEBUG(1,
-	{ Sdprintf("EXCEPTION:");
-	  pl_writeln(ex);
-	});
+static void
+discardBag(ARG1_LD)
+{ Assoc a, next;
 
   for( a=alist; a; a = next )
   { if ( a->record )
@@ -196,8 +190,16 @@ pl_except_bag(term_t ex)
 
     freeHeap(a, sizeof(*a));
   }
+}
 
-  return PL_raise_exception(ex);
+
+static
+PRED_IMPL("$discard_bag", 0, discard_bag, 0)
+{ PRED_LD
+
+  discardBag(PASS_LD1);
+
+  succeed;
 }
 
 
@@ -208,4 +210,5 @@ pl_except_bag(term_t ex)
 BeginPredDefs(bag)
   PRED_DEF("$record_bag", 1, record_bag, 0)
   PRED_DEF("$collect_bag", 2, collect_bag, 0)
+  PRED_DEF("$discard_bag", 0, discard_bag, 0)
 EndPredDefs

@@ -131,7 +131,6 @@ COMMON(int) 		arithChar(Word p ARG_LD);
 /* pl-bag.c */
 COMMON(void) 		resetBags(void);
 COMMON(int)  		checkBags(void);
-COMMON(foreign_t) 	pl_except_bag(term_t ex);
 
 /* pl-comp.c */
 COMMON(void) 		initWamTable(void);

@@ -1232,7 +1232,7 @@ undone by the Undo().
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
-dobind_vars(Word t, atom_t constant ARG_LD)
+dobind_vars(Word t ARG_LD)
 {
 right_recursion:
   deRef(t);
@@ -1250,7 +1250,7 @@ right_recursion:
 
     arity = arityFunctor(f->definition);
     for(t = argTermP(*t, 0); --arity; t++)
-      dobind_vars(t, constant PASS_LD);
+      dobind_vars(t PASS_LD);
 
     goto right_recursion;
   }
@@ -1272,15 +1272,13 @@ bind_existential_vars(Word t, Word *plain ARG_LD)
 #endif
 
     if ( f->definition == FUNCTOR_hat2 )
-    { dobind_vars(&f->arguments[0], ATOM_nil PASS_LD);
-      *plain = &f->arguments[1];
-      bind_existential_vars(&f->arguments[1], plain PASS_LD);
-      return;
+    { dobind_vars(&f->arguments[0] PASS_LD);
+      *plain = t = &f->arguments[1];
+    } else
+    { arity = arityFunctor(f->definition);
+      for(t = f->arguments; --arity > 0; t++)
+	bind_existential_vars(t, plain PASS_LD);
     }
-    
-    arity = arityFunctor(f->definition);
-    for(t = f->arguments; --arity > 0; t++)
-      bind_existential_vars(t, plain PASS_LD);
 
     deRef(t);				/* right recursion */
   }
