@@ -14,7 +14,8 @@ EXDIR=$(PKGDOC)\examples\chr
 CHR=$(LIBDIR)\chr
 
 EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
-		bool.chr family.chr fibonacci.chr leq.chr listdom.chr
+		bool.chr family.chr fibonacci.chr leq.chr listdom.chr \
+		chrdif.chr
 
 all::		
 
