@@ -204,6 +204,8 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
 void
 freezeGlobal(ARG1_LD)
 { LD->frozen_bar = LD->mark_bar = gTop;  
+  DEBUG(2, Sdprintf("*** frozen bar to %p at freezeGlobal()\n",
+		    LD->frozen_bar));
 }
 
 
