@@ -1,3 +1,9 @@
+Aug 16, 2004
+
+  * FIXED: Remove " from boundary=... HTTP-POST requests.  Appears necessary
+    for posting to Tomcat servers.  Also added explicit MIME-Version: 1.0
+    to the header.
+
 Aug 12, 2004
 
   * ADDED: form_data(+List) alternative to http_post/4.

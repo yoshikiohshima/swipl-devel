@@ -41,7 +41,7 @@ RFC 2045 which I've read from
 
 	http://www.cis.ohio-state.edu/cgi-bin/rfc/rfc2045.html
 
-MIME deconding is now  arranged  through   library(mime)  from  the clib
+MIME decoding is now  arranged  through   library(mime)  from  the  clib
 package, based on the  external  librfc2045   library.  Most  likely the
 functionality of this package will be moved to the same library someday.
 Packing however is a lot simpler then parsing.
@@ -68,7 +68,11 @@ pack(X, _Out) :-
 	var(X), !,
 	throw(error(instantiation_error, _)).
 pack(Name=Value, Out) :- !,
-	format(Out, 'Content-Disposition: form-data; name="~w"\r\n', [Name]),
+	(   Value = file(FileName)
+	->  format(Out, 'Content-Disposition: form-data; name="~w"; filename="~w"\r\n',
+		   [Name, FileName])
+	;   format(Out, 'Content-Disposition: form-data; name="~w"\r\n', [Name])
+	),
 	pack(Value, Out).
 pack(html(HTML), Out) :-
 	format(Out, 'Content-Type: text/html\r\n\r\n', []),
@@ -95,7 +99,8 @@ pack(mime(Atts, Data, []), Out) :- !,		% mime_parse compatibility
 	write(Out, Data).
 pack(mime(_Atts, '', Parts), Out) :-
 	make_boundary(Parts, Boundary),
-	format('Content-type: multipart/mixed\r\n\r\n'),
+	format('Content-type: multipart/mixed; boundary=~w\r\n\r\n',
+	       [Boundary]),
 	mime_pack(Parts, Out, Boundary).
 pack(Atom, Out) :-
 	atomic(Atom), !,
@@ -117,6 +122,7 @@ write_mime_attributes(Atts, Out) :-
 write_mime_attributes([_|T], Out) :-
 	write_mime_attributes(T, Out).
 
+
 %	make_boundary(+Inputs, ?Boundary)
 %
 %	Generate a boundary.  This should check all input sources whether
@@ -131,6 +137,6 @@ make_boundary(_, Boundary) :-
 	C is random(1<<16),
 	D is random(1<<16),
 	E is random(1<<16),
-	sformat(Boundary, '~0f~16r~16r~16r~16r~16r',
+	sformat(Boundary, '------~0f~16r~16r~16r~16r~16r',
 		[Now, A, B, C, D, E]).
 

@@ -270,9 +270,10 @@ http_post_data(form_data(Data), Out, HdrExtra) :- !,
 	mime_pack(Data, MimeOut, Boundary),
 	close(MimeOut),
 	size_memory_file(MemFile, Size),
-	sformat(ContentType, 'multipart/form-data; boundary="~w"', [Boundary]),
+	sformat(ContentType, 'multipart/form-data; boundary=~w', [Boundary]),
 	http_join_headers(HdrExtra,
-			  [ content_type(ContentType)
+			  [ mime_version('1.0'),
+			    content_type(ContentType)
 			  ], Header),
 	phrase(post_header(cgi_data(Size), Header), HeaderChars),
 	format(Out, '~s', [HeaderChars]),
@@ -287,7 +288,7 @@ http_post_data(List, Out, HdrExtra) :-		% multipart-mixed
 	mime_pack(List, MimeOut, Boundary),
 	close(MimeOut),
 	size_memory_file(MemFile, Size),
-	sformat(ContentType, 'multipart/mixed; boundary="~w"', [Boundary]),
+	sformat(ContentType, 'multipart/mixed; boundary=~w', [Boundary]),
 	http_join_headers(HdrExtra,
 			  [ mime_version('1.0'),
 			    content_type(ContentType)
