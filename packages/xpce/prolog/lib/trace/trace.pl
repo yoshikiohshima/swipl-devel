@@ -48,7 +48,7 @@
 		 *	      INTERCEPT		*
 		 *******************************/
 
-:- dynamic
+:- thread_local
 	last_action/1,
 	show_unify_as/2,
 	showing/1.

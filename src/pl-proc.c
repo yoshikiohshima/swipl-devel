@@ -76,7 +76,8 @@ lookupProcedure(functor_t f, Module m)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Add (import) a defintion to a module.  Used by loadImport()
+Add (import) a defintion to a  module.   Used  by  loadImport(). Must be
+merged with pl_import().
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
@@ -103,8 +104,10 @@ importDefinitionModule(Module m, Definition def)
   { GET_LD
 
     proc = (Procedure) allocHeap(sizeof(struct procedure));
+    proc->type = PROCEDURE_TYPE;
     proc->definition = def;
     addHTable(m->procedures, (void *)functor, proc);
+    set(proc->definition, P_SHARED);
   }
 
 done:
