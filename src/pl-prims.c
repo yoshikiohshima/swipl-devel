@@ -31,7 +31,9 @@
 #undef LD
 #define LD LOCAL_LD
 
-forwards char 	*prependBase(int, char *);
+static char 	*prependBase(int, char *);
+static void	duplicate_term(term_t in, term_t copy ARG_LD);
+
 
 		/********************************
 		*         TYPE CHECKING         *
@@ -900,8 +902,12 @@ PRED_IMPL("arg", 3, arg, PL_FA_NONDETERMINISTIC)
 }
 	
 
-word
-pl_setarg(term_t n, term_t term, term_t value)
+#define SETARG_BACKTRACKABLE    0x1
+#define SETARG_LINK		0x2
+
+
+static word
+setarg(term_t n, term_t term, term_t value, int flags)
 { GET_LD
   int arity, argn;
   atom_t name;
@@ -910,26 +916,44 @@ pl_setarg(term_t n, term_t term, term_t value)
   if ( !PL_get_integer_ex(n, &argn) )
     fail;
   if ( argn < 0 )
-    return PL_error("arg", 3, NULL, ERR_DOMAIN,
+    return PL_error(NULL, 0, NULL, ERR_DOMAIN,
 		    ATOM_not_less_than_zero, n);
   if ( !PL_get_name_arity(term, &name, &arity) )
-    return PL_error("setarg", 3, NULL, ERR_TYPE, ATOM_compound, term);
+    return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_compound, term);
   
   if ( argn > arity )
     fail;
 
-  a = valTermRef(term);
-  v = valTermRef(value);
-  deRef(a);
-  deRef(v);
+  if ( (flags & SETARG_BACKTRACKABLE) )
+  { a = valTermRef(term);
+    deRef(a);
+    a = argTermP(*a, argn-1);
 
-  a = argTermP(*a, argn-1);
+    TrailAssignment(a);
+  } else
+  { v = valTermRef(value);
+    deRef(v);
 
-#ifdef O_DESTRUCTIVE_ASSIGNMENT
-  TrailAssignment(a);
-#endif
+    if ( !isAtomic(*v) )
+    { if ( !(flags & SETARG_LINK) )
+      { term_t copy = PL_new_term_ref();
+
+	duplicate_term(value, copy PASS_LD);
+	value = copy;
+      }
+
+      freezeGlobal(PASS_LD1);
+    }
+
+    a = valTermRef(term);		/* duplicate may shift stacks */
+    deRef(a);
+    a = argTermP(*a, argn-1);
+  }
 					/* this is unify(), but the */
 					/* assignment must *not* be trailed */
+  v = valTermRef(value);
+  deRef(v);
+
   if ( isVar(*v) )
   { if ( v < a )
     { *a = makeRef(v);
@@ -938,11 +962,32 @@ pl_setarg(term_t n, term_t term, term_t value)
       *v = makeRef(a);
     } else
       setVar(*a);
+  } else if ( isAttVar(*v) )
+  { *a = makeRef(v);
   } else
     *a = *v;
 
   succeed;
 }
+
+
+static
+PRED_IMPL("setarg", 3, setarg, 0)
+{ return setarg(A1, A2, A3, SETARG_BACKTRACKABLE);
+}
+
+
+static
+PRED_IMPL("nb_setarg", 3, nb_setarg, 0)
+{ return setarg(A1, A2, A3, 0);
+}
+
+
+static
+PRED_IMPL("nb_linkarg", 3, nb_linkarg, 0)
+{ return setarg(A1, A2, A3, SETARG_LINK);
+}
+
 
 
 /*  Determine the length of a list. If the list is not proper (or not
@@ -1588,14 +1633,21 @@ PRED_IMPL("copy_term", 2, copy_term, 0)
 }
 
 
+static void
+duplicate_term(term_t in, term_t copy ARG_LD)
+{ Word *m = aTop;
+
+  do_copy_term(valTermRef(in), valTermRef(copy), FALSE PASS_LD);
+  exitCyclicCopy(m PASS_LD);
+}
+
+
 static
 PRED_IMPL("duplicate_term", 2, duplicate_term, 0)
 { PRED_LD
   term_t copy = PL_new_term_ref();
-  Word *m = aTop;
 
-  do_copy_term(valTermRef(A1), valTermRef(copy), FALSE PASS_LD);
-  exitCyclicCopy(m PASS_LD);
+  duplicate_term(A1, copy PASS_LD);
   
   return PL_unify(copy, A2);
 }
@@ -3220,4 +3272,7 @@ BeginPredDefs(prims)
   PRED_DEF("$option", 3, option, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$style_check", 2, style_check, 0)
   PRED_DEF("deterministic", 1, deterministic, 0)
+  PRED_DEF("setarg", 3, setarg, 0)
+  PRED_DEF("nb_setarg", 3, nb_setarg, 0)
+  PRED_DEF("nb_linkarg", 3, nb_linkarg, 0)
 EndPredDefs

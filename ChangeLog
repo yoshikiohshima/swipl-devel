@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
+    assignments on terms.
+
   * ADDED: cycle-check in bagof/setof code handling existential bindings
     (should be an error!?).
 

@@ -2876,18 +2876,6 @@ $\arg{Arg} > \mbox{\em arity}$ and raises the exception
 \errorterm{domain_error}{not_less_then_zero, \arg{Arg}} if $\arg{Arg} <
 0$.
 
-    \predicate{setarg}{3}{+Arg, +Term, +Value}
-Extra-logical predicate.  Assigns the \arg{Arg}-th argument of the
-compound term \arg{Term} with the given \arg{Value}.  The assignment
-is undone if backtracking brings the state back into a position before
-the setarg/3 call.
-
-This predicate may be used for destructive assignment to terms, using
-them as and extra-logical storage bin.  Always try hard to avoid the
-use of setarg/3 as it is not supported by many Prolog systems and one
-has to be very careful about unexpected copying as well as unexpected
-not copying of terms.
-
     \infixop{=..}{?Term}{?List}
 \arg{List} is a list which head is the functor of \arg{Term} and the
 remaining arguments are the arguments of the term. Each of the
@@ -2954,12 +2942,53 @@ ground term from another ground term with exactly the same structure,
 ground sub-terms are \emph{shared} between \arg{In} and \arg{Out}.
 Sharing ground terms does affect setarg/3.  SWI-Prolog provides 
 duplicate_term/2 to create a true copy of a term.
+\end{description}
+
+
+\subsection{Non-logical operations on terms}	\label{sec:setarg}
+
+Prolog is not capable to \emph{modify} instantiated parts of a term.
+Lacking that capability makes that language much safer, but
+unfortunately there are problems that suffer severely in terms of
+time and/or memory usage.  Always try hard to avoid the use of
+these primitives, but they can be a good alternative to using
+dynamic predicates.  See also \secref{gvar}, discussing the use
+of global variables.
+
+\begin{description}
+    \predicate{setarg}{3}{+Arg, +Term, +Value}
+Extra-logical predicate.  Assigns the \arg{Arg}-th argument of the
+compound term \arg{Term} with the given \arg{Value}.  The assignment
+is undone if backtracking brings the state back into a position before
+the setarg/3 call.  See also nb_setarg/3.
+
+This predicate may be used for destructive assignment to terms, using
+them as and extra-logical storage bin.  Always try hard to avoid the
+use of setarg/3 as it is not supported by many Prolog systems and one
+has to be very careful about unexpected copying as well as unexpected
+not copying of terms.
+
+    \predicate{nb_setarg}{3}{+Arg, +Term, +Value}
+Assigns the \arg{Arg}-th argument of the compound term \arg{Term} with
+the given \arg{Value} as setarg/3, but on backtracking the assignment
+is \emph{not} reversed.  If \arg{Term} is not atomic, it is duplicated
+using duplicate_term/2. This predicate uses the same technique as
+nb_setval/2.  We therefore refer to the description of nb_setval/2
+for details on non-backtrackable assignment of terms.  This predicate
+is compatible to GNU-Prolog \term{setarg}{A,T,V,false}, removing the
+type-restriction on \arg{Value}.  See also nb_linkarg/3.
+
+    \predicate{nb_linkarg}{3}{+Arg, +Term, +Value}
+As nb_setarg/3, but like nb_linkval/2 it does \emph{not} duplicate
+\arg{Value}.  Use with extreme care and consult the documentation
+of nb_linkval/2 before use.
 
     \predicate{duplicate_term}{2}{+In, -Out}
 Version of copy_term/2 that also copies ground terms and therefore
 ensures destructive modification using setarg/3 does not affect the
-copy.  See also nb_setval/2.
+copy.  See also nb_setval/2, nb_linkval/2, nb_setarg/3 and nb_linkarg/3.
 \end{description}
+
 
 \section{Analysing and Constructing Atoms}	\label{sec:manipatom}
 

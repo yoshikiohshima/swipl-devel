@@ -629,7 +629,8 @@ gvars_to_term_refs()
       PL_close_foreign_frame(fid);
       return 0;
     }
-  }
+  } else			/* other use is nb_setarg/3, but */
+    LD->frozen_bar = 0;		/* term is always accessible otherwise */
 
   return 0;
 }
@@ -658,10 +659,10 @@ term_refs_to_gvars(fid_t fid)
 
     freeTableEnum(e);
     PL_close_foreign_frame(fid);
-
-    if ( LD->frozen_bar > gTop )
-      LD->frozen_bar = gTop;
   }
+
+  if ( LD->frozen_bar > gTop )
+    LD->frozen_bar = gTop;
 }
 
 #else /*O_GVAR*/

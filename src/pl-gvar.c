@@ -201,7 +201,7 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
 		 * NON-BACKTRACKABLE GLOBAL VARS*
 		 *******************************/
 
-static void
+void
 freezeGlobal(ARG1_LD)
 { LD->frozen_bar = LD->mark_bar = gTop;  
 }

@@ -74,6 +74,8 @@ COMMON(int) 		assignAttVar(Word av, Word value ARG_LD);
 /* pl-gvar.c */
 
 COMMON(void) 		destroyGlobalVars();
+COMMON(void)		freezeGlobal(ARG1_LD);
+
 
 /* pl-wam.c */
 COMMON(word) 		pl_count(void);
@@ -535,7 +537,6 @@ COMMON(int) 		iswin32s(void);
 /* pl-prims.c */
 COMMON(word) 		pl_notunify(term_t t1, term_t t2);
 COMMON(int) 		compareStandard(Word t1, Word t2, int eq ARG_LD);
-COMMON(word) 		pl_setarg(term_t n, term_t term, term_t arg);
 COMMON(int) 		lengthList(term_t list, int errors);
 COMMON(word) 		pl_univ(term_t t, term_t l);
 COMMON(int) 		numberVars(term_t t, functor_t functor, int n ARG_LD);

@@ -170,7 +170,6 @@ static const PL_extension foreigns[] = {
   FRG("current_char_conversion",2, pl_current_char_conversion, NDET),
 
   FRG("!",			0, pl_metacut,			0),
-  FRG("setarg",			3, pl_setarg,			0),
   FRG("=..",			2, pl_univ,			0),
   FRG("name",			2, pl_name,			0),
   FRG("atom_chars",		2, pl_atom_chars,		0),
