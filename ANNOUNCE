@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.18/XPCE 6.2.24 development snapshot
+SWI-Prolog 5.3.19/XPCE 6.2.24 development snapshot
 
 Status
 ======
@@ -56,19 +56,20 @@ Brief summary of changes since 5.3.16
 SWI-Prolog
 ----------
 
-  * Add goal expansion for Module:Goal goals.
+  * ENHANCED: realised native Win32 guarding of thread message queues,
+    sponsored by SSS (www.sss.co.nz).
+
+  * FIXED: Recorded database handling of attributed variables (could loose
+    attributes on some terms).
+
+  * ADDED: Support for attributed variables and cyclic terms for =@= and
+    \=@=.
 
 Packages
 --------
 
-  * RDF: MODIFIED: The raw RDF parser as implemented by load_rdf/3 now
-    returns all resources as atoms rather than some as NameSpace:Local.
-
-  * HTTP: Various patches and additions.
-
-  * XPCE: Fixed buffer overrun-by-one problem in menu handling, which
-    caused crashes in the Windows version (and possibly others, depending
-    on the compiler and optimization).
+  * SemWeb: Provide some additional statistics information use in the
+    experimental work on query optimisation.
 
 Development environment
 -----------------------
