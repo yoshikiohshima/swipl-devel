@@ -165,7 +165,7 @@ read_header(In, Code, Comment, Lines) :-
 	rest_header(Line2, In, Lines).
 
 
-rest_header("", _, []).
+rest_header("", _, []) :- !.		% blank line: end of header
 rest_header(L0, In, [L0|L]) :-
 	read_line_to_codes(In, L1),
 	rest_header(L1, In, L).
