@@ -31,14 +31,15 @@
 // still to do:
 //  * make it completely thread-safe
 //    (both to multiple Prolog (engine-enabled) threads and to multiple Java threads)
-//  * return e.g. hybrid @(integer,tag) structures
 //  * suss JVM 'abort' and 'exit' handling, and 'vfprintf' redirection
+//  * figure out why Java native methods have "Class:  jpl_fli_PL" (and not jpl_fli_Prolog)
+//  * rationalise initialisation; perhaps support startup from C?
 
 // update this to distinguish releases of this C library:
-#define	    JPL_C_LIB_VERSION		"3.0.3-alpha"
+#define	    JPL_C_LIB_VERSION		"3.0.4-alpha"
 #define	    JPL_C_LIB_VERSION_MAJOR	3
 #define	    JPL_C_LIB_VERSION_MINOR	0
-#define	    JPL_C_LIB_VERSION_PATCH	3
+#define	    JPL_C_LIB_VERSION_PATCH	4
 #define	    JPL_C_LIB_VERSION_STATUS	"alpha"
 
 #define DEBUG(n, g) ((void)0)
@@ -244,9 +245,8 @@
 
 // converts:
 //   atom -> String
-//   @integer -> obj (obsolete)
-//   @tag -> obj
-//   @null -> NULL
+//   @(null) -> NULL
+//   @(tag) -> obj
 // (else fails)
 //
 #define JNI_term_to_ref(T,J) \
@@ -266,28 +266,10 @@
 
 // converts:
 //   atom -> String
-//   @integer -> obj (obsolete)
 //   @tag -> obj
 // (else fails)
 // stricter than JNI_term_to_ref(T,J)
 //
-/* OBSOLETE VERSION:
-#define JNI_term_to_jobject(T,J) \
-    ( PL_get_atom_chars((T),&cp) \
-    ? ((J)=(*env)->NewStringUTF(env,cp))!=NULL \
-    : PL_get_functor((T),&fn) \
-      && fn==JNI_functor_at_1 \
-      && ( a1=PL_new_term_ref(), \
-	   PL_get_arg(1,(T),a1) \
-	 ) \
-      && ( PL_get_integer(a1,(int*)&(J)) \
-	 ? TRUE \
-	 : PL_get_atom(a1,&a) \
-	   && a!=JNI_atom_null \
-	   && jni_tag_to_iref(a,(int*)&(J)) \
-	 ) \
-    )
- */
 #define JNI_term_to_jobject(T,J) \
     ( PL_get_atom_chars((T),&cp) \
     ? ((J)=(*env)->NewStringUTF(env,cp))!=NULL \
@@ -576,12 +558,12 @@ static functor_t   JNI_functor_jpl_error_1;	    // jpl_error(_)
 
 //=== JNI's static JVM references, lazily initialised by jni_init() ================================
 
-static jclass	    c_class;	    // java.lang.Class
-static jmethodID   c_getName;	    // java.lang.Class' getName()
-static jclass	    str_class;	    // java.lang.String
+static jclass	   c_class;	    // java.lang.Class                       (rename to jClass_c ?)
+static jmethodID   c_getName;	    // java.lang.Class' getName()            (rename to jClassGetName_m ?)
+static jclass	   str_class;	    // java.lang.String                      (this duplicates jString_c below)
 
-static jclass	    sys_class;	    // java.lang.System
-static jmethodID   sys_ihc;	    // java.lang.System's identityHashCode()
+static jclass	   sys_class;	    // java.lang.System                      (rename to jSystem_c ?)
+static jmethodID   sys_ihc;	    // java.lang.System's identityHashCode() (rename to jSystemIdentityHashCode_m ?)
 
 
 //=== JPL's reusable global class object refs, initialised by jpl_ensure_jpl_init() ================
@@ -605,6 +587,9 @@ static jclass	    jStringHolder_c;
 static jclass	    jObjectHolder_c;
 static jclass	    jBooleanHolder_c;
 
+static jclass	    jJRef_c;
+static jclass	    jJBoolean_c;
+
 
 //=== JPL's reusable constant field IDs, set before first use by jpl_ensure_jpl_init() =============
 
@@ -615,6 +600,9 @@ static jfieldID    jDoubleHolderValue_f;
 static jfieldID    jStringHolderValue_f;
 static jfieldID    jObjectHolderValue_f;
 static jfieldID    jBooleanHolderValue_f;
+
+static jfieldID    jJRefRef_f;
+static jfieldID    jJBooleanValue_f;
 
 
 
@@ -716,14 +704,29 @@ static int	    jni_hr_del(int);
 
 //=== JNI functions (NB first 6 are cited in macros used subsequently) =============================
 
+// this now checks that the atom's name resembles a tag (PS 18/Jun/2004)
 static bool
 jni_tag_to_iref(
     atom_t	a,
     int		*iref
     )
     {
+    const char  *s = PL_atom_chars(a);
 
-    return (*iref=atoi(&PL_atom_chars(a)[2])) != 0; // assumes e.g. "J#0123456789"
+    return strlen(s) == 12
+        && s[0] == 'J'
+        && s[1] == '#'
+        && isdigit(s[2])
+        && isdigit(s[3])
+        && isdigit(s[4])
+        && isdigit(s[5])
+        && isdigit(s[6])
+        && isdigit(s[7])
+        && isdigit(s[8])
+        && isdigit(s[9])
+        && isdigit(s[10])
+        && isdigit(s[11])            // s is like 'J#0123456789'
+        && (*iref=atoi(&s[2])) != 0;
     }
 
 
@@ -824,23 +827,11 @@ jni_string_to_atom(	// called from the JNI_jobject_to_term(J,T) macro
     }
 
 
-static bool
-jni_object_to_hash(
-    jobject	obj,	// MUST BE a valid non-null reference to a Java object
-    int		*hash	// gets obj's System.identityHashCode()
-    )
-    {
-    jobject	e;	// for possible (but unlikely?) exception
-
-    *hash = (*env)->CallStaticIntMethod(env,sys_class,sys_ihc,obj,(int)obj);
-    return (e=(*env)->ExceptionOccurred(env))==NULL;
-    }
-
-
 /*
 %T jni_tag_to_iref( +atom, -integer)
  */
 
+// an FLI wrapper for jni_tag_to_iref() above
 // with luck, this will be redundant when hybrid atom+int tag scheme is sorted
 // is currently called by jpl_tag_to_type/2, jpl_cache_type_of_object/2
 // jpl_tag_to_type/2 is called by jpl_object_to_type/2, jpl_ref_to_type/2
@@ -856,8 +847,7 @@ jni_tag_to_iref_plc(
 
     return  PL_get_atom(tt,&a)
 	&&  jni_tag_to_iref(a,&iref)
-     // &&  PL_unify_pointer(ti,(void*)iref);
-	&&  PL_unify_integer(ti,iref);		    // PS 8/6/2001 bugfix
+	&&  PL_unify_integer(ti,iref);
     }
 
 
@@ -874,37 +864,17 @@ jni_atom_freed(
     int		iref;
     char	cs[11];
 
-    if	( strlen(cp) == 12
-	&& cp[0] == 'J'
-	&& cp[1] == '#'
-	&& isdigit(cp[2])			// these digit checks may be redundant, now we reconstruct...
-	&& isdigit(cp[3])
-	&& isdigit(cp[4])
-	&& isdigit(cp[5])
-	&& isdigit(cp[6])
-	&& isdigit(cp[7])
-	&& isdigit(cp[8])
-	&& isdigit(cp[9])
-	&& isdigit(cp[10])
-	&& isdigit(cp[11])			// lexically, it's a plausible tag e.g. 'J#0123456789'
-	)
-	{
-	if ( jni_tag_to_iref( a, &iref) )	// convert digits to int
-	    {
-	    sprintf( cs, "%010u", iref);	// reconstruct digits part of tag in cs
-	    if ( strcmp(&cp[2],cs) != 0 )	// original digits != reconstructed digits?
-		{
-		  DEBUG(0, Sdprintf( "[JPL: garbage-collected tag '%s'=%u is bogus (not canonical)]\n", cp, iref));
-		}
-	    else
-	    if ( !jni_free_iref(iref) )		// free it (iff it's in the hashedref table)
-		{
-		  DEBUG(0, Sdprintf( "[JPL: garbage-collected tag '%s' is bogus (not in HashedRefs)]\n", cp));
-		}
+    if ( jni_tag_to_iref( a, &iref) )	// check format and convert digits to int if ok
+        {
+        sprintf( cs, "%010u", iref);	// reconstruct digits part of tag in cs
+        if ( strcmp(&cp[2],cs) != 0 )	// original digits != reconstructed digits?
+            {
+	      DEBUG(0, Sdprintf( "[JPL: garbage-collected tag '%s'=%u is bogus (not canonical)]\n", cp, iref));
 	    }
 	else
+	if ( !jni_free_iref(iref) )		// free it (iff it's in the hashedref table)
 	    {
-	      DEBUG(0, Sdprintf( "[JPL: somehow failed to convert tag '%s' to an iref]\n", cp));
+	      DEBUG(0, Sdprintf( "[JPL: garbage-collected tag '%s' is bogus (not in HashedRefs)]\n", cp));
 	    }
 	}
     else
@@ -913,6 +883,8 @@ jni_atom_freed(
     return TRUE;    // means "go ahead and expunge the atom" (we do this regardless)
     }
 
+
+//=== "hashed ref" (canonical JNI global reference) support ========================================
 
 /*
 %T jni_hr_info( -term, -term, -term, -term)
@@ -1123,6 +1095,19 @@ jni_hr_rehash()
     }
 
 
+static bool
+jni_hr_hash(
+    jobject	obj,	// MUST BE a valid non-null reference to a Java object
+    int		*hash	// gets obj's System.identityHashCode()
+    )
+    {
+    jobject	e;	// for possible (but unlikely?) exception
+
+    *hash = (*env)->CallStaticIntMethod(env,sys_class,sys_ihc,obj,(int)obj);
+    return (e=(*env)->ExceptionOccurred(env))==NULL;
+    }
+
+
 // returns
 //   JNI_HR_ADD_NEW -> referenced object is novel
 //   JNI_HR_ADD_OLD -> referenced object is already known
@@ -1144,7 +1129,7 @@ jni_hr_add(
 	{
 	return JNI_HR_ADD_FAIL; // lazy table creation failed: oughta sort return codes
 	}
-    if ( !jni_object_to_hash(lref,&hash) )
+    if ( !jni_hr_hash(lref,&hash) )
 	{
 	return JNI_HR_ADD_FAIL; // System.identityHashCode() failed (?)
 	}
@@ -1268,13 +1253,14 @@ jvm_abort()
 #endif /*0*/
 
 
-// called once: after successful JVM creation/discovery, before any JNI calls
+// called once: after successful PVM & JVM creation/discovery, before any JNI calls
 //
 static int
 jni_init()
     {
     jclass	lref;	    // temporary local ref, replaced by global
 
+    // these initialisations require an active PVM:
     JNI_atom_false	= PL_new_atom( "false");
     JNI_atom_true	= PL_new_atom( "true");
 
@@ -1302,6 +1288,7 @@ jni_init()
 
     (void)PL_agc_hook( jni_atom_freed); // link atom GC to object GC (cool:-)
 
+    // these initialisations require an active JVM:
     return  (  (lref=(*env)->FindClass(env,"java/lang/Class")) != NULL
 	    && (c_class=(*env)->NewGlobalRef(env,lref)) != NULL
 	    && ( (*env)->DeleteLocalRef(env,lref), TRUE)
@@ -1432,6 +1419,8 @@ jni_check_exception()
 	}
     }
 
+
+//=== buffer and method param transput =============================================================
 
 /*
 %T jni_byte_buf_length_to_codes( +integer, +integer, -term)
@@ -1765,6 +1754,8 @@ jni_stash_buffer_value_plc(
     }
 
 
+//=== JVM initialisation, startup etc. =============================================================
+
 // this isn't much use; it can't discover JDK 1.2 support...
 static int
 jni_supported_jvm_version(
@@ -1792,7 +1783,7 @@ jni_get_created_jvm_count()
     {
     int		    n;
 
-    return  (	JNI_GetCreatedJavaVMs(NULL,0,&n) == 0
+    return  (	JNI_GetCreatedJavaVMs(NULL,0,&n) == 0		// what does the '0' arg mean?
 	    ?	n
 	    :	-1
 	    )
@@ -1800,6 +1791,7 @@ jni_get_created_jvm_count()
     }
     
 
+// this could be inlined, or made into a macro?
 static int
 jni_get_env()
     {
@@ -1853,7 +1845,7 @@ jni_create_jvm_c(
  // vm_args.ignoreUnrecognized = TRUE;
 
     return
-	( JNI_GetCreatedJavaVMs(&jvm,1,&n) == 0
+	( JNI_GetCreatedJavaVMs(&jvm,1,&n) == 0    // what does the '1' arg mean?
 	  && n == 1
     //	  && (r=(*jvm)->GetEnv(jvm,(void**)&env,JNI_VERSION_1_2)) == JNI_OK
 	  && jni_get_env((void**)&env)
@@ -1972,8 +1964,8 @@ jni_void_0_plc( // C identifiers distinguished _0_ etc, Prolog name is overloade
     int		n;	// JNI function index
     jboolean	r;	// Prolog exit/fail outcome
 
-    if	(   !jni_ensure_jvm()
-	||  !PL_get_integer(tn,&n)
+    if	(   !jni_ensure_jvm()           // ought this either succeed or throw a JPL error?
+	||  !PL_get_integer(tn,&n)      // ought this either succeed or throw a Prolog type error?
 	)
 	{
 	return FALSE;
@@ -3266,6 +3258,7 @@ jni_func_4_plc(
     }
 
 
+// would it be better style to have this at the end of the file?
 static
 PL_extension predspecs[] =
     { { "jni_create_jvm",		 2, jni_create_jvm_plc,		       0 },
@@ -3432,6 +3425,14 @@ jpl_do_jpl_init(		// to be called once only, after PL init, before any JPL calls
 	||  (jBooleanHolder_c=(*env)->NewGlobalRef(env,tc)) == NULL
 	||  ( (*env)->DeleteLocalRef(env,tc), FALSE)
 
+	||  (tc=(*env)->FindClass(env,"jpl/JRef")) == NULL
+	||  (jJRef_c=(*env)->NewGlobalRef(env,tc)) == NULL
+	||  ( (*env)->DeleteLocalRef(env,tc), FALSE)
+
+	||  (tc=(*env)->FindClass(env,"jpl/JBoolean")) == NULL
+	||  (jJBoolean_c=(*env)->NewGlobalRef(env,tc)) == NULL
+	||  ( (*env)->DeleteLocalRef(env,tc), FALSE)
+
 	||  (jLongHolderValue_f=(*env)->GetFieldID(env,jLongHolder_c,"value","J")) == NULL
 
 	||  (jPointerHolderValue_f=(*env)->GetFieldID(env,jPointerHolder_c,"value","J")) == NULL
@@ -3445,6 +3446,10 @@ jpl_do_jpl_init(		// to be called once only, after PL init, before any JPL calls
 	||  (jObjectHolderValue_f=(*env)->GetFieldID(env,jObjectHolder_c,"value","Ljava/lang/Object;")) == NULL
 
 	||  (jBooleanHolderValue_f=(*env)->GetFieldID(env,jBooleanHolder_c,"value","Z")) == NULL
+
+	||  (jJRefRef_f=(*env)->GetFieldID(env,jJRef_c,"ref","Ljava/lang/Object;")) == NULL
+
+	||  (jJBooleanValue_f=(*env)->GetFieldID(env,jJBoolean_c,"value","Z")) == NULL
        )
 	{
 	msg = "jpl_do_jpl_init(): failed to find jpl.* or jpl.fli.* classes";
@@ -3655,6 +3660,11 @@ err:
  * Method:    get_default_init_args
  * Signature: ()[Ljava/lang/String;
  */
+//
+// if not yet init then return default init args as String[]
+// if already init then return NULL
+// if already failed to init then throw an exception
+//
 JNIEXPORT jobject JNICALL 
 Java_jpl_fli_Prolog_get_1default_1init_1args(
     JNIEnv     *env, 
@@ -3687,6 +3697,12 @@ err:
  * Method:    set_default_init_args
  * Signature: ([Ljava/lang/String;)Z
  */
+//
+// if the given jargs are null then throw an exception
+// if already failed to init then throw an exception
+// if not yet init then set default init args from jargs and return TRUE
+// if already init then return FALSE
+//
 JNIEXPORT jboolean JNICALL 
 Java_jpl_fli_Prolog_set_1default_1init_1args(
     JNIEnv     *env, 
@@ -3732,6 +3748,11 @@ err:
  * Method:    get_actual_init_args
  * Signature: ()[Ljava/lang/String;
  */
+//
+// if not yet init then return null
+// if already init then return actual init args as String[]
+// if already failed to init then throw an exception
+//
 JNIEXPORT jobject JNICALL 
 Java_jpl_fli_Prolog_get_1actual_1init_1args(
     JNIEnv     *env, 
@@ -3744,7 +3765,7 @@ Java_jpl_fli_Prolog_get_1actual_1init_1args(
 
     if ( jpl_status==JPL_INIT_JPL_FAILED || jpl_status==JPL_INIT_PVM_FAILED )
 	{
-	msg = "jpl.fli.Prolog.get_default_init_args(): initialisation has already failed";
+	msg = "jpl.fli.Prolog.get_actual_init_args(): initialisation has already failed";
 	goto err;
 	}
 
@@ -3764,6 +3785,11 @@ err:
  * Method:    initialise
  * Signature: ()Z
  */
+//
+// if already init then return FALSE
+// if already failed to init then throw an exception
+// else attempt to init and if success then return TRUE else throw an exception
+//
 JNIEXPORT jboolean JNICALL 
 Java_jpl_fli_Prolog_initialise(
     JNIEnv	*env, 
@@ -4862,6 +4888,61 @@ Java_jpl_fli_Prolog_get_1jboolean(
 
 /*
  * Class:     jpl_fli_PL
+ * Method:    get_jpl_term
+ * Signature: (Ljpl/fli/term_t;Ljpl/fli/ObjectHolder;)Z
+ */
+//
+// added 18/Jun/2004 PS untested...
+// succeeds iff jterm is one of the special JPL terms,
+// i.e. @(false), @(true), @(null) or @(Tag) e.g. @('J#0123456789'),
+// stashing a corresponding jpl.JBoolean or jpl.JRef into the object holder
+//
+JNIEXPORT jboolean JNICALL
+Java_jpl_fli_Prolog_get_1jpl_1term(
+    JNIEnv     *env, 
+    jclass	jProlog, 
+    jobject	jterm,          // a jpl.fli.term_t instance
+    jobject	jobject_holder  // a jpl.fli.ObjectHolder instance
+    )
+    {
+    term_t      term;           // the Prolog term referred to by jterm
+    functor_t	fn;             // the term's functor
+    term_t	a1;             // the term's first & only arg, if it has one
+    atom_t	a;              // the atom which is the term's only arg
+    jobject     obj;            // a JBoolean or JRef to be returned
+    jobject     ref;            // the object referred to by Tag
+    
+    return  jpl_ensure_pvm_init(env)
+        &&  getLongValue(env,jterm,&(long)term)
+        &&  PL_get_functor(term,&fn)       // succeeds iff jterm is atom or compound
+        &&  fn == JNI_functor_at_1         // jterm is @(Something)
+        &&  ( a1 = PL_new_term_ref(),
+              PL_get_arg(1,term,a1)        // a1 is that Something
+            )
+        &&  PL_get_atom(a1,&a)             // succeeds iff a1 is an atom
+        &&  ( a == JNI_atom_null           // Something == null
+            ? (obj=(*env)->AllocObject(env,jJRef_c)) != NULL
+              && ((*env)->SetObjectField(env,obj,jJRefRef_f,NULL), TRUE)
+              &&  setObjectValue(env,jobject_holder,obj)
+            : a == JNI_atom_true           // Something == true
+            ? (obj=(*env)->AllocObject(env,jJBoolean_c)) != NULL
+              && ((*env)->SetBooleanField(env,obj,jJBooleanValue_f,TRUE), TRUE)
+              &&  setObjectValue(env,jobject_holder,obj)
+            : a == JNI_atom_false          // Something == false
+            ? (obj=(*env)->AllocObject(env,jJBoolean_c)) != NULL
+              && ((*env)->SetBooleanField(env,obj,jJBooleanValue_f,FALSE), TRUE)
+              &&  setObjectValue(env,jobject_holder,obj)
+            : jni_tag_to_iref(a,(int*)&ref)	// convert digits to int
+            ? (obj=(*env)->AllocObject(env,jJRef_c)) != NULL
+              && ((*env)->SetObjectField(env,obj,jJRefRef_f,ref), TRUE)
+              &&  setObjectValue(env,jobject_holder,obj)
+            : FALSE                        // jterm is not a special JPL structure
+            );
+    }
+
+
+/*
+ * Class:     jpl_fli_PL
  * Method:    get_functor
  * Signature: (Ljpl/fli/term_t;Ljpl/fli/functor_t;)Z
  */
@@ -5086,6 +5167,7 @@ Java_jpl_fli_Prolog_get_1nil(				    // redundant: tests term == '[]'
 
 
 //=== from "5.6.4 Constructing terms" ==============================================================
+// these methods perhaps oughta return jboolean, false iff given object is null...
 
 /*
  * Class:     jpl_fli_PL
@@ -5101,8 +5183,8 @@ Java_jpl_fli_Prolog_put_1variable(
     {
     term_t	term;
 
-    if	(   jpl_ensure_pvm_init(env)
-	&&  getLongValue(env,jterm,(long*)&term)		// checks that jterm isn't null
+    if	(   jpl_ensure_pvm_init(env)                    // may throw exception but cannot fail
+	&&  getLongValue(env,jterm,(long*)&term)	// checks that jterm isn't null
 	)
 	{
 	PL_put_variable(term);
@@ -5144,7 +5226,7 @@ Java_jpl_fli_Prolog_put_1atom(
  * Signature: (Ljpl/fli/term_t;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL 
-Java_jpl_fli_Prolog_put_1atom_1chars(
+Java_jpl_fli_Prolog_put_1atom_1chars(   // no atom refs involved here
     JNIEnv     *env, 
     jclass	jProlog, 
     jobject	jterm, 
@@ -5705,12 +5787,15 @@ Java_jpl_fli_Prolog_predicate(
  * Method:    predicate_info
  * Signature: (Ljpl/fli/predicate_t;Ljpl/fli/atom_t;ILjpl/fli/module_t;)I
  */
+//
+// perhaps this oughta return a jboolean instead?
+//
 JNIEXPORT jint JNICALL 
 Java_jpl_fli_Prolog_predicate_1info(
     JNIEnv     *env, 
     jclass	jProlog, 
     jobject	jpredicate, 
-    jobject	jatom, 
+    jobject	jatom,      // this Atom instance will have its value field destructively updated
     jobject	jarity_holder, 
     jobject	jmodule
     )
@@ -5959,7 +6044,7 @@ Java_jpl_fli_Prolog_exception(
 
 //=== from "5.6.1  Miscellaneous" ==================================================================
 
-// not yet mapped:
+// not yet mapped (these might actually be useful as native methods, although they can be called via Prolog):
 //	record()
 //	reorded()
 //	erase()
