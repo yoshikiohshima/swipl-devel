@@ -698,6 +698,9 @@ All these functions return either \const{TRUE} or \const{FALSE}.
 \begin{description}
 \cfunction{int}{PL_is_variable}{term_t}
 Returns non-zero if \arg{term} is a variable.
+\cfunction{int}{PL_is_ground}{term_t}
+Returns non-zero if \arg{term} is a ground term.  See also ground/1.
+This function is cycle-safe.
 \cfunction{int}{PL_is_atom}{term_t}
 Returns non-zero if \arg{term} is an atom.
 \cfunction{int}{PL_is_string}{term_t}

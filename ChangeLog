@@ -7,11 +7,14 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: PL_is_ground() to check for term groundness in the foreign
+    interface.
+
   * ENHANCED: error messages produced by load_foreign_library/1.
 
   * MAINTENANCE: Fixed incorrect assertion in O_SECURE mode.  Barry Evans.
 
-  * ENHANCED: some Makefile cleanup.
+  * ENHANCED: some Makefile cleanup.  Fixed typo spotted by Tom Schrijvers.
 
   * PORT: Cleanup of autoconf configuration (dropped acconfig.h)
 

@@ -183,6 +183,20 @@ last:
 }
 
 
+int
+PL_is_ground(term_t t)
+{ GET_LD
+
+  Word *m = aTop;
+  int rc;
+
+  rc = ground(valTermRef(t) PASS_LD);
+  unvisit(m PASS_LD);
+
+  return rc;
+}
+
+
 static
 PRED_IMPL("ground", 1, ground, 0)
 { PRED_LD

@@ -355,6 +355,7 @@ PL_EXPORT(char *)	PL_quote(int chr, const char *data);
 			/* Verify types */
 PL_EXPORT(int)		PL_term_type(term_t t);
 PL_EXPORT(int)		PL_is_variable(term_t t);
+PL_EXPORT(int)		PL_is_ground(term_t t);
 PL_EXPORT(int)		PL_is_atom(term_t t);
 PL_EXPORT(int)		PL_is_integer(term_t t);
 PL_EXPORT(int)		PL_is_string(term_t t);

@@ -1980,7 +1980,7 @@ get_literal(term_t lit, triple *t, int flags)
     PL_get_arg(2, lit, a);
 
     return get_literal(a, t, LIT_TYPED|flags);
-  } else if ( PL_is_variable(lit) )
+  } else if ( !PL_is_ground(lit) )
   { if ( !(flags & LIT_PARTIAL) )
       return type_error(lit, "rdf_object");
   } else				/* TBD: check groundness */
