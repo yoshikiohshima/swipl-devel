@@ -1,3 +1,7 @@
+Jun 29, 2004
+
+  * FIXED: rdf_split_url(+, +, -).  Bob Wielinga.
+
 Jun 17, 2004
 
   * FIXED: pass base_uri option to rdf_load from rdfe_load to avoid clashes

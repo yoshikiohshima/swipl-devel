@@ -3594,7 +3594,7 @@ split_url(term_t base, term_t local, term_t url)
     { char buf[1024];
 
       memcpy(buf, b, bl);
-      memcpy(buf, l, ll);
+      memcpy(buf+bl, l, ll);
 
       return PL_unify_atom_nchars(url, bl+ll, buf);
     } else
@@ -3602,7 +3602,7 @@ split_url(term_t base, term_t local, term_t url)
       int rc;
 
       memcpy(buf, b, bl);
-      memcpy(buf, l, ll);
+      memcpy(buf+bl, l, ll);
 
       rc = PL_unify_atom_nchars(url, bl+ll, buf);
       PL_free(buf);
