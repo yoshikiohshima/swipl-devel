@@ -1,0 +1,151 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{pl}
+\usepackage{html}
+\sloppy
+\makeindex
+
+\onefile
+\htmloutput{html}				% Output directory
+\htmlmainfile{index}				% Main document file
+\bodycolor{white}				% Page colour
+
+\renewcommand{\runningtitle}{SWI-Prolog SSL Interface}
+
+\begin{document}
+
+\title{SWI-Prolog SSL Interface}
+\author{Jan Wielemaker \\
+	SWI, University of Amsterdam \\
+	The Netherlands \\
+	E-mail: \email{jan@swi-prolog.org} \\[5pt]
+	Jan van der Steen \\
+	Diff Automatisering v.o.f}
+	
+\maketitle
+
+\begin{abstract}
+This document describes the SWI-Prolog SSL library, a set of predicates
+which provides secure sockets to Prolog applications, for example to run
+a secure HTTPS server, or access websites using the \const{https}
+protocol.  It can also be used to provide authetification and secure
+data exchange between Prolog processes over the network.
+\end{abstract}
+
+\pagebreak
+\tableofcontents
+\pagebreak
+
+\section{Introduction}
+
+\section{Overview of the Prolog API}
+
+An SSL server and client can be built with the following (abstracted)
+predicate calls:
+
+\begin{center}
+\begin{tabular}{ll}
+    SSL server    &     SSL client \\
+\hline
+    ssl_init      &     ssl_init \\
+    ssl_socket    &     ssl_socket \\
+    ssl_accept    &     ssl_connect \\
+    ssl_open      &     ssl_open \\
+    \ldots        &     \ldots \\
+    ssl_exit      &     ssl_exit
+\end{tabular}
+\end{center}
+
+What follows is a description of each of these functions and the
+arguments they accept.
+
+\begin{description}
+    \predicate{ssl_init}{3}{-SSL, +Server, +Options}
+Server with legal values \const{server} or \const{client} denotes
+whether the SSL socket will have a server or client role in the
+established connection. With \arg{Options} various properties of the
+TCP/IP + SSL connection can be defined, some of which required, some
+optional. An overview is given below. The handle of the connection is
+returned in \arg{SSL}.
+
+Below is an overview of the \arg{Options} argument.  Some options are only
+required by the client (C), some are required by the server (marked S),
+some by both server as client (marked CS). 
+
+\begin{description}
+    \termitem{host}{+HostName} [C]
+        The host to connect to by the client or identified by the server.
+        Both IP addresses and hostnames can be supplied here. This option
+        is required for the client and optional for the server.
+    \termitem{port}{+Integer} [CS]
+        The port to connect or listen to. This option is required since
+        no default port can sensibly be defined for an abstract layer.
+	The webserver \jargon{https} protocol uses port 443.
+    \termitem{certificate_file}{+FileName} [S]
+        Specify where the certificate file can be found. This can be the
+        same as the key file (see next option).
+    \termitem{key_file}{+FileName} [S]
+        Specify where the private key can be found. This can be the same
+        as the certificate file.
+    \termitem{password}{+Text}
+        Specify the password the private key is protected with (if any).
+	If you do not want to store the password you can also specify
+	an application defined handler to return the password
+	(see next option).
+    \termitem{pem_password_hook}{:PredicateName}
+        In case a password is required to access the private key the
+        supplied function will be called to fetch it. The function
+        has the following prototype: \term{function}{+SSL, -Password}
+    \termitem{cacert_file}{+FileName}
+        Specify a file containing certificate keys which will thus
+        automatically be verified as trusted. You can also install
+        an application defined handler to verify certificates (see
+        next option).
+    \termitem{cert_verify_hook}{:PredicateName}
+        In case a certificate cannot be verified or has some properties
+        which make it invalid (invalid validity date for example) the
+        supplied function will be called to ask its opinion about the
+        certificate. The predicate is calles as follows:
+	\term{function}{+SSL, +Certificate, +Error}.  Access will be
+	granted iff the predicate succeeds.
+    \termitem{cert}{+Boolean}
+        Trigger the sending of our certificate as specified using
+        the option \const{certificate_file} described earlier. For a
+        server this option is automatically turned on.
+    \termitem{peer_cert}{+Boolean}
+        Trigger the request of our peer's certificate while establishing
+        the SSL layer. This option is automatically turned on in a client
+	SSL socket.
+\end{description}
+
+    \predicate{ssl_socket}{2}{+SSL, -Socket}
+Initialize the network socket layer.
+
+    \predicate{ssl_accept}{3}{+SSL, +Socket, -Socketinstance} 
+Switch the network socket to accept state, opening it for network
+connections.
+
+    \predicate{ssl_open}{4}{+SSL, +Socket, -In, -Out}
+Attach a Prolog input and output stream to the socket.  The \arg{Socket}
+is automatically closed after both streams are closed.  Please note that
+the output stream is fully buffered and therefore flush_output/1 is
+required to actually send the data to the peer.
+
+    \predicate{ssl_exit}{2}{+SSL}
+Clean up all resources related to the SSL + TCP/IP socket layers.
+\end{description}
+
+\section{Acknowledgments}
+
+The SWI-Prolog ODBC interface started from a partial interface by
+Stefano De Giorgi. Mike Elston suggested programmable
+null-representation with many other suggestions while doing the first
+field-tests with this package.
+
+\bibliographystyle{plain}
+\bibliography{odbc}
+
+\printindex
+
+\end{document}
+
