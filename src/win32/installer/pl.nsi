@@ -185,6 +185,16 @@ Section "C/C++ Interface"
   File pl\doc\packages\pl2cpp.html
 SectionEnd
 
+Section "JPL -- Java <-> Prolog"
+  SectionIn 1 3
+  SetOutPath $INSTDIR\bin
+  File pl\bin\jpl.dll
+  SetOutPath $INSTDIR\lib
+  File pl\lib\jpl.jar
+  SetOutPath $INSTDIR\library
+  File pl\lib\jpl.pl
+SectionEnd
+
 Section "XPCE graphics library"
   SectionIn 1 3
   SetOutPath $INSTDIR
