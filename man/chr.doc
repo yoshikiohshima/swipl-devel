@@ -300,6 +300,8 @@ The following debug commans are currently supported:
         CHR debug options:
 
                 <cr>    creep           c       creep
+		s	skip
+		g	ancestors
                 n       nodebug
                 a       abort
                 f       fail
@@ -311,6 +313,10 @@ Their meaning is:
 \begin{itemlist}
 	\termitem{creep}{}
 Step to the next port.
+	\termitem{skip}{}
+Skip to exit port of this call or wake port.
+	\termitem{ancestors}
+Print list of ancestor call and wake ports.
 	\termitem{nodebug}{}
 Disable the tracer.
 	\termitem{abort}{}
