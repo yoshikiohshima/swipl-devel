@@ -129,13 +129,13 @@ The following is an implementation of the classic alphametics
 puzzle SEND + MORE = MONEY:
 
 \begin{code}
-:- [bounds].
+:- use_module(library('clp/bounds')).
 
-send([[S,E,N,D],  [M,O,R,E],  [M,O,N,E,Y]])  :-
-              Digits  =  [S,E,N,D,M,O,R,Y],
+send([[S,E,N,D], [M,O,R,E], [M,O,N,E,Y]])  :-
+              Digits   =  [S,E,N,D,M,O,R,Y],
               Carries  =  [C1,C2,C3,C4],
               Digits  in  0..9,
-              Carries  in  0..1,
+              Carries in  0..1,
 
               M                #=              C4,
               O  +  10  *  C4  #=  M  +  S  +  C3,
