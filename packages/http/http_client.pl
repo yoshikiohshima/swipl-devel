@@ -154,7 +154,7 @@ http_do_get(Parts, Data, Options) :-
 	),
 	memberchk(host(Host), Parts),
 	http_write_header(Write, 'GET', Location, Host, Options, ReplyOptions),
-	format(Write, '~n', []),
+	write(Write, '\r\n'),
 	flush_output(Write),
 	http_read_reply(Read, Data, ReplyOptions), !.
 http_do_get(Parts, _Data, _Options) :-
@@ -194,7 +194,7 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 	;   Major = 1, Minor = 1,
 	    Options1 = Options
 	),
-	format(Out, '~w ~w HTTP/~w.~w~n', [Method, Location, Major, Minor]),
+	format(Out, '~w ~w HTTP/~w.~w\r\n', [Method, Location, Major, Minor]),
 	format(Out, 'Host: ~w~n', [Host]),
 	(   select(connection(Connection), Options1, Options2)
 	->  true
@@ -206,8 +206,8 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 	;   user_agent(Agent),
 	    Options3 = Options2
 	),
-	format(Out, 'User-Agent: ~w~n\
-		     Connection: ~w~n', [Agent, Connection]),
+	format(Out, 'User-Agent: ~w\r\n\
+		     Connection: ~w\r\n', [Agent, Connection]),
 	x_headers(Options3, Out, RestOptions).
 
 
@@ -222,7 +222,7 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 
 x_headers(Options0, Out, Options) :-
 	select(request_header(Name=Value), Options0, Options1), !,
-	format(Out, '~w: ~w~n', [Name, Value]),
+	format(Out, '~w: ~w\r\n', [Name, Value]),
 	x_headers(Options1, Out, Options).
 x_headers(Options, _, Options).
 

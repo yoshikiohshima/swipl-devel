@@ -1,3 +1,8 @@
+Jun 16, 2004
+
+  * FIXED: make HTTP client library write header line terminate with
+    \r\n.  Mike Elston.
+
 Jun 15, 2004
 
   * FIXED: Undefined predicate strip_module/2 in thread_httpd.pl when
