@@ -1,5 +1,14 @@
 ################################################################
+# @configure_input@
 #
+# Build JPL.  Building JPL for Unix currently relies on the following
+# assumptions:
+#
+#	* $JAVA_HOME points to the JDK top directory
+#	* $PATH includes $JAVA_HOME/bin
+#	* ELF Dynamic Linker semantics
+#
+# Author: Jan Wielemaker, based on shell-scripts from Paul Singleton.
 ################################################################
 
 .SUFFIXES: .tex .dvi .doc .pl
@@ -133,6 +142,7 @@ exjava-install::
 		    if [ -f examples/java/$$d/$$plfile ]; then \
 			$(INSTALL_DATA) examples/java/$$d/$$plfile $(EXJAVA)/$$d ;\
 		    fi; \
+		    (cd $(EXJAVA)/$$d && env JPL_COMPILE_ONLY=yes ./run.sh); \
 		done
 		$(INSTALL_DATA) examples/java/SemWeb/test.rdf $(EXJAVA)/SemWeb
 

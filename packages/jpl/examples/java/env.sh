@@ -9,11 +9,9 @@
 # 
 # 	* The directory holding java and javac must be in $PATH
 # 	* JPL must be installed
-# 	* Prolog must be available as pl from $PATH
+# 	* Prolog must be available as one of "swi-prolog", "swipl"
+#	  or "pl" in $PATH
 #
-# Bugs
-# 
-# Script should check the setup and warn if any errors are found
 ################################################################
 
 findexe()
@@ -51,7 +49,7 @@ if findexe javac; then
   true
 else
   echo "ERROR: Cannot find javac.  This demo requires the SDK to"
-  echo "ERROR: be installed and and accessible through JAVA_HOME"
+  echo "ERROR: be installed and accessible through JAVA_HOME"
   echo "ERROR: or PATH"
   exit 1
 fi
@@ -105,11 +103,13 @@ compile()
 run()
 { compile $1
 
-  echo ""
-  echo "JPL demo: $1"
-  echo ""
+  if [ "$JPL_COMPILE_ONLY" != "yes" ]; then
+    echo ""
+    echo "JPL demo: $1"
+    echo ""
 
-  java $1
+    java $1
+  fi
 }
 
 ################################################################
@@ -122,12 +122,15 @@ run()
 run_preloaded()
 { compile $1
 
-  JPLSO="$PLBASE/lib/$PLARCH/libjpl.$PLSOEXT"
+  if [ "$JPL_COMPILE_ONLY" != "yes" ]; then
+    JPLSO="$PLBASE/lib/$PLARCH/libjpl.$PLSOEXT"
 
-  echo ""
-  echo "JPL demo: $1"
-  echo "Using preloaded $JPLSO"
-  echo ""
+    echo ""
+    echo "JPL demo: $1"
+    echo "Using preloaded $JPLSO"
+    echo ""
 
-  env LD_PRELOAD=$JPLSO java $1
+  
+    env LD_PRELOAD=$JPLSO java $1
+  fi
 } 
