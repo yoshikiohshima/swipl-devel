@@ -68,6 +68,8 @@ The following constraints are supported:
 	The product of two expressions.
 	\infixop{-}{?Expr}{?Expr}
 	The difference of two expressions.
+	\predicate{max}{2}{?Expr}{?Expr}
+	The maximum of two expressions.
 \end{description}
 
 \subsection{Constraint Implication and Reified Constraints}
