@@ -308,6 +308,8 @@ rdf(S0, P0, O0) -->
 	[ rdf(S, P, O) ].
 
 
+global_ref(URI, URI) :-
+	var(URI), !.
 global_ref(rdf:Local, Global) :-
 	rdf_name_space(NS), !,
 	atom_concat(NS, Local, Global).
@@ -315,6 +317,8 @@ global_ref(NS:Local, Global) :- !,
 	atom_concat(NS, Local, Global).
 global_ref(URI, URI).
 
+global_obj(V, V) :-
+	var(V), !.
 global_obj(literal(X), literal(X)) :- !.
 global_obj(Local, Global) :-
 	global_ref(Local, Global).
