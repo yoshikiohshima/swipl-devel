@@ -50,7 +50,7 @@ Pentium 1.5Ghz).
 SWI-Prolog has started support for web-documents with the development of
 a small and fast SGML/XML parser, followed by an RDF parser (early
 2000). With the \file{semweb} library we provide more high level support
-for manipulating semantic web documents.  The semantic web is a likely
+for manipulating semantic web documents.  The semantic web is the likely
 point of orientation for knowledge representation in the future, making
 a library designed in its spirit promising.
 
@@ -105,26 +105,45 @@ Currently the following indexing is provided.
 	  \const{subPropertyOf} predicates indexing happens on the most
 	  abstract predicate. This makes calls to rdf_has/4 very
 	  efficient.
-    \item Literal \arg{Objects} are indexed case-insensitive to make
-          case-insensitive queries fully indexed.  See rdf/3.
+    \item String literal \arg{Objects} are indexed case-insensitive to make
+          case-insensitive queries fully indexed. See rdf/3.
 \end{itemize}
 
 \subsection{Query the RDF database}
 
 \begin{description}
     \predicate{rdf}{3}{?Subject, ?Predicate, ?Object}
-Elementary query for triples.  \arg{Subject} and \arg{Predicate} are
+Elementary query for triples. \arg{Subject} and \arg{Predicate} are
 atoms representing the fully qualified URL of the resource. \arg{Object}
-is either an atom representing a resource or \term{literal}{Text} if the
-object is a literal value.%
-	\footnote{The current implementation has no provisions for
-		  XML-Schema typed literals.}
-If a value of the form \infixterm{:}{NameSpaceID}{LocalName} is provided
-it is expanded to a ground atom using expand_goal/2. This implies you
-can use this construct in compiled code without paying a preformance
-penalty.  See also \secref{rdfns}. 
-For querying purposes, \arg{Object} can be of the form
+is either an atom representing a resource or \term{literal}{Value} if
+the object is a literal value. If a value of the form
+\infixterm{:}{NameSpaceID}{LocalName} is provided it is expanded to a
+ground atom using expand_goal/2. This implies you can use this construct
+in compiled code without paying a preformance penalty. See also
+\secref{rdfns}.  Literal values take one of the following forms:
+
+\begin{description}
+    \termitem{Atom}{}
+If the value is a simple atom it is the textual representation of
+a string literal without explicit type or language (\const{xml:lang})
+qualifier.
+
+    \termitem{lang}{LangID, Atom}
+\arg{Atom} represents the text of a string literal qualified with
+the given language.
+
+    \termitem{type}{TypeID, Value}
+Used for attributes qualified using the \const{rdf:dataType}
+\arg{TypeID}. The \arg{Value} is either the textual representation
+or a natural Prolog representation.  See the option
+\term{convert_typed_literal}{:Convertor} of the parser.  The storage
+layer provides efficient handling of atoms, integers and floats.  All
+other data is represented as a Prolog record.
+\end{description}
+
+For string querying purposes, \arg{Object} can be of the form
 \term{literal}{+Query, -Value}, where \arg{Query} is one of
+
     \begin{description}
 	\termitem{exact}{+Text}
     	    Perform exact, but case-insensitive match.  This query is
@@ -224,8 +243,9 @@ predicates from this section directly.
 Assert a new triple into the database. This is equivalent to
 rdf_assert/4 using \arg{SourceRef} \const{user}. \arg{Subject} and
 \arg{Predicate} are resources. \arg{Object} is either a resource or a
-term \term{literal}{Value}. All arguments are subject to name-space
-expansion (see \secref{rdfns}).
+term \term{literal}{Value}. See rdf/3 for an explanation of \arg{Value}
+for typed and language qualified literals. All arguments are subject to
+name-space expansion (see \secref{rdfns}).
 
     \predicate{rdf_assert}{4}{+Subject, +Predicate, +Object, +SourceRef}
 As rdf_assert/3, adding \arg{SourceRef} to specify the orgin of the
@@ -286,6 +306,10 @@ described below.  Caching is activated by creating a directory
 \file{.cache} (or \file{_cache} on Windows) in the directory holding
 the \fileext{rdf} files.  Cached RDF files are loaded at approx.\
 25 times the speed of RDF-XML files.
+
+    \predicate{rdf_load}{2}{+File, +Options}
+As rdf_load/1, providing additional options.  The options are handed
+to the RDF parser as implemented by process_rdf/3.
 
     \predicate{rdf_unload}{1}{+Spec}
 Remove all triples loaded from \arg{Spec}. In the current implementation
@@ -352,7 +376,7 @@ designed a binary format that is more compact, avoids the complications
 of the RDF parser and avoids repetitive lookup of (URL) identifiers.
 Especially the speed improvement of about 25 times is worth-while when
 loading large databases.  These predicates are used for caching by
-rdf_load/1 under certain conditions.
+rdf_load/[1,2] under certain conditions.
 
 \begin{description}
     \predicate{rdf_save_db}{1}{+File}

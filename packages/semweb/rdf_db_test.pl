@@ -206,6 +206,43 @@ lang(save) :-
 	).
 
 		 /*******************************
+		 *	       UPDATE		*
+		 *******************************/
+
+update(subject) :-
+	rdf_assert(x, a, v),
+	rdf_update(x, a, v, subject(y)),
+	rdf(y, a, v).
+update(predicate) :-
+	rdf_assert(x, a, v),
+	rdf_update(x, a, v, predicate(b)),
+	rdf(x, b, v).
+update(object-1) :-
+	rdf_assert(x, a, v),
+	rdf_update(x, a, v, object(w)),
+	rdf(x, a, w).
+update(object-2) :-
+	rdf_assert(x, a, v),
+	rdf_update(x, a, v, object(literal(hello))),
+	rdf(x, a, literal(hello)).
+update(object-3) :-
+	rdf_assert(x, a, v),
+	rdf_update(x, a, v, object(literal(lang(nl, hallo)))),
+	rdf(x, a, literal(lang(nl, hallo))).
+update(object-4) :-			% only change lang
+	rdf_assert(x, a, literal(lang(en, hallo))),
+	rdf_update(x, a, literal(lang(en, hallo)),
+		   object(literal(lang(nl, hallo)))),
+	rdf(x, a, literal(lang(nl, hallo))).
+update(object-5) :-			% drop lang
+	rdf_assert(x, a, literal(lang(en, hallo))),
+	rdf_update(x, a, literal(lang(en, hallo)),
+		   object(literal(hallo))),
+	rdf(x, a, literal(hallo)).
+
+
+
+		 /*******************************
 		 *	      SCRIPTS		*
 		 *******************************/
 
@@ -281,6 +318,7 @@ testset(resource).
 testset(literal).
 testset(typed).
 testset(lang).
+testset(update).
 
 %	testdir(Dir)
 %	

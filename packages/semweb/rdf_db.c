@@ -76,7 +76,6 @@ static functor_t FUNCTOR_triples2;
 static functor_t FUNCTOR_subjects1;
 static functor_t FUNCTOR_predicates1;
 static functor_t FUNCTOR_duplicates1;
-
 static functor_t FUNCTOR_subject1;
 static functor_t FUNCTOR_predicate1;
 static functor_t FUNCTOR_object1;
@@ -1810,8 +1809,13 @@ md5_triple(triple *t, md5_byte_t *digest)
       assert(0);
   }
   md5_append(&state, (const md5_byte_t *)s, len);
+  if ( t->type_or_lang )
+  { md5_append(&state, t->has_lang ? "l" : "t", 1);
+    s = PL_atom_nchars(t->type_or_lang, &len);
+    md5_append(&state, (const md5_byte_t *)s, len);
+  }
   if ( t->source )
-  { md5_append(&state, "S", 2);
+  { md5_append(&state, "S", 1);
     s = PL_atom_nchars(t->source, &len);
     md5_append(&state, (const md5_byte_t *)s, len);
   }
@@ -2632,6 +2636,7 @@ update_triple(term_t action, triple *t)
   } else if ( PL_is_functor(action, FUNCTOR_object1) )
   { triple t2;
 
+    memset(&t2, 0, sizeof(t2));
     if ( !get_object(a, &t2) )
       return FALSE;
     if ( match_object(&t2, &tmp) )
@@ -2639,6 +2644,8 @@ update_triple(term_t action, triple *t)
 
     tmp.objtype = t2.objtype;
     tmp.object = t2.object;		/* Union copy.  Portable? */
+    tmp.type_or_lang = t2.type_or_lang;
+    tmp.has_lang = t2.has_lang;
   } else if ( PL_is_functor(action, FUNCTOR_source1) )
   { triple t2;
 
@@ -2666,12 +2673,14 @@ update_triple(term_t action, triple *t)
   erase_triple(t);
   new = PL_malloc(sizeof(*new));
   memset(new, 0, sizeof(*new));
-  new->subject	 = tmp.subject;
-  new->predicate = tmp.predicate;
-  new->object	 = tmp.object;
-  new->objtype	 = tmp.objtype;
-  new->source	 = tmp.source;
-  new->line	 = tmp.line;
+  new->subject	    = tmp.subject;
+  new->predicate    = tmp.predicate;
+  new->object	    = tmp.object;
+  new->objtype	    = tmp.objtype;
+  new->type_or_lang = tmp.type_or_lang;
+  new->has_lang	    = tmp.has_lang;
+  new->source	    = tmp.source;
+  new->line	    = tmp.line;
 
   lock_atoms(new);
   link_triple(new);
