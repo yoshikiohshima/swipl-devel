@@ -305,6 +305,8 @@ PRED_IMPL("nb_current", 2, nb_current, PL_FA_NONDETERMINISTIC)
       if ( LD->gvar.nb_vars )
       { e = newTableEnum(LD->gvar.nb_vars);
 	break;
+      } else
+      { fail;
       }
     case FRG_REDO:
       e =  CTX_PTR;
