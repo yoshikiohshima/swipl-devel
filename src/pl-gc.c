@@ -799,7 +799,7 @@ can be reached from  the  choice-points.   In  addition,  it deletes all
 trail-references  that  will   be   overruled    by   the   choice-point
 stack-reference anyway.
 
-When using setarg/3 (O_DESTRUCTIVE_ASSIGNMENT),   destrctive assignments
+When using setarg/3 (O_DESTRUCTIVE_ASSIGNMENT),  destructive assignments
 are stored on the trail-stack as  two   entries.  The first entry is the
 normal trail-pointer, while the  second   is  flagged  with TAG_TRAILVAL
 (0x1). When undoing, the tail is scanned backwards and if a tagged value
@@ -840,7 +840,6 @@ mark_choicepoints(Choice ch, GCTrailEntry te)
 	  trailcells_deleted++;
 	} else if ( !is_marked(tard) )	/* garbage */
 	{ setVar(*tard);
-	  SECURE(assert(*tard != QID_MAGIC));
 #if O_DESTRUCTIVE_ASSIGNMENT
 	  if ( ttag(te[1].address) == TAG_TRAILVAL)
 	  { te[1].address = 0;
