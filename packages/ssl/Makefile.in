@@ -134,7 +134,7 @@ check::
 ################################################################
 
 clean:
-		rm -f $(OBJ) *~ *.o *% a.out core config.log
+		rm -f $(OBJ) *~ *.o *% a.out core config.log ssl.tex
 		$(RUNTEX) --clean ssl
 
 distclean:	clean
