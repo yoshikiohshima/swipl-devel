@@ -17,11 +17,18 @@ BINDIR=$(PLBASE)\bin
 LIBDIR=$(PLBASE)\lib
 INCDIR=$(PLBASE)\include
 PLCUSTOM=$(PLBASE)\custom
+
 # We get pthreadVC.dll, pthreadVC.lib, pthread.h, sched.h and semaphore.h
 # from the locations below
 WINDLLDIR=$(WINDIR)\system32
 PTHREADLIBDIR=$(HOME)\lib
 PTHREADINCDIR=$(HOME)\include
+
+# The OpenSSL library and include files
+# http://www.slproweb.com/products/Win32OpenSSL.html
+OPENSSL=$(HOME)\OpenSSL
+OPENSSLLIBDIR=$(OPENSSL)\lib\VC
+OPENSSLINCDIR=$(OPENSSL)\include
 
 # Setup the environment.  Use this to additional libraries and include
 # files to the path.  In particular provide access to the jpeg and xpm

@@ -720,14 +720,18 @@ PL_signal(int sigandflags, handler_t func)
 int
 PL_handle_signals()
 { int done = 0;
+  PL_local_data_t *ld = LD;
 
-  while(!LD->critical && LD->pending_signals)
+  if ( !ld )
+    return 0;
+
+  while(!ld->critical && ld->pending_signals)
   { ulong mask = 1L;
     int sig = 1;
 
     for( ; mask ; mask <<= 1, sig++ )
-    { if ( LD->pending_signals & mask )
-      { LD->pending_signals &= ~mask;	/* reset the signal */
+    { if ( ld->pending_signals & mask )
+      { ld->pending_signals &= ~mask;	/* reset the signal */
 
 	done++;
 
@@ -741,10 +745,10 @@ PL_handle_signals()
 	  pl_garbage_collect_atoms();
 	else
 #endif
-        if ( sig == SIG_EXCEPTION && LD->pending_exception )
-	{ record_t ex = LD->pending_exception;
+        if ( sig == SIG_EXCEPTION && ld->pending_exception )
+	{ record_t ex = ld->pending_exception;
 	  
-	  LD->pending_exception = 0;
+	  ld->pending_exception = 0;
 
 	  PL_put_variable(exception_bin);
 	  PL_recorded(ex, exception_bin);

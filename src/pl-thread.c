@@ -471,6 +471,7 @@ free_prolog_thread(void *data)
 void
 initPrologThreads()
 { PL_thread_info_t *info;
+  static int init_ldata_key = FALSE;
 
   LOCK();
   if ( threads_ready )
@@ -478,7 +479,10 @@ initPrologThreads()
     return;
   }
 
-  TLD_alloc(&PL_ldata);			/* see also alloc_thread() */
+  if ( !init_ldata_key )
+  { TLD_alloc(&PL_ldata);		/* see also alloc_thread() */
+    init_ldata_key = TRUE;
+  }
   TLD_set(PL_ldata, &PL_local_data);
   PL_local_data.magic = LD_MAGIC;
   info = &threads[1];
@@ -505,7 +509,7 @@ initPrologThreads()
 
 void
 cleanupThreads()
-{ TLD_free(PL_ldata);
+{ /*TLD_free(PL_ldata);*/		/* this causes crashes */
   threadTable = NULL;
   queueTable = NULL;
   memset(&threads, 0, sizeof(threads));
@@ -1674,13 +1678,17 @@ dispatch_cond_wait(message_queue *queue)
 
     rc = pthread_cond_timedwait(&queue->cond_var, &queue->mutex, &timeout);
 #ifdef O_DEBUG
-    switch( LD->thread.info->ldata_status )
-    { case LDATA_IDLE:
-      case LDATA_ANSWERED:
-	break;
-      default:
-	Sdprintf("%d: ldata_status = %d\n",
-		 PL_thread_self(), LD->thread.info->ldata_status);
+    if ( LD && LD->thread.info )	/* can be absent during shutdown */
+    { switch( LD->thread.info->ldata_status )
+      { case LDATA_IDLE:
+	  case LDATA_ANSWERED:
+	    break;
+	default:
+	  Sdprintf("%d: ldata_status = %d\n",
+		   PL_thread_self(), LD->thread.info->ldata_status);
+      }
+    } else
+    { return EINTR;
     }
 #endif
 
@@ -1755,6 +1763,12 @@ get_message(message_queue *queue, term_t msg)
     DEBUG(1, Sdprintf("%d: waiting on queue\n", PL_thread_self()));
     while( dispatch_cond_wait(queue) == EINTR )
     { DEBUG(1, Sdprintf("%d: EINTR\n", PL_thread_self()));
+
+      if ( !LD )			/* needed for clean exit */
+      { Sdprintf("Forced exit from get_message()\n");
+	exit(1);
+      }
+      
       if ( PL_handle_signals() < 0 )	/* thread-signal */
       { queue->waiting--;
 	queue->waiting_var -= isvar;
