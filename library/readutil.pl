@@ -100,23 +100,21 @@ read_stream_to_codes(C, Fd, [C|T], Tail) :-
 	read_stream_to_codes(C2, Fd, T, Tail).
 
 
-%	read_stream_to_terms(+Stream, -Terms, [?Tail]).
+%	read_stream_to_terms(+Stream, -Terms, ?Tail, +Options).
 
-read_stream_to_terms(Fd, Terms) :-
-	read_stream_to_terms(Fd, Terms, []).
-read_stream_to_terms(Fd, Terms, Tail) :-
-	read(Fd, C0),
-	read_stream_to_terms(C0, Fd, Terms0, Tail),
+read_stream_to_terms(Fd, Terms, Tail, Options) :-
+	read_term(Fd, C0, Options),
+	read_stream_to_terms(C0, Fd, Terms0, Tail, Options),
 	Terms = Terms0.
 
-read_stream_to_terms(end_of_file, _, Tail, Tail) :- !.
-read_stream_to_terms(C, Fd, [C|T], Tail) :-
-	read(Fd, C2),
-	read_stream_to_terms(C2, Fd, T, Tail).
+read_stream_to_terms(end_of_file, _, Tail, Tail, _) :- !.
+read_stream_to_terms(C, Fd, [C|T], Tail, Options) :-
+	read_term(Fd, C2, Options),
+	read_stream_to_terms(C2, Fd, T, Tail, Options).
 
 
 		 /*******************************
-		 *     FILE (ENTIRE INPUT)	*
+		 *      FILE (ENTIRE INPUT)	*
 		 *******************************/
 
 %	read_file_to_codes(+Spec, -Codes, +Options)
@@ -127,7 +125,7 @@ read_file_to_codes(Spec, Codes, Options) :-
 	;   Tail = [],
 	    Options1 = Options
 	),
-	split_options(Options1, FileOptions, OpenOptions),
+	split_options(Options1, file_options, FileOptions, OpenOptions),
 	absolute_file_name(Spec,
 			   [ access(read)
 			   | FileOptions
@@ -138,20 +136,6 @@ read_file_to_codes(Spec, Codes, Options) :-
 	close(Fd),
 	Codes = Codes0.
 
-file_option(extensions(_)).
-file_option(file_type(_)).
-file_option(file_errors(_)).
-
-split_options([], [], []).
-split_options([H|T], File, Open) :-
-	(   file_option(H)
-	->  File = [H|FT],
-	    OT = Open
-	;   Open = [H|OT],
-	    FT = File
-	),
-	split_options(T, FT, OT).
-
 
 %	read_file_to_terms(+Spec, -Terms, +Options)
 
@@ -161,13 +145,36 @@ read_file_to_terms(Spec, Terms, Options) :-
 	;   Tail = [],
 	    Options1 = Options
 	),
-	split_options(Options1, FileOptions, OpenOptions),
+	split_options(Options1, file_option, FileOptions, Options2),
+	split_options(Options2, read_option, ReadOptions, OpenOptions),
 	absolute_file_name(Spec,
 			   [ access(read)
 			   | FileOptions
 			   ],
 			   Path),
 	open(Path, read, Fd, OpenOptions),
-	read_stream_to_terms(Fd, Terms0, Tail),
+	read_stream_to_terms(Fd, Terms0, Tail, ReadOptions),
 	close(Fd),
 	Terms = Terms0.
+
+split_options([], _, [], []).
+split_options([H|T], G, File, Open) :-
+	(   call(G, H)
+	->  File = [H|FT],
+	    OT = Open
+	;   Open = [H|OT],
+	    FT = File
+	),
+	split_options(T, G, FT, OT).
+
+
+read_option(module(_)).
+read_option(syntax_errors(_)).
+read_option(character_escapes(_)).
+read_option(double_quotes(_)).
+read_option(backquoted_string(_)).
+
+file_option(extensions(_)).
+file_option(file_type(_)).
+file_option(file_errors(_)).
+
