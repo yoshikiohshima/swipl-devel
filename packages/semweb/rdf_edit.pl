@@ -667,11 +667,13 @@ user_transaction_member(Update, Subject, Predicate, Object,
 %		access(ro/rw)
 %		default(all/fallback)
 
-rdfe_set_file_property(File, access(Access)) :- !,
+rdfe_set_file_property(File0, access(Access)) :- !,
+	absolute_file_name(File0, File),
 	retractall(rdf_source_permission(File, _)),
 	assert(rdf_source_permission(File, Access)),
 	broadcast(rdf_file_property(File, access(Access))).
-rdfe_set_file_property(File, default(Type)) :-
+rdfe_set_file_property(File0, default(Type)) :-
+	absolute_file_name(File0, File),
 	rdfe_set_file_property(File, access(rw)), % must be writeable
 	retractall(rdf_current_default_file(_,_)),
 	assert(rdf_current_default_file(File, Type)),
