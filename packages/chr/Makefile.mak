@@ -35,6 +35,7 @@ install::
 install::
 		@if not exist "$(CHR)\$(NULL)" $(MKDIR) "$(CHR)"
 		copy chr_runtime.pl "$(CHR)"
+		copy chr_messages.pl "$(CHR)"
 		copy chr_op.pl "$(CHR)"
 		copy chr_translate.pl "$(CHR)"
 		copy chr_debug.pl "$(CHR)"

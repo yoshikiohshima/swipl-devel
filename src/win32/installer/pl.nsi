@@ -148,6 +148,7 @@ Section "Constraint Handling Rules"
   File pl\library\chr.pl
   SetOutPath $INSTDIR\library\chr
   File pl\library\chr\chr_runtime.pl
+  File pl\library\chr\chr_messages.pl
   File pl\library\chr\chr_debug.pl
   File pl\library\chr\chr_op.pl
   File pl\library\chr\chr_translate.pl

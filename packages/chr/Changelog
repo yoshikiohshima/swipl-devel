@@ -1,3 +1,8 @@
+Apr 9, 2004
+
+  * JW: Added chr_messages.pl.  Make all debug messages use the print_message/2
+    interface to enable future embedding.
+
 Apr 7, 2004
 
   * JW: Added chr:debug_interact/3 hook.  Defined in chr_swi.pl to void

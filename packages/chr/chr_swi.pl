@@ -56,6 +56,7 @@ user:file_search_path(chr, library(chr)).
 :- use_module(chr(chr_translate)).
 :- use_module(chr(chr_runtime)).
 :- use_module(chr(chr_debug)).
+:- use_module(chr(chr_messages)).
 :- use_module(library(gensym)).
 
 :- dynamic
@@ -192,6 +193,7 @@ user:message_hook(trace_mode(OnOff), _, _) :-
 %	events if we are in a Prolog `skip' and we ignore the 
 
 chr:debug_event(_State, _Event) :-
+	tracing,			% are we tracing?
 	prolog_skip_level(Skip, Skip),
 	Skip \== very_deep,
 	prolog_current_frame(Me),
@@ -220,8 +222,8 @@ prolog_event(fail(_)).
 :- multifile
 	prolog:message/3.
 
-prolog:message(chr(compilation_failed(From))) -->
-	[ 'CHR: Failed to compile ~w'-[From] ].
+prolog:message(chr(CHR)) -->
+	chr_message(CHR).
 
 
 		 /*******************************
