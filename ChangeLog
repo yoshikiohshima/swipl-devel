@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Handle goal_expansion/2 for the arguments of call_cleanup/2.
+
   * ADDED: clp/bounds.pl: an Integer Bounds Constraint Solver by
     Tom Schrijvers.
 

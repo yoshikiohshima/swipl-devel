@@ -48,6 +48,12 @@
 		    [
 		    ]).
 
+colourise_buffer(M) :->
+	"Cross-reference the buffer and set up colours"::
+	push_chr_operators,
+	call_cleanup(send_super(M, colourise_buffer),
+		     pop_chr_operators).
+
 :- emacs_end_mode.
 
 
