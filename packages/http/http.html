@@ -502,8 +502,9 @@ etc. The defined exceptions are:
 
 <P>
 <DT><STRONG>http_reply</STRONG>(<VAR>+Reply, +HdrExtra</VAR>)<DD>
-Return a result page using <A NAME="idx:httpreply3:17"></A><B>http_reply/3</B>. 
-See <A NAME="idx:httpreply3:18"></A><B>http_reply/3</B> for details.
+Return a result page using <A NAME="idx:httpreply3:17"></A><A HREF="#http_reply/3">http_reply/3</A>. 
+See <A NAME="idx:httpreply3:18"></A><A HREF="#http_reply/3">http_reply/3</A> 
+for details.
 
 <P>
 <DT><STRONG>http_reply</STRONG>(<VAR>+Reply</VAR>)<DD>
@@ -1004,16 +1005,16 @@ context information derived from the exception.
 <P>The library <CODE>library(http/http_header)</CODE> provides 
 primitives for parsing and composing HTTP headers. Its functionality is 
 normally hidden by the other parts of the HTTP server and client 
-libraries. We provide a brief overview of <A NAME="idx:httpreply3:32"></A><B>http_reply/3</B> 
+libraries. We provide a brief overview of <A NAME="idx:httpreply3:32"></A><A HREF="#http_reply/3">http_reply/3</A> 
 which can be accessed from the reply body using an exception as explain 
 in <A HREF="#sec:httpspecials">section 3.1.1</A>.
 
 <DL>
 
 <P>
-<DT><A NAME="http_reply/+Type, +Stream, +HdrExtra"><STRONG>http_reply</STRONG>(<VAR>+Type, 
+<DT><A NAME="http_reply/3"><STRONG>http_reply</STRONG>(<VAR>+Type, 
 +Stream, +HdrExtra</VAR>)</A><DD>
-ompose a complete HTTP reply from the term <VAR>Type</VAR> using 
+Compose a complete HTTP reply from the term <VAR>Type</VAR> using 
 additional headers from <VAR>HdrExtra</VAR> to the output stream <VAR>Stream</VAR>.
 <VAR>ExtraHeader</VAR> is a list of <CODE>Field(Value)</CODE>. <VAR>Type</VAR> 
 is one of:
@@ -1047,8 +1048,9 @@ The user must provides the MIME type and other attributes through the
 Similar to <CODE>stream(+Stream, +Len)</CODE>, but the data on <VAR>Stream</VAR> 
 must contain an HTTP header.
 
-<P>moved+URL Generate a ``301 Moved Permanently'' page with the given 
-target
+<P>
+<DT><STRONG>moved</STRONG>(<VAR>+URL</VAR>)<DD>
+Generate a ``301 Moved Permanently'' page with the given target
 <VAR>URL</VAR>.
 
 <P>
@@ -1585,10 +1587,8 @@ Currently atom-garbage collection is activated after the creation of
 <A HREF="#idx:httpreaddata3:3">2.2</A> <A HREF="#idx:httpreaddata3:4">2.2</A> <A HREF="#idx:httpreaddata3:21">3.2.1</A>
 <DT><A HREF="#http_read_request/2">http_read_request/2</A><DD>
 <A HREF="#idx:httpreadrequest2:19">3.2</A> <A HREF="#idx:httpreadrequest2:20">3.2</A>
-<DT>http_reply/3<DD>
+<DT><A HREF="#http_reply/3">http_reply/3</A><DD>
 <A HREF="#idx:httpreply3:17">3.1.1</A> <A HREF="#idx:httpreply3:18">3.1.1</A> <A HREF="#idx:httpreply3:32">3.5</A>
-<DT><A HREF="#http_reply/+Type, +Stream, +HdrExtra">http_reply/+Type, 
-+Stream, +HdrExtra</A><DD>
 <DT>http_server/1<DD>
 <A HREF="#idx:httpserver1:29">3.3.4</A>
 <DT><A HREF="#http_server/2">http_server/2</A><DD>

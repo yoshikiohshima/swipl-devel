@@ -807,7 +807,7 @@ an exception as explain in \secref{httpspecials}.
 
 
 \begin{description}
-    \predicate{http_reply}{+Type, +Stream, +HdrExtra}
+    \predicate{http_reply}{3}{+Type, +Stream, +HdrExtra}
 Compose a complete HTTP reply from the term \arg{Type} using additional
 headers from \arg{HdrExtra} to the output stream \arg{Stream}.
 \arg{ExtraHeader} is a list of \term{Field}{Value}.  \arg{Type} is
@@ -834,7 +834,7 @@ user must provides the MIME type and other attributes through the
 Similar to \term{stream}{+Stream, +Len}, but the data on \arg{Stream}
 must contain an HTTP header.
 
-	\term_item{moved}{+URL}
+	\termitem{moved}{+URL}
 Generate a ``301 Moved Permanently'' page with the given target
 \arg{URL}.
 
