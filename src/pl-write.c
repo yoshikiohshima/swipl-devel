@@ -638,16 +638,28 @@ writeTerm2(term_t t, int prec, write_options *options)
 	if ( currentOperator(options->module, functor, OP_PREFIX,
 			     &op_type, &op_pri) )
 	{ term_t arg = PL_new_term_ref();
-  
+	  int embrace;
+
+	  embrace = ( op_pri > prec );
+
 	  PL_get_arg(1, t, arg);
-	  if ( op_pri > prec )
+	  if ( embrace )
 	  { TRY(PutOpenBrace(out));
 	  }
 	  TRY(writeAtom(functor, options));
-	  TRY(writeTerm(arg,
-			op_type == OP_FX ? op_pri-1 : op_pri,
-			options));
-	  if ( op_pri > prec )
+
+				/* +/-(Number) : avoid parsing as number */
+	  if ( (functor == ATOM_minus || functor == ATOM_plus) &&
+	       PL_is_number(arg) )
+	  { TRY(Putc('(', out));
+	    TRY(writeTerm(arg, 999, options));
+	    TRY(Putc(')', out));
+	  } else
+	  { TRY(writeTerm(arg,
+			  op_type == OP_FX ? op_pri-1 : op_pri,
+			  options));
+	  }
+	  if ( embrace )
 	  { TRY(PutCloseBrace(out));
 	  }
 
