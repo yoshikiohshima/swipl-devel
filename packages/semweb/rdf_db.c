@@ -1164,11 +1164,13 @@ match_object(triple *t, triple *p)
     { case OBJ_RESOURCE:
 	return t->object.resource == p->object.resource;
       case OBJ_STRING:
-	if ( t->object.string == p->object.string )
-	  return TRUE;
-        if ( p->match )
+	if ( p->object.string && t->object.string != p->object.string )
+	  return FALSE;
+        if ( p->type_or_lang && t->type_or_lang != p->type_or_lang )
+	  return FALSE;
+        if ( p->match && t->object.string != p->object.string )
 	  return match(p->match, p->object.string, t->object.string);
-	return FALSE;
+	return TRUE;
       case OBJ_INTEGER:
 	return t->object.integer == p->object.integer;
       case OBJ_DOUBLE:
@@ -1930,8 +1932,25 @@ unlock_atoms(triple *t)
 		 *      PROLOG CONVERSION	*
 		 *******************************/
 
+#define LIT_TYPED	0x1
+#define LIT_NOERROR	0x2
+#define LIT_PARTIAL	0x4
+
 static int
-get_literal(term_t lit, triple *t)
+get_lit_atom_ex(term_t t, atom_t *a, int flags)
+{ if ( PL_get_atom(t, a) )
+    return TRUE;
+  if ( (flags & LIT_PARTIAL) && PL_is_variable(t) )
+  { *a = 0L;
+    return TRUE;
+  }
+
+  return type_error(t, "atom");
+}
+
+
+static int
+get_literal(term_t lit, triple *t, int flags)
 { if ( PL_get_atom(lit, &t->object.string) )
   { t->objtype = OBJ_STRING;
   } else if ( PL_is_integer(lit) && PL_get_long(lit, &t->object.integer) )
@@ -1942,23 +1961,28 @@ get_literal(term_t lit, triple *t)
   { term_t a = PL_new_term_ref();
     
     PL_get_arg(1, lit, a);
-    if ( !get_atom_ex(a, &t->type_or_lang) )
+    if ( !get_lit_atom_ex(a, &t->type_or_lang, flags) )
       return FALSE;
     PL_get_arg(2, lit, a);
-    if ( !get_atom_ex(a, &t->object.string) )
+    if ( !get_lit_atom_ex(a, &t->object.string, flags) )
       return FALSE;
 
     t->has_lang = TRUE;
     t->objtype = OBJ_STRING;
-  } else if ( PL_is_functor(lit, FUNCTOR_type2) )
+  } else if ( PL_is_functor(lit, FUNCTOR_type2) &&
+	      !(flags & LIT_TYPED) )	/* avoid recursion */
   { term_t a = PL_new_term_ref();
     
     PL_get_arg(1, lit, a);
-    if ( !get_atom_ex(a, &t->type_or_lang) )
+    if ( !get_lit_atom_ex(a, &t->type_or_lang, flags) )
       return FALSE;
     t->has_lang = FALSE;
+    PL_get_arg(2, lit, a);
 
-    return get_literal(a, t);
+    return get_literal(a, t, LIT_TYPED|flags);
+  } else if ( PL_is_variable(lit) )
+  { if ( !(flags & LIT_PARTIAL) )
+      return type_error(lit, "rdf_object");
   } else				/* TBD: check groundness */
   { t->object.term.record = PL_record_external(lit, &t->object.term.len);
     t->objtype = OBJ_TERM;
@@ -1976,7 +2000,7 @@ get_object(term_t object, triple *t)
   { term_t a = PL_new_term_ref();
     
     PL_get_arg(1, object, a);
-    return get_literal(a, t);
+    return get_literal(a, t, 0);
   } else
     return type_error(object, "rdf_object");
 
@@ -2048,7 +2072,7 @@ get_partial_triple(term_t subject, term_t predicate, term_t object,
     { term_t a = PL_new_term_ref();
       
       PL_get_arg(1, object, a);
-      if ( !get_literal(a, t) )		/* TBD: what if non-ground? */
+      if ( !get_literal(a, t, LIT_PARTIAL) )
 	return FALSE;
     } else if ( PL_is_functor(object, FUNCTOR_literal2) )
     { term_t a = PL_new_term_ref();
@@ -2172,6 +2196,98 @@ unify_source(term_t src, triple *t)
 
 
 static int
+unify_lang(term_t lit, triple *t)
+{ if ( PL_is_functor(lit, FUNCTOR_lang2) )
+  { term_t a = PL_new_term_ref();
+    
+    if ( t->has_lang && t->type_or_lang )
+    { PL_get_arg(1, lit, a);
+      if ( !PL_unify_atom(a, t->type_or_lang) )
+	return FALSE;
+    }
+    PL_get_arg(2, lit, a);
+
+    return PL_unify_atom(a, t->object.string);
+  } else
+  { return PL_unify_atom(lit, t->object.string);
+  }
+}
+
+
+static int
+unify_value(term_t v, triple *t)
+{ switch(t->objtype)
+  { case OBJ_STRING:
+      return PL_unify_atom(v, t->object.string);
+    case OBJ_INTEGER:
+      return PL_unify_integer(v, t->object.integer);
+    case OBJ_DOUBLE:
+      return PL_unify_float(v, t->object.real);
+    case OBJ_TERM:
+    { term_t term = PL_new_term_ref();
+
+      PL_recorded_external(t->object.term.record, term);
+      return PL_unify(v, term);
+    }
+    default:
+      assert(0);
+      return FALSE;
+  }
+}
+
+
+
+static int
+unify_typed(term_t lit, triple *t)
+{ if ( PL_is_functor(lit, FUNCTOR_type2) )
+  { term_t a = PL_new_term_ref();
+
+    if ( t->type_or_lang && !t->has_lang )
+    { PL_get_arg(1, lit, a);
+
+      if ( !PL_unify_atom(a, t->type_or_lang) )
+	return FALSE;
+    }
+
+    PL_get_arg(2, lit, a);
+    return unify_value(a, t);
+  } else
+    return unify_value(lit, t);
+}
+
+
+
+static int
+unify_object(term_t object, triple *t)
+{ term_t a;
+
+  switch(t->objtype)
+  { case OBJ_RESOURCE:
+      return PL_unify_atom(object, t->object.resource);
+    case OBJ_STRING:
+      if ( PL_is_functor(object, FUNCTOR_literal2) )
+      { a = PL_new_term_ref();
+
+	PL_get_arg(2, object, a);
+
+	return unify_lang(a, t);
+      }
+  }
+
+  if ( !PL_unify_functor(object, FUNCTOR_literal1) )
+    return FALSE;
+
+  a = PL_new_term_ref();
+  PL_get_arg(1, object, a);
+
+  if ( t->objtype == OBJ_STRING && unify_lang(a, t) )
+    return TRUE;
+
+  return unify_typed(a, t);
+}
+
+
+static int
 unify_triple(term_t subject, term_t pred, term_t object,
 	     term_t src, triple *t, int inversed)
 { predicate *p = t->predicate;
@@ -2186,53 +2302,9 @@ unify_triple(term_t subject, term_t pred, term_t object,
   }
 
   if ( !PL_unify_atom(subject, t->subject) ||
-       !PL_unify_atom(pred, p->name) )
+       !PL_unify_atom(pred, p->name) ||
+       !unify_object(object, t) )
     return FALSE;
-
-  switch(t->objtype)
-  { case OBJ_RESOURCE:
-      if ( !PL_unify_atom(object, t->object.resource) )
-	return FALSE;
-      break;
-    case OBJ_STRING:
-      if ( PL_is_functor(object, FUNCTOR_literal2) )
-      { term_t a = PL_new_term_ref();
-
-	PL_get_arg(2, object, a);
-	if ( !PL_unify_atom(a, t->object.string) )
-	  return FALSE;
-      } else
-      { if ( !PL_unify_term(object,
-			    PL_FUNCTOR, FUNCTOR_literal1,
-			      PL_ATOM, t->object.string) )
-	  return FALSE;
-      }
-      break;
-    case OBJ_INTEGER:
-      if ( !PL_unify_term(object,
-			  PL_FUNCTOR, FUNCTOR_literal1,
-			    PL_INTEGER, t->object.integer) )
-	return FALSE;
-      break;
-    case OBJ_DOUBLE:
-      if ( !PL_unify_term(object,
-			  PL_FUNCTOR, FUNCTOR_literal1,
-			    PL_FLOAT, t->object.real) )
-	return FALSE;
-      break;
-    case OBJ_TERM:
-    { term_t term = PL_new_term_ref();
-
-      PL_recorded_external(t->object.term.record, term);
-      if ( !PL_unify_term(object,
-			  PL_FUNCTOR, FUNCTOR_literal1,
-			    PL_TERM, term) )
-	return FALSE;
-      break;
-    }
-    default:
-      assert(0);
-  }
 
   if ( src )
     return unify_source(src, t);

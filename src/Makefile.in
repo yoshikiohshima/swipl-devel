@@ -135,7 +135,7 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	checklast.pl checkselect.pl operators.pl
 CLP=	bounds.pl
 PLWIN=	wise.pl dde.pl progman.pl registry.pl
-builddirs = ../lib ../lib/$ARCH
+builddirs = ../lib ../lib/$(ARCH)
 
 all:	banner dirs \
 	headers rc-lib $(MKLIBS) system startup index plld
