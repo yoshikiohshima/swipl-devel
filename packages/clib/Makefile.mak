@@ -51,7 +51,7 @@ check-socket::
 		"$(PLCON)" -q -f testsocket.pl -F none -g tcp_test,halt -t 'halt(1)'
 
 torture-socket::
-		$(PL) -q -f stresssocket.pl -F none -g test,halt -t 'halt(1)'
+		"$(PLCON)" -q -f stresssocket.pl -F none -g test,halt -t 'halt(1)'
 
 ################################################################
 # Installation
