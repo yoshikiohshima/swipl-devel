@@ -88,7 +88,11 @@ layout_dialog(W, _Gap:[size], _Size:[size], _Border:[size]) :->
 on_top(W, Name:name) :->
 	"Put the named tab on top"::
 	get_super(W, member, tab_stack, TS),
-	send(TS, on_top, Name).
+	(   get(TS, member, Name, Tab)
+	->  send(TS, on_top, Tab)
+	;   get(W, hypered, tab, @arg3?name == Name, Window)
+	->  send(Window, expose)
+	).
 
 :- pce_group(members).
 
@@ -116,7 +120,13 @@ members(W, Windows:chain) :<-
 	new(Windows, chain),
 	get_super(W, member, tab_stack, TS),
 	send(TS?graphicals, for_all,
-	     message(Windows, append, @arg1?window)).
+	     message(Windows, append, @arg1?window)),
+	(   get(W, all_hypers, Hypers)
+	->  send(Hypers, for_all,
+		 if(@arg1?forward_name == toplevel,
+		    message(Windows, append, @arg1?to)))
+	;   true
+	).
 	
 clear(W) :->
 	"Remove all member tabs"::
@@ -145,7 +155,7 @@ tab(W, Name:name, Tab:tab) :<-
 		 *******************************/
 
 
-:- pce_begin_class(window_tab, tab,
+:- pce_begin_class(window_tab(name), tab,
 		   "Tab displaying a window").
 
 variable(window,	window*, get, "Displayed window").
@@ -205,14 +215,6 @@ resize_window(T) :->
 	;   Resize = Window
 	),
 	send(Resize, do_set, 0,0,W,H).
-
-%layout_dialog(T) :->
-%	(   get(T, window, Window),
-%	    Window \== @nil
-%	->  send(Window, '_compute_desired_size')
-%	;   true
-%	),
-%	send_super(T, layout_dialog).
 
 :- pce_group(event).
 
@@ -297,9 +299,8 @@ untab(Tab) :->
 	get(Tab, container, dialog, TabbedWindow),
 	get(Tab, display_position, point(X, Y)),
 	get(Tab, untab, Window),
-	send(new(F, window_tab_frame(Window, Name, Rank)), open,
-	     point(X, Y+20)),
-	new(_, partof_hyper(TabbedWindow, F, toplevel, tab)).
+	send(new(window_tab_frame(Window, Name, Rank)), open, point(X, Y+20)),
+	new(_, partof_hyper(TabbedWindow, Window, toplevel, tab)).
 
 :- pce_end_class(window_tab).
 
@@ -316,15 +317,25 @@ initialise(F, Window:window, Name:name, Rank:'1..') :->
 	send(F, done_message, message(F, retab)).
 
 
+window(F, Window:window) :<-
+	"Get the un-tabbed window"::
+	get(F?members, head, Window).
+
 retab(F) :->
 	"Bring the window back to its tab"::
-	get(F?members, head, Window),
-	get(F, hypered, tab, TabbedWindow),
+	get(F, window, Window),
+	get(Window, hypered, tab, TabbedWindow),
 	get(F, rank, Rank),
 	send(F, delete, Window),
+	send(Window, delete_hypers, tab),
 	send(TabbedWindow, append, Window),
 	get(Window, container, tab, Tab),
 	send(Tab, rank, Rank),
 	send(F, destroy).
+
+contained_in(F, TabbedWindow:tabbed_window) :<-
+	"An untabbed window is consider part of the tab"::
+	get(F, window, Window),
+	get(Window, hypered, tab, TabbedWindow).
 
 :- pce_end_class(window_tab_frame).
