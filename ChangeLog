@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: prolog_frame_attribute(Frame, goal, Goal) created term that
+    cannot be handled by the garbage collector.
+
   * ADDED: read_pending_input/3, fetching pending input from a stream.
 
   * ENHANCED: On Windows-NT, use Waitable Timers to realise sleep/1,

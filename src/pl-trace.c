@@ -681,6 +681,34 @@ helpTrace(void)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Write goal of stack frame.  First a term representing the  goal  of  the
+frame  is  constructed.  Trail and global stack are marked and undone to
+avoid garbage on the global stack.
+
+Trick, trick, O big trick ... In order to print the  goal  we  create  a
+term  for  it  (otherwise  we  would  have to write a special version of
+write/1, etc.  for stack frames).  A small problem arises: if the  frame
+holds a variable we will make a reference to the new term, thus printing
+the wrong variable: variables sharing in a clause does not seem to share
+any  longer  in  the  tracer  (Anjo  Anjewierden discovered this ackward
+feature of the tracer).  The solution is simple: we make  the  reference
+pointer  the other way around.  Normally references should never go from
+the global to the local stack as the local stack frame  might  cease  to
+exists  before  the  global frame.  In this case this does not matter as
+the local stack frame definitely survives the tracer (measuring does not
+always mean influencing in computer science :-).
+
+Unfortunately the garbage collector doesn't like   this. It violates the
+assumptions  in  offset_cell()  where  a    local  stack  reference  has
+TAG_REFERENCE and storage STG_LOCAL. It   also violates assumptions made
+in mark_variable(). Hence we can only play   this trick if GC is blocked
+and the data is destroyed using PL_discard_foreign_frame().
+
+For the above reason, the code  below uses low-level manipulation rather
+than normal unification, etc.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 static void
 put_frame_goal(term_t goal, LocalFrame frame)
 { Definition def = frame->predicate;
@@ -712,28 +740,6 @@ put_frame_goal(term_t goal, LocalFrame frame)
 }
 
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Write goal of stack frame.  First a term representing the  goal  of  the
-frame  is  constructed.  Trail and global stack are marked and undone to
-avoid garbage on the global stack.
-
-Trick, trick, O big trick ... In order to print the  goal  we  create  a
-term  for  it  (otherwise  we  would  have to write a special version of
-write/1, etc.  for stack frames).  A small problem arises: if the  frame
-holds a variable we will make a reference to the new term, thus printing
-the wrong variable: variables sharing in a clause does not seem to share
-any  longer  in  the  tracer  (Anjo  Anjewierden discovered this ackward
-feature of the tracer).  The solution is simple: we make  the  reference
-pointer  the other way around.  Normally references should never go from
-the global to the local stack as the local stack frame  might  cease  to
-exists  before  the  global frame.  In this case this does not matter as
-the local stack frame definitely survives the tracer (measuring does not
-always mean influencing in computer science :-).
-
-For the above reason, the code  below uses low-level manipulation rather
-than normal unification, etc.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
 typedef struct
 { unsigned int flags;			/* flag mask */
   atom_t name;				/* name */
@@ -759,6 +765,8 @@ static void
 writeFrameGoal(LocalFrame frame, Code PC, unsigned int flags)
 { fid_t cid = PL_open_foreign_frame();
   Definition def = frame->predicate;
+
+  blockGC(PASS_LD1);
 
   if ( gc_status.active )
   { Sfprintf(Serror, " (%d): %s\n",
@@ -830,6 +838,8 @@ writeFrameGoal(LocalFrame frame, Code PC, unsigned int flags)
     debugstatus.debugging = debugSave;
   }
 
+  unblockGC(PASS_LD1);
+    
   PL_discard_foreign_frame(cid);
 }
 
@@ -889,8 +899,10 @@ listGoal(LocalFrame frame)
   IOSTREAM *old = Scurout;
 
   Scurout = Sdout;
+  blockGC(PASS_LD1);
   put_frame_goal(goal, frame);
   PL_call_predicate(MODULE_system, PL_Q_NODEBUG, pred, goal);
+  unblockGC(PASS_LD1);
   Scurout = old;
 
   PL_discard_foreign_frame(cid);
@@ -1597,7 +1609,7 @@ pl_prolog_frame_attribute(term_t frame, term_t what,
 
     if ((arity = fr->predicate->functor->arity) == 0)
     { PL_unify_atom(arg, fr->predicate->functor->name);
-    } else				/* see put_frame_goal(); must be one */
+    } else			/* see put_frame_goal(); must be merged */
     { Word argv = argFrameP(fr, 0);
       Word argp;
 
@@ -1606,11 +1618,15 @@ pl_prolog_frame_attribute(term_t frame, term_t what,
       deRef(argp);
       argp = argTermP(*argp, 0);
 
-      for(n=0; n < arity; n++)
+      for(n=0; n < arity; n++, argp++)
       { Word a;
 
 	deRef2(argv+n, a);
-	*argp++ = (needsRef(*a) ? makeRef(a) : *a);
+	if ( isVar(*a) && onStack(local, a) && !gc_status.blocked )
+	{ *a = makeRef(argp);
+	  Trail(a);
+	} else
+	  *argp = (needsRef(*a) ? makeRef(a) : *a);
       }
     }
   } else if ( key == ATOM_parent_goal )
