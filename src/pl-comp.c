@@ -3589,15 +3589,44 @@ find_code1(Code PC, code fop, code ctx)
 
 
 static Code
-find_code0(Code PC, code fop)
+find_if_then_end(Code PC)
 { for(;;)
   { code op = fetchop(PC++);
 
-    if ( fop == op )
+    if ( op == C_END )
       return &PC[-1];
+
     assert(op != I_EXIT);
 
-    PC += codeTable[op].arguments;
+    switch(op)				/* jump over control structures */
+    { case C_OR:
+      { Code jmploc;
+	code inc = *PC++;
+	
+	jmploc = PC + inc;
+	PC = jmploc + jmploc[-1];
+	break;
+      }
+      case C_NOT:
+	PC = PC + PC[1] + 2;
+        break;
+      case C_SOFTIF:
+      case C_IFTHENELSE:
+      { Code elseloc = PC + PC[1] + 2;
+
+	PC = elseloc + elseloc[-1];
+	break;
+      }
+      case C_MARK:
+      { Code cutloc = find_code1(&PC[1], C_CUT, PC[0]);
+	PC = find_if_then_end(cutloc+2) + 1; /* returns location of C_END */
+	break;
+      }
+      default:
+	PC += codeTable[op].arguments;
+        break;
+    }
+
   }
 }
 
@@ -3770,9 +3799,9 @@ pl_clause_term_position(term_t ref, term_t pc, term_t locterm)
 				/* C_MARK <var> <A> C_CUT <var> <B> C_END */
       { Code cutloc = find_code1(&PC[1], C_CUT, PC[0]);
 	
-	endloc = find_code0(cutloc+2, C_END);
+	endloc = find_if_then_end(cutloc+2);
 
-	DEBUG(1, Sdprintf("cut = %d, end = %d\n",
+	DEBUG(0, Sdprintf("C_MARK: cut = %d, end = %d\n",
 			  cutloc - clause->codes, endloc - clause->codes));
 
 	if ( loc <= endloc )

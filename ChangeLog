@@ -10,6 +10,9 @@
 VERSION 5.3.17 (August 2, 2004)
 ===============================
 
+  * FIXED: source-location handling for if -> then if then holds control
+    structures.  Alan Baljeu.
+
   * FIXED: global-variables related GC bug.  Thanks to David Reitter for
     producing an reproducable case.
 

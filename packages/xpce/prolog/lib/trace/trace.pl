@@ -354,7 +354,8 @@ subgoal_position(ClauseRef, exception, File, CharA, CharZ) :- !,
 subgoal_position(ClauseRef, PC, File, CharA, CharZ) :-
 	clause_info(ClauseRef, File, TPos, _),
 	(   '$clause_term_position'(ClauseRef, PC, List)
-	->  debug('Term-position: ~w~n', [List]),
+	->  debug('Term-position: for ref=~w at PC=~w: ~w~n',
+		  [ClauseRef, PC, List]),
 	    (   find_subgoal(List, TPos, PosTerm)
 	    ->  true
 	    ;   PosTerm = TPos,

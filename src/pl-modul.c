@@ -145,24 +145,22 @@ initModules(void)
 
 int
 isSuperModule(Module s, Module m)	/* s is a super-module of m */
-{ for(;;)
-  { ListCell c;
+{ ListCell c;
 
-  next:
-    if ( m == s )
-      succeed;
-    
-    for(c=m->supers; c; c=c->next)
-    { if ( c->next )
-      { if ( isSuperModule(s, c->value) )
-	  succeed;
-      } else
-      { m = c->value;
-	goto next;
-      }
+next:
+  if ( m == s )
+    succeed;
+  
+  for(c=m->supers; c; c=c->next)
+  { if ( c->next )
+    { if ( isSuperModule(s, c->value) )
+	succeed;
+    } else
+    { m = c->value;
+      goto next;
     }
-    fail;
   }
+  fail;
 }
 
 
