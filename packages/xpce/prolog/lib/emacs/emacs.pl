@@ -106,6 +106,7 @@ pce_ifhostproperty(prolog(swi),
 :- declare_emacs_mode(chr,	library('emacs/chr_mode')).
 :- declare_emacs_mode(latex,	library('emacs/latex_mode')).
 %:- declare_emacs_mode(html,	library('emacs/html_mode')).
+:- declare_emacs_mode(java,	library('emacs/java_mode')).
 :- declare_emacs_mode(c,	library('emacs/c_mode')).
 :- declare_emacs_mode(cpp,	library('emacs/cpp_mode')).
 :- declare_emacs_mode(script,	library('emacs/script_mode')).
@@ -166,6 +167,7 @@ default_emacs_mode('.*\\.rdfs~?$',	 		rdfs).
 default_emacs_mode('.*\\.owl~?$',	 		owl).
 default_emacs_mode('.*\\.ann~?$',	 		annotate).
 default_emacs_mode('.*\\.[ch]~?$', 			c).
+default_emacs_mode('.*\\.java~?$',			java).
 default_emacs_mode('.*\\.C$',				cpp).
 default_emacs_mode('.*\\.cc$',				cpp).
 default_emacs_mode('.*\\.cpp$',				cpp).
