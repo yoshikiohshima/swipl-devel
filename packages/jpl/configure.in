@@ -71,7 +71,7 @@ CFLAGS="$CMFLAGS"
 
 if test ! -z "$GCC"; then
     COFLAGS="-O2 -fno-strict-aliasing"
-    CWFLAGS=-Wall
+    CWFLAGS="-Wall -Wno-strict-aliasing"
 else
     COFLAGS=-O
     CWFLAGS=

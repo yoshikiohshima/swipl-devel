@@ -1951,6 +1951,8 @@ setDynamicProcedure(Procedure proc, bool isdyn)
 
   if ( isdyn )				/* static --> dynamic */
   { GET_LD
+    char *msg;
+    
     if ( def->definition.clauses )
     { UNLOCKDEF(def);
       if ( true(def, NEEDSCLAUSEGC) )
@@ -1960,7 +1962,14 @@ setDynamicProcedure(Procedure proc, bool isdyn)
 	  goto ok;
 	UNLOCKDEF(def);
       }
-      return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, proc);
+
+      if ( isDefinedProcedure(proc) )
+	msg = NULL;
+      else
+	msg = "procedure has active clauses";
+
+      return PL_error(NULL, 0, msg,
+		      ERR_MODIFY_STATIC_PROC, proc);
     }
   ok:
     set(def, DYNAMIC);
@@ -1971,9 +1980,8 @@ setDynamicProcedure(Procedure proc, bool isdyn)
   } else				/* dynamic --> static */
   { clear(def, DYNAMIC);
     if ( def->references && true(def, NEEDSCLAUSEGC|NEEDSREHASH) )
-    { registerDirtyDefinition(def);
-      def->references = 0;
-    }
+      registerDirtyDefinition(def);
+    def->references = 0;
 
     detachMutexAndUnlock(def);
   }

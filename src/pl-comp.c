@@ -1968,13 +1968,10 @@ mode, the predicate is still undefined and is not dynamic or multifile.
   /* assert[az]/1 */
 
   if ( false(def, DYNAMIC) )
-  { if ( isDefinedProcedure(proc) )
-    { PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, proc);
-      freeClause(clause PASS_LD);
+  { if ( !setDynamicProcedure(proc, TRUE) )
+    { freeClause(clause PASS_LD);
       return NULL;
     }
-
-    setDynamicProcedure(proc, TRUE);
   }
 
   return assertProcedure(proc, clause, where PASS_LD) ? clause : (Clause)NULL;

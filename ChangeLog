@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#152: making active dynamic predicates static using
+    compile_predicates/1.  Marc Bezem.
+
   * CLEANUP: some errors reported by the valgrind tool.
 
 
