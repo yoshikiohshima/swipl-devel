@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* FIXED: Class connect gesture to reset <-device in ->terminate.
+  Petter Egesund.
+
 VERSION 6.2.25, distributed with SWI-Prolog 5.3.18
 ==================================================
 
