@@ -291,6 +291,7 @@ print_triple(triple *t)
 static triple  *by_none, *by_none_tail;
 static triple **table[INDEX_TABLES];
 static triple **tail[INDEX_TABLES];
+static int     *counts[INDEX_TABLES];
 static int	table_size[INDEX_TABLES];
 static long	created;		/* #triples created */
 static long	erased;			/* #triples erased */
@@ -881,6 +882,7 @@ static void
 init_tables()
 { int i;
   int bytes = sizeof(triple*)*INITIAL_TABLE_SIZE;
+  int cbytes = sizeof(int)*INITIAL_TABLE_SIZE;
 
   table[0] = &by_none;
   tail[0]  = &by_none_tail;
@@ -893,6 +895,8 @@ init_tables()
     memset(table[i], 0, bytes);
     tail[i] = PL_malloc(bytes);
     memset(tail[i], 0, bytes);
+    counts[i] = PL_malloc(cbytes);
+    memset(counts[i], 0, cbytes);
     table_size[i] = INITIAL_TABLE_SIZE;
   }
 
@@ -1051,6 +1055,7 @@ link_triple_hash(triple *t)
       { table[i][hash] = t;
       }
       tail[i][hash] = t;
+      counts[i][hash]++;
     }
   }
 }
@@ -1114,9 +1119,11 @@ rehash_triples()
   for(i=1; i<INDEX_TABLES; i++)
   { if ( table[i] )
     { long bytes = sizeof(triple*) * table_size[i];
+      long cbytes = sizeof(int)    * table_size[i];
 
       memset(table[i], 0, bytes);
       memset(tail[i], 0, bytes);
+      memset(counts[i], 0, cbytes);
     }
   }
 
@@ -2727,6 +2734,30 @@ rdf_has(term_t subject, term_t predicate, term_t object,
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+rdf_estimate_complexity(+S,+P,+O,-C)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static foreign_t
+rdf_estimate_complexity(term_t subject, term_t predicate, term_t object,
+		        term_t complexity)
+{ triple t;
+  int c;
+
+  if ( !update_hash() )			/* or ignore this problem? */
+    return FALSE;
+
+  memset(&t, 0, sizeof(t));
+  if ( !get_partial_triple(subject, predicate, object, 0, &t) )
+    return FALSE;
+  
+  c = counts[t.indexed][triple_hash(&t, t.indexed)];
+
+  return PL_unify_integer(complexity, c);
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 rdf_update(+Subject, +Predicate, +Object, +Action)
 
 Update a triple. Please note this is actually erase+assert as the triple
@@ -3911,9 +3942,13 @@ install_rdf_db()
   PL_register_foreign("rdf_load_db_",   1, rdf_load_db,     0);
   PL_register_foreign("rdf_reachable",  3, rdf_reachable,   NDET);
   PL_register_foreign("rdf_reset_db_",  0, rdf_reset_db,    0);
-  PL_register_foreign("rdf_set_predicate", 2, rdf_set_predicate, 0);
-  PL_register_foreign("rdf_predicate_property", 2, rdf_predicate_property, NDET);
+  PL_register_foreign("rdf_set_predicate",
+					2, rdf_set_predicate, 0);
+  PL_register_foreign("rdf_predicate_property",
+					2, rdf_predicate_property, NDET);
   PL_register_foreign("rdf_sources_",   1, rdf_sources,     0);
+  PL_register_foreign("rdf_estimate_complexity",
+					4, rdf_estimate_complexity, 0);
 #ifdef O_DEBUG
   PL_register_foreign("rdf_debug",      1, rdf_debug,       0);
 #endif

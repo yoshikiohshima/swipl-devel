@@ -74,6 +74,7 @@
 	    rdf_source_location/2,	% +Subject, -Source
 	    rdf_statistics/1,		% -Key
 	    rdf_generation/1,		% -Generation
+	    rdf_estimate_complexity/4,	% +S,+P,+O,-Count
 
 	    rdf_save_subject/3,		% +Stream, +Subject, +DB
 	    rdf_save_header/2,		% +Out, +DB
@@ -267,6 +268,12 @@ user:goal_expansion(rdf_set_predicate(P0, Prop),
 user:goal_expansion(rdf_predicate_property(P0, Prop),
 		    rdf_predicate_property(P, Prop)) :-
 	rdf_global_id(P0, P).
+user:goal_expansion(rdf_estimate_complexity(Subj0, Pred0, Obj0, C),
+		    rdf_estimate_complexity(Subj, Pred, Obj, C)) :-
+	rdf_global_id(Subj0, Subj),
+	rdf_global_id(Pred0, Pred),
+	rdf_global_object(Obj0, Obj).
+
 
 %	rdf_equal(?Resource1, ?Resource2)
 %	
