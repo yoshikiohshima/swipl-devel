@@ -190,13 +190,11 @@ The \pllib{chr} module contains several useful predicates that
 allow inspecting and printing the content of the constraint store.
 
 \begin{description}
-    \predicate{show_store}{1}{+Mod}
+    \predicate{chr_show_store}{1}{+Mod}
 Prints all suspended constraints of module \arg{Mod} to the
 standard output.
-
-    \predicate{suspended_chr_constraints}{2}{+Mod, -List}
-Returns the list of all suspended CHR constraints of the given module.
 \end{description}
+
 
 \section{Examples}			\label{sec:examples}
 %================
