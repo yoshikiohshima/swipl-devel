@@ -177,17 +177,41 @@ If provided local identifiers and identifier-references are globalised
 using this URI.  If omited or the atom \verb$[]$, local identifiers are
 not tagged.
 
-	\termitem{expand_foreach}{Boolean}
-If \arg{Boolean} is \const{true}, expand \const{rdf:aboutEach} into
-a set of triples. By default the parser generates
-\term{rdf}{each(Container), Predicate, Subject}.
-
 	\termitem{blank_nodes}{Mode}
 If \arg{Mode} is \const{share}, blank-node properties (i.e.\ complex
 properties without identifier) are reused if they result in exactly the
 same triple-set. Two descriptions are shared if their intermediate
 description is the same.  This means they should produce the same set
 of triples in the same order.
+
+	\termitem{expand_foreach}{Boolean}
+If \arg{Boolean} is \const{true}, expand \const{rdf:aboutEach} into
+a set of triples. By default the parser generates
+\term{rdf}{each(Container), Predicate, Subject}.
+
+	\termitem{lang}{Lang}
+Define the initial language (i.e.\ pretend there is an \const{xml:lang}
+declaration in an enclosing element).
+
+	\termitem{ignore_lang}{Bool}
+If \const{true}, \const{xml:lang} declarations in the document are
+ignored.  This is mostly for compatibility with older versions of
+this library that did not support language identifiers.
+
+	\termitem{convert_typed_literal}{:ConvertPred}
+If the parser finds a literal with the \const{rdf:dataType}=\arg{Type}
+attribute, call \term{ConvertPred}{+Type, +Content, -Literal}.
+\arg{Content} is the XML element contentas returned by the XML
+parser (a list). The predicate must unify \arg{Literal}
+with a Prolog representation of \arg{Content} according to
+\arg{Type} or throw an exception if the conversion cannot be made.
+
+This option servers two purposes.  First of all it can be used
+to ignore type declarations for backward compatibility of this
+library.  Second it can be used to convert typed literals to 
+a meaningful Prolog representation.  E.g.\ convert '42' to the
+Prolog integer 42 if the type is \const{xsd:int} or a related
+type.
    \end{description}
 
 The \arg{Triples} list is a list of \term{rdf}{Subject, Predicate,

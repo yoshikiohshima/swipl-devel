@@ -37,7 +37,8 @@
 load_rdf(File, Triples) :-
 	load_rdf(File, Triples, []).
 
-load_rdf(File, Triples, Options) :-
+load_rdf(File, Triples, Options0) :-
+	meta_options(Options0, Options),
 	option(base_uri(BaseURI), Options, []),
 	load_structure(File,
 		       [ RDFElement
@@ -126,9 +127,18 @@ member_attribute(A) :-
 %	
 %		# base_uri(+URI)
 %		Determines the reference URI.
+%		
+%		# lang(LanguageID)
+%		Set initial language (as xml:lang)
+%		
+%		# convert_typed_literal(:Convertor)
+%		Call Convertor(+Type, +Content, -RDFObject) to create
+%		a triple rdf(S, P, RDFObject) instead of rdf(S, P,
+%		literal(type(Type, Content)).
 
-process_rdf(File, OnObject, Options) :-
-	is_list(Options), !,
+process_rdf(File, OnObject, Options0) :-
+	is_list(Options0), !,
+	meta_options(Options0, Options),
 	option(base_uri(BaseURI), Options, []),
 	rdf_start_file(Options),
 	'$strip_module'(OnObject, Module, Pred),
@@ -213,6 +223,27 @@ set_option(Opt, Options0, [Opt|Options]) :-
 	delete(Options0, VO, Options).
 
 
+%	meta_options(+OptionsIn, -OptionsOut)
+%	
+%	Do module qualification for options that are module sensitive.
+
+:- module_transparent
+	meta_options/2.
+
+meta_options([], []).
+meta_options([Name=Value|T0], List) :-
+	atom(Name), !,
+	Opt =.. [Name, Value],
+	meta_options([Opt|T0], List).
+meta_options([H0|T0], [H|T]) :-
+	(   H0 = convert_typed_literal(Handler)
+	->  '$strip_module'(Handler, M, P),
+	    H = convert_typed_literal(M:P)
+	;   H = H0
+	),
+	meta_options(T0, T).
+
+
 		 /*******************************
 		 *	      UTIL		*
 		 *******************************/
@@ -245,8 +276,6 @@ prolog:message(rdf(unparsed(Data))) -->
 	{ phrase(unparse_xml(Data), XML)
 	},
 	[ 'RDF: Failed to interpret "~s"'-[XML] ].
-prolog:message(rdf(protege(id, Id))) -->
-	[ 'RDF: Fixed Protege 1.3 ID="~w" bug'-[Id] ].
 prolog:message(rdf(shared_blank_nodes(N))) -->
 	[ 'RDF: Shared ~D blank nodes'-[N] ].
 prolog:message(rdf(not_a_name(Name))) -->

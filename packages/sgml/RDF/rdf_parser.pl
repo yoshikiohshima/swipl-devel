@@ -210,12 +210,19 @@ propertyElt(Id, Name, collection(Elements), Options) ::=
 		\nodeElementList(Elements, Options)).
 propertyElt(Id, Name, Literal, Options) ::=
 	element(Name,
-		\attrs([ \?idAttr(Id, Options),
-			 \?typeAttr(Type, Options)
+		\attrs([ \typeAttr(Type, Options),
+			 \?idAttr(Id, Options)
+		       ]),
+		Content),
+	{ typed_literal(Type, Content, Literal, Options)
+	}.
+propertyElt(Id, Name, Literal, Options) ::=
+	element(Name,
+		\attrs([ \?idAttr(Id, Options)
 		       ]),
 		[ Value ]),
 	{ atom(Value), !,
-	  typed_literal(Type, Value, Literal, Options)
+	  mkliteral(Value, Literal, Options)
 	}.
 propertyElt(Id, Name, Value, Options) ::=
 	element(Name,
@@ -273,15 +280,23 @@ mkliteral(Text, literal(Val), Options) :-
 	;   Val = Text
 	).
 
-%	typed_literal(?Type, +Text, -Literal, +Options)
+%	typed_literal(+Type, +Content, -Literal, +Options)
 %	
-%	Handle a literal attribute with optional rdf:dataType=Type and
-%	optional xml:lang=Language attributes.
+%	Handle a literal attribute with rdf:dataType=Type qualifier. NB:
+%	possibly  it  is  faster  to  use  a  global  variable  for  the
+%	conversion hook.
 
-typed_literal(Type, Text, Literal, Options) :-
-	var(Type), !,			% no type specified
-	mkliteral(Text, Literal, Options).
-typed_literal(Type, Text, literal(type(Type, Text)), _Options).
+typed_literal(Type, Content, literal(Object), Options) :-
+	memberchk(convert_typed_literal(Convert), Options), !,
+	(   catch(call(Convert, Type, Content, Object), E, true)
+	->  (   var(E)
+	    ->	true
+	    ;	Object = E
+	    )
+	;   Object = error(cannot_convert(Type, Content), _)
+	).
+typed_literal(Type, [Text], literal(type(Type, Text)), _Options) :- !.
+typed_literal(Type, Content, literal(type(Type, Content)), _Options).
 	
 
 idTermAttr(id(Id), Options) ::=
@@ -593,7 +608,8 @@ modify_state(element(Name, Attrs0, Content), Options0,
 	Options = [base_uri(Base)|Options1].
 modify_state(element(Name, Attrs0, Content), Options0,
 	     element(Name, Attrs, Content),  Options) :-
-	select(xml:lang=Lang, Attrs0, Attrs), !,
+	select(xml:lang=Lang, Attrs0, Attrs),
+	\+ memberchk(ignore_lang(true), Options0), !,
 	delete(Options0, lang(_), Options1),
 	(   Lang == ''
 	->  Options = Options1
