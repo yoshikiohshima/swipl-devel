@@ -6,6 +6,7 @@
 %% ported to hProlog by Tom Schrijvers 
 
 :- module(leq,[]).
+:- use_module(library(chr)).
 
 :- constraints leq/2.
 reflexivity  @ leq(X,X) <=> true.

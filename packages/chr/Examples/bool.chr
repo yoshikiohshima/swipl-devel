@@ -12,8 +12,7 @@
 
 
 :- module(bool,[]).
-
-:- use_module( library(chr)).
+:- use_module(library(chr)).
 
 :- constraints boolean/1, and/3, or/3, xor/3, neg/2, imp/2, labeling/0, card/4.
 

@@ -1,4 +1,5 @@
 :- module(chrfreeze,[chrfreeze/2]).
+:- use_module(library(chr)).
 
 :- constraints chrfreeze/2.
 

@@ -10,6 +10,7 @@
 */
 
 :- module(chrdif,[chrdif/2]).
+:- use_module(library(chr)).
 
 :- constraints dif/2, dif2/3, or/2, or_seq/2, del_or/1.
 

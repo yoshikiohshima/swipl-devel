@@ -7,6 +7,7 @@
 %% ported to hProlog by Tom Schrijvers 
 
 :- module(primes,[]).
+:- use_module(library(chr)).
 
 :- constraints candidate/1.
 :- constraints prime/1.
