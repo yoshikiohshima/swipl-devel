@@ -264,6 +264,22 @@ http_post_data(form(Fields), Out, HdrExtra) :- !,
 	phrase(post_header(cgi_data(Size), Header), HeaderChars),
 	format(Out, '~s', [HeaderChars]),
 	format(Out, '~s', [Codes]).
+http_post_data(form_data(Data), Out, HdrExtra) :- !,
+	new_memory_file(MemFile),
+	open_memory_file(MemFile, write, MimeOut),
+	mime_pack(Data, MimeOut, Boundary),
+	close(MimeOut),
+	size_memory_file(MemFile, Size),
+	sformat(ContentType, 'multipart/form-data; boundary="~w"', [Boundary]),
+	http_join_headers(HdrExtra,
+			  [ content_type(ContentType)
+			  ], Header),
+	phrase(post_header(cgi_data(Size), Header), HeaderChars),
+	format(Out, '~s', [HeaderChars]),
+	open_memory_file(MemFile, read, In),
+	copy_stream_data(In, Out),
+	close(In),
+	free_memory_file(MemFile).
 http_post_data(List, Out, HdrExtra) :-		% multipart-mixed
 	is_list(List), !,
 	new_memory_file(MemFile),

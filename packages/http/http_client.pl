@@ -381,6 +381,7 @@ write_post_header(Out, Location, Host, In, Options) :-
 post_option(connection(_)).
 post_option(http_version(_)).
 post_option(cache_control(_)).
+post_option(request_header(_)).
 
 split_options([], [], []).
 split_options([H|T], [H|P], R) :-

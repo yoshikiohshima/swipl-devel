@@ -99,6 +99,7 @@ pack(mime(_Atts, '', Parts), Out) :-
 	mime_pack(Parts, Out, Boundary).
 pack(Atom, Out) :-
 	atomic(Atom), !,
+	format(Out, '\r\n', []),
 	write(Out, Atom).
 pack(Value, _) :-
 	throw(error(type_error(mime_part, Value), _)).
