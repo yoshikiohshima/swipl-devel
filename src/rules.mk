@@ -26,7 +26,7 @@ PTHREADINCDIR=$(HOME)\include
 
 # The OpenSSL library and include files
 # http://www.slproweb.com/products/Win32OpenSSL.html
-OPENSSL=$(HOME)\OpenSSL
+OPENSSL=C:\OpenSSL
 OPENSSLLIBDIR=$(OPENSSL)\lib\VC
 OPENSSLINCDIR=$(OPENSSL)\include
 
@@ -69,7 +69,7 @@ BINDIR=$(PLBASE)\runtime
 # Define the packages to be installed automatically.  Note that the
 # Makefile also checks whether the package directory exists.
 
-PKGS=	chr table cpp odbc clib sgml sgml\RDF semweb http xpce jpl
+PKGS=	chr table cpp odbc clib sgml sgml\RDF semweb http xpce jpl ssl
 PKGDIR=$(PLHOME)\packages
 PKGDOC=$(PLBASE)\doc\packages
 

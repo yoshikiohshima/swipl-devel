@@ -71,6 +71,7 @@ Section "Base system (required)"
   File pl\library\tty.pl
   File pl\library\dif.pl
   File pl\library\when.pl
+  File pl\library\prolog_stack.pl
 
 ; COMPATIBILITY
   File pl\library\backcomp.pl
@@ -229,6 +230,18 @@ Section "Package CLIB"
   File pl\library\time.pl
   SetOutPath $INSTDIR\doc\packages
   File pl\doc\packages\clib.html
+SectionEnd
+
+Section "SSL Interface"
+  SectionIn 1 3
+  SetOutPath $INSTDIR\bin
+  File pl\bin\ssl.dll
+  SetOutPath $INSTDIR\library
+  File pl\library\ssl.pl
+  SetOutPath $INSTDIR\doc\packages
+  File pl\doc\packages\ssl.html
+  SetOutPath $INSTDIR\doc\packages\examples
+  File /r pl\doc\packages\examples\ssl
 SectionEnd
 
 Section "ODBC Interface"
