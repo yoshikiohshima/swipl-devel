@@ -84,10 +84,10 @@ uninstall::
 ################################################################
 
 servercert:
-        openssl x509 -inform PEM -text -noout -in etc/server/server-cert.pem
+	openssl x509 -inform PEM -text -noout -in etc/server/server-cert.pem
  
 clientcert:
-        openssl x509 -inform PEM -text -noout -in etc/client/client-cert.pem
+	openssl x509 -inform PEM -text -noout -in etc/client/client-cert.pem
 
 
 ################################################################
