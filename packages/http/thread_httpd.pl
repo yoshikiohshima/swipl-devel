@@ -64,26 +64,43 @@ multiple clients in Prolog threads and doesn't need XPCE.
 %					the HTTP reply.
 
 http_server(Goal, Options) :-
+	'$strip_module'(Goal, Module, G),
 	select(port(Port), Options, Options1), !,
-	http_server(Goal, Port, Options1).
+	http_server(G, Module, Port, Options1).
 http_server(_Goal, _Options) :-
 	throw(error(existence_error(option, port), _)).
 
 
-http_server(Goal, Port, Options0) :-
-	'$strip_module'(Goal, M, G),
+http_server(Goal, Module, Port, Options0) :-
+	select(ssl(SSLOptions), Options0, Options1), !,
+	ssl_init(SSL, server, [port(Port)|SSLOptions]),
+	atom_concat('httpsd@', Port, Queue),
+	Options = [ queue(Queue),
+		    ssl_instance(SSL)
+		  | Options1
+		  ],
+	create_pool(Options),
+	create_server(SSL, Module:Goal, Port, Queue, Options).
+http_server(Goal, Module, Port, Options0) :-
 	tcp_socket(Socket),
 	tcp_bind(Socket, Port),
 	tcp_listen(Socket, 5),
-	(   select(after(After), Options0, Options1)
-	->  '$strip_module'(After, MA, A),
-	    Options2 = [after(MA:A)|Options1]
-	;   Options2 = Options0
-	),
+	after_option(Options0, Module, Options1),
 	atom_concat('httpd@', Port, Queue),
-	Options = [queue(Queue)|Options2],
+	Options = [queue(Queue)|Options1],
 	create_pool(Options),
-	create_server(Socket, M:G, Port, Queue, Options).
+	create_server(Socket, Module:Goal, Port, Queue, Options).
+
+%	after_option(+Options0, +Module, -Options)
+%	
+%	Add the module qualifier to the goal for the after(Goal) option
+
+after_option(Options0, Module, Options) :-
+	select(after(After), Options0, Options1), !,
+	'$strip_module'(Module:After, MA, A),
+	Options = [after(MA:A) | Options1].
+after_option(Options, _, Options).
+
 
 create_server(Socket, Goal, Port, Queue, Options) :-
 	atom_concat('http@', Port, Alias),
@@ -123,11 +140,18 @@ http_workers(Port, Workers) :-
 %	The goal of a small server-thread accepting new requests and
 %	posting them to the queue of workers.
 
+accept_server(SSL, Goal, Options) :-
+	memberchk(ssl_instance(SSL), Options), !,
+	option(queue(Queue), Options, http_client),
+	repeat,
+	  ssl_accept(SSL, Client, Peer),
+	  thread_send_message(Queue, ssl_client(SSL, Client, Goal, Peer)),
+	fail.
 accept_server(Socket, Goal, Options) :-
 	option(queue(Queue), Options, http_client),
 	repeat,
 	  tcp_accept(Socket, Client, Peer),
-	  thread_send_message(Queue, client(Client, Goal, Peer)),
+	  thread_send_message(Queue, tcp_client(Client, Goal, Peer)),
 	fail.
 
 
@@ -192,10 +216,13 @@ http_worker(Options) :-
 	  (   Message == quit
 	  ->  thread_self(Self),
 	      thread_detach(Self)
-	  ;   Message = client(Socket, Goal, Peer),
-	      tcp_open_socket(Socket, In, Out),
+	  ;   (   Message = tcp_client(Client, Goal, Peer)
+	      ->  tcp_open_socket(Client, In, Out)
+	      ;	  Message = ssl_client(SSL, Client, Goal, Peer),
+		  ssl_open(SSL, Client, In, Out)
+	      ),
 	      set_stream(In, timeout(Timeout)),
-	      (	  server_loop(Goal, In, Out, Socket, Peer, After)
+	      (	  server_loop(Goal, In, Out, Peer, After)
 	      ->  true
 	      ;	  format(user_error, 'FAILED~n', [])
 	      ),
@@ -216,21 +243,30 @@ done_worker :-
 %	Handle a client on the given stream. It will keep the connection
 %	open as long as the client wants this
 
-server_loop(_Goal, In, _Out, Socket, _, _) :-
+server_loop(_Goal, In, Out, _, _) :-
 	at_end_of_stream(In), !,
-	tcp_close_socket(Socket).
-server_loop(Goal, In, Out, Socket, Peer, After) :-
+	close_connection(In, Out).
+server_loop(Goal, In, Out, Peer, After) :-
 	http_wrapper(Goal, In, Out, Connection, [request(Request)]),
 	(   downcase_atom(Connection, 'keep-alive')
 	->  after(After, Request),
-	    server_loop(Goal, In, Out, Socket, Peer, After)
-	;   tcp_close_socket(Socket),
+	    server_loop(Goal, In, Out, Peer, After)
+	;   close_connection(In, Out),
 	    after(After, Request)
 	).
 
 after([], _) :- !.
 after(Goal, Request) :-
 	call(Goal, Request).
+
+%	close_connection(+In, +Out)
+%	
+%	Closes the connection from the server to the client.  Errors are
+%	currently silently ignored.
+
+close_connection(In, Out) :-
+	catch(close(In, [force(true)]), _, true),
+	catch(close(Out, [force(true)]), _, true).
 
 %	option(+Term, +Options, +Default)
 %	

@@ -1,3 +1,7 @@
+Jun 28, 2004
+	
+  * ADDED: SSL interface to threaded HTTP server (needs documentation)
+
 Jun 21, 2004
 
   * FIXED: Handling continue header required for POST to MS IIS servers.
