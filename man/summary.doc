@@ -98,6 +98,7 @@ suggest predicates from a keyword.
 \predicatesummary{character_count}{2}{Get character index on a stream}
 \predicatesummary{chdir}{1}{Compatibility: change working directory}
 \predicatesummary{checklist}{2}{Invoke goal on all members of a list}
+\predicatesummary{chr_show_store}{1}{List suspended CHR constraints}
 \predicatesummary{clause}{2}{Get clauses of a predicate}
 \predicatesummary{clause}{3}{Get clauses of a predicate}
 \predicatesummary{clause_property}{2}{Get properties of a clause}

@@ -1,8 +1,13 @@
 \chapter{CHR: Constraint Handling Rules} 		\label{sec:chr}
 
-This chapter is written by Tom Schrijvers, K.U. Leuven for the
-hProlog system.  Adjusted by Jan Wielemaker to fit the SWI-Prolog
-documentation infrastructure and remove hProlog specific references.
+This chapter is written by Tom Schrijvers, K.U. Leuven for the hProlog
+system. Adjusted by Jan Wielemaker to fit the SWI-Prolog documentation
+infrastructure and remove hProlog specific references.
+
+The CHR runtime environment using in SWI-Prolog is written by Christian
+Holzbaur and Tom Schrijvers while the compiler is written by Tom
+Schrijvers.  Both are integrated with SWI-Prolog and licenced under
+compatible conditions with permission from the authors.
 
 
 \section{Introduction}
@@ -47,7 +52,7 @@ rules --> [].
 
 rule --> name, actual_rule, pragma, [atom('.')].
 
-name --> xsb_atom, [atom('@')].
+name --> atom, [atom('@')].
 name --> [].
 
 actual_rule --> simplification_rule.
@@ -62,15 +67,15 @@ simpagation_rule --> constraints, [atom('\')], constraints, [atom('<=>')],
 constraints --> constraint, constraint_id.
 constraints --> constraint, [atom(',')], constraints.
 
-constraint --> xsb_compound_term.
+constraint --> compound_term.
 
 constraint_id --> [].
-constraint_id --> [atom('#')], xsb_variable.
+constraint_id --> [atom('#')], variable.
 
 guard --> [].
-guard --> xsb_goal, [atom('|')].
+guard --> goal, [atom('|')].
 
-body --> xsb_goal.
+body --> goal.
 
 pragma --> [].
 pragma --> [atom('pragma')], actual_pragmas.
@@ -78,7 +83,7 @@ pragma --> [atom('pragma')], actual_pragmas.
 actual_pragmas --> actual_pragma.
 actual_pragmas --> actual_pragma, [atom(',')], actual_pragmas.
 
-actual_pragma --> [atom('passive(')], xsb_variable, [atom(')')].
+actual_pragma --> [atom('passive(')], variable, [atom(')')].
 
 \end{code}
 
@@ -163,7 +168,7 @@ passive constraint in that rule.
 
 Additional pragmas may be released in the future.
 
-\section{CHR in hProlog Programs}		\label{sec:practical}
+\section{CHR in SWI-Prolog Programs}		\label{sec:practical}
 %===========================
 
 \subsection{Embedding in Prolog Programs}
@@ -174,8 +179,17 @@ never load different \fileext{chr} files with the same CHR module name.
 
 \subsection{Compilation}
 
-A \fileext{chr} file containing CHR rules should be comiled and loaded
-like any other \fileext{pl} file.
+A \fileext{chr} file containing CHR rules can be compiled and loaded
+like any other \fileext{pl} file after loading the library module
+\pllib{chr}:
+
+\begin{code}
+:- use_module(library(chr)).
+:- ['Tests/zebra.chr'].
+% Translating CHR file zebra.chr
+% Written translation to zebra.pl
+% /staff/jan/src/pl/packages/chr/Tests/zebra.pl compiled into zebra 0.01 sec, 20,984 bytes
+\end{code}
 
 \paragraph{Note}
 
