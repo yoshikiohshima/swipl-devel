@@ -7,10 +7,12 @@
     WWW:     http://www.swi.psy.uva.nl/projects/SWI-Prolog/
     Copying: GPL-2.  See the file COPYING or http://www.gnu.org
 
-    Copyright (C) 1990-2001 SWI, University of Amsterdam. All rights reserved.
+    Copyright (C) 1990-2004 SWI, University of Amsterdam. All rights
+    reserved.
 */
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Demo using the threaded HTTP library with SSL.  
 
 URL:	https://localhost:1443/env
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -27,7 +29,7 @@ server :-
 server(Port, Options) :-
 	http_server(reply,
 		    [ port(Port),
-		      timeout(20),
+%		      timeout(20),		% does not (yet) work
 		      ssl([ host('localhost'),
 %			    cert(1),
 %			    peer_cert(1),
