@@ -3,13 +3,9 @@ SWI-Prolog 5.3.9/XPCE 6.2.17 development snapshot
 Status
 ======
   
-  * Various users have reported their old programs to run fine on
-    this development version.
-
-  * Be careful on production systems.  Should be fine for running normal
-    Prolog code for development.  Especially =/2, ==/2, @>/2, copy_term/2,
-    recorda and friends have been modified significantly to deal with
-    cyclic terms and attributed variables.
+  * We do not anticipate more major changes to the kernel in the 5.3.x
+    development branch and Prolog programs that do not use the extensions
+    appear to run stable.
   
   * The implementation of global variables is new, but few problems are
     expected.
@@ -28,7 +24,7 @@ Anticipated features relative to stable 5.2.x release and their status
   * Attributed variables
     Complete.
 
-  * Corouting.
+  * Coroutining.
     Lacking call_residue/2.  Unclear whether this is feasible and
     whether or not we want that.
 
@@ -46,7 +42,7 @@ Anticipated features relative to stable 5.2.x release and their status
 		 (and friends, partial support), asserta/1 (and friends).
 
   * CHR constraint language support
-    Complete.  Debugger is being integrated with the Prolog debugger.
+    Complete.  Debugger must be integrated with graphical debugger.
 
   * Domain specific constraint libraries
     Only integer bounds constraint (a subset if CLP(fd)).
@@ -56,45 +52,44 @@ Anticipated features relative to stable 5.2.x release and their status
     implementation.
 
 
-Brief summary of changes since 5.3.7
+Brief summary of changes since 5.3.8
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Fixed a number of issues around load_files/2 (the primitive below
-    consult, use_module, etc).
+  * Fixed some debug-mode issues
 
-  * Added exporting operators from modules.
+  * Made when/2 module aware
+
+  * Turned some traditional printed error messages into exceptions.
 
 Packages
 --------
 
-  * CHR: various improvements.  Loading files now uses term_expansion
-    rather than creating a .pl file from a .chr file and CHR rules may
-    be defined in files using any extension as long as they include
-    library(chr).  The debugger is improved (added chr_leash/1) and
-    (partly) integrated with the Prolog commandline debugger.
+  * CHR: various improvements.  Notably integration in the environment.
 
-    Synchronised CHR debugging and optimization to the -O and -nodebug
-    flags (optimise and generate_debug_info flags).
+  * XPCE: Cleanup of operator issues.  Fixed buffer overflow menus with
+    > 1000 entries.
 
-  * Clib: added library(prolog_server) to interact with Prolog using
-    a TCP/IP connection via telnet.
-
-  * Semweb: save anonymous resources.  Second argument of rdf_save/2
-    is now a list of options.  Old-style calls are mapped to the new
-    one for compatibility.
+  * Semweb: fix XML output of rdf_save/[1,2] (unquoted attribute).
 
 Development environment
 -----------------------
 
-  * Make command history thread-aware
-  * Some fixes to the debugger
-  * Added prolog flag 'generate_debug_info' and option -nodebug
+  * Improved reporting of syntax error location.
+
+  * Integrated CHR debugger with Prolog commandline debugger
+
+  * Added CHR mode to PceEmacs for syntax highlighting and
+    cross-referencing
+
+  * Limit listing of a module to the predicate actually defined
+    in that module (exclude imported predicates).
 
 
 INCOMPATIBILITIES
 =================
 
-  (none)
+  * Exception terms as generated on syntax errors have an additional
+    field expressing the line-position of the error.

@@ -1,4 +1,4 @@
-\chapter{Special Variables and Corouting}
+\chapter{Special Variables and Coroutining}
 
 This chapter deals with extensions primarily designed to support
 constraint logic programming (CLP).
@@ -142,9 +142,9 @@ Set all attributes of \arg{Var}.  See get_attrs/2 for a description of
 \end{description}
 
 
-\section{Corouting}				\label{sec:corouting}
+\section{Coroutining}				\label{sec:coroutining}
 
-Corouting deals with having Prolog goals scheduled for execution as
+Coroutining deals with having Prolog goals scheduled for execution as
 soon as some conditions is fullfilled.  In Prolog the most commonly
 used conditions is the instantiation (binding) of a variable. Scheduling
 a goal to execute immediately after a variable is bound allows may

@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.9 (Apr 15, 2004)
+============================
+
+  * FIXED: Renamed corouting --> coroutining (Joachim Schimpf).
+
   * FIXED: debug/nondebug issues with multifile predicates (causing
     gtrace/0 to trace itself).  David Reitter.
 
@@ -267,7 +272,7 @@ VERSION 5.3.0 (Jan 16, 2004)
   * ADDED: global variables: b_setval/2, b_getval/2, nb_setval/2,
     nb_getval/2.
 
-  * ADDED: Corouting: freeze/2
+  * ADDED: Coroutining: freeze/2
 
   * ADDED: Attributed variables: attvar/1, put_attr/3, get_attr/3.
 

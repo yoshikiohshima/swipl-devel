@@ -36,9 +36,9 @@
 	  ]).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Attributed variable and corouting support based on attributed variables.
-This  module  is  complemented  with  C-defined  predicates  defined  in
-pl-attvar.c
+Attributed  variable  and  coroutining  support    based  on  attributed
+variables. This module is complemented with C-defined predicates defined
+in pl-attvar.c
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 %	'$wakeup'(+List)

@@ -470,9 +470,9 @@ and many related modifications to the kernel.
 
 \subsection{Version 5.3 Release Notes} \label{sec:rel-5.3}
 
-Version 5.3.x is a development series for adding corouting, constraints,
-global variables, cyclic terms (infinite trees) and other goodies to the
-kernel.
+Version 5.3.x is a development series for adding coroutining,
+constraints, global variables, cyclic terms (infinite trees) and other
+goodies to the kernel.
 
 
 \section{Donate to the SWI-Prolog project}	\label{sec:sponsor}

@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+VERSION 6.2.17, distributed with SWI-Prolog 5.3.9
+=================================================
+
 * ADDED: PceEmacs to determine mode from arbitrary patterns on the content.
   See emacs_content_mode/3 in library('emacs/emacs.pl').
 
