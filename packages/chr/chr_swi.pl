@@ -153,12 +153,12 @@ add_optimise_decl(CHR, CHR).
 
 %	call_chr_translate(+File, +In, -Out)
 %	
-%	The entire chr_translate/2 translation may  fail,   in  which we'd better
-%	issue  a  warning  rather   than    simply   ignoring   the  CHR
+%	The entire chr_translate/2 translation may   fail, in which we'd
+%	better issue a warning  rather  than   simply  ignoring  the CHR
 %	declarations.
 
 call_chr_translate(_, In, Out) :-
-	chr_translate(In, Out).
+	chr_translate(In, Out), !.
 call_chr_translate(File, _, []) :-
 	print_message(error, chr(compilation_failed(File))).
 
