@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: throw/1 throwing a single variable if the exception is not
+    caught (Roberto Bagnara)
+
   * ADDED: PL_is_ground() to check for term groundness in the foreign
     interface.
 

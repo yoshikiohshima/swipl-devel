@@ -2997,7 +2997,6 @@ the moment the code marked (**) handles this not very elegant
 					/* TBD: needs a foreign frame? */
 	  QF->exception = consTermRef(p);
 	  *p = except;
-	  deRef(p);
 
 	  undo_while_saving_term(&QF->choice.mark, p);
 	  if ( false(QF, PL_Q_PASS_EXCEPTION) )
