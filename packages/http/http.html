@@ -849,6 +849,16 @@ timeout, a worker may wait forever on an a client that doesn't complete
 its request.
 
 <P>
+<DT><STRONG>keep_alive_timeout</STRONG>(<VAR>+SecondsOrInfinite</VAR>)<DD>
+Maximum time to wait for new actity on <EM>Keep-Alive</EM> connections. 
+Choosing the correct value for this parameter is hard. Disabling 
+Keep-Alive is bad for performance if the clients request multiple 
+documents for a single page. This may ---for example-- be caused by HTML 
+frames, HTML pages with images, associated CSS files, etc. Keeping a 
+connection open in the threaded model however prevents the thread 
+servicing the client servicing other clients. The default is 5 seconds.
+
+<P>
 <DT><STRONG>local</STRONG>(<VAR>+KBytes</VAR>)<DD>
 Size of the local-stack for the workers. Default is taken from the 
 commandline option.

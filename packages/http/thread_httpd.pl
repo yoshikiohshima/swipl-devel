@@ -69,6 +69,7 @@ is not elegant.
 %	
 %	  workers(N)	[2]		Define the number of worker threads
 %	  timeout(S)	[infinite]	Drop connections after inactivity
+%	  keep_alive_timeout [10]	Drop Keep-Alive connection timeout
 %	  local(KBytes)	
 %	  global(KBytes)
 %	  trail(KBytes) [<CommandLine>] Stack-sizes of worker threads
@@ -236,7 +237,6 @@ resize_pool(Queue, Size) :-
 
 http_worker(Options) :-
 	option(timeout(Timeout), Options, infinite),
-	option(after(After), Options, []),
 	option(queue(Queue), Options, http_client),
 	thread_at_exit(done_worker),
 	repeat,
@@ -252,7 +252,7 @@ http_worker(Options) :-
 	      set_stream(In, timeout(Timeout)),
 	      debug(server, 'Running server goal ~p on ~p -> ~p',
 		    [Goal, In, Out]),
-	      (	  catch(server_loop(Goal, In, Out, Peer, After), E, true)
+	      (	  catch(server_loop(Goal, In, Out, Peer, Options), E, true)
 	      ->  (   var(E)
 		  ->  true
 		  ;   (   message_level(E, Level)
@@ -266,7 +266,7 @@ http_worker(Options) :-
 		  )
 	      ;	  print_message(error,
 				goal_failed(server_loop(Goal, In, Out,
-							Peer, After)))
+							Peer, Options)))
 	      ),
 	      fail
 	  ),
@@ -290,11 +290,11 @@ done_worker :-
 :- multifile
 	message_level/2.
 
-message_level(error(io_error(read, _), _), silent).
-message_level(error(timeout_error(read, _), _),  informational).
+message_level(error(io_error(read, _), _),	silent).
+message_level(error(timeout_error(read, _), _),	informational).
+message_level(keep_alive_timeout,		silent).
 
-
-%	server_loop(:Goal, +In, +Out, +Socket, +Peer, :After)
+%	server_loop(:Goal, +In, +Out, +Socket, +Peer, +Options)
 %	
 %	Handle a client on the given stream. It will keep the connection
 %	open as long as the client wants this
@@ -302,18 +302,28 @@ message_level(error(timeout_error(read, _), _),  informational).
 server_loop(_Goal, In, Out, _, _) :-
 	at_end_of_stream(In), !,
 	close_connection(In, Out).
-server_loop(Goal, In, Out, Peer, After) :-
+server_loop(Goal, In, Out, Peer, Options) :-
 	http_wrapper(Goal, In, Out, Connection, [request(Request)]),
 	(   downcase_atom(Connection, 'keep-alive')
-	->  after(After, Request),
-	    server_loop(Goal, In, Out, Peer, After)
+	->  after(Request, Options),
+	    option(timeout(TimeOut), Options, infinite),
+	    option(keep_alive_timeout(KeepAliveTMO), Options, 5),
+	    set_stream(In, timeout(KeepAliveTMO)),
+	    catch(peek_code(In, _), _, throw(keep_alive_timeout)),
+	    set_stream(In, timeout(TimeOut)),
+	    server_loop(Goal, In, Out, Peer, Options)
 	;   close_connection(In, Out),
-	    after(After, Request)
+	    after(Request, Options)
 	).
 
-after([], _) :- !.
-after(Goal, Request) :-
-	call(Goal, Request).
+%	run `after' hook each time after processing a request.
+
+after(Request, Options) :-
+	(   option(after(After), Options, []),
+	    After \== []
+	->  call(After, Request)
+	;   true
+	).
 
 %	close_connection(+In, +Out)
 %	
