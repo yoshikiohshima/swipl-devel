@@ -40,6 +40,8 @@
 %
 % Update 7/3/2004:
 %   Now uses unifyable/3. It enables dif/2 to work with infinite terms.
+% Update 11/3/2004:
+%   Cleaned up code. Now uses just one or node for every call to dif/2.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -47,240 +49,156 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dif(X,Y) :-
-	( compound(X), compound(Y) ->
-		dif_c_c(X,Y,-) 
-	% not terms, so comparing should be relatively cheap
-	; X == Y ->
-		fail
-	; nonvar(X), nonvar(Y) ->
-		true
-	;
-		% one or both are variables
-		( var(X) ->
-			( var(Y) ->
-				dif_var_var(X,Y)
-			;
-				dif_var_nonvar(X,Y)
-			)
-		; var(Y) ->
-			dif_var_nonvar(Y,X)
-		)
-	).
+	dif_c_c(X,Y,_).
 	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % types of attributes?
 % 	vardif: X is a variable
 %	node(Parent,Children,Variables,Counter)
 
-dif_c_c(X,Y,Parent) :-
+dif_c_c(X,Y,OrNode) :-
 	( unifyable(X,Y,Unifier) ->
 		( Unifier == [] ->
-			or_one_fail(Parent)
+			or_one_fail(OrNode)
 		;
-			dif_c_c_l(Unifier,Parent)
+			dif_c_c_l(Unifier,OrNode)
 		)
 	;
-		or_succeed(Parent)
+		or_succeed(OrNode)
 	).
 
-dif_c_c_l(Unifier,Parent) :-
+dif_c_c_l(Unifier,OrNode) :-
 	length(Unifier,N),
-	put_attr(OrNode,dif,node(Parent,[],[],N)),
-	register_child(Parent,OrNode),
-	dif_c_c_l_aux(Unifier,OrNode).	
+	extend_ornode(OrNode,N,List,Tail),
+	dif_c_c_l_aux(Unifier,OrNode,List,Tail).	
 
-register_child(Parent,Child) :-
-	( var(Parent) ->
-		get_attr(Parent,dif,Attr),
-		Attr = node(P,Children,Vs,C),
-		put_attr(Parent,dif,node(P,[Child|Children],Vs,C))
+extend_ornode(OrNode,N,List,Vars) :-
+	( get_attr(OrNode,dif,Attr) ->
+		Attr = node(M,Vars),
+		O is N + M
 	;
-		true
-	).
-
-
-dif_c_c_l_aux([],_).
-dif_c_c_l_aux([X=Y|Unifier],OrNode) :-
-	dif2(X,Y,OrNode),
-	( var(OrNode) ->
-		dif_c_c_l_aux(Unifier,OrNode)
-	;
-		true
-	).
-
-dif_var_nonvar(X,Y) :-
-	( get_attr(X,dif,Attr) ->
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		put_attr(X,dif,vardif(VL,[Y|NVL],OVL,ONVL))
-	;
-		put_attr(X,dif,vardif([],[Y],[],[]))
-	).
-
-dif_var_var(X,Y) :-
-	dif_var_var_(X,Y),
-	dif_var_var_(Y,X).
-
-dif_var_var_(X,Y) :-
-	( get_attr(X,dif,Attr) ->
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		put_attr(X,dif,vardif([Y|VL],NVL,OVL,ONVL))
-	;
-		put_attr(X,dif,vardif([Y],[],[],[]))
-	).
-
-attr_unify_hook(vardif(VL,NVL,OVL,ONVL),Other) :-
-	( var(Other) ->
-		\+ memberchk_eq(Other,VL),
-		( reverse_lookup(OVL,Other,OrNode) ->
- 		  	or_one_fail(OrNode)
-		;
-			true
-		),
-		get_attr(Other,dif,OAttr),
-		OAttr = vardif(VL2,NVL2,OVL2,ONVL2),
-		append(VL,VL2,N_VL),
-		append(NVL,NVL2,N_NVL),
-		append(OVL,OVL2,N_OVL),
-		append(ONVL,ONVL2,N_ONVL),
-		put_attr(Other,dif,vardif(N_VL,N_NVL,N_OVL,N_ONVL))
-	;
-		var_bound(Other,VL,NVL,OVL,ONVL)
-	).
-
-% from hProlog lists.pl
-memberchk_eq(X,[Y|Ys]) :-
-   (   X == Y ->
-       true
-   ;   memberchk_eq(X,Ys)
-   ).
-
-reverse_lookup([X-Y|XYs],Value,Key) :-
-	( Y == Value ->
-		Key = X
-	;
-		reverse_lookup(XYs,Value,Key)
-	).
-
-var_bound(Other,VL,NVL,OVL,ONVL) :-
-	var_bound_nvl(NVL,Other),
-	var_bound_onvl(ONVL,Other),
-	var_bound_vl(VL,Other),
-	var_bound_ovl(OVL,Other).
-
-var_bound_nvl([],_).
-var_bound_nvl([Y|Ys],X) :-
-	dif(X,Y),
-	var_bound_nvl(Ys,X).
-
-var_bound_onvl([],_).
-var_bound_onvl([OrNode-Y|Ys],X) :-
-	( var(OrNode) ->
-		dif2(X,Y,OrNode)
-	;
-		true	
+		O = N,
+		Vars = []
 	),
-	var_bound_onvl(Ys,X).
+	put_attr(OrNode,dif,node(O,List)).
+		
+dif_c_c_l_aux([],_,List,List).
+dif_c_c_l_aux([X=Y|Unifier],OrNode,List,Tail) :-
+	List = [X=Y|Rest],
+	add_ornode(X,Y,OrNode),
+	dif_c_c_l_aux(Unifier,OrNode,Rest,Tail).	
 
-var_bound_vl([],_).
-var_bound_vl([Y|Ys],X) :-
+add_ornode(X,Y,OrNode) :-
+	add_ornode_var1(X,Y,OrNode),
 	( var(Y) ->
-		get_attr(Y,dif,Attr),
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		delete(VL,X,N_VL),
-		put_attr(Y,dif,vardif(N_VL,[X|NVL],OVL,ONVL))
-	;
-		dif(X,Y)
-	),
-	var_bound_vl(Ys,X).
-
-var_bound_ovl([],_).
-var_bound_ovl([OrNode-Y|Ys],X) :-
-	( var(OrNode) ->
-		( var(Y) ->
-			get_attr(Y,dif,Attr),
-			Attr = vardif(VL,NVL,OVL,ONVL),
-			delete(OVL,OrNode-X,N_OVL),
-			put_attr(Y,dif,vardif(VL,NVL,N_OVL,[OrNode-X|ONVL]))
-		;
-			dif2(X,Y,OrNode)
-		)
+		add_ornode_var2(X,Y,OrNode)
 	;
 		true
+	).	
+
+add_ornode_var1(X,Y,OrNode) :-
+	( get_attr(X,dif,Attr) ->
+		Attr = vardif(V1,V2),
+		put_attr(X,dif,vardif([OrNode-Y|V1],V2))
+	;
+		put_attr(X,dif,vardif([OrNode-Y],[]))
+	).
+
+add_ornode_var2(X,Y,OrNode) :-
+	( get_attr(Y,dif,Attr) ->
+		Attr = vardif(V1,V2),
+		put_attr(Y,dif,vardif(V1,[OrNode-X|V2]))
+	;
+		put_attr(Y,dif,vardif([],[OrNode-X]))
+	).
+
+attr_unify_hook(vardif(V1,V2),Other) :-
+	( var(Other) ->
+		reverse_lookups(V1,Other,OrNodes1,NV1),
+		or_one_fails(OrNodes1),
+		reverse_lookups(V2,Other,OrNodes2,NV2),
+		or_one_fails(OrNodes2),
+		get_attr(Other,dif,OAttr),
+		OAttr = vardif(OV1,OV2),
+		append(NV1,OV1,CV1),
+		append(NV2,OV2,CV2),
+		put_attr(Other,dif,vardif(CV1,CV2))	
+	;
+		verify_compounds(V1,Other),
+		verify_compounds(V2,Other)	
+	).
+
+reverse_lookups([],_,[],[]).
+reverse_lookups([N-X|NXs],Value,Nodes,Rest) :-
+	( X == Value ->
+		Nodes = [N|RNodes],
+		Rest = RRest
+	;
+		Nodes = RNodes,
+		Rest = [N-X|RRest]
 	),
-	var_bound_ovl(Ys,X).
+	reverse_lookups(NXs,Value,RNodes,RRest).
+
+verify_compounds([],_).
+verify_compounds([Node-Y|Rest],X) :-
+	( var(Y) ->
+		true
+	;
+		dif_c_c(X,Y,Node)
+	),
+	verify_compounds(Rest,X).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dif2(X,Y,OrNode) :-
-	( compound(X), compound(Y) ->
-		dif_c_c(X,Y,OrNode)
-	% not terms, so comparing should be relatively cheap
-	; X == Y ->
-		or_one_fail(OrNode)
-	; nonvar(X), nonvar(Y) ->
-		or_succeed(OrNode)	
-	;
-		% one or both are variables
-		( var(X) ->
-			( var(Y) ->
-				dif_var_var2(X,Y,OrNode)
-			;
-				dif_var_nonvar2(X,Y,OrNode)
-			)
-		; var(Y) ->
-			dif_var_nonvar2(Y,X,OrNode)
-		)
-	).
-
 or_succeed(OrNode) :-
-	( var(OrNode) ->
+	( attvar(OrNode) ->
 		get_attr(OrNode,dif,Attr),
-		Attr = node(Parent,Children,Variables,_Counter),
+		Attr = node(_Counter,Pairs),
 		del_attr(OrNode,dif),
 		OrNode = (-),
-		or_succeed(Parent),
-		or_succeed_list(Children),
-		del_or_dif(Variables)
-	; OrNode == (-) ->
+		del_or_dif(Pairs)
+	;
 		true
 	).
 
-or_succeed_list([]).
-or_succeed_list([Child|Children]) :-
-	or_succeed(Child),
-	or_succeed_list(Children).
+or_one_fails([]).
+or_one_fails([N|Ns]) :-
+	or_one_fail(N),
+	or_one_fails(Ns).
 
 or_one_fail(OrNode) :-
-	( var(OrNode) ->
+	( attvar(OrNode) ->
 		get_attr(OrNode,dif,Attr),
-		Attr = node(Parent,Children,Variables,Counter),
+		Attr = node(Counter,Pairs),
 		NCounter is Counter - 1,
 		( NCounter == 0 ->
-			del_attr(OrNode,dif),
-			OrNode = (-),
-			or_one_fail(Parent)
+			fail
 		;
-			put_attr(OrNode,dif,node(Parent,Children,Variables,NCounter))
+			put_attr(OrNode,dif,node(NCounter,Pairs))
 		)
 	;
 		fail	
 	).
 
 del_or_dif([]).
-del_or_dif([X|Xs]) :-
-	( var(X) ->
-		get_attr(X,dif,Attr),
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		filter_dead_ors(OVL,N_OVL),
-		filter_dead_ors(ONVL,N_ONVL),
-		( VL == [], NVL == [], N_OVL == [], N_ONVL == [] ->
+del_or_dif([X=Y|Xs]) :-
+	cleanup_dead_nodes(X),
+	cleanup_dead_nodes(Y),
+	del_or_dif(Xs).
+
+cleanup_dead_nodes(X) :-
+ 	( var(X) ->
+ 		get_attr(X,dif,Attr),
+		Attr = vardif(V1,V2),
+		filter_dead_ors(V1,NV1),
+		filter_dead_ors(V2,NV2),
+		( NV1 == [], NV2 == [] ->
 			del_attr(X,dif) 
 		;
-			put_attr(X,dif,vardif(VL,NVL,N_OVL,N_ONVL))	
+			put_attr(X,dif,vardif(NV1,NV2))	
 		)
 	;
 		true
-	),
-	del_or_dif(Xs).
+	).
 
 filter_dead_ors([],[]).
 filter_dead_ors([Or-Y|Rest],List) :-
@@ -291,30 +209,13 @@ filter_dead_ors([Or-Y|Rest],List) :-
 	),
 	filter_dead_ors(Rest,NRest).
 
-dif_var_nonvar2(X,Y,OrNode) :-
-	register_variable(X,OrNode),
-	( get_attr(X,dif,Attr) ->
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		put_attr(X,dif,vardif(VL,NVL,OVL,[OrNode-Y|ONVL]))
-	;
-		put_attr(X,dif,vardif([],[],[],[OrNode-Y]))
-	).
+attr_portray_hook(vardif(V1,V2),_) :-
+	snd_of_pairs(V1,VV1),
+	snd_of_pairs(V2,VV2),
+	append(VV1,VV2,VV),
+	format('~w',[dif(VV)]).
 
-register_variable(V,OrNode) :-
-	get_attr(OrNode,dif,Attr),
-	Attr = node(P,Cs,Vs,C),
-	put_attr(OrNode,dif,node(P,Cs,[V|Vs],C)).
-
-dif_var_var2(X,Y,OrNode) :-
-	dif_var_var2_(X,Y,OrNode),
-	dif_var_var2_(Y,X,OrNode).
-
-dif_var_var2_(X,Y,OrNode) :-
-	register_variable(X,OrNode),
-	( get_attr(X,dif,Attr) ->
-		Attr = vardif(VL,NVL,OVL,ONVL),
-		
-		put_attr(X,dif,vardif(VL,NVL,[OrNode-Y|OVL],ONVL))
-	;
-		put_attr(X,dif,vardif([],[],[OrNode-Y],[]))
-	).
+% from hProlog's pairlist module
+snd_of_pairs([],[]).
+snd_of_pairs([_-Y|XYs],[Y|Ys]) :-
+	snd_of_pairs(XYs,Ys).

@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: Cleanup of dif/2 by Tom Schrijvers.
+
   * FIXED: ensure a thread is considered to exist before it actually
     starts running.
 
