@@ -1,3 +1,7 @@
+Jun 16, 2004
+
+  * FIXED: rdf(-,+,+) was indexed as rdf(-,+,-) if the object is a resource.
+
 Jun 2, 2004
 
   * ADDED: rdf_is_bnode/1

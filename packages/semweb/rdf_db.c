@@ -2135,6 +2135,8 @@ get_partial_triple(term_t subject, term_t predicate, term_t object,
     t->indexed |= BY_P;
   if ( t->objtype == OBJ_STRING && t->match <= STR_MATCH_EXACT )
     t->indexed |= BY_O;
+  else if ( t->objtype == OBJ_RESOURCE )
+    t->indexed |= BY_O;
 
   indexed[t->indexed]++;		/* statistics */
 
