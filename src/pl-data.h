@@ -300,7 +300,7 @@ and while loading .wic files.  It comes at no price.
 
 #define nonvar(w)	(!isVar(w))
 #define isNumber(w)	(isInteger(w) || isReal(w))
-#define isAtomic(w)	(!isVar(w) && !isTerm(w))
+#define isAtomic(w)	(!canBind(w) && !isTerm(w))
 
 
 		 /*******************************
