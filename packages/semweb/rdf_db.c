@@ -93,6 +93,8 @@ static functor_t FUNCTOR_inverse_of1;
 static functor_t FUNCTOR_transitive1;
 
 static functor_t FUNCTOR_searched_nodes1;
+static functor_t FUNCTOR_lang2;
+static functor_t FUNCTOR_type2;
 
 static atom_t   ATOM_user;
 static atom_t	ATOM_exact;
@@ -1936,6 +1938,27 @@ get_literal(term_t lit, triple *t)
   { t->objtype = OBJ_INTEGER;
   } else if ( PL_get_float(lit, &t->object.real) )
   { t->objtype = OBJ_DOUBLE;
+  } else if ( PL_is_functor(lit, FUNCTOR_lang2) )
+  { term_t a = PL_new_term_ref();
+    
+    PL_get_arg(1, lit, a);
+    if ( !get_atom_ex(a, &t->type_or_lang) )
+      return FALSE;
+    PL_get_arg(2, lit, a);
+    if ( !get_atom_ex(a, &t->object.string) )
+      return FALSE;
+
+    t->has_lang = TRUE;
+    t->objtype = OBJ_STRING;
+  } else if ( PL_is_functor(lit, FUNCTOR_type2) )
+  { term_t a = PL_new_term_ref();
+    
+    PL_get_arg(1, lit, a);
+    if ( !get_atom_ex(a, &t->type_or_lang) )
+      return FALSE;
+    t->has_lang = FALSE;
+
+    return get_literal(a, t);
   } else				/* TBD: check groundness */
   { t->object.term.record = PL_record_external(lit, &t->object.term.len);
     t->objtype = OBJ_TERM;
@@ -3573,6 +3596,8 @@ install_rdf_db()
   MKFUNCTOR(symmetric, 1);
   MKFUNCTOR(transitive, 1);
   MKFUNCTOR(inverse_of, 1);
+  MKFUNCTOR(lang, 2);
+  MKFUNCTOR(type, 2);
 
   FUNCTOR_colon2 = PL_new_functor(PL_new_atom(":"), 2);
 

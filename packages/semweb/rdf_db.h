@@ -111,16 +111,18 @@ typedef struct triple
       int       len;
     } term;				/* external record */
   } object;
+  atom_t	type_or_lang;		/* Type or language for literals */
   atom_t	source;			/* where it comes from */
   struct triple*next[INDEX_TABLES];	/* hash-table next links */
   unsigned	objtype : 3;
   unsigned	indexed : 3;		/* Partials: BY_* */
+  unsigned	has_lang : 1;		/* string with language specifier */
   unsigned	erased  : 1;		/* If TRUE, triple is erased */
   unsigned	first   : 1;		/* I'm the first on subject */
   unsigned	match   : 3;		/* How to match literals */
   unsigned	inversed : 1;		/* Partials: using inverse match */
   unsigned	is_duplicate : 1;	/* I'm a duplicate */
-  unsigned	duplicates : 19;	/* Duplicate count */
+  unsigned	duplicates : 18;	/* Duplicate count */
   unsigned long line;			/* source-line number */
 } triple;
 
