@@ -3459,7 +3459,7 @@ integer.  There are three types of arguments to functions:
 \begin{center}\begin{tabular}{lp{4in}}
 \arg{Expr}	& Arbitrary expression, returning either a floating
 		  point value or an integer. \\
-\arg{IntExpr}   & Arbitrary expression that should evaluate into
+\arg{IntExpr}   & Arbitrary expression that must evaluate into
                   an integer. \\
 \arg{Int}       & An integer.
 \end{tabular}\end{center}

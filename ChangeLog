@@ -7,7 +7,18 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-  * ADDED: handle cycles in term_variables/2 and numbervars/3.
+VERSION 5.3.4 (Mar 11, 2003)
+============================
+
+  * ADDED: handle cycles in term_variables/2 and numbervars/3 as well as
+    in the goal for bagof/setof.
+
+  * MODIFIED: character classification for the range 159-255 to follow
+    ISO-latin-1.  Richard O'Keefe.  All these characters used to be
+    classified as lowercase letter.  Note that this may cause errors
+    reading old code containing not-quoted atoms holding such characters.
+    For example, Æab used to be read as an atom but is now read as a
+    Prolog variable.
 
   * ENHANCED: Cleanup of dif/2 by Tom Schrijvers.
 
