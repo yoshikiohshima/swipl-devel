@@ -111,6 +111,9 @@ suggest predicates from a keyword.
 \predicatesummary{chdir}{1}{Compatibility: change working directory}
 \predicatesummary{checklist}{2}{Invoke goal on all members of a list}
 \predicatesummary{chr_show_store}{1}{List suspended CHR constraints}
+\predicatesummary{chr_trace}{0}{Start CHR tracer}
+\predicatesummary{chr_notrace}{0}{Stop CHR tracer}
+\predicatesummary{chr_leash}{1}{Define CHR leashed ports}
 \predicatesummary{clause}{2}{Get clauses of a predicate}
 \predicatesummary{clause}{3}{Get clauses of a predicate}
 \predicatesummary{clause_property}{2}{Get properties of a clause}

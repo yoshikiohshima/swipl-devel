@@ -43,7 +43,8 @@
 
 	    chr_show_store/1,		% +Module
 	    chr_trace/0,
-	    chr_notrace/0
+	    chr_notrace/0,
+	    chr_leash/1			% +Ports
 	  ]).
 :- set_prolog_flag(generate_debug_info, false).
 
@@ -173,7 +174,8 @@ call_chr_translate(File, _, []) :-
 
 :- multifile
 	user:message_hook/3,
-	chr:debug_event/2.
+	chr:debug_event/2,
+	chr:debug_interact/3.
 :- dynamic
 	user:message_hook/3.
 
@@ -184,6 +186,11 @@ user:message_hook(trace_mode(OnOff), _, _) :-
 	),
 	fail.				% backtrack to other handlers
 
+%	chr:debug_event(+State, +Event)
+%	
+%	Hook into the CHR debugger.  At this moment we will discard CHR
+%	events if we are in a Prolog `skip' and we ignore the 
+
 chr:debug_event(_State, _Event) :-
 	prolog_skip_level(Skip, Skip),
 	Skip \== very_deep,
@@ -191,7 +198,19 @@ chr:debug_event(_State, _Event) :-
 	prolog_frame_attribute(Me, level, Level),
 	Level > Skip, !.
 
+%	chr:debug_interact(+Event, +Depth, -Command)
+%	
+%	Hook into the CHR debugger to display Event and ask for the next
+%	command to execute. This  definition   causes  the normal Prolog
+%	debugger to be used for the standard ports.
 
+chr:debug_interact(Event, _Depth, creep) :-
+	prolog_event(Event),
+	tracing, !.
+
+prolog_event(call(_)).
+prolog_event(exit(_)).
+prolog_event(fail(_)).
 
 
 		 /*******************************

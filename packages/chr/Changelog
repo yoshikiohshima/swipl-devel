@@ -1,5 +1,7 @@
 Apr 7, 2004
 
+  * JW: Added chr:debug_interact/3 hook.  Defined in chr_swi.pl to void
+    showing constraints first as goal and then as CHR call.
   * JW: Added chr:debug_event/2 hook.  Defined in chr_swi.pl to make the
     CHR debugger honour a skip command from the Prolog tracer.
 

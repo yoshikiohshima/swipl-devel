@@ -109,8 +109,7 @@ noprofile(Spec) :-
 	(volatile)/1,
 	(thread_local)/1,
 	(noprofile)/1,
-	$hide/2,
-	$show_childs/2.
+	$hide/2.
 
 
 		/********************************
@@ -123,12 +122,6 @@ noprofile(Spec) :-
 $hide(Name, Arity) :-
 	$set_predicate_attribute(Name/Arity, trace, 0).
 
-%	$show_childs(+Name, +Arity)
-%	Normally system predicates hide their childs frames if these are
-%	system predicates as well.  $show_childs suppresses this.
-
-$show_childs(Name, Arity) :-  
-        $set_predicate_attribute(Name/Arity, hide_childs, 0).
 
 		/********************************
 		*       CALLING, CONTROL        *
@@ -259,28 +252,6 @@ call_cleanup(Goal, Cleanup) :-
 
 call_cleanup(_Goal, _Catcher, _Cleanup) :-
 	$call_cleanup.
-
-:-
-	$hide((';'), 2),
-	$hide(('|'), 2),
-	$hide((','), 2),
-	$hide((->), 2),
-	$show_childs(^, 2),
-	$show_childs(call, 1),
-	$show_childs(call, 2),
-	$show_childs(call, 3),
-	$show_childs(call, 4),
-	$show_childs(call, 5),
-	$show_childs(call, 6),
-	$show_childs(not, 1),
-	$show_childs(\+, 1),
-	$show_childs(once, 1),
-	$show_childs(ignore, 1), 	
-	$show_childs((','), 2), 	
-	$show_childs((';'), 2), 	
-	$show_childs(('|'), 2),
-	$show_childs(block, 3),
-	$show_childs((->), 2).
 
 
 		/********************************

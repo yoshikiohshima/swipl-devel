@@ -254,7 +254,7 @@ from the SWI-Prolog flag \const{generate_debug_info}.  Therefore debug
 info is provided unless the \cmdlineoption{-nodebug} is used.
 
 
-\subsection{Ports}
+\subsection{Ports}				\label{sec:chrports}
 %===============
 
 For CHR constraints the four standard ports are defined:
@@ -296,13 +296,12 @@ store, if it had been inserted.
 \subsection{Tracing}
 %=================
 
-Tracing is enabled with the \predref{chr_trace}{0} predicate
-and disabled with the \predref{chr_notrace}{0} predicate.
+Tracing is enabled with the chr_trace/0 predicate
+and disabled with the chr_notrace/0 predicate.
 
-When enabled the tracer will step through
-the \texttt{call}, \texttt{exit}, \texttt{fail}, \texttt{wake}
-and \texttt{apply} ports, accepting debug commands,
-and simply write out the other ports.
+When enabled the tracer will step through the \const{call},
+\const{exit}, \const{fail}, \const{wake} and \const{apply} ports,
+accepting debug commands, and simply write out the other ports.
 
 The following debug commans are currently supported:
 
@@ -313,6 +312,7 @@ The following debug commans are currently supported:
 		s	skip
 		g	ancestors
                 n       nodebug
+		b	break
                 a       abort
                 f       fail
                 ?       help            h       help
@@ -329,21 +329,42 @@ Skip to exit port of this call or wake port.
 Print list of ancestor call and wake ports.
 	\termitem{nodebug}{}
 Disable the tracer.
+	\termitem{break}{}
+Enter a recursive Prolog toplevel.  See break/0.
 	\termitem{abort}{}
-Exit to the toplevel.
+Exit to the toplevel.  See abort/0.
 	\termitem{fail}{}
 Insert failure in execution.
 	\termitem{help}{}
 Print the above available debug options.
 \end{itemlist}
 
-\section{Useful Predicates} 		\label{sec:predicates}
-%=========================
+\subsection{CHR Debugging Predicates} 		\label{sec:predicates}
+%====================================
 
-The \pllib{chr} module contains several useful predicates that
-allow inspecting and printing the content of the constraint store.
+The \pllib{chr} module contains several predicates that allow
+inspecting and printing the content of the constraint store.
 
 \begin{description}
+    \predicate{chr_trace}{0}{}
+Activate the CHR tracer.  By default the CHR tracer is activated and
+deactivated automatically by the Prolog predicates trace/0 and
+notrace/0.
+
+    \predicate{chr_notrace}{0}{}
+De-activate the CHR tracer.  By default the CHR tracer is activated and
+deactivated automatically by the Prolog predicates trace/0 and
+notrace/0.
+    
+    \predicate{chr_leash}{1}{+Spec}
+Define the set of CHR ports on which the CHR tracer asks for user
+intervention (i.e.\ stops). \arg{Spec} is either a list of ports as
+defined in \secref{chrports} or a predefined `alias'. Defined aliases
+are: \const{full} to stop at all ports, \const{none} or \const{off} to
+never stop, and \const{default} to stop at the \const{call},
+\const{exit}, \const{fail}, \const{wake} and \const{apply} ports.
+See also leash/1.
+
     \predicate{chr_show_store}{1}{+Mod}
 Prints all suspended constraints of module \arg{Mod} to the
 standard output.
