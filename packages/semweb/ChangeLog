@@ -1,3 +1,8 @@
+Jun 17, 2004
+
+  * FIXED: pass base_uri option to rdf_load from rdfe_load to avoid clashes
+    of bnodes.
+
 Jun 16, 2004
 
   * FIXED: rdf(-,+,+) was indexed as rdf(-,+,-) if the object is a resource.

@@ -231,8 +231,10 @@ rdfe_load(File) :-
 			   [ access(read),
 			     extensions([rdf,rdfs,owl,''])
 			   ], Path),
+	atom_concat('file://', Path, BaseURI),
 	rdf_load(Path,
-		 [ result(Action, Triples, MD5)
+		 [ base_uri(BaseURI),
+		   result(Action, Triples, MD5)
 		 ]),
 	(   Action == none		% load, reload, none
 	->  true
