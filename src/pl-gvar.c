@@ -182,6 +182,17 @@ destroyGlobalVars()
 }
 
 
+static void
+free_nb_setval_symbol(Symbol s)
+{ word w = (word)s->value;
+
+  if ( isAtom(w) )
+    PL_unregister_atom(w);
+
+  PL_unregister_atom((atom_t)s->name);
+}
+
+
 static
 PRED_IMPL("nb_setval", 2, nb_setval, 0)
 { PRED_LD
@@ -195,6 +206,7 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
 
   if ( !LD->gvar.nb_vars )
   { LD->gvar.nb_vars = newHTable(32|TABLE_UNLOCKED);
+    LD->gvar.nb_vars->free_symbol = free_nb_setval_symbol;
   }
 
   requireStack(global, sizeof(word));
@@ -215,7 +227,13 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
   }
 
   if ( (s=lookupHTable(LD->gvar.nb_vars, (void*)name)) )
-  { s->value = (void*)w;
+  { word old = (word)s->value;
+
+    if ( w != old )
+    { if ( isAtom(old) )
+	PL_unregister_atom(old);
+      s->value = (void *)w;
+    }
   } else
   { addHTable(LD->gvar.nb_vars, (void*)name, (void*)w);
     PL_register_atom(name);
@@ -223,6 +241,8 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
 
   if ( storage(w) == STG_GLOBAL )
     freezeGlobal(PASS_LD1);
+  else if ( isAtom(w) )
+    PL_register_atom(w);
 
   succeed;
 }
