@@ -130,6 +130,10 @@ Use an HTTP proxy to connect to the outside world.
 	\termitem{user_agent}{+Agent}
 Defines the value of the \const{User-Agent} field of the HTTP header.
 Default is \const{SWI-Prolog (http://www.swi-prolog.org)}.
+
+	\termitem{request_header}{+Name = +Value}
+Additional name-value parts are added in the order of appearance to
+the HTTP request header.  No interpretation is done.
     \end{description}
 
 Here is a simple example:

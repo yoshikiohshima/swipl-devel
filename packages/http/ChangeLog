@@ -1,3 +1,7 @@
+Aug 5, 2004
+
+  * ADDED: request_header(Name=Value) to http_open/3
+
 Aug 3, 2004
 
   * ADDED: keep_alive_timeout(Seconds) for multi-threaded server.

@@ -58,6 +58,7 @@ client support is provided by http_client.pl
 %		timeout(+Timeout)	Raise exception on timeout
 %		proxy(+Host, +Port)	Use an HTTP proxy server
 %		user_agent(+Agent)	User agent for identifying
+%		request_header(Name=Value) Extra header field
 
 http_open(Url, Stream, Options) :-
 	atom(Url), !,
@@ -69,15 +70,17 @@ http_open(Parts, Stream, Options) :-
 	parse_url(URL, Parts),
 	open_socket(Host:Port, In, Out, Options),
 	format(Out,
-	       'GET ~w HTTP/1.0~n\
-	       Host: ~w~n\
-	       User-Agent: ~w~n\
-	       Connection: close~n~n',
+	       'GET ~w HTTP/1.0\r\n\
+	       Host: ~w\r\n\
+	       User-Agent: ~w\r\n\
+	       Connection: close\r\n',
 	       [URL, Host, Agent]),
+	x_headers(Options, Out, Options1),
+	format(Out, '\r\n', []),
 	close(Out),
 					% read the reply header
 	read_header(In, Code, Comment, Lines),
-	do_open(Code, Comment, Lines, Options, Parts, In, Stream).
+	do_open(Code, Comment, Lines, Options1, Parts, In, Stream).
 http_open(Parts, Stream, Options) :-
 	memberchk(host(Host), Parts),
 	option(port(Port), Parts, 80),
@@ -85,15 +88,24 @@ http_open(Parts, Stream, Options) :-
 	user_agent(Agent, Options),
 	open_socket(Host:Port, In, Out, Options),
 	format(Out,
-	       'GET ~w HTTP/1.0~n\
-	       Host: ~w~n\
-	       User-Agent: ~w~n\
-	       Connection: close~n~n',
+	       'GET ~w HTTP/1.0\r\n\
+	       Host: ~w\r\n\
+	       User-Agent: ~w\r\n\
+	       Connection: close\r\n',
 	       [Location, Host, Agent]),
+	x_headers(Options, Out, Options1),
+	format(Out, '\r\n', []),
 	close(Out),
 					% read the reply header
 	read_header(In, Code, Comment, Lines),
-	do_open(Code, Comment, Lines, Options, Parts, In, Stream).
+	do_open(Code, Comment, Lines, Options1, Parts, In, Stream).
+
+
+x_headers(Options0, Out, Options) :-
+	select(request_header(Name=Value), Options0, Options1), !,
+	format(Out, '~w: ~w\r\n', [Name, Value]),
+	x_headers(Options1, Out, Options).
+x_headers(Options, _, Options).
 
 
 option(Option, List, Default) :-

@@ -189,6 +189,11 @@ Use an HTTP proxy to connect to the outside world.
 <DT><STRONG>user_agent</STRONG>(<VAR>+Agent</VAR>)<DD>
 Defines the value of the <CODE>User-Agent</CODE> field of the HTTP 
 header. Default is <CODE>SWI-Prolog (http://www.swi-prolog.org)</CODE>.
+
+<P>
+<DT><STRONG>request_header</STRONG>(<VAR>+Name = +Value</VAR>)<DD>
+Additional name-value parts are added in the order of appearance to the 
+HTTP request header. No interpretation is done.
 </DL>
 
 <P>Here is a simple example:
