@@ -77,7 +77,7 @@ newHTable(int buckets)
   if ( (buckets & TABLE_UNLOCKED) )
     ht->mutex = NULL;
   else
-  { ht->mutex     = allocHeap(sizeof(*ht->mutex));
+  { ht->mutex     = allocHeap(sizeof(simpleMutex));
     simpleMutexInit(ht->mutex);
   }
 #endif
@@ -94,6 +94,7 @@ destroyHTable(Table ht)
   if ( ht->mutex )
   { simpleMutexDelete(ht->mutex);
     freeHeap(ht->mutex, sizeof(*ht->mutex));
+	ht->mutex = NULL;
   }
 #endif
 
@@ -331,7 +332,7 @@ copyHTable(Table org)
   }
 #ifdef O_PLMT  
   if ( org->mutex )
-  { ht->mutex = allocHeap(sizeof(*ht->mutex));
+  { ht->mutex = allocHeap(sizeof(simpleMutex));
     simpleMutexInit(ht->mutex);
   }
 #endif
