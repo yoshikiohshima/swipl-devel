@@ -548,71 +548,71 @@ int	size[16] = {	// NB relies on sequence of JNI_XPUT_* defs
 
 //=== JNI "constants", lazily initialised by jni_init() ============================================
 
-atom_t	    JNI_atom_false;		    // false
-atom_t	    JNI_atom_true;		    // true
+static atom_t	    JNI_atom_false;		    // false
+static atom_t	    JNI_atom_true;		    // true
 
-atom_t	    JNI_atom_boolean;		    // boolean
-atom_t	    JNI_atom_char;		    // char
-atom_t	    JNI_atom_byte;		    // byte
-atom_t	    JNI_atom_short;		    // short
-atom_t	    JNI_atom_int;		    // int
-atom_t	    JNI_atom_long;		    // long
-atom_t	    JNI_atom_float;		    // float
-atom_t	    JNI_atom_double;		    // double
+static atom_t	    JNI_atom_boolean;		    // boolean
+static atom_t	    JNI_atom_char;		    // char
+static atom_t	    JNI_atom_byte;		    // byte
+static atom_t	    JNI_atom_short;		    // short
+static atom_t	    JNI_atom_int;		    // int
+static atom_t	    JNI_atom_long;		    // long
+static atom_t	    JNI_atom_float;		    // float
+static atom_t	    JNI_atom_double;		    // double
 
-atom_t	    JNI_atom_null;		    // null
-atom_t	    JNI_atom_void;		    // void
+static atom_t	    JNI_atom_null;		    // null
+static atom_t	    JNI_atom_void;		    // void
 
-functor_t   JNI_functor_at_1;		    // @(_)
-functor_t   JNI_functor_jbuf_2;		    // jbuf(_,_)
-functor_t   JNI_functor_jlong_2;	    // jlong(_,_)
-functor_t   JNI_functor_jfieldID_1;	    // jfieldID(_)
-functor_t   JNI_functor_jmethodID_1;	    // jmethodID(_)
-functor_t   JNI_functor_java_exception_2;   // java_exception(_,_)
-functor_t   JNI_functor_jpl_error_2;	    // jpl_error(_,_)
+static functor_t   JNI_functor_at_1;		    // @(_)
+static functor_t   JNI_functor_jbuf_2;		    // jbuf(_,_)
+static functor_t   JNI_functor_jlong_2;	    // jlong(_,_)
+static functor_t   JNI_functor_jfieldID_1;	    // jfieldID(_)
+static functor_t   JNI_functor_jmethodID_1;	    // jmethodID(_)
+static functor_t   JNI_functor_java_exception_2;   // java_exception(_,_)
+static functor_t   JNI_functor_jpl_error_2;	    // jpl_error(_,_)
 
 
 //=== JNI's static JVM references, lazily initialised by jni_init() ================================
 
-jclass	    c_class;	    // java.lang.Class
-jmethodID   c_getName;	    // java.lang.Class' getName()
-jclass	    str_class;	    // java.lang.String
+static jclass	    c_class;	    // java.lang.Class
+static jmethodID   c_getName;	    // java.lang.Class' getName()
+static jclass	    str_class;	    // java.lang.String
 
-jclass	    sys_class;	    // java.lang.System
-jmethodID   sys_ihc;	    // java.lang.System's identityHashCode()
+static jclass	    sys_class;	    // java.lang.System
+static jmethodID   sys_ihc;	    // java.lang.System's identityHashCode()
 
 
 //=== JPL's reusable global class object refs, initialised by jpl_ensure_jpl_init() ================
 
-jclass	    jString_c;
-jclass	    jJPLException_c;
-jclass	    jTermT_c;
-jclass	    jAtomT_c;
-jclass	    jFunctorT_c;
-jclass	    jFidT_c;
-jclass	    jPredicateT_c;
-jclass	    jQidT_c;
-jclass	    jModuleT_c;
-jclass	    jEngineT_c;
+static jclass	    jString_c;
+static jclass	    jJPLException_c;
+static jclass	    jTermT_c;
+static jclass	    jAtomT_c;
+static jclass	    jFunctorT_c;
+static jclass	    jFidT_c;
+static jclass	    jPredicateT_c;
+static jclass	    jQidT_c;
+static jclass	    jModuleT_c;
+static jclass	    jEngineT_c;
 
-jclass	    jLongHolder_c;	    
-jclass	    jPointerHolder_c;
-jclass	    jIntHolder_c;
-jclass	    jDoubleHolder_c;
-jclass	    jStringHolder_c;
-jclass	    jObjectHolder_c;
-jclass	    jBooleanHolder_c;
+static jclass	    jLongHolder_c;	    
+static jclass	    jPointerHolder_c;
+static jclass	    jIntHolder_c;
+static jclass	    jDoubleHolder_c;
+static jclass	    jStringHolder_c;
+static jclass	    jObjectHolder_c;
+static jclass	    jBooleanHolder_c;
 
 
 //=== JPL's reusable constant field IDs, set before first use by jpl_ensure_jpl_init() =============
 
-jfieldID    jLongHolderValue_f;
-jfieldID    jPointerHolderValue_f;
-jfieldID    jIntHolderValue_f;
-jfieldID    jDoubleHolderValue_f;
-jfieldID    jStringHolderValue_f;
-jfieldID    jObjectHolderValue_f;
-jfieldID    jBooleanHolderValue_f;
+static jfieldID    jLongHolderValue_f;
+static jfieldID    jPointerHolderValue_f;
+static jfieldID    jIntHolderValue_f;
+static jfieldID    jDoubleHolderValue_f;
+static jfieldID    jStringHolderValue_f;
+static jfieldID    jObjectHolderValue_f;
+static jfieldID    jBooleanHolderValue_f;
 
 
 
@@ -626,32 +626,32 @@ const char  *default_args[] = { "pl",
 
 //=== JNI global state (initialised by jni_create_jvm_c) ===========================================
 
-JavaVM		*jvm = NULL;	// non-null -> JVM successfully loaded & initialised
-JNIEnv		*env;		// if jvm is defined, then so will this be
+static JavaVM	*jvm = NULL;	// non-null -> JVM successfully loaded & initialised
+static JNIEnv	*env;		// if jvm is defined, then so will this be
 
 
 
 //=== JNI global state (hashed global refs) ========================================================
 
-HrTable		*hr_table =	NULL;	// static handle to allocated-on-demand table
-int		hr_add_count =	0;  // cumulative total of new refs interned
-int		hr_old_count =	0;  // cumulative total of old refs reused
-int		hr_del_count =	0;  // cumulative total of dead refs released
+static HrTable	*hr_table =	NULL;	// static handle to allocated-on-demand table
+static int	hr_add_count =	0;  // cumulative total of new refs interned
+static int	hr_old_count =	0;  // cumulative total of old refs reused
+static int	hr_del_count =	0;  // cumulative total of dead refs released
 
 
 //=== JPL global state, initialised by jpl_ensure_jpl_init() or jpl_ensure_jvm_init() ==============
 
-int		jpl_status =	JPL_INIT_RAW;  // neither JPL nor PVM initialisation has occurred
-jobject		dia =		NULL;  // default init args (after jpl init, until pvm init)
-jobject		aia =		NULL;  // actual init args (after pvm init)
-PL_engine_t	*engines =	NULL;  // handles of the pooled Prolog engines
-pthread_mutex_t engines_mutex = PTHREAD_MUTEX_INITIALIZER;  // for controlling pool access
-pthread_cond_t	engines_cond =	PTHREAD_COND_INITIALIZER;  // for controlling pool access
+static int		jpl_status =	JPL_INIT_RAW;  // neither JPL nor PVM initialisation has occurred
+static jobject		dia =		NULL;  // default init args (after jpl init, until pvm init)
+static jobject		aia =		NULL;  // actual init args (after pvm init)
+static PL_engine_t	*engines =	NULL;  // handles of the pooled Prolog engines
+static pthread_mutex_t	engines_mutex = PTHREAD_MUTEX_INITIALIZER;  // for controlling pool access
+static pthread_cond_t	engines_cond =	PTHREAD_COND_INITIALIZER;  // for controlling pool access
 
 
 //=== common functions =============================================================================
 
-char *
+static char *
 jpl_c_lib_version()
     {
     static char v[100]; // version string
@@ -673,7 +673,7 @@ jpl_c_lib_version()
 
 // ...
 //
-foreign_t
+static foreign_t
 jpl_c_lib_version_1_plc(
     term_t	ta
     )
@@ -689,7 +689,7 @@ jpl_c_lib_version_1_plc(
 
 // ...
 //
-foreign_t
+static foreign_t
 jpl_c_lib_version_4_plc(
     term_t	tmajor,
     term_t	tminor,
@@ -707,13 +707,13 @@ jpl_c_lib_version_4_plc(
 
 //=== JNI function prototypes (to resolve unavoidable forward references) ==========================
 
-int	    jni_hr_add(jobject,int*);
-int	    jni_hr_del(int);
+static int	    jni_hr_add(jobject,int*);
+static int	    jni_hr_del(int);
 
 
 //=== JNI functions (NB first 6 are cited in macros used subsequently) =============================
 
-bool
+static bool
 jni_tag_to_iref(
     atom_t	a,
     int		*iref
@@ -724,7 +724,7 @@ jni_tag_to_iref(
     }
 
 
-bool
+static bool
 jni_iref_to_tag(
     int		iref,
     atom_t	*a
@@ -739,7 +739,7 @@ jni_iref_to_tag(
     }
 
 
-bool
+static bool
 jni_object_to_iref(
     jobject	obj,	    // a newly returned JNI local ref
     int		*iref	    // gets an integerised, canonical, global equivalent
@@ -766,7 +766,7 @@ jni_object_to_iref(
 
 
 // retract all jpl_iref_type_cache(Iref,_) facts
-bool
+static bool
 jni_tidy_iref_type_cache(
     int		iref
     )
@@ -785,7 +785,7 @@ jni_tidy_iref_type_cache(
 
 
 // could merge this into jni_hr_del() ?
-bool
+static bool
 jni_free_iref(		    // called indirectly from agc hook when a possible iref is unreachable
     int		iref
     )
@@ -807,7 +807,7 @@ jni_free_iref(		    // called indirectly from agc hook when a possible iref is u
     }
 
 
-bool
+static bool
 jni_string_to_atom(	// called from the JNI_jobject_to_term(J,T) macro
     jobject	obj,
     atom_t	*a
@@ -821,7 +821,7 @@ jni_string_to_atom(	// called from the JNI_jobject_to_term(J,T) macro
     }
 
 
-bool
+static bool
 jni_object_to_hash(
     jobject	obj,	// MUST BE a valid non-null reference to a Java object
     int		*hash	// gets obj's System.identityHashCode()
@@ -842,7 +842,7 @@ jni_object_to_hash(
 // is currently called by jpl_tag_to_type/2, jpl_cache_type_of_object/2
 // jpl_tag_to_type/2 is called by jpl_object_to_type/2, jpl_ref_to_type/2
 //
-foreign_t
+static foreign_t
 jni_tag_to_iref_plc(
     term_t	tt,
     term_t	ti
@@ -862,7 +862,7 @@ jni_tag_to_iref_plc(
 // and is called just before each redundant atom is expunged from the dict
 // NB need to be able to switch this on and off from Prolog...
 //
-bool
+static bool
 jni_atom_freed(
     atom_t	a
     )
@@ -915,7 +915,7 @@ jni_atom_freed(
 %T jni_hr_info( -term, -term, -term, -term)
  */
 
-foreign_t
+static foreign_t
 jni_hr_info_plc(    // implements jni_hr_info/4
     term_t	t1, // -integer:       # object references currently in hash table
     term_t	t2, // -integer: total # object references so far added
@@ -932,7 +932,7 @@ jni_hr_info_plc(    // implements jni_hr_info/4
 
 // unifies t2 with a Prolog term which represents the contents of the hashtable slot
 //
-bool
+static bool
 jni_hr_table_slot(
     term_t	t2,
     HrEntry	*slot
@@ -963,7 +963,7 @@ jni_hr_table_slot(
  */
 // unifies t with a list of hash table slot representations
 //
-foreign_t
+static foreign_t
 jni_hr_table_plc(
     term_t	t
     )
@@ -985,7 +985,7 @@ jni_hr_table_plc(
     
 // an empty table of length is successfully created, where none was before
 //
-bool
+static bool
 jni_hr_create(
     int		length	    // required # slots in table
     )
@@ -1021,7 +1021,7 @@ jni_hr_create(
 
 // an empty table of some default length is successfully created, where none was before
 //
-bool
+static bool
 jni_hr_create_default()
     {
 
@@ -1031,7 +1031,7 @@ jni_hr_create_default()
 
 // ep must point to a chain of zero or more entries; they are freed
 //
-void
+static void
 jni_hr_free_chain_entries(
     HrEntry	*ep
     )
@@ -1047,7 +1047,7 @@ jni_hr_free_chain_entries(
 
 // table t is emptied
 //
-void
+static void
 jni_hr_free_table_chains(
     HrTable	*t
     )
@@ -1065,7 +1065,7 @@ jni_hr_free_table_chains(
 
 // all dynamic space used by the pointed-to table is freed
 //
-bool
+static bool
 jni_hr_free_table(
     HrTable	*t
     )
@@ -1086,7 +1086,7 @@ jni_hr_free_table(
 
 // the current table is replaced by an equivalent one with more free space
 //
-bool
+static bool
 jni_hr_rehash()
     {
     HrTable	*t0;	// old table while building new one from it
@@ -1126,7 +1126,7 @@ jni_hr_rehash()
 //   JNI_HR_ADD_FAIL -> something went wrong
 // and, in *iref, an integerised canonical global ref to the object
 //
-int
+static int
 jni_hr_add(
     jobject	lref,	// new JNI local ref from a regular JNI call 
     int		*iref	// for integerised canonical global ref
@@ -1183,7 +1183,7 @@ jni_hr_add(
 // iref corresponded to an entry in the current HashedRef table;
 // now that entry is gone, its space is recovered, counts are adjusted etc.
 //
-bool
+static bool
 jni_hr_del(
     int		iref	// a possibly spurious canonical global iref
     )
@@ -1214,7 +1214,9 @@ jni_hr_del(
     }
 
 
-void
+#if 0					/* These functions are not yet used */
+
+static void
 jni_hr_destroy()    // tidily returns to consistent "table absent" state
     {
 
@@ -1226,7 +1228,7 @@ jni_hr_destroy()    // tidily returns to consistent "table absent" state
 // this gets called OK, but I don't know the state of the JVM,
 // or what happens to a pending JNI call
 //
-void
+static void
 jvm_exit(
     jint	code
     )
@@ -1246,7 +1248,7 @@ jvm_exit(
 // this gets called OK, but I don't know the state of the JVM,
 // or what happens to a pending JNI call
 //
-void
+static void
 jvm_abort()
     {
      // term_t	    e = PL_new_term_ref();
@@ -1260,10 +1262,12 @@ jvm_abort()
     DEBUG(0, Sdprintf( "[JPL: JVM aborts]\n"));
     }
 
+#endif /*0*/
+
 
 // called once: after successful JVM creation/discovery, before any JNI calls
 //
-int
+static int
 jni_init()
     {
     jclass	lref;	    // temporary local ref, replaced by global
@@ -1312,7 +1316,7 @@ jni_init()
     }
 
 
-term_t
+static term_t
 jni_new_java_exception( // construct a Prolog exception structure java_exception/2
     const char	*m,	// to represent a caught Java exception
     atom_t	a
@@ -1331,7 +1335,7 @@ jni_new_java_exception( // construct a Prolog exception structure java_exception
     }
 
 
-term_t
+static term_t
 jni_new_jpl_error(  // construct a Prolog exception structure jpl_error/2
     const char	*m,	// to represent an exceptional condition within JSP
     atom_t	a
@@ -1352,7 +1356,7 @@ jni_new_jpl_error(  // construct a Prolog exception structure jpl_error/2
 
 // test for a raised exception; clear and report it if found
 //
-bool
+static bool
 jni_check_exception()
     {
     jobject	ej;	// the pending Java exception, if any
@@ -1419,7 +1423,7 @@ jni_check_exception()
 %T jni_byte_buf_length_to_codes( +integer, +integer, -term)
  */
 
-foreign_t
+static foreign_t
 jni_byte_buf_length_to_codes_plc(   // carefully s/chars/codes/ :-(
     term_t	tbb,
     term_t	tlen,
@@ -1473,7 +1477,7 @@ jni_byte_buf_length_to_codes_plc(   // carefully s/chars/codes/ :-(
 %T jni_param_put( +integer, +integer, +term, +integer)
  */
 
-foreign_t		// can a "user" mistake can cause this to fail?
+static foreign_t		// can a "user" mistake can cause this to fail?
 jni_param_put_plc(
     term_t	tn,	// index, as Prolog integer, of this method param (0 -> first)
     term_t	txc,	// transput code, as Prolog integer, appropriate to this param
@@ -1567,7 +1571,7 @@ jni_param_put_plc(
 // for completeness, allocates zero-length buffers too,
 // while avoiding malloc() problems
 //
-foreign_t
+static foreign_t
 jni_alloc_buffer_plc(
     term_t  txc,	// +transput code
     term_t  tlen,	// +required length (# items)
@@ -1595,7 +1599,7 @@ jni_alloc_buffer_plc(
 %T jni_free_buffer( +integer)
  */
 
-foreign_t
+static foreign_t
 jni_free_buffer_plc(
     term_t  tbp		// +pointer: a redundant buffer
     )
@@ -1613,7 +1617,7 @@ jni_free_buffer_plc(
 
 // NB simplify this routine as done for jni_params_put
 //
-foreign_t
+static foreign_t
 jni_fetch_buffer_value_plc(
     term_t  tbp,    // +pointer: an active buffer from jni_alloc_buffer/3
     term_t  ti,	    // +integer: index into buffer; 0 <= i < length
@@ -1674,7 +1678,7 @@ jni_fetch_buffer_value_plc(
 %T jni_stash_buffer_value( +integer, +integer, +integer, +term, +integer)
  */
 
-foreign_t
+static foreign_t
 jni_stash_buffer_value_plc(
     term_t  tbp,
     term_t  ti,
@@ -1748,7 +1752,7 @@ jni_stash_buffer_value_plc(
 
 
 // this isn't much use; it can't discover JDK 1.2 support...
-int
+static int
 jni_supported_jvm_version(
     int		    major,
     int		    minor
@@ -1769,7 +1773,7 @@ jni_supported_jvm_version(
     }
 
 
-int
+static int
 jni_get_created_jvm_count()
     {
     int		    n;
@@ -1782,7 +1786,7 @@ jni_get_created_jvm_count()
     }
     
 
-int
+static int
 jni_get_env()
     {
     JNIEnv	    *env0 = env;
@@ -1799,7 +1803,7 @@ jni_get_env()
 
 #define		MAX_JVM_OPTIONS 10
 
-int
+static int
 jni_create_jvm_c(
     char    *classpath
     )
@@ -1848,7 +1852,7 @@ jni_create_jvm_c(
     }
 
 
-foreign_t
+static foreign_t
 jni_supported_jvm_version_plc(	    // not as useful as I'd hoped...
     term_t	t1,
     term_t	t2
@@ -1864,7 +1868,7 @@ jni_supported_jvm_version_plc(	    // not as useful as I'd hoped...
     }
 
 
-foreign_t
+static foreign_t
 jni_get_created_jvm_count_plc(
     term_t	t1
     )
@@ -1874,7 +1878,7 @@ jni_get_created_jvm_count_plc(
     }
 
 
-int
+static int
 jni_create_jvm(
     char	*cp
     )
@@ -1905,7 +1909,7 @@ jni_create_jvm(
  */
 // is this useful? dangerous? redundant?
 //
-foreign_t
+static foreign_t
 jni_create_jvm_plc(	// maps jni_create_jvm() into Prolog
     term_t  a1,
     term_t  a2
@@ -1931,7 +1935,7 @@ jni_create_default_jvm()
 /*
 %T jni_ensure_jvm
  */
-foreign_t
+static foreign_t
 jni_ensure_jvm_plc()
     {
 
@@ -1946,7 +1950,7 @@ jni_ensure_jvm_plc()
 /*
 %T jni_void( +integer)
  */
-foreign_t
+static foreign_t
 jni_void_0_plc( // C identifiers distinguished _0_ etc, Prolog name is overloaded
     term_t	tn
     )
@@ -1978,7 +1982,7 @@ jni_void_0_plc( // C identifiers distinguished _0_ etc, Prolog name is overloade
 /*
 %T jni_void( +integer, +term)
  */
-foreign_t
+static foreign_t
 jni_void_1_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1	// +Arg1
@@ -2027,7 +2031,7 @@ jni_void_1_plc(
 /*
 %T jni_void( +integer, +term, +term)
  */
-foreign_t
+static foreign_t
 jni_void_2_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -2088,7 +2092,7 @@ jni_void_2_plc(
 /*
 %T jni_void( +integer, +term, +term, +term)
  */
-foreign_t
+static foreign_t
 jni_void_3_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -2325,7 +2329,7 @@ jni_void_3_plc(
 /*
 %T jni_void( +integer, +term, +term, +term, +term)
  */
-foreign_t
+static foreign_t
 jni_void_4_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -2513,7 +2517,7 @@ jni_void_4_plc(
 /*
 %T jni_func( +integer, -term)
  */
-foreign_t
+static foreign_t
 jni_func_0_plc(
     term_t	tn,	// +FuncIndex
     term_t	tr	// -Result
@@ -2559,7 +2563,7 @@ jni_func_0_plc(
 /*
 %T jni_func( +integer, +term, -term)
  */
-foreign_t
+static foreign_t
 jni_func_1_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -2681,7 +2685,7 @@ jni_func_1_plc(
 /*
 %T jni_func( +integer, +term, +term, -term)
  */
-foreign_t
+static foreign_t
 jni_func_2_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -2903,7 +2907,7 @@ jni_func_2_plc(
 /*
 %T jni_func( +integer, +term, +term, +term, -term)
  */
-foreign_t
+static foreign_t
 jni_func_3_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -3111,7 +3115,7 @@ jni_func_3_plc(
 /*
 %T jni_func( +integer, +term, +term, +term, +term, -term)
  */
-foreign_t
+static foreign_t
 jni_func_4_plc(
     term_t	tn,	// +FuncIndex
     term_t	ta1,	// +Arg1
@@ -3292,7 +3296,7 @@ install()
 
 static int create_pool_engines();
 
-int
+static int
 jpl_num_initial_default_args()	// used only once, by jpl_do_jpl_init()
     {
     int		i;
@@ -3308,7 +3312,7 @@ jpl_num_initial_default_args()	// used only once, by jpl_do_jpl_init()
 //	fail to find jpl.*, jpl.fli.* classes or to convert init args to String[]: exception, FALSE
 //	all OK: TRUE
 //
-bool
+static bool
 jpl_do_jpl_init(		// to be called once only, after PL init, before any JPL calls
     JNIEnv     *env
     )
@@ -3450,7 +3454,7 @@ err:
 //	error setting up post-PVM-init JPL state:  throws exception, sets status = PVM_FAILED, returns FALSE
 //	OK:  sets status = OK, returns TRUE
 //
-bool
+static bool
 jpl_post_pvm_init(
     JNIEnv	*env,
     int		argc,
@@ -3507,7 +3511,7 @@ err:
 //	PVM is (already) initialised -> TRUE
 //	error setting up post-PVM-init JPL state -> exception
 //
-bool
+static bool
 jpl_test_pvm_init(
     JNIEnv	*env
     )
@@ -3567,7 +3571,7 @@ err:
 //	successful PVM initialisation and subsequent JPL state setup -> TRUE
 //	any error -> exception
 //
-bool
+static bool
 jpl_do_pvm_init(
     JNIEnv	*env
     )
