@@ -929,7 +929,7 @@ save_attribute(body, Name=Value, DefNS, Out, Indent, DB) :-
 	rdf_id(Name, DefNS, NameText),
 	SubIndent is Indent + 2,
 	(   rdf(Value, rdf:type, rdf:'List')
-	->  format(Out, '~N~*|<~w rdf:parseType=Collection>~n',
+	->  format(Out, '~N~*|<~w rdf:parseType="Collection">~n',
 		   [Indent, NameText]),
 	    rdf_save_list(Out, Value, DefNS, SubIndent, DB)
 	;   format(Out, '~N~*|<~w>~n',

@@ -1,3 +1,8 @@
+Apr 11, 2004
+
+  * FIXED: rdf:parseType="Collection": XML attribute value _always_ requires
+    quotes.  Maarten Menken.
+
 Apr 1, 2004
 
   * FIXED: Save toplevel anonymous resources unless anon(false) is provided
