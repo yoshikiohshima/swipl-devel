@@ -247,7 +247,9 @@ machine interpreter with the toplevel goal.
 
 static void
 resetProlog()
-{ emptyStacks();
+{
+  if ( !LD->gvar.nb_vars )		/* we would loose nb_setval/2 vars */
+    emptyStacks();
 
 #ifdef O_LIMIT_DEPTH
   depth_limit   = (unsigned long)DEPTH_NO_LIMIT;
