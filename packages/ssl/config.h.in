@@ -15,6 +15,9 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Define of h_errno is provided */
+#undef HAVE_H_ERRNO
+
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #undef HAVE_LIBCRYPTO
 

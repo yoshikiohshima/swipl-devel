@@ -90,6 +90,20 @@ else
   TARGETS=""
 fi
 
+AC_MSG_CHECKING(h_errno)
+AC_TRY_COMPILE(
+[
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+],
+[ int x = h_errno;
+], AC_DEFINE(HAVE_H_ERRNO, 1,
+	     [Define of h_errno is provided])
+   AC_MSG_RESULT(yes),
+   AC_MSG_RESULT(no))
+
 PLTARGETS=`echo $TARGETS | sed "s/4pl\.$SO/.pl/g"`
 
 AC_OUTPUT(Makefile)
