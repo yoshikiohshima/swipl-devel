@@ -138,6 +138,20 @@ Section "Documentation and Help-system"
   File pl\library\help.pl
 SectionEnd
 
+Section "Constraint Handling Rules"
+  SectionIn 1 3
+  SetOutPath $INSTDIR
+  File pl\library\chr.pl
+  File pl\library\chr\chr_runtime.pl
+  File pl\library\chr\chr_debug.pl
+  File pl\library\chr\chr_op.pl
+  File pl\library\chr\chr_translate.pl
+  File pl\library\chr\hprolog.pl
+  File pl\library\chr\pairlist.pl
+  SetOutPath $INSTDIR\doc\packages\examples
+  File /r pl\doc\packages\examples\chr
+SectionEnd
+
 Section "Demo files"
   SectionIn 1 3
   SetOutPath $INSTDIR

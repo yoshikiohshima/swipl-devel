@@ -28,8 +28,10 @@ install::
 		copy chr_op.pl "$(CHR)"
 		copy chr_translate.pl "$(CHR)"
 		copy chr_debug.pl "$(CHR)"
+		copy hprolog.pl "$(CHR)"
+		copy pairlist.pl "$(CHR)"
 		copy chr_swi.pl "$(LIBDIR)\chr.pl"
-		copy README "$(LIBDIR)\README.TXT"
+		copy README "$(CHR)\README.TXT"
 		$(MAKEINDEX)
 !ENDIF
 
@@ -46,6 +48,8 @@ uninstall::
 		del "$(CHR)\chr_runtime.pl"
 		del "$(CHR)\chr_op.pl"
 		del "$(CHR)\chr_translate.pl"
+		del "$(CHR)\hprolog.pl"
+		del "$(CHR)\pairlist.pl"
 		del "$(CHR)\chr_debug.pl"
 		del "$(CHR)\README.TXT"
 		del "$(LIBDIR)\chr.pl"
