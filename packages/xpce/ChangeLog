@@ -2,6 +2,12 @@
 			   ==============
 
 
+VERSION 6.2.24, distributed with SWI-Prolog 5.3.17
+==================================================
+
+* FIXED: editor->transpose_characters to fail if the caret is at the
+  end of the buffer instead of importing a random character.
+
 * FIXED: Bug#154 Application modal frame handling.  Holger Kanwischer. 
 
 VERSION 6.2.23, distributed with SWI-Prolog 5.3.16

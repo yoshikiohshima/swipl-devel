@@ -2528,7 +2528,7 @@ transposeCharsEditor(Editor e)
 { long caret = valInt(e->caret);
 
   MustBeEditable(e);
-  if ( caret >= 1 )
+  if ( caret >= 1 && caret < e->text_buffer->size )
   { char c1, c2;
 
     c1 = Fetch(e, caret-1);

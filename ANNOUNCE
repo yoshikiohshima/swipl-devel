@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.16/XPCE 6.2.22 development snapshot
+SWI-Prolog 5.3.17/XPCE 6.2.23 development snapshot
 
 Status
 ======
@@ -49,48 +49,39 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
     object-references.
 
 
-Brief summary of changes since 5.3.15
+Brief summary of changes since 5.3.16
 =====================================
 
 SWI-Prolog
 ----------
 
+  * Added nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
+    assignments on terms.
+
+  * Cycle safeness of the recorded database (also used by findall/3,
+    setof/3 and bagof/3).  Cycle-safe analysis of the variable structure
+    for setof/3 and bagof/3.
+
+  * Fixed string-equality testing (broken in the 5.3.x branch while
+    implementing cycle-safeness).
+
 
 Packages
 --------
 
-  * CHR: Synchronised with research version by Tom Schrijvers:
-    "The new version of the compiler contains several new optimizations, both
-    fully automatic, such as the antimonotny-based delay avoidance (see
-    http://www.cs.kuleuven.ac.be/publicaties/rapporten/cw/CW385.abs.html for
-    the technical report), and enabled by mode declarations (see CHR
-    documentation), such as hashtable-based constraint indexes."
+  * RDF: Added Namespace expansion for typed literals, added string
+    matching with patterns using literal(like, '*foo*bar').  Added
+    library(rdf_ntriples) to read W3C ntriples format files.
 
-  * SSL: Handle timeouts and thread-signals while waiting for I/O.
-    Based on behaviour abstracted from the TCP/IP socket layer.
+  * HTTP: Various patches and additions.
 
 
 Development environment
 -----------------------
 
-  * PceEmacs: fix handling of conjuctions in directives for the cross
-    referencer.
-
+  (none)
 
 INCOMPATIBILITIES
 =================
 
-  * MODIFIED: print/1 behaves as write/1 instead of writeq/1.  This
-    new behaviour is compatible to other Prolog systems and the
-    documentation.  Lourens van der Meij.  Use write_term/[2,3]
-    to get unambiguous ISO compliant printing in a specific mode.
-
-    Affected code must be updated.  
-
-  * MODIFIED: By default, symbols from shared objects are not made
-    global any longer.  The argument order of open_shared_object/3
-    has changes, though the predicate automatically reverses the
-    arguments when confronted with the old order.
-
-    This is unlikely to affect user code.  If it does, the user can
-    use open_shared_object(File, Handle, [global]) for compatibility.
+  (none)

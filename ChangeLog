@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.17 (August 2, 2004)
+===============================
+
   * ADDED: nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
     assignments on terms.
 
