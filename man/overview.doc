@@ -1081,8 +1081,12 @@ explicit request.  May be changed.
 
     \prologflagitem{generate_debug_info}{bool}{rw}
 If \const{true} (default) generate code that can be debugged using
-trace/0, spy/1, etc.  Can be set to \const{false} using the
-\cmdlineoption{-nodebug}.%
+trace/0, spy/1, etc. Can be set to \const{false} using the
+\cmdlineoption{-nodebug}. The predicate load_files/2 restores the value
+of this flag after loading a file, causing modifications to be local
+to a source-file.  Many of the libraries have
+\verb$:- set_prolog_flag(generate_debug_info, false)$ to hide their
+details from a normal trace.%
 	\footnote{In the current implementation this only causes a flag
 		  to be set on the predicate that causes children to be
 		  hidden from the debugger. The name anticipates on
