@@ -1661,10 +1661,12 @@ value:
       break;
     case 'T':
     { int i;
+      char *s;
+
       t->objtype = OBJ_TERM;
       t->object.term.len = load_int(in);
       t->object.term.record = PL_malloc(t->object.term.len);
-      char *s = (char *)t->object.term.record;
+      s = (char *)t->object.term.record;
 
       for(i=0; i<t->object.term.len; i++)
 	s[i] = Sgetc(in);
