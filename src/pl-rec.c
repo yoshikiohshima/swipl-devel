@@ -1585,8 +1585,10 @@ right_recursion:
   count++;
 
   if ( isAttVar(*t) )
-  { Word t = valPAttVar(*t);
+  { Word p = valPAttVar(*t);
     
+    assert(onStackArea(global, p));
+    t = p;
     goto right_recursion;
   } else if ( isTerm(*t) )
   { int arity = arityTerm(*t);
