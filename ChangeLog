@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.4.0 (September 21, 2004)
+==================================
+
   * ADDED: write_term/3 using option numbervars(true) writes atoms
     appearing as argument to '$VAR'(X) without quotes.  I.e.
     write_term(x('$VAR'('Foo')), [quoted(true), numbervars(true)])

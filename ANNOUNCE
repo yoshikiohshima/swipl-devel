@@ -1,25 +1,19 @@
-SWI-Prolog 5.3.21/XPCE 6.2.26 development snapshot
+SWI-Prolog 5.4.0/XPCE 6.4.0 stable release
 
-Status
-======
-  
-  * We do not anticipate more major changes to the kernel in the 5.3.x
-    development branch and Prolog programs that do not use the extensions
-    appear to run stable.
-  
+Although there are still various issues  with the current development it
+is decided to call it 5.4.0. This   version  is more stable than 5.2.13,
+the remaining issues do not  involve  core   components  and  we  do not
+anticipate incompatible changes while resolving them.
 
-Features anticipated in 5.4.x relative to 5.2.x and their status
-================================================================
 
-  * Attributed variables
-    Complete.
+New features in 5.4.x relative to 5.2.x and their status
+========================================================
+
+  * Attributed variables.
 
   * Coroutining.
-    Lacking call_residue/2.  Unclear whether this is feasible and
-    whether or not we want that.
 
   * Global variables
-    Complete.
 
   * Infinite terms (cyclic terms)
     Incomplete but useable.
@@ -29,52 +23,9 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
 	       numbervars/3, hash_term/3, findall/3, bagof/3, setof/3,
 	       recorded database.
 
-    Unsupported: write/1 (and friends, partial support),
-		 asserta/1 (and friends).
-
   * CHR constraint language support
-    Complete.  Debugger must be integrated with graphical debugger.
 
-  * Domain specific constraint libraries
-    Only integer bounds constraint (a subset if CLP(fd)).
-    If you have code available or want to develop,
-    please contact me (jan@swi-prolog.org).  The aim is to support at
-    least the popular solvers compatible to at least one other major
-    implementation.
+  * integer bounds constraint library (clp/bounds.pl) (a subset if CLP(fd)).
 
   * JPL: Integrated Java/Prolog interface package
-    First integration for Windows and Linux.  There are still many
-    configuration issues, documentation integration, some technical
-    issues (engine-pool handling in Java --> Prolog, performance and
-    API detailsin Prolog --> Java, using the new blob type for Java
-    object-references.
-
-
-Brief summary of changes since 5.3.19
-=====================================
-
-SWI-Prolog
-----------
-
-  * Minor stuff
-    
-Packages
---------
-
-  * RDF Parser: allow getting the xmlns namespace declarations to get
-    access to user-provided short names.
-
-  * Semweb: Various patches involving data corruption and crashes, mostly
-    related to removing things from the database.  With many thanks to
-    Sandro Hawke.  Added various statistics which are being used in the
-    development of a query optimizer.
-
-Development environment
------------------------
-
-  (none)
-
-INCOMPATIBILITIES
-=================
-
-  (none)
+    Does not yet support MacOS and various (notably COFF based) systems.
