@@ -18,6 +18,12 @@ suggest predicates from a keyword.
 \begin{summarylist}{ll}
 \predicatesummary{!}{0}{Cut (discard choicepoints)}
 \predicatesummary{!}{1}{Cut block. See block/3}
+\oppredsummary{#>}{2}{xfx}{700}{Greater than constraint}
+\oppredsummary{#<}{2}{xfx}{700}{Less than constraint}
+\oppredsummary{#>=}{2}{xfx}{700}{Greater or equal constraint}
+\oppredsummary{#=<}{2}{xfx}{700}{Less of equal constraint}
+\oppredsummary{#\=}{2}{xfx}{700}{Non-equal constraint}
+\oppredsummary{#=}{2}{xfx}{700}{Equality constraint}
 \oppredsummary{,}{2}{xfy}{1000}{Conjunction of goals}
 \oppredsummary{->}{2}{xfy}{1050}{If-then-else}
 \oppredsummary{*->}{2}{xfy}{1050}{Soft-cut}
@@ -51,6 +57,7 @@ suggest predicates from a keyword.
 \predicatesummary{absolute_file_name}{3}{Get absolute path name with options}
 \predicatesummary{access_file}{2}{Check access permissions of a file}
 \predicatesummary{add_import_module}{3}{Add module to the auto-import list}
+\predicatesummary{all_different}{1}{Constraint all values to be unique}
 \predicatesummary{append}{1}{Append to a file}
 \predicatesummary{apply}{2}{Call goal with additional arguments}
 \predicatesummary{apropos}{1}{\pllib{online_help} Search manual}
@@ -242,6 +249,7 @@ suggest predicates from a keyword.
 \predicatesummary{ignore}{1}{Call the argument, but always succeed}
 \predicatesummary{import}{1}{Import a predicate from a module}
 \predicatesummary{import_module}{2}{Query import modules}
+\oppredsummary{in}{2}{xfx}{700}{Define interval for variable}
 \predicatesummary{include}{1}{Include a file with declarations}
 \predicatesummary{index}{1}{Change clause indexing}
 \predicatesummary{initialization}{1}{Initialization directive}
@@ -253,6 +261,7 @@ suggest predicates from a keyword.
 \predicatesummary{is_absolute_file_name}{1}{True if arg defines an absolute path}
 \predicatesummary{is_list}{1}{Type check for a list}
 \predicatesummary{keysort}{2}{Sort, using a key}
+\predicatesummary{label}{1}{Solve constraints for variables}
 \predicatesummary{last}{2}{Last element of a list}
 \predicatesummary{leash}{1}{Change ports visited by the tracer}
 \predicatesummary{length}{2}{Length of a list}
