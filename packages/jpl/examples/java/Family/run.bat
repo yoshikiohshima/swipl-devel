@@ -1,9 +1,11 @@
 @echo off
-rem this assumes that jpl.dll is somewhere on your PATH
 call ..\env.bat
-echo JPL demo: Family
 
-java -classpath "..\..\..\jpl.jar;." Family
+if not exist Family.class (
+  echo  Compiling Family.class
+  javac Family.class
+)
+
+java Family.java
 
 pause
-

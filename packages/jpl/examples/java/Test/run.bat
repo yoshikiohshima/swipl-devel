@@ -1,8 +1,11 @@
 @echo off
-rem this assumes that jpl.dll is somewhere on your PATH
-echo JPL demo: Test
-echo.
-java -classpath "..\..\..\jpl.jar;." Test
-echo.
-pause
+call ..\env.bat
 
+if not exist Test.class (
+  echo  Compiling Test.class
+  javac Test.class
+)
+
+java Test.java
+
+pause
