@@ -16,6 +16,22 @@ Places to deal with them
 
 
 		 /*******************************
+		 *	      TESTING		*
+		 *******************************/
+
+	* Wakeup (I_ENTER, I_EXITFACT, exit_builtin)
+	* Avoid copying attvar (always make a reference)
+	* Test for attvar in assignment
+	* Systematic pass to unify operations:
+		unify()
+		unifyAtomic()
+		H_* instructions
+		B_* instructions
+		Check trailing?
+	* Check undo
+
+
+		 /*******************************
 		 *	   THE WAKE LIST	*
 		 *******************************/
 
@@ -29,10 +45,6 @@ Places to deal with them
 
 	  	wakeup(A, V, <Tail>)
 	
-
-
-
-
 
 		 /*******************************
 		 *	  GLOBAL VARIABLES	*
