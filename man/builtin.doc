@@ -154,28 +154,6 @@ expansions. \arg{Options} is a list of options using the format
 The following options are currently supported:
 
 \begin{description}
-    \termitem{if}{Condition}
-Load the file only if the specified condition is satisfied. The value
-\const{true} loads the file unconditionally, \const{changed} loads the
-file if it was not loaded before, or has been modified since it was
-loaded the last time, \const{not_loaded} loads the file if it was not
-loaded before.
-
-    \termitem{must_be_module}{Bool}
-If \const{true}, raise an error if the file is not a module file.  Used by
-use_module/[1,2].
-
-    \termitem{imports}{ListOrAll}
-If \const{all} and the file is a module file, import all public
-predicates. Otherwise import only the named predicates. Each predicate
-is refered to as <name>/<arity>. This option has no effect if the file
-is not a module file.
-
-    \termitem{silent}{Bool}
-If \const{true}, load the file without printing a message. The specified
-value is the default for all files loaded as a result of loading the
-specified files.
-
     \termitem{autoload}{Bool}
 If \const{true} (default \const{false}), indicate this load is a
 \jargon{demand} load. This implies that, depending on the setting of the
@@ -183,11 +161,44 @@ prolog-flag \const{verbose_autoload} the load-action is printed at
 level \const{informational} or \const{silent}.  See also print_message/2
 and current_prolog_flag/2.
 
+    \termitem{derived_from}{File}
+Indicate that the loaded file is derived from \arg{File}.  Used by
+make/0 to time-check and load the original file rather than the derived
+file.
+
+    \termitem{expand}{Bool}
+If \const{true}, run the filenames through expand_file_name/2 and load
+the returned files.  Default is \const{false}, except for consult/1
+which is intended for interactive use.  Flexible location of files
+is defined by file_search_path/2.
+
+    \termitem{if}{Condition}
+Load the file only if the specified condition is satisfied. The value
+\const{true} loads the file unconditionally, \const{changed} loads the
+file if it was not loaded before, or has been modified since it was
+loaded the last time, \const{not_loaded} loads the file if it was not
+loaded before.
+
+    \termitem{imports}{ListOrAll}
+If \const{all} and the file is a module file, import all public
+predicates. Otherwise import only the named predicates. Each predicate
+is refered to as <name>/<arity>. This option has no effect if the file
+is not a module file.
+
+    \termitem{must_be_module}{Bool}
+If \const{true}, raise an error if the file is not a module file.  Used by
+use_module/[1,2].
+
     \termitem{qcompile}{Bool}
 If this call appears in a directive of a file that is compiled into
 Quick Load Format using qcompile/1 and this flag is \const{true}, the
 contents of the argument files are included in the \fileext{qlf} file
 instead of the loading directive.
+
+    \termitem{silent}{Bool}
+If \const{true}, load the file without printing a message. The specified
+value is the default for all files loaded as a result of loading the
+specified files.
 
     \termitem{stream}{Input}
 This SWI-Prolog extension compiles the data from the stream
@@ -197,11 +208,6 @@ well as remove all clauses if the data is re-consulted.
 
 This option is added to allow compiling from non-file locations such as
 databases, the web, the \jargon{user} (see consult/1) or other servers.
-
-    \termitem{derived_from}{File}
-Indicate that the loaded file is derived from \arg{File}.  Used by
-make/0 to time-check and load the original file rather than the derived
-file.
 \end{description}
 
 The load_files/2 predicate can be hooked to load other data or data from
