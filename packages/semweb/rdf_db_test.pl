@@ -7,6 +7,7 @@
 
 :- asserta(file_search_path(foreign, '.')).
 :- use_module('rdf_db').
+:- use_module(library(xsdp_types)).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RDF-DB test file.  A test is a clause of the form:
@@ -64,7 +65,10 @@ save_reload :-
 	tmp_file(rdf, File),
 	rdf_save(File),
 	rdf_reset_db,
-	rdf_load(File, [base_uri([])]),		% do not qualify
+	rdf_load(File,
+		 [ base_uri([]),	% do not qualify
+		   convert_typed_literal(xsdp_convert)
+		 ]),
 	delete_file(File).
 
 
@@ -123,7 +127,11 @@ typed(save_db) :-
 	findall(X, rdf(x, a, literal(X)), TV2),
 	TV2 == TVs.
 typed(save) :-
-	findall(type(T,V), (data(T, V), T \== term), TVs),
+	findall(type(T,V),
+		( data(T, V),
+		  T \== term,
+		  V \== ''
+		), TVs),
 	forall(member(Value, TVs),
 	       rdf_assert(x, a, literal(Value))),
 	save_reload,
