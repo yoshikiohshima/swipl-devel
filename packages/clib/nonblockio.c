@@ -389,7 +389,7 @@ doRequest(plsocket *s)
       if ( s->w32_flags & FD_CONNECT )
       { s->w32_flags &= ~FD_CONNECT;
 
-	if ( true(s->SOCK_WAITING) )
+	if ( true(s, SOCK_WAITING) )
 	{ doneRequest(s);
 	  break;
 	}
@@ -421,7 +421,7 @@ doRequest(plsocket *s)
       if ( s->w32_flags & FD_ACCEPT )
       { s->w32_flags &= ~FD_ACCEPT;
 
-	if ( true(s->SOCK_WAITING) )
+	if ( true(s, SOCK_WAITING) )
 	{ doneRequest(s);
 	  break;
 	}
@@ -451,7 +451,7 @@ doRequest(plsocket *s)
       if ( s->w32_flags & (FD_READ|FD_CLOSE) )
       { s->w32_flags &= ~FD_READ;
 
-	if ( true(s->SOCK_WAITING) )
+	if ( true(s, SOCK_WAITING) )
 	{ doneRequest(s);
 	  break;
 	}
@@ -477,7 +477,7 @@ doRequest(plsocket *s)
       { int n;
 	s->w32_flags &= ~FD_WRITE;
 
-	if ( true(s->SOCK_WAITING) )
+	if ( true(s, SOCK_WAITING) )
 	{ doneRequest(s);
 	  break;
 	}
