@@ -70,7 +70,7 @@
 :- op(750, xfy,user:(#=>)).
 :- op(750, yfx,user:(#<=)).
 :- op(700, xfx,user:(#>)).
-:- op(700,xfx,user:(#<)).
+:- op(700, xfx,user:(#<)).
 :- op(700,xfx,user:(#>=)).
 :- op(700,xfx,user:(#=<)).
 :- op(700,xfx,user:(#=)).
