@@ -206,7 +206,7 @@ portray_clause(Term) :-
 	portray_clause(Out, Term).
 
 portray_clause(Stream, Term) :-
-	\+ \+ ( numbervars(Term, '$VAR', 0, _), 
+	\+ \+ ( numbervars(Term, 0, _), 
 		do_portray_clause(Stream, Term)
 	      ).
 
