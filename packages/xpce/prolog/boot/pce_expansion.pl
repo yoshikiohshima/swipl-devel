@@ -756,9 +756,20 @@ pce_summary(List, string(List)).
 
 term_names(_, []) :- !.
 term_names(Class, Selectors) :-
+	check_term_selectors(Selectors),
 	VectorTerm =.. [vector|Selectors],
 	add_attribute(Class, directive,
 		      send(@class, term_names, new(VectorTerm))).
+
+
+check_term_selectors([]).
+check_term_selectors([H|T]) :-
+	(   atom(H)
+	->  true
+	;   pce_error(bad_term_argument(H)),
+	    fail
+	),
+	check_term_selectors(T).
 
 
 		 /*******************************
