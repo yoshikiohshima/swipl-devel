@@ -507,7 +507,7 @@ int		iswin32s(void);
 
 /* pl-prims.c */
 word		pl_notunify(term_t t1, term_t t2);
-int		compareStandard(Word t1, Word t2 ARG_LD);
+int		compareStandard(Word t1, Word t2, int eq ARG_LD);
 word		pl_setarg(term_t n, term_t term, term_t arg);
 int		lengthList(term_t list, int errors);
 word		pl_univ(term_t t, term_t l);

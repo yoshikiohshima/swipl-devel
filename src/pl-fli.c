@@ -404,7 +404,7 @@ PL_compare(term_t t1, term_t t2)
   Word p1 = valHandleP(t1);
   Word p2 = valHandleP(t2);
 
-  return compareStandard(p1, p2 PASS_LD);	/* -1, 0, 1 */
+  return compareStandard(p1, p2, FALSE PASS_LD);	/* -1, 0, 1 */
 }
 
 

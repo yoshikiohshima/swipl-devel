@@ -145,10 +145,10 @@ typedef struct
 } ITEM;
 
 #ifndef COMPARE
-#define COMPARE(x,y) compareStandard((x)->term, (y)->term PASS_LD)
+#define COMPARE(x,y) compareStandard((x)->term, (y)->term, FALSE PASS_LD)
 #endif
 #ifndef COMPARE_KEY
-#define COMPARE_KEY(x,y) compareStandard((x)->key, (y)->key PASS_LD)
+#define COMPARE_KEY(x,y) compareStandard((x)->key, (y)->key, FALSE PASS_LD)
 #endif
 #ifndef FREE
 #define FREE(x) \

@@ -283,70 +283,6 @@ PRED_IMPL("hash_term", 2, hash_term, 0)
 
 
 		/********************************
-		*           EQUALITY            *
-		*********************************/
-
-static word
-_pl_equal(register Word t1, register Word t2 ARG_LD)
-{ int arity;
-
-right_recursive:
-  deRef(t1);
-  deRef(t2);
-
-  if ( isVar(*t1) )
-  { if (t1 == t2)
-      succeed;
-    fail;
-  }
-
-  if (*t1 == *t2)
-    succeed;
-
-  if ( isIndirect(*t1) )
-  { if ( isIndirect(*t2) )
-      return equalIndirect(*t1, *t2);
-    fail;
-  }
-
-  if (!isTerm(*t1) || !isTerm(*t2) ||
-       functorTerm(*t1) != functorTerm(*t2) )
-    fail;
-
-  arity = arityFunctor(functorTerm(*t1));
-  t1 = argTermP(*t1, 0);
-  t2 = argTermP(*t2, 0);
-  if ( arity == 0 )
-    succeed;
-  for(; --arity > 0; t1++, t2++)
-    TRY(_pl_equal(t1, t2 PASS_LD));
-  goto right_recursive;
-
-  succeed;
-}
-
-
-static
-PRED_IMPL("==", 2, equal, 0)
-{ PRED_LD
-  Word p1 = valTermRef(A1);
-  Word p2 = p1+1;
-
-  return _pl_equal(p1, p2 PASS_LD);
-}
-
-
-static
-PRED_IMPL("\\==", 2, nonequal, 0)
-{ PRED_LD
-  Word p1 = valTermRef(A1);
-  Word p2 = p1+1;
-
-  return _pl_equal(p1, p2 PASS_LD) ? FALSE : TRUE;
-}
-
-
-		/********************************
 		*        STANDARD ORDER         *
 		*********************************/
 
@@ -380,7 +316,10 @@ compareStrings(word w1, word w2 ARG_LD)
 }
 
 
-/*  Rules:
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+compareStandard(Word p1, Word p2, int eq)
+
+    Rules:
 
     Var @< AttVar @< Number @< Atom @< String < Term
     
@@ -390,14 +329,17 @@ compareStrings(word w1, word w2 ARG_LD)
     number:	value
     Term:	arity / alphabetically / recursive
 
- ** Tue Apr 26 16:25:50 1988  jan@swivax.UUCP (Jan Wielemaker)  */
+If eq == TRUE, only test for equality. In this case expensive inequality
+tests (alphabetical order) are skipped and the call returns NOTEQ.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define LESS -1
-#define EQUAL  0
+#define LESS    -1
+#define EQUAL    0
 #define GREATER  1
+#define NOTEQ    2
 
 int
-compareStandard(Word p1, Word p2 ARG_LD)
+compareStandard(Word p1, Word p2, int eq ARG_LD)
 { word w1, w2;
   int t1, t2;
 
@@ -417,7 +359,7 @@ tail_recursion:
   t2 = tag(w2);
 
   if ( t1 != t2 )
-  { if ( !trueFeature(ISO_FEATURE) )
+  { if ( !trueFeature(ISO_FEATURE) && !eq )
     { if ( t1 == TAG_INTEGER && t2 == TAG_FLOAT )
       { real f1 = (real)valInteger(w1);
 	real f2 = valReal(w2);
@@ -452,9 +394,9 @@ tail_recursion:
       return f1 < f2 ? LESS : f1 == f2 ? EQUAL : GREATER;
     }
     case TAG_ATOM:
-      return compareAtoms(w1, w2);
+      return eq ? NOTEQ : compareAtoms(w1, w2);
     case TAG_STRING:
-      return compareStrings(w1, w2 PASS_LD);
+      return eq ? NOTEQ : compareStrings(w1, w2 PASS_LD);
     case TAG_COMPOUND:
     { Functor f1 = (Functor)valPtr(w1);
       Functor f2 = (Functor)valPtr(w2);
@@ -466,7 +408,7 @@ tail_recursion:
 	if ( fd1->arity != fd2->arity )
 	  return fd1->arity > fd2->arity ? GREATER : LESS;
 
-	return compareAtoms(fd1->name, fd2->name);
+	return eq ? NOTEQ : compareAtoms(fd1->name, fd2->name);
       } else
       { int arity = arityFunctor(f1->definition);
 	int rval;
@@ -474,7 +416,7 @@ tail_recursion:
 	p1 = f1->arguments;
 	p2 = f2->arguments;
 	for( ; --arity > 0; p1++, p2++ )
-	{ if ((rval = compareStandard(p1, p2 PASS_LD)) != EQUAL)
+	{ if ((rval = compareStandard(p1, p2, eq PASS_LD)) != EQUAL)
 	    return rval;
 	}
         goto tail_recursion;
@@ -495,7 +437,7 @@ PRED_IMPL("compare", 3, compare, 0)
   Word p1 = valTermRef(A2);
   Word p2 = p1+1;
 
-  int val = compareStandard(p1, p2 PASS_LD);
+  int val = compareStandard(p1, p2, FALSE PASS_LD);
 
   return PL_unify_atom(A1, val < 0 ? ATOM_smaller :
 		           val > 0 ? ATOM_larger :
@@ -509,7 +451,7 @@ PRED_IMPL("@<", 2, std_lt, 0)
   Word p1 = valTermRef(A1);
   Word p2 = p1+1;
 
-  return compareStandard(p1, p2 PASS_LD) < 0 ? TRUE : FALSE;
+  return compareStandard(p1, p2, FALSE PASS_LD) < 0 ? TRUE : FALSE;
 }
 
 
@@ -519,7 +461,7 @@ PRED_IMPL("@=<", 2, std_leq, 0)
   Word p1 = valTermRef(A1);
   Word p2 = p1+1;
 
-  return compareStandard(p1, p2 PASS_LD) <= 0 ? TRUE : FALSE;
+  return compareStandard(p1, p2, FALSE PASS_LD) <= 0 ? TRUE : FALSE;
 }
 
 
@@ -529,7 +471,7 @@ PRED_IMPL("@>", 2, std_gt, 0)
   Word p1 = valTermRef(A1);
   Word p2 = p1+1;
 
-  return compareStandard(p1, p2 PASS_LD) > 0 ? TRUE : FALSE;
+  return compareStandard(p1, p2, FALSE PASS_LD) > 0 ? TRUE : FALSE;
 }
 
 
@@ -539,8 +481,32 @@ PRED_IMPL("@>=", 2, std_geq, 0)
   Word p1 = valTermRef(A1);
   Word p2 = p1+1;
 
-  return compareStandard(p1, p2 PASS_LD) >= 0 ? TRUE : FALSE;
+  return compareStandard(p1, p2, FALSE PASS_LD) >= 0 ? TRUE : FALSE;
 }
+
+		/********************************
+		*           EQUALITY            *
+		*********************************/
+
+static
+PRED_IMPL("==", 2, equal, 0)
+{ PRED_LD
+  Word p1 = valTermRef(A1);
+  Word p2 = p1+1;
+
+  return compareStandard(p1, p2, TRUE PASS_LD) == EQUAL ? TRUE : FALSE;
+}
+
+
+static
+PRED_IMPL("\\==", 2, nonequal, 0)
+{ PRED_LD
+  Word p1 = valTermRef(A1);
+  Word p2 = p1+1;
+
+  return compareStandard(p1, p2, TRUE PASS_LD) == EQUAL ? FALSE : TRUE;
+}
+
 
 		/********************************
 		*     STRUCTURAL EQUIVALENCE    *
@@ -1178,7 +1144,26 @@ pl_e_free_variables(term_t t, term_t vars)
     fail;
   }  
 }
+
+
+#if O_CYCLIC
+
+		 /*******************************
+		 *	       CYCLES		*
+		 *******************************/
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+term_cycles(+Term, -Cycles)
+is_cycle(+SubTerm, +Cycles)
+
+term_cycles(+Term, -Cycles) returns a binary tree  holding the cycles of
+Term sorted by address. The tree   is  represented as cycle(Cycle, Left,
+Right) where [] represents terminals.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
   
+#endif /*O_CYCLIC*/
 
 		 /*******************************
 		 *	    COPY TERM		*
