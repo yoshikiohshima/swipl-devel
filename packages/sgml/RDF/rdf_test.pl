@@ -112,7 +112,7 @@ test_dir(Dir, How) :-
 	format('Tests from "~w" [~w]: ', [Dir, How]),
 	atom_concat(Dir, '/*.rdf', Pattern),
 	expand_file_name(Pattern, TestFiles),
-	checklist(test(How), TestFiles),
+	maplist(test(How), TestFiles),
 	format(' done~n').
 
 test(How, File) :-

@@ -344,7 +344,7 @@ canonical_char(X, X).
 
 remove_trailing_spaces([], []).
 remove_trailing_spaces([0' |T], []) :-
-	checklist(=(0' ), T), !.
+	maplist(=(0' ), T), !.
 remove_trailing_spaces([H|T0], [H|T]) :-
 	remove_trailing_spaces(T0, T).
 

@@ -570,7 +570,7 @@ atom_handling(sub_atom-4) :-		% sharing variables
 
 atom_handling(current-1) :-
 	findall(X, current_atom(X), Atoms),
-	checklist(atom, Atoms),
+	maplist(atom, Atoms),
 	member(atom, Atoms),
 	member(testset, Atoms),
 	member('', Atoms),

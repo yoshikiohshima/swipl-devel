@@ -130,7 +130,7 @@ has_arity(A, G) :-
 %	Transform Goal into a readable format.
 
 goal_name(Goal, Bindings, String) :-
-	checklist(call, Bindings),		% Bind the variables
+	maplist(call, Bindings),		% Bind the variables
 	goal_name_(Goal, String),
 	recorda($goal_name, String),
 	fail.

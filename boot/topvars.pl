@@ -51,7 +51,7 @@ expand_query(Query, Expanded, Bindings, ExpandedBindings) :-
 
 
 print_query(Query, Bindings) :-
-	checklist(call, Bindings),
+	maplist(call, Bindings),
 	writeq(Query), write('.'), nl,
 	fail.
 print_query(_, _).
