@@ -35,7 +35,7 @@ JAVAC=@JAVAC@
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
-DOC=clib
+DOC=jpl
 TEX=$(DOC).tex
 DVI=$(DOC).dvi
 PDF=$(DOC).pdf
@@ -148,7 +148,7 @@ exjava-install::
 
 pdf-install::
 		mkdir -p $(PKGDOC)
-		$(INSTALL) -m 644 clib.pdf $(PKGDOC)
+		$(INSTALL) -m 644 $(DOC).pdf $(PKGDOC)
 
 uninstall::
 		(cd $(PLBASE)/lib/$(PLARCH) && rm -f $(TARGETS))
@@ -169,7 +169,7 @@ $(PDF):		$(TEX)
 
 html:		$(TEX)
 		latex2html $(DOC)
-		mv html/index.html clib.html
+		mv html/index.html $(DOC).html
 		rm -r html
 
 $(TEX):		$(DOCTOTEX)
@@ -191,5 +191,6 @@ clean:
 distclean:	clean
 		rm -rf autom4te.cache
 		rm -f $(TARGETS) config.cache config.h config.status Makefile
-		rm -f clib.aux clib.log clib.out clib.toc
+		rm -f $(DOC).aux $(DOC).log $(DOC).out $(DOC).toc
 		rm -rf html
+
