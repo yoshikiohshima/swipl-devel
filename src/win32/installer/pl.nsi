@@ -35,7 +35,7 @@ InstType "Full"					# 3
 Page license
 Page components
 Page directory
-Page custom SetCustom ": Installation options"
+Page custom SetCustom "" ": Installation options"
 Page instfiles
 
 Section "Base system (required)"
