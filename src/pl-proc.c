@@ -2067,8 +2067,9 @@ pl_set_predicate_attribute(term_t pred,
        (att & PROC_DEFINED) &&
        false(def, FILE_ASSIGNED) &&
        ReadingSource )
-  { DEBUG(2, Sdprintf("Associating %s to %s\n",
-		      predicateName(def), PL_atom_chars(source_file_name)));
+  { DEBUG(2, Sdprintf("Associating %s to %s (%p)\n",
+		      predicateName(def), PL_atom_chars(source_file_name),
+		      def));
     addProcedureSourceFile(lookupSourceFile(source_file_name), proc);
 
     if ( SYSTEM_MODE )
@@ -2614,7 +2615,8 @@ startConsult(SourceFile f)
 	  GD->procedures.active_marked--;
 	}
 
-	clear(def, FILE_ASSIGNED);
+	if ( false(def, MULTIFILE) )
+	  clear(def, FILE_ASSIGNED);
       }
       freeHeap(cell, sizeof(struct list_cell));
     }

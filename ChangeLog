@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: debug/nondebug issues with multifile predicates (causing
+    gtrace/0 to trace itself).  David Reitter.
+
   * MODIFIED: listing/1 throws exception if the target cannot be
     found (Enhancement#143).  Holger Kanwischer.
 
