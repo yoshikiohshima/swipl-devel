@@ -825,11 +825,11 @@ abolishProcedure(Procedure proc, Module module)
 	endCritical;
 	succeed;
       } else				/* dynamic --> static */
-      { setDynamicProcedure(proc, FALSE);
-	if ( true(def, NEEDSCLAUSEGC|NEEDSREHASH) )
-	{ registerDirtyDefinition(def);
-	  def->references = 0;
-	}
+      { UNLOCKDYNDEF(def);		/* release private lock */
+	setDynamicProcedure(proc, FALSE);
+	endCritical;
+
+	succeed;
       }
     } else if ( true(def, NEEDSCLAUSEGC) )
     { registerDirtyDefinition(def);
