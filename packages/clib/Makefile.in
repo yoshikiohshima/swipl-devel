@@ -69,8 +69,6 @@ files.@SO@:	$(FILESOBJ)
 rlimit.@SO@:	$(RLIMITOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(RLIMITOBJ) $(LIBS)
 
-check::
-
 install:	$(TARGETS) $(LIBPL)
 		mkdir -p $(PLBASE)/lib/$(PLARCH)
 		for f in $(TARGETS); do \
@@ -96,6 +94,17 @@ uninstall::
 		(cd $(PLBASE)/lib/$(PLARCH) && rm -f $(TARGETS))
 		(cd $(PLBASE)/library && rm -f $(LIBPL))
 		$(PL) -f none -g make -t halt
+
+################################################################
+# Testing
+################################################################
+
+check:		check-socket
+
+
+check-socket::
+		$(PL) -q -f testsocket.pl -F none -g tcp_test,halt -t 'halt(1)'
+
 
 ################################################################
 # Documentation
