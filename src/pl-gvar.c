@@ -187,6 +187,7 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
 { PRED_LD
   atom_t name;
   Word p;
+  word w;
   Symbol s;
 
   if ( !PL_get_atom_ex(A1, &name) )
@@ -196,17 +197,31 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
   { LD->gvar.nb_vars = newHTable(32|TABLE_UNLOCKED);
   }
 
+  requireStack(global, sizeof(word));
   p = valTermRef(A2);
   deRef(p);
+  w = *p;
+
+  if ( isVar(w) )
+  { if ( onStackArea(local, p) )
+    { Word p2 = allocGlobal(1);
+
+      setVar(*p2);
+      w = *p = makeRef(p2);
+      Trail(p);
+    } else
+    { w = makeRef(p);
+    }
+  }
 
   if ( (s=lookupHTable(LD->gvar.nb_vars, (void*)name)) )
-  { s->value = (void*)*p;
+  { s->value = (void*)w;
   } else
-  { addHTable(LD->gvar.nb_vars, (void*)name, (void*)*p);
+  { addHTable(LD->gvar.nb_vars, (void*)name, (void*)w);
     PL_register_atom(name);
   }
 
-  if ( storage(*p) == STG_GLOBAL )
+  if ( storage(w) == STG_GLOBAL )
     freezeGlobal(PASS_LD1);
 
   succeed;
@@ -227,10 +242,7 @@ PRED_IMPL("nb_getval", 2, nb_getval, 0)
     if ( s )
     { word w = (word)s->value;
 
-      if ( !isVar(w) )
-	return unify_ptrs(valTermRef(A2), &w PASS_LD);
-
-      succeed;
+      return unify_ptrs(valTermRef(A2), &w PASS_LD);
     }
   }
 
