@@ -20,12 +20,12 @@ EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
 
 all:		chr_translate.pl
 
-chr_translate:	chr_translate.chr
+chr_translate.pl:	chr_translate.chr
 		$(PL) -q -f chr_swi_bootstrap.pl \
-		      -g "chr_compile_step1('$<','$@'),halt" \
+		      -g "chr_compile_step1('chr_translate.chr', 'chr_translate.pl' ), halt" \
 		      -t 'halt(1)'
 		$(PL) -q -f chr_swi_bootstrap.pl \
-		      -g "chr_compile_step2('$<','$@'),halt" \
+		      -g "chr_compile_step2('chr_translate.chr', 'chr_translate.pl'), halt" \
 		      -t 'halt(1)'
 
 
