@@ -235,7 +235,7 @@ SectionEnd
 Section "SSL Interface"
   SectionIn 1 3
   SetOutPath $INSTDIR\bin
-  File pl\bin\ssl.dll
+  File pl\bin\ssl4pl.dll
   SetOutPath $INSTDIR\library
   File pl\library\ssl.pl
   SetOutPath $INSTDIR\doc\packages
@@ -321,6 +321,7 @@ Section "C Debugging Symbols (.pdb files)"
   File pl\bin\sgml2pl.pdb
   File pl\bin\socket.pdb
   File pl\bin\time.pdb
+  File pl\bin\ssl4pl.pdb
 SectionEnd
 
 Section "Sources for system predicates"
