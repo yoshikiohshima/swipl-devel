@@ -1,0 +1,15 @@
+CHR For Prolog
+
+Files and their roles:
+
+	# chr.pl
+	CHR runtime support library.
+
+	# chr_op.pl
+	Include file containing the operator declaractions
+
+	# chr_translate.pl
+	Core translation module.  Defined chr_translate/2.	
+
+	# chr_swi.pl
+	Hook the CHR compiler into the SWI compiler
