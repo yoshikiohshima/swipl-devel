@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.6/XPCE 6.2.15 development snapshot
+SWI-Prolog 5.3.7/XPCE 6.2.16 development snapshot
 
 Status
 ======
@@ -46,10 +46,11 @@ Anticipated features relative to stable 5.2.x release and their status
 		 (and friends, partial support), asserta/1 (and friends).
 
   * CHR constraint language support
-    Lacking some options and a debugger.
+    Complete
 
   * Domain specific constraint libraries
-    Not yet available.  If you have code available or want to develop,
+    Only integer bounds constraint (a subset if CLP(fd)).
+    If you have code available or want to develop,
     please contact me (jan@swi-prolog.org).  The aim is to support at
     least the popular solvers compatible to at least one other major
     implementation.
@@ -61,10 +62,9 @@ Brief summary of changes since 5.3.5
 SWI-Prolog
 ----------
 
-  * Fixed a bug in attributed variable handling for setof/3 and bagof/3.
+  * `Blob' interface for dealing with external references
   
-  * New library('clp/bounds.pl') realising an integer bounds constraint
-    solver.  By Tom Schrijvers.
+  * Debugger to CHR
 
 Packages
 --------
@@ -74,7 +74,10 @@ Packages
 Development environment
 -----------------------
 
-  * PceEmacs: highlight matching bracket like GNU-Emacs in language mode.
+  * PceEmacs: Fix to bracket highlighing
+
+  * Make cross-referencer deal properly with Prolog files starting
+    with #!.
 
 
 INCOMPATIBILITIES

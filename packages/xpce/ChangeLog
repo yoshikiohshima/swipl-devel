@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+VERSION 6.2.16, distributed with SWI-Prolog 5.3.7
+=================================================
+
 * FIXED: PceEmacs: make matching bracket highlighting work after
   text-modifying commands.
 

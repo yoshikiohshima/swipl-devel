@@ -7,8 +7,13 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.7 (Mar 26, 2004)
+============================
+
   * ADDED: First prototype of binary-blobs-in-atoms after
     discussion on the mailinglist.
+
+  * ADDED: CHR Debugger.  Tom Schrijvers.
 
   * FIXED: sub_atom/5 with variables sharing in the call.  Emerson.
 
