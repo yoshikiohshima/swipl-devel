@@ -107,7 +107,8 @@ chr_expand(Term, []) :-
 	assert(chr_term(File, Term)).
 chr_expand(end_of_file,
 	   [ (:- use_module(chr(chr_runtime))),
-	     (:- style_check(-discontiguous)) % no need to restore; file ends
+	     (:- style_check(-discontiguous)), % no need to restore; file ends
+	     (:- set_prolog_flag(generate_debug_info, false))
 	   | Program
 	   ]) :-
 	is_chr_file,
@@ -163,6 +164,21 @@ call_chr_translate(_, In, Out) :-
 	chr_translate(In, Out), !.
 call_chr_translate(File, _, []) :-
 	print_message(error, chr(compilation_failed(File))).
+
+
+		 /*******************************
+		 *      SYNCHRONISE TRACER	*
+		 *******************************/
+
+:- multifile user:message_hook/3.
+:- dynamic   user:message_hook/3.
+
+user:message_hook(trace_mode(OnOff), _, _) :-
+	(   OnOff == on
+	->  chr_trace
+	;   chr_notrace
+	),
+	fail.				% backtrack to other handlers
 
 
 		 /*******************************

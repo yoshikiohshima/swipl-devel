@@ -1092,10 +1092,12 @@ $consult_file_2(Absolute, Module, Import, IsModule, What, LM) :-
 	),
 	$assert_load_context_module(Id, OldModule),
 
+	current_prolog_flag(generate_debug_info, DebugInfo),
 	$style_check(OldStyle, OldStyle),	% Save style parameters
 	$open_source(Absolute, In,
 		     $load_file(In, Id, Import, IsModule, LM)),
 	$style_check(_, OldStyle),		% Restore old style
+	set_prolog_flag(generate_debug_info, DebugInfo),
 	$set_source_module(_, OldModule).	% Restore old module
 
 $load_id(stream(Id, _), Id) :- !.

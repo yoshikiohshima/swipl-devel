@@ -34,6 +34,7 @@
 	  ]).
 :- use_module(chr(chr_runtime)).
 :- use_module(library(lists)).
+:- set_prolog_flag(generate_debug_info, false).
 
 
 %	chr_show_store(+Module)

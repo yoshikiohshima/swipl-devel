@@ -613,11 +613,11 @@ traceAction(char *cmd, int port, LocalFrame frame, Choice bfr, bool interactive)
 		setPrintOptions(ATOM_print);
 		return ACTION_AGAIN;
     case 'l':	FeedBack("leap\n");
-		debugstatus.tracing = FALSE;
+    		tracemode(FALSE, NULL);
 		return ACTION_CONTINUE;
     case 'n':	FeedBack("no debug\n");
+		tracemode(FALSE, NULL);
     		debugmode(DBG_OFF, NULL);
-		debugstatus.tracing = FALSE;
 		return ACTION_CONTINUE;
     case 'g':	FeedBack("goals\n");
 		backTrace(frame, num_arg == Default ? 5 : num_arg);
