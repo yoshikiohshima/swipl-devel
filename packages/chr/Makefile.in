@@ -114,7 +114,8 @@ $(TEX):		$(DOCTOTEX)
 ################################################################
 
 clean:
-		rm -f *~ *% config.log chr.pl chr_translate.pl
+		rm -f *~ *% config.log
+		rm -f chr.pl chr_translate.pl chr_translate_bootstrap1.pl
 
 distclean:	clean
 		rm -f $(TARGETS) config.h config.cache config.status Makefile
