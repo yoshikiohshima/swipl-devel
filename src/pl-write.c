@@ -27,16 +27,42 @@
 #include "pl-ctype.h"
 #include <stdio.h>			/* sprintf() */
 
+typedef struct visited
+{ Word address;				/* we have done this address */
+  struct visited *next;			/* next already visited */
+} visited;
+
 typedef struct
 { int   flags;				/* PL_WRT_* flags */
   int   max_depth;			/* depth limit */
   int   depth;				/* current depth */
   Module module;			/* Module for operators */
   IOSTREAM *out;			/* stream to write to */
+  visited *visited;			/* visited (attributed-) variables */
 } write_options;
 
 static bool	writeTerm2(term_t term, int prec, write_options *options);
 static bool	writeTerm(term_t t, int prec, write_options *options);
+
+static Word
+address_of(term_t t)
+{ Word adr = valTermRef(t);
+
+  deRef(adr);
+  return adr;
+}
+
+
+static int
+has_visited(visited *v, Word addr)
+{ for( ; v; v=v->next )
+  { if ( v->address == addr )
+      succeed;
+  }
+
+  fail;
+}
+
 
 char *
 varName(term_t t, char *name)
@@ -256,17 +282,29 @@ writeQuoted(IOSTREAM *stream, const char *text, int len, int quote,
 static bool
 writeAttVar(term_t av, write_options *options)
 { char buf[32];
+  visited v;
   fid_t fid = PL_open_foreign_frame();
   term_t a = PL_new_term_ref();
 
   TRY(PutToken(varName(av, buf), options->out));
+  v.address = address_of(av);
+  if ( has_visited(options->visited, v.address) )
+    succeed;
+  v.next = options->visited;
+  options->visited = &v;
   Sputc('{', options->out);
   PL_get_attr(av, a);
-  TRY(writeTerm(a, 1200, options));
+  if ( !writeTerm(a, 1200, options) )
+    goto error;
   Sputc('}', options->out);
   PL_close_foreign_frame(fid);
 
+  options->visited = v.next;
   succeed;
+
+error:
+  options->visited = v.next;
+  fail;
 }
 #endif
 
@@ -661,9 +699,7 @@ pl_write_term3(term_t stream, term_t term, term_t opts)
   IOSTREAM *s;
   write_options options;
 
-  options.flags	    = 0;
-  options.max_depth = 0;
-  options.depth     = 0;
+  memset(&options, 0, sizeof(options));
 
   if ( !scan_options(opts, 0, ATOM_write_option, write_term_options,
 		     &quoted, &ignore_ops, &numbervars, &portray,
@@ -703,9 +739,8 @@ int
 PL_write_term(IOSTREAM *s, term_t term, int precedence, int flags)
 { write_options options;
 
+  memset(&options, 0, sizeof(options));
   options.flags	    = flags;
-  options.max_depth = 0;
-  options.depth     = 0;
   options.out	    = s;
   options.module    = MODULE_user;
 
@@ -721,9 +756,8 @@ do_write2(term_t stream, term_t term, int flags)
   if ( getOutputStream(stream, &s) )
   { write_options options;
 
+    memset(&options, 0, sizeof(options));
     options.flags     = flags;
-    options.max_depth = 0;
-    options.depth     = 0;
     options.out	      = s;
     options.module    = MODULE_user;
     if ( options.module && true(options.module, CHARESCAPE) )
