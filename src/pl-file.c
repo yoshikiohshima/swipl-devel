@@ -3148,7 +3148,14 @@ pl_rename_file(term_t old, term_t new)
 
   if ( PL_get_file_name(old, &o, 0) &&
        PL_get_file_name(new, &n, 0) )
-  { if ( RenameFile(o, n) )
+  { if ( SameFile(o, n) )
+    { if ( fileerrors )
+	return PL_error("rename_file", 2, "same file", ERR_PERMISSION,
+			ATOM_rename, ATOM_file, old);
+      fail;
+    }
+
+    if ( RenameFile(o, n) )
       succeed;
 
     if ( fileerrors )
