@@ -179,13 +179,18 @@ lang_string(String) -->
 	"\"", !,
 	{ atom_codes(Atom, Codes)
 	},
-	(   "-"
+	(   langsep
 	->  language(Lang),
-	    { String = literal(Atom, Lang)
+	    { String = literal(lang(Lang, Atom))
 	    }
 	;   { String = literal(Atom)
 	    }
 	).
+
+langsep -->
+	"-".
+langsep -->
+	"@".
 
 %	xml_string(String)
 %	
