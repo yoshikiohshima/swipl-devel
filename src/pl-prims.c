@@ -845,11 +845,15 @@ pl_setarg(term_t n, term_t term, term_t value)
   atom_t name;
   Word a, v;
 
-  if ( !PL_get_integer(n, &argn) ||
-       !PL_get_name_arity(term, &name, &arity) )
-    return warning("$setarg/3: instantiation fault");
+  if ( !PL_get_integer_ex(n, &argn) )
+    fail;
+  if ( argn < 0 )
+    return PL_error("arg", 3, NULL, ERR_DOMAIN,
+		    ATOM_not_less_than_zero, n);
+  if ( !PL_get_name_arity(term, &name, &arity) )
+    return PL_error("setarg", 3, NULL, ERR_TYPE, ATOM_compound, term);
   
-  if ( argn < 1 || argn > arity )
+  if ( argn > arity )
     fail;
 
   a = valTermRef(term);

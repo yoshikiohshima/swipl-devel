@@ -69,3 +69,9 @@ GNU:
 	g_link(+Callable, ?Term)
 	g_read(+Callable, ?Term)
 
+
+		 /*******************************
+		 *	       MISC		*
+		 *******************************/
+
+	* Print attvars as X{...} (Tom Schrijvers)

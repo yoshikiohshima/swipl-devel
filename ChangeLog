@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#133: setarg/3 did not throw an exception.  Holger
+    Kanwischer.
+
   * ADDED: Handle ~@ in format/[2,3].  SICStus compatibility.  Reported
     by Tom Schrijvers.
 
