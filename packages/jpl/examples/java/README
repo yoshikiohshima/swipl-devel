@@ -56,14 +56,6 @@ its folder so it can find any corresponding .pl (Prolog source) files:
 Windows users can use 'compile.bat' to (re)compile each demo, and
 'run.bat' to run it.
 
-
-Tests for the Prolog-calls-Java interface:
-------------------------------------------
-
-library(jpl) contains a predicate jpl_demo/0 which exercises the
-Prolog-calls-Java part of JPL3, displaying some SWING dialogs.
-Have a look at the source of this predicate in jpl.pl
-
 ----
 
 Paul Singleton (paul.singleton@bcs.org.uk)
