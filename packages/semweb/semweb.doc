@@ -234,6 +234,41 @@ duplicates} as one gets using \term{rdf}{Subject, _, _}.
 \end{description}
 
 
+\subsection{Predicate properties}		\label{sec:predproperty}
+
+The predicates below form an experimental interface to provide more
+reasoning inside the kernel of the rdb_db engine. Note that
+\const{symetric}, \const{inverse_of} and \const{transitive} are not yet
+supported by the rest of the engine.
+
+\begin{description}
+    \predicate{rdf_set_predicate}{2}{+Predicate, +Property}
+Define a property of the predicate.  Defined properties are listed
+with rdf_predicate_property/2.
+
+    \predicate{rdf_predicate_property}{2}{+Predicate, -Property}
+Query properties of a defined predicate.  Currently defined properties
+are given below.
+
+    \begin{description}
+	\termitem{symmetric}{Bool}
+True if the predicate is defined to be symetric.  I.e.\ 
+\mbox{\{A\} P \{B\}} implies \mbox{\{B\} P \{A\}}.
+
+	\termitem{inverse_of}{Inverse}
+True if this predicate is the inverse of \arg{Inverse}.
+
+	\termitem{transitive}{Bool}
+True if this predicate is transitive.
+
+	\termitem{triples}{Triples}
+Unify \arg{Triples} with the number of existing triples using
+this predicate as second argument.  Reporting the number of 
+triples is intended to support query optimization.
+    \end{description}
+\end{description}
+
+
 \subsection{Modifying the database}		\label{sec:rdfmodify}
 
 As depicted in \figref{modules}, there are two levels of modification.

@@ -408,7 +408,6 @@ lookup_predicate(atom_t name)
   memset(p, 0, sizeof(*p));
   p->name = name;
   p->root = p;
-  p->oldroot = NULL;
   PL_register_atom(name);
   p->next = pred_table[hash];
   pred_table[hash] = p;
@@ -1092,6 +1091,7 @@ link_triple(triple *t)
 
 ok:
   created++;
+  t->predicate->triple_count++;
   register_source(t);
 }
 
@@ -1224,6 +1224,7 @@ erase_triple(triple *t)
 	subjects--;
     }
     erased++;
+    t->predicate->triple_count--;
     unregister_source(t);
   }
 }
@@ -2978,7 +2979,8 @@ rdf_set_predicate(term_t pred, term_t option)
 }
 
 
-static functor_t predicate_key[4];
+#define PRED_PROPERTY_COUNT 5
+static functor_t predicate_key[PRED_PROPERTY_COUNT];
 
 static int
 unify_predicate_property(predicate *p, term_t option, functor_t f)
@@ -2992,11 +2994,15 @@ unify_predicate_property(predicate *p, term_t option, functor_t f)
     else
       return FALSE;
   } else if ( f == FUNCTOR_transitive1 )
-    return PL_unify_term(option, PL_FUNCTOR, f,
+  { return PL_unify_term(option, PL_FUNCTOR, f,
 			 PL_BOOL, p->transitive);
-  else
-    assert(0);
+  } else if ( f == FUNCTOR_triples1 )
+  { return PL_unify_term(option, PL_FUNCTOR, f,
+			 PL_INTEGER, p->triple_count);
+  } else
+  { assert(0);
     return FALSE;
+  }
 }
 
 
@@ -3011,6 +3017,8 @@ rdf_predicate_property(term_t pred, term_t option, control_t h)
     predicate_key[i++] = FUNCTOR_symmetric1;
     predicate_key[i++] = FUNCTOR_inverse_of1;
     predicate_key[i++] = FUNCTOR_transitive1;
+    predicate_key[i++] = FUNCTOR_triples1;
+    assert(i < PRED_PROPERTY_COUNT);
   }
 
   switch(PL_foreign_control(h))

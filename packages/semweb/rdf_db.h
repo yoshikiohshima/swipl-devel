@@ -91,6 +91,7 @@ typedef struct predicate
   int		    visited;		/* loop detection */
   struct predicate *inverse_of;		/* my inverse predicate */
   unsigned 	    transitive : 1;	/* P(a,b)&P(b,c) --> P(a,c) */
+  int		    triple_count;	/* # triples on this predicate */
 } predicate;
 
 
