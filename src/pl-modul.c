@@ -585,12 +585,13 @@ declareModule(atom_t name, SourceFile sf, int line)
 
   if ( module->file && module->file != sf)
   { term_t obj;
-    char msg[1024];
+    char msg[256];
     UNLOCK();
 
     obj = PL_new_term_ref();
     PL_put_atom(obj, name);
-    Ssprintf(msg, "Alread loaded from %s", stringAtom(module->file->name));
+    Ssprintf(msg, "Alread loaded from %s",
+	     atom_summary(module->file->name, 100));
     return PL_error("module", 2, msg, ERR_PERMISSION,
 		    ATOM_redefine, ATOM_module, obj);
   }

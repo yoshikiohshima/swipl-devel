@@ -81,7 +81,7 @@ procedureName(Procedure proc)
 }
 
 
-static const char *
+const char *
 atom_summary(atom_t name, int maxlen)
 { int len;
   const char *nm = PL_atom_nchars(name, &len);
