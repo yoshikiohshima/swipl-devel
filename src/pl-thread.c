@@ -2047,6 +2047,7 @@ static
 PRED_IMPL("thread_get_message", 2, thread_get_message, 0)
 { message_queue *q;
 
+					/* Needs lock? */
   if ( !get_message_queue(A1, &q, TRUE) )
     fail;
   
