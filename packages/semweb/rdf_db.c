@@ -804,8 +804,8 @@ update_predicate_counts(predicate *p, int which)
     DEBUG(1, Sdprintf("%s: distinct subjects (%s): %ld, objects: %ld\n",
 		      PL_atom_chars(p->name),
 		      (which == DISTINCT_DIRECT ? "rdf" : "rdfs"),
-		      p->distinct_subjects,
-		      p->distinct_objects));
+		      p->distinct_subjects[which],
+		      p->distinct_objects[which]));
   }
 
   return TRUE;
@@ -1286,6 +1286,9 @@ rehash_triples()
       freed++;
     }
   }
+
+  if ( by_none == NULL )
+    by_none_tail = NULL;
 }
 
 

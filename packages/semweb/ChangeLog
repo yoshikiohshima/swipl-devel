@@ -1,3 +1,8 @@
+Sep 2, 2004
+
+  * FIXED: Bug#182: After rdf_retractall(_,_,_) database cannot be refilled.
+    Sandro Hawke.
+
 Sep 1, 2004
 
   * FIXED: rdf_match_label(like, '*Rijn*', 'van Rijn')
