@@ -18,7 +18,10 @@ LIBS =		$(LIBS) $(JAVA_HOME)\lib\jvm.lib
 
 OBJ=		src\c\jpl.obj
 
-all:		checkenv $(PKGDLL).dll
+all:		checkenv $(PKGDLL).dll jar
+
+jar::
+		chdir src\java\jpl & $(MAKE)
 
 checkenv::
 		@if not exist "$(JAVA_HOME)\lib\jvm.lib" \
