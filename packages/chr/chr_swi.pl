@@ -164,7 +164,7 @@ read_chr_file_to_terms(Spec, Terms) :-
 	close(Fd).
 
 read_chr_stream_to_terms(Fd, Terms) :-
-	read_term(Fd, C0, [module(chr)]),
+	read_term(Fd, C0, [ module(chr) ]),
 	read_chr_stream_to_terms(C0, Fd, Terms).
 
 read_chr_stream_to_terms(end_of_file, _, []) :- !.
