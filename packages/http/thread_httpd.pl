@@ -236,9 +236,14 @@ http_worker(Options) :-
 	      set_stream(In, timeout(Timeout)),
 	      debug(server, 'Running server goal ~p on ~p -> ~p',
 		    [Goal, In, Out]),
-	      (	  server_loop(Goal, In, Out, Peer, After)
-	      ->  true
-	      ;	  format(user_error, 'FAILED~n', [])
+	      (	  catch(server_loop(Goal, In, Out, Peer, After), E, true)
+	      ->  (   var(E)
+		  ->  true
+		  ;   print_message(error, E)
+		  )
+	      ;	  print_message(error,
+				goal_failed(server_loop(Goal, In, Out,
+							Peer, After)))
 	      ),
 	      fail
 	  ),

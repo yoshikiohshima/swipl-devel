@@ -1,6 +1,8 @@
 Jun 28, 2004
 	
-  * ADDED: SSL interface to threaded HTTP server (needs documentation)
+  * ENHANCED: print server errors and continue
+
+  * ADDED: SSL interface to threaded HTTP server
 
 Jun 21, 2004
 
