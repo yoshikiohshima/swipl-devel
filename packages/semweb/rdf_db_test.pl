@@ -114,7 +114,7 @@ typed(3) :-
 	X = type(T,V),
 	findall(X, rdf(x, a, literal(X)), TV2),
 	TV2 == TVs.
-typed(save) :-
+typed(save_db) :-
 	findall(type(T,V), data(T, V), TVs),
 	forall(member(Value, TVs),
 	       rdf_assert(x, a, literal(Value))),
@@ -132,6 +132,11 @@ lang_data :-
 	rdf_assert(x, a, literal(lang(nl, 'Jan'))),
 	rdf_assert(x, a, literal(lang(en, 'John'))),
 	rdf_assert(x, a, literal('Johannes')).
+
+same_set(S1, S2) :-
+	sort(S1, Sorted1),
+	sort(S2, Sorted2),
+	Sorted1 =@= Sorted2.
 
 lang(1) :-
 	lang_data,
@@ -165,9 +170,9 @@ lang(save_db) :-
 lang(save) :-
 	lang_data,
 	save_reload,
-	X = lang(_,_),
 	findall(X, rdf(x, a, literal(X)), Xs),
-	(   Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ]
+	(   same_set(Xs,
+		     [ lang(nl, 'Jan'),  lang(en, 'John'), 'Johannes' ])
 	->  true
 	;   format(user_error, 'Xs = ~w~n', [Xs]),
 	    fail
