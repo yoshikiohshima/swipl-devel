@@ -397,7 +397,10 @@ built-in predicates that handle modules.
 This directive can only be used as the first term of a source file. It
 declares the file to be a \jargon{module file}, defining \arg{Module} and
 exporting the predicates of \arg{PublicList}. \arg{PublicList} is a
-list of name/arity pairs.
+list of predicate indicators (name/arity pairs) or operator declarations
+using the format \term{op}{Precedence, Type, Name}.  Operators
+defined in the export list are available inside the module as well as
+to modules importing this module.  See also \secref{operators}.
 
     \prefixop{module_transparent}{+Preds}
 \arg{Preds} is a comma separated list of name/arity pairs (like
@@ -487,6 +490,8 @@ modules are visible in all other modules as well.
     \item
 Quintus has the `meta_predicate/1' declaration were SWI-Prolog has the
 module_transparent/1 declaration.
+    \item
+Operator declarations are local to a module and may be exported.
 \end{itemize}
 
 The meta_predicate/1 declaration causes the compiler to tag arguments

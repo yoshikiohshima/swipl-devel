@@ -3289,14 +3289,19 @@ to write \exam{+(*(2,3),*(4,5))}.  In Prolog, a number of operators have
 been predefined. All operators, except for the comma (,) can be
 redefined by the user.  
 
-\index{operator,and modules}
-Some care has to be taken before defining new operators.  Defining too
+\index{operator,and modules}%
+Some care has to be taken before defining new operators. Defining too
 many operators might make your source `natural' looking, but at the same
-time lead to hard to understand the limits of your syntax.  To ease the
+time lead to hard to understand the limits of your syntax. To ease the
 pain, as of SWI-Prolog 3.3.0, operators are local to the module in which
-they are defined.  The module-table of the module \const{user} acts as
-default table for all modules. This global table can be modified
-explictly from inside a module:
+they are defined. Operators can be exported from modules using a term
+\term{op}{Precedence, Type, Name} in the export list as specified by
+module/2. This is an extension specific to SWI-Prolog and the adviced
+mechanism of portability is not an important concern.
+
+The module-table of the module \const{user} acts as default table for
+all modules and can be modified explictly from inside a module to
+achieve compatibility to other Prolog systems:
 
 \begin{code}
 :- module(prove,

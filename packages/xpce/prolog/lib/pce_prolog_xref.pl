@@ -634,6 +634,8 @@ assert_export(Src, [H|T]) :-
 assert_export(Src, Name/Arity) :-
 	functor(Term, Name, Arity),
 	assert(exported(Term, Src)).
+assert_export(_, op(P, A, N)) :-
+	op(P, A, N).			% should be local ...
 
 assert_dynamic(Src, (A, B)) :- !,
 	assert_dynamic(Src, A),

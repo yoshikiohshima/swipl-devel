@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: Exporting operators from modules.
+
   * ADDED: flag called generate_debug_info and commandline option -nodebug.
 
   * FIXED: Bug#140, various problems with complicated reload of files.

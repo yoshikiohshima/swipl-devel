@@ -1163,8 +1163,9 @@ $load_module(Module, Public, Import, In, File) :-
 	$set_source_module(OldModule, OldModule),
 	source_location(_File, Line),
 	$declare_module(Module, File, Line),
-	$export_list(Module, Public),
+	$export_list(Public, Module, File, Ops),
 	$ifcompiling($qlf_start_module(Module)),
+	$export_ops(Ops, Module, File),
 	$consult_stream(In, File),
 	Module:$check_export,
 	$ifcompiling($qlf_end_part),
@@ -1179,7 +1180,8 @@ $import_list(Module, Source, [Name/Arity|Rest]) :- !,
 	$import_list(Module, Source, Rest).
 $import_list(Context, Module, all) :- !,
 	export_list(Module, Exports),
-	$import_all(Exports, Context, Module).
+	$import_all(Exports, Context, Module),
+	$import_ops(Context, Module).
 
 
 $import_all([], _, _).
@@ -1189,14 +1191,53 @@ $import_all([Head|Rest], Context, Source) :-
 	$import_all(Rest, Context, Source).
 
 
-$export_list(_, []) :- !.
-$export_list(Module, [Name/Arity|Rest]) :-
+%	$import_ops(+Target, +Source)
+%	
+%	Import the operators export from Source into the module table of
+%	Target.
+
+$import_ops(To, From) :-
+	(   '$c_current_predicate'(_, From:$exported_op(_, _, _)),
+	    From:$exported_op(Pri, Assoc, Name),
+	    op(Pri, Assoc, To:Name),
+	    fail
+	;   true
+	).
+
+
+%	$export_list(+Declarations, +Module, +File, -Ops)
+%	
+%	Handle the export list of the module declaration for Module
+%	associated to File.
+
+$export_list([H|T], Module, File, Ops) :-
+	(   H = op(_,_,_)
+	->  Ops = [H|RestOps]
+	;   catch($export1(H, Module, File), E, print_message(error, E))
+	->  RestOps = Ops
+	;   print_message(error, error(type_error(export_declaration, H), _)),
+	    RestOps = Ops
+	),
+	$export_list(T, Module, File, RestOps).
+$export_list([], _, _, []).
+
+
+$export_ops([H|T], Module, File) :-
+	(   catch($export1(H, Module, File), E, print_message(error, E))
+	->  true
+	;   print_message(error, error(type_error(export_declaration, H), _))
+	),
+	$export_ops(T, Module, File).
+$export_ops([], _, _).
+
+
+$export1(Name/Arity, Module, _File) :-
 	functor(Term, Name, Arity), !,
-	catch(export(Module:Term), E, print_message(error, E)),
-	$export_list(Module, Rest).
-$export_list(Module, [Term|Rest]) :-
-	print_message(error, error(type_error(predicate_indicator, Term), _)),
-	$export_list(Module, Rest).
+	export(Module:Term).
+$export1(op(Pri, Assoc, Name), Module, File) :-
+	op(Pri, Assoc, Module:Name),
+	$store_clause($exported_op(Pri, Assoc, Name), File).
+
 
 %	$consult_stream(+Stream, +File)
 %

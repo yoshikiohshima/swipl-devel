@@ -34,6 +34,7 @@
 :- use_module(library(pce)).
 :- use_module(library(emacs_extend)).
 :- use_module(library(pce_prolog_xref)).
+:- use_module(library(lists)).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 User extension hooks.
@@ -192,6 +193,12 @@ fix_operators((:-Directive)) :- !,
 	asserta(user:message_hook(_,_,_), Ref),
 	ignore(xref_expand((:-Directive), _)),
 	erase(Ref).
+fix_operators((:- module(_, ExportedOps))) :-
+	(   member(op(P,A,N), ExportedOps),
+	    catch(op(P,A,N), _, fail),
+	    fail
+	;   true
+	).
 fix_operators(_).
 
 
@@ -657,8 +664,10 @@ colourise_declaration(Module:Name/Arity, TB,
 	colour_item(module(M), TB, PM),
 	functor(Goal, Name, Arity),
 	colour_item(goal(extern(M), Goal), TB, PG).
+colourise_declaration(op(_,_,_), TB, Pos) :-
+	colour_item(exported_operator, TB, Pos).
 colourise_declaration(_, TB, Pos) :-
-	colour_item(type_error(name_arity), TB, Pos).
+	colour_item(type_error(export_declaration), TB, Pos).
 
 
 %	colour_item(+Class, +TB, +Pos)
