@@ -26,7 +26,7 @@
 
 #define _GNU_SOURCE 1			/* get recursive mutex stuff to */
 					/* compile clean with glibc.  Can */
-					/* this to any harm? */
+					/* this do any harm? */
 #include "pl-incl.h"
 #include <stdio.h>
 #ifdef O_PLMT
@@ -496,6 +496,7 @@ initPrologThreads()
   info->w32id = GetCurrentThreadId();
 #endif
   set_system_thread_id(info);
+  init_message_queue(&PL_local_data.thread.messages);
 
   GD->statistics.thread_cputime = 0.0;
   GD->statistics.threads_created = 1;
@@ -1552,6 +1553,131 @@ freeThreadSignals(PL_local_data_t *ld)
 		 *	  MESSAGE QUEUES	*
 		 *******************************/
 
+#ifdef WIN32
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Earlier implementations used pthread-win32 condition   variables.  As we
+need to dispatch messages while waiting for a condition variable we need
+to use pthread_cond_timedwait() which is   really  complicated and SLOW.
+Below is an  alternative  emulation   of  pthread_cond_wait()  that does
+dispatch messages. It is not fair  nor   correct,  but  neither of these
+problems bothers us considering the promises we make about Win32 message
+queues. This implentation is about 250 times faster, providing about the
+same performance as on native  pthread   implementations  such as Linux.
+This work was sponsored by SSS, http://www.sss.co.nz
+
+This implementation is based on   the following, summarizing discussions
+on comp.lang.thread.
+
+Strategies for Implementing POSIX Condition Variables on Win32
+Douglas C. Schmidt and Irfan Pyarali
+Department of Computer Science
+Washington University, St. Louis, Missouri
+http://www.cs.wustl.edu/~schmidt/win32-cv-1.html
+
+It uses the second alternative, avoiding   the extra critical section as
+we assume the condition  variable  is   always  associated  to  the same
+critical section (associated to the same SWI-Prolog message queue).
+
+The resulting implementation suffers from the following problems:
+
+  * Unfairness
+    If two threads are waiting and two messages arrive on the queue it
+    is possible for one thread to consume both of them. We never
+    anticipated on `fair' behaviour in this sense in SWI-Prolog, so
+    we should not be bothered.  Nevertheless existing application may
+    have assumed fairness.
+
+  * Incorrectness
+    If two threads are waiting, a broadcast happens and a third thread
+    kicks in it is possible one of the threads does not get a wakeup.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
+static int 
+win32_cond_init(win32_cond_t *cv)
+{ cv->events[SIGNAL]    = CreateEvent(NULL, FALSE, FALSE, NULL);
+  cv->events[BROADCAST] = CreateEvent(NULL, TRUE,  FALSE, NULL);
+  cv->waiters = 0;
+
+  return 0;
+}
+
+
+static int
+win32_cond_destroy(win32_cond_t *cv)
+{ CloseHandle(cv->events[SIGNAL]);
+  CloseHandle(cv->events[BROADCAST]);
+
+  return 0;
+}
+
+
+static int 
+win32_cond_wait(win32_cond_t *cv,
+		CRITICAL_SECTION *external_mutex)
+{ int rc, last;
+
+  cv->waiters++;
+
+  LeaveCriticalSection(external_mutex);
+  rc = MsgWaitForMultipleObjects(2,
+				 cv->events,
+				 FALSE,	/* wait for either event */
+				 INFINITE,
+				 QS_ALLINPUT);
+  if ( rc == WAIT_OBJECT_0+2 )
+  { MSG msg;
+
+    while( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) )
+    { TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    }
+
+    if ( LD->pending_signals )
+    { EnterCriticalSection(external_mutex);
+      return EINTR;
+    }
+  }
+
+  EnterCriticalSection(external_mutex);
+
+  cv->waiters--;
+  last = (rc == WAIT_OBJECT_0 + BROADCAST && cv->waiters == 0);
+  if ( last )
+    ResetEvent (cv->events[BROADCAST]);
+
+  return 0;
+}
+
+
+static int 
+win32_cond_signal(win32_cond_t *cv)	/* must be holding associated mutex */
+{ if ( cv->waiters > 0 )
+    SetEvent(cv->events[SIGNAL]);
+
+  return 0;
+}
+
+
+static int 
+win32_cond_broadcast(win32_cond_t *cv)	/* must be holding associated mutex */
+{ if ( cv->waiters > 0 )
+    SetEvent(cv->events[BROADCAST]);
+
+  return 0;
+}
+
+#define cv_broadcast 	win32_cond_broadcast
+#define cv_signal    	win32_cond_signal
+#define cv_init(cv,p)	win32_cond_init(cv)
+#define cv_destroy	win32_cond_destroy
+#else /*WIN32*/
+#define cv_broadcast	pthread_cond_broadcast
+#define cv_signal	pthread_cond_signal
+#define cv_init(cv,p)	pthread_cond_init(cv, p)
+#define cv_destroy	pthread_cond_destroy
+#endif /*WIN32*/
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 This code deals with telling other threads something.  The interface:
 
@@ -1584,7 +1710,7 @@ queue_message(message_queue *queue, term_t msg)
   msgp->message = PL_record(msg);
   msgp->key     = getIndexOfTerm(msg);
   
-  pthread_mutex_lock(&queue->mutex);
+  simpleMutexLock(&queue->mutex);
 
   if ( !queue->head )
   { queue->head = queue->tail = msgp;
@@ -1598,16 +1724,16 @@ queue_message(message_queue *queue, term_t msg)
     { DEBUG(1, Sdprintf("%d of %d non-var waiters; broadcasting\n",
 			queue->waiting - queue->waiting_var,
 		        queue->waiting));
-      pthread_cond_broadcast(&queue->cond_var);
+      cv_broadcast(&queue->cond_var);
     } else
     { DEBUG(1, Sdprintf("%d var waiters; signalling\n", queue->waiting));
-      pthread_cond_signal(&queue->cond_var);
+      cv_signal(&queue->cond_var);
     }
   } else
   { DEBUG(1, Sdprintf("No waiters\n"));
   }
 
-  pthread_mutex_unlock(&queue->mutex);
+  simpleMutexUnlock(&queue->mutex);
 }
 
 
@@ -1623,64 +1749,17 @@ cleanup_get_message(void *context)
 
   ctx->queue->waiting--;
   ctx->queue->waiting_var -= ctx->isvar;
-  pthread_mutex_unlock(&ctx->queue->mutex);
+  simpleMutexUnlock(&ctx->queue->mutex);
 }
 
 #ifdef WIN32
-#include <sys/timeb.h>
-
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-dispatch_cond_wait() is like pthread_cond_wait(),  but   it  watches for
-Windows messages and signals comming through thread_signal/2. The latter
-allows us to use call_with_time_limit/2 with thread_get_message/1.
-
-Dispatching Windows messages appears necessary, at  least on NT. Without
-this, windows belonging to this thread (e.g.  the hidden window used for
-signalling) can cause other  applications  to   lock  up.  This  notably
-happens to MS-Word in Windows-NT4. A better   solution might be to avoid
-the  use  of  this  hidden  window    and   define  that  threads  using
-thread_get_message/1 should not be using windows.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
 dispatch_cond_wait(message_queue *queue)
-{ struct timeb now;
-  struct timespec timeout;
-  int rc;
-
-  for(;;)
-  { ftime(&now);
-    timeout.tv_sec  = now.time;
-    timeout.tv_nsec = (now.millitm+250) * 1000000;
-
-    switch( (rc=pthread_cond_timedwait(&queue->cond_var, &queue->mutex,
-				       &timeout)) )
-    { case ETIMEDOUT:
-      { MSG msg;
-
-	DEBUG(2, Sdprintf("Checking messages\n"));
-	if ( PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) )
-	{ TranslateMessage(&msg);
-	  DispatchMessage(&msg);
-	}
-	if ( LD->pending_signals )
-	  return EINTR;
-
-	if ( queue->head )
-	{ DEBUG(1, Sdprintf("[%d]: ETIMEDOUT: queue not empty\n",
-			    PL_thread_self()));
-	  return 0;
-	}
-
-	continue;
-      }
-      default:
-	return rc;
-    }
-  }
+{ return win32_cond_wait(&queue->cond_var, &queue->mutex);
 }
 
-#else
+#else /*WIN32*/
 
 static int
 dispatch_cond_wait(message_queue *queue)
@@ -1728,7 +1807,7 @@ dispatch_cond_wait(message_queue *queue)
   }
 }
 
-#endif
+#endif /*WIN32*/
 
 static int
 get_message(message_queue *queue, term_t msg)
@@ -1744,7 +1823,7 @@ get_message(message_queue *queue, term_t msg)
   ctx.queue = queue;
   ctx.isvar = isvar;
   pthread_cleanup_push(cleanup_get_message, (void *)&ctx);
-  pthread_mutex_lock(&queue->mutex);
+  simpleMutexLock(&queue->mutex);
 
   for(;;)
   { thread_message *msgp = queue->head;
@@ -1799,7 +1878,7 @@ get_message(message_queue *queue, term_t msg)
   }
 out:
 
-  pthread_mutex_unlock(&queue->mutex);
+  simpleMutexUnlock(&queue->mutex);
   pthread_cleanup_pop(0);
 
   return rval;
@@ -1815,7 +1894,7 @@ peek_message(message_queue *queue, term_t msg)
 
   Mark(m);
 
-  pthread_mutex_lock(&queue->mutex);
+  simpleMutexLock(&queue->mutex);
   msgp = queue->head;
 
   for( msgp = queue->head; msgp; msgp = msgp->next )
@@ -1824,14 +1903,14 @@ peek_message(message_queue *queue, term_t msg)
     PL_recorded(msgp->message, tmp);
 
     if ( PL_unify(msg, tmp) )
-    { pthread_mutex_unlock(&queue->mutex);
+    { simpleMutexUnlock(&queue->mutex);
       succeed;
     }
 
     Undo(m);
   }
      
-  pthread_mutex_unlock(&queue->mutex);
+  simpleMutexUnlock(&queue->mutex);
   fail;
 }
 
@@ -1852,18 +1931,17 @@ destroy_message_queue(message_queue *queue)
     freeHeap(msgp, sizeof(*msgp));
   }
   
-  pthread_mutex_destroy(&queue->mutex);
-  pthread_cond_destroy(&queue->cond_var);
+  simpleMutexDelete(&queue->mutex);
+  cv_destroy(&queue->cond_var);
 }
 
 
 static void
 init_message_queue(message_queue *queue)
 { memset(queue, 0, sizeof(*queue));
-  pthread_mutex_init(&queue->mutex, NULL);
-  pthread_cond_init(&queue->cond_var, NULL);
+  simpleMutexInit(&queue->mutex);
+  cv_init(&queue->cond_var, NULL);
 }
-
 
 					/* Prolog predicates */
 
