@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: at_end_of_stream/[0,1] to throw an exception if the stream
+    is at the end due to an error.
+
   * FIXED: attributed variable handling in findall/3 and friends.
     David Reitter.
 

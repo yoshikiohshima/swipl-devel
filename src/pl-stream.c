@@ -376,6 +376,7 @@ S__fillbuf(IOSTREAM *s)
       }
     } else
     { errno = EPERM;			/* no permission to select */
+      s->flags |= SIO_FERR;
       goto error;
     }
   }
