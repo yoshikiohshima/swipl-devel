@@ -107,21 +107,7 @@
 :- use_module(assoc).
 :- use_module(pairlist).
 :- use_module(library(ordsets)).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
-%% Operator Priorities
-
-?- op( 700, xfx, ::).
-?- op(1180, xfx, ==>).
-?- op(1180, xfx, <=>).
-?- op(1150, fx, constraints).
-?- op(1100, xfx, \).
-?- op(1200, xfx, @).			% values from hProlog
-?- op(1190, xfx, pragma).		% values from hProlog
-?- op( 500, yfx, #).			% values from hProlog
-%:- op(1100, xfx, '|').
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+:- include(chr_op).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
