@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.4/XPCE 6.2.14 development snapshot
+SWI-Prolog 5.3.6/XPCE 6.2.15 development snapshot
 
 Status
 ======
@@ -55,13 +55,16 @@ Anticipated features relative to stable 5.2.x release and their status
     implementation.
 
 
-Brief summary of changes since 5.3.4
+Brief summary of changes since 5.3.5
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Fixed very nasty bug in the new copy_term/2 implementation.
+  * Fixed a bug in attributed variable handling for setof/3 and bagof/3.
+  
+  * New library('clp/bounds.pl') realising an integer bounds constraint
+    solver.  By Tom Schrijvers.
 
 Packages
 --------
@@ -71,7 +74,8 @@ Packages
 Development environment
 -----------------------
 
-  (none)
+  * PceEmacs: highlight matching bracket like GNU-Emacs in language mode.
+
 
 INCOMPATIBILITIES
 =================
