@@ -5,6 +5,8 @@
 VERSION 6.2.24, distributed with SWI-Prolog 5.3.17
 ==================================================
 
+* FIXED: Drawing arrow heads on bezier curves.  Christophe Costa Florencio.
+
 * FIXED: editor->transpose_characters to fail if the caret is at the
   end of the buffer instead of importing a random character.
 
