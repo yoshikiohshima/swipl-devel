@@ -1496,7 +1496,7 @@ $translate_rule((LP-->List), H) :-
         ;   List = [X]
         ->  $t_head(LP, [X|S], S, H)
         ;   $append(List, SR, S),
-            $extend([S, SR], LP, H)
+            $extend(LP, S, SR, H)
         ).
 $translate_rule((LP-->RP), (H:-B)):-
 	$t_head(LP, S, SR, H),
@@ -1505,9 +1505,9 @@ $translate_rule((LP-->RP), (H:-B)):-
 
 $t_head((LP, List), S, SR, H) :-
 	$append(List, SR, List2), !,
-	$extend([S, List2], LP, H).
+	$extend(LP, S, List2, H).
 $t_head(LP, S, SR, H) :-
-	$extend([S, SR], LP, H).
+	$extend(LP, S, SR, H).
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1605,7 +1605,7 @@ $t_body((C->T), S, SR, (Ct->Tt)) :- !,
 $t_body((\+ C), S, S, (\+ Ct)) :- !,
 	$t_body(C, S, _, Ct).
 $t_body(T, S, SR, Tt) :-
-	$extend([S, SR], T, Tt).
+	$extend(T, S, SR, Tt).
 
 
 $t_fill(S, SR, S1, T, (T, SR=S)) :-
@@ -1613,12 +1613,43 @@ $t_fill(S, SR, S1, T, (T, SR=S)) :-
 $t_fill(_S, SR, SR, T, T).
 
 
-$extend(More, M:OldT, M:NewT) :- !,
-	$extend(More, OldT, NewT).
-$extend(More, OldT, NewT) :-
-	OldT =.. OldL,
-	$append(OldL, More, NewL),
-	NewT =.. NewL.
+%	$extend(+Head, +Extra1, +Extra2, -NewHead)
+%	
+%	Extend Head with two more arguments (on behalf DCG compilation).
+%	The solution below is one option. Using   =..  and append is the
+%	alternative. In the current version (5.3.2), the =.. is actually
+%	slightly faster, but it creates less garbage.
+
+:- dynamic  $extend_cache/4.
+:- volatile $extend_cache/4.
+
+$extend(M:OldT, A1, A2, M:NewT) :- !,
+	$extend(OldT, A1, A2, NewT).
+$extend(OldT, A1, A2, NewT) :-
+	$extend_cache(OldT, A1, A2, NewT), !.
+$extend(OldT, A1, A2, NewT) :-
+	functor(OldT, Name, Arity),
+	functor(CopT, Name, Arity),
+	NewArity is Arity+2,
+	functor(NewT, Name, NewArity),
+	$copy_args(1, Arity, CopT, NewT),
+	A1Pos is Arity+1,
+	A2Pos is Arity+2,
+	arg(A1Pos, NewT, A1C),
+	arg(A2Pos, NewT, A2C),
+	assert($extend_cache(CopT, A1C, A2C, NewT)),
+	OldT = CopT,
+	A1C = A1,
+	A2C = A2.
+
+$copy_args(I, Arity, Old, New) :-
+	I =< Arity, !,
+	arg(I, Old, A),
+	arg(I, New, A),
+	I2 is I + 1,
+	$copy_args(I2, Arity, Old, New).
+$copy_args(_, _, _, _).
+
 
 'C'([X|S], X, S).
 
@@ -1629,9 +1660,10 @@ $extend(More, OldT, NewT) :-
 phrase(RuleSet, Input) :-
 	phrase(RuleSet, Input, []).
 phrase(RuleSet, Input, Rest) :-
-	$t_body(RuleSet, S0, S, Body),
+	$strip_module(RuleSet, M, Plain),
+	$t_body(Plain, S0, S, Body),
 	Input = S0, Rest = S,
-	Body.
+	M:Body.
 
 
 		/********************************
