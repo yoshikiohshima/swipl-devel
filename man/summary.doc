@@ -109,7 +109,6 @@ suggest predicates from a keyword.
 \predicatesummary{char_type}{2}{Classify characters}
 \predicatesummary{character_count}{2}{Get character index on a stream}
 \predicatesummary{chdir}{1}{Compatibility: change working directory}
-\predicatesummary{checklist}{2}{Invoke goal on all members of a list}
 \predicatesummary{chr_show_store}{1}{List suspended CHR constraints}
 \predicatesummary{chr_trace}{0}{Start CHR tracer}
 \predicatesummary{chr_notrace}{0}{Stop CHR tracer}
@@ -289,7 +288,9 @@ suggest predicates from a keyword.
 \predicatesummary{make_fat_filemap}{1}{Win32: Create file containing non-FAT filenames}
 \predicatesummary{make_library_index}{1}{Create autoload file INDEX.pl}
 \predicatesummary{make_library_index}{2}{Create selective autoload file INDEX.pl}
-\predicatesummary{maplist}{3}{Transform all elements of a list}
+\predicatesummary{maplist}{2}{Apply predicate on all elements}
+\predicatesummary{maplist}{3}{Map elements pairwise}
+\predicatesummary{maplist}{4}{Map triples of elements}
 \predicatesummary{memberchk}{2}{Deterministic member/2}
 \predicatesummary{merge}{3}{Merge two sorted lists}
 \predicatesummary{merge_set}{3}{Merge two sorted sets}

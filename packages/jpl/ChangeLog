@@ -1,0 +1,5 @@
+May 12, 2004
+ 
+  * JW: Removed jpl_demo/0
+  * JW: Included library(lists) and removed list predicates
+  * JW: Cleanup of is_pairs/1 and is_pair/1.

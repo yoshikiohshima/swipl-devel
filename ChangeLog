@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: Renamed checklist/2 --> maplist/2 for compatibility reasons.
+    Added checklist/2 to the compatibility library.
+
+  * ADDED: Maplist/4
+
   * FIXED: Bug#152: making active dynamic predicates static using
     compile_predicates/1.  Marc Bezem.
 

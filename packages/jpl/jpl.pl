@@ -30,7 +30,6 @@
 	jpl_call/4,
 	jpl_get/3,
 	jpl_set/3,
-	jpl_demo/0,
 	jpl_test_fac/2,
 	jpl_servlet_byref/3,
 	jpl_servlet_byval/3,
@@ -1390,11 +1389,6 @@ jpl_type_slashed_package_parts([]) -->
 
 jpl_type_void(void) -->
 	"V".
-
-%------------------------------------------------------------------------------
-
-jpl_demo :-
-	write( 'JPL demos are now in jpl/examples/prolog'), nl.
 
 %------------------------------------------------------------------------------
 

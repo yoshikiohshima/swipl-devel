@@ -3837,14 +3837,23 @@ X = [1, 2, 3]
 we will phrase this as ``\arg{Predicate} is applied on \ldots''
 
 \begin{description}
-    \predicate{checklist}{2}{+Pred, +List}
+    \predicate{maplist}{2}{+Pred, +List}
 \arg{Pred} is applied successively on each element of \arg{List} until
 the end of the list or \arg{Pred} fails. In the latter case the
-checklist/2 fails.
+maplist/2 fails.%
+	\footnote{The maplist/2 predicate replaces the obsolete
+		  checklist/2 predicate.}
+
     \predicate{maplist}{3}{+Pred, ?List1, ?List2}
 Apply \arg{Pred} on all successive pairs of elements from \arg{List1}
 and \arg{List2}. Fails if \arg{Pred} can not be applied to a pair. See
 the example above.
+
+    \predicate{maplist}{4}{+Pred, ?List1, ?List2, ?List3}
+Apply \arg{Pred} on all successive triples of elements from \arg{List1},
+\arg{List2} and \arg{List3}. Fails if \arg{Pred} can not be applied to a
+triple. See the example above.
+
     \predicate{sublist}{3}{+Pred, +List1, ?List2}
 Unify \arg{List2} with a list of all elements of \arg{List1} to which
 \arg{Pred} applies.

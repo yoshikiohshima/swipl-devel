@@ -45,7 +45,8 @@
 	    flush/0,
 	    write_ln/1,
 	    proper_list/1,
-	    free_variables/2		% +Term, -Variables
+	    free_variables/2,		% +Term, -Variables
+	    checklist/2			% :Goal, +List
 	  ]).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,3 +131,13 @@ proper_list(List) :-
 
 free_variables(Term, Variables) :-
 	term_variables(Term, Variables).
+
+%	checklist(:Goal, +List)
+%	
+%	Obsolete synonym for maplist/2
+
+:- module_transparent
+	checklist/2.
+
+checklist(Goal, List) :-
+	maplist(Goal, List).
