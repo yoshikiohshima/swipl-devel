@@ -67,9 +67,17 @@ save_reload :-
 	rdf_reset_db,
 	rdf_load(File,
 		 [ base_uri([]),	% do not qualify
-		   convert_typed_literal(xsdp_convert)
+		   convert_typed_literal(convert_typed)
 		 ]),
 	delete_file(File).
+
+%	convert_typed(+Type, +Content, -Object)
+%	
+%	Convert to type(Type, PrologValue), providing the inverse of
+%	the default RDF as produced by rdf_db.pl
+
+convert_typed(Type, Content, type(Type, Value)) :-
+	xsdp_convert(Type, Content, Value).
 
 
 		 /*******************************
@@ -138,7 +146,7 @@ typed(save) :-
 	findall(X, rdf(x, a, literal(X)), TV2),
 	(   same_set(TV2, TVs)
 	->  true
-	;   format('TV2 = ~w~n', [TV2]),
+	;   format('TV2 = ~q~n', [TV2]),
 	    fail
 	).
 
@@ -193,7 +201,7 @@ lang(save) :-
 	(   same_set(Xs,
 		     [ lang(nl, 'Jan'),  lang(en, 'John'), 'Johannes' ])
 	->  true
-	;   format(user_error, 'Xs = ~w~n', [Xs]),
+	;   format(user_error, 'Xs = ~q~n', [Xs]),
 	    fail
 	).
 

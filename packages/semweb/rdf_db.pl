@@ -429,28 +429,32 @@ rdf_load_db(File) :-
 %	    	Return action taken (load, reload, none) and number
 %	    	of triples loaded from the file as well as the MD5
 %	    	digest.
+%	    	
+%	Other options are forwarded to process_rdf/3.
 
 rdf_load(Spec) :-
 	rdf_load(Spec, []).
 
-rdf_load(Spec, Options) :-
+rdf_load(Spec, Options0) :-
 	statistics(cputime, CpuOld),
-	(   select(result(Action, Triples, MD5), Options, Options1)
+	(   select(result(Action, Triples, MD5), Options0, Options1)
 	->  true
-	;   Options1 = Options
+	;   Options1 = Options0
+	),
+	(   memberchk(blank_nodes(_), Options1)
+	->  Options2 = Options1
+	;   Options2 = [ blank_nodes(share)|Options1 ]
 	),
 	(   (   Spec = '$stream'(_)
 	    ->	In = Spec
 	    ;	Spec = stream(In)
 	    )
-	->  (   memberchk(base_uri(BaseURI), Options1)
-	    ->	true
-	    ;	gensym('stream://', BaseURI)
+	->  (   memberchk(base_uri(BaseURI), Options2)
+	    ->	Options = Options2
+	    ;	gensym('stream://', BaseURI),
+		Options = [base_uri(BaseURI)|Options2]
 	    ),
-	    process_rdf(In, assert_triples,
-			[ base_uri(BaseURI),
-			  blank_nodes(share)
-			]),
+	    process_rdf(In, assert_triples, Options),
 	    rdf_statistics_(triples(BaseURI, Triples)),
 	    rdf_md5(BaseURI, MD5),
 	    assert(rdf_source(BaseURI, Modified, Triples, MD5)),
@@ -458,6 +462,7 @@ rdf_load(Spec, Options) :-
 	    Load = parsed(ParseTime),
 	    Action = load
 	;   Source = Spec,
+	    Options = Options2,
 	    absolute_file_name(Spec,
 			       [ access(read),
 				 extensions([rdf,rdfs,owl,''])
@@ -481,17 +486,11 @@ rdf_load(Spec, Options) :-
 			CacheTime >= FileTime,
 			catch(rdf_load_db(Cache), _, fail)
 		    ->  Load = cache(ParseTime)
-		    ;   process_rdf(File, assert_triples,
-				    [ base_uri(BaseURI),
-				      blank_nodes(share)
-				    ]),
+		    ;   process_rdf(File, assert_triples, Options),
 			Load = parsed(ParseTime),
 			save_cache(File, Cache)
 		    )
-		;   process_rdf(File, assert_triples,
-				[ base_uri(BaseURI),
-				  blank_nodes(share)
-				]),
+		;   process_rdf(File, assert_triples, Options),
 		    Load = parsed(ParseTime)
 		),
 		rdf_statistics_(triples(File, Triples)),
