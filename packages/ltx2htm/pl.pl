@@ -358,17 +358,17 @@ cmd(Cmd, HTML) :-
 
 
 special('Sexe', '#!').
-special('Scgt', '#>').
-special('Scge', '#>=').
-special('Sclt', '#<').
-special('Scle', '#=<').
-special('Scne', '#\=').
+special('Scgt', #>).
+special('Scge', #>=).
+special('Sclt', #<).
+special('Scle', #=<).
+special('Scne', #\=).
 special('Sceq', '#=').
-special('Sequiv', '#<=>').
-special('Slimpl', '#<=').
-special('Srimpl', '#=>').
-special('Scine', '#=\=').
-special('Scieq', '#=:=').
+special('Sequiv', #<=>).
+special('Slimpl', #<=).
+special('Srimpl', #=>).
+special('Scine', #=\=).
+special('Scieq', #=:=).
 special('Scut', !).
 special('Scomma',  (,)).
 special('Sifthen',  (->)).
