@@ -45,8 +45,6 @@
 
 :- module(dif,[dif/2]).
 
-%:- use_module(library(lists)).
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dif(X,Y) :-
 	( compound(X), compound(Y) ->
@@ -109,7 +107,6 @@ dif_c_c_l_aux([X=Y|Unifier],OrNode) :-
 	;
 		true
 	).
-
 
 dif_var_nonvar(X,Y) :-
 	( get_attr(X,dif,Attr) ->
@@ -245,8 +242,6 @@ or_succeed(OrNode) :-
 		del_or_dif(Variables)
 	; OrNode == (-) ->
 		true
-	;
-		writeln('ERROR: or_succeed/1: unexpectedly instantiated OrnOde')
 	).
 
 or_succeed_list([]).
@@ -277,12 +272,15 @@ del_or_dif([X|Xs]) :-
 		Attr = vardif(VL,NVL,OVL,ONVL),
 		filter_dead_ors(OVL,N_OVL),
 		filter_dead_ors(ONVL,N_ONVL),
-		put_attr(X,dif,vardif(VL,NVL,N_OVL,N_ONVL))	
+		( VL == [], NVL == [], N_OVL == [], N_ONVL == [] ->
+			del_attr(X,dif) 
+		;
+			put_attr(X,dif,vardif(VL,NVL,N_OVL,N_ONVL))	
+		)
 	;
 		true
 	),
 	del_or_dif(Xs).
-
 
 filter_dead_ors([],[]).
 filter_dead_ors([Or-Y|Rest],List) :-
