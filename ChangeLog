@@ -13,6 +13,8 @@
   * ADDED: Handle ~@ in format/[2,3].  SICStus compatibility.  Reported
     by Tom Schrijvers.
 
+  * FIXED: int/char problem in parser.  Michal Cihar.
+
   * FIXED: Bug#128: memory deallocation problem in library(memfile).
     MS-Windows only.  Added Sfree() to free memory from the right
     pool.  Holger Kanwischer.
