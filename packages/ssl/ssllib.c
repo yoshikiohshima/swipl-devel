@@ -166,6 +166,8 @@ ssl_new(void)
         new->pl_ssl_cb_pem_passwd_data  = NULL;
 	new->magic 		        = SSL_CONFIG_MAGIC;
     }
+    ssl_deb("Allocated config structure\n");
+
     return new;
 }
 
@@ -183,6 +185,7 @@ ssl_free(PL_SSL *config)
         free(config->pl_ssl_password);
     }
     free(config);
+    ssl_deb("Released config structure\n");
 }
 
 static int
@@ -247,6 +250,7 @@ ssl_set_cacert(PL_SSL *config, const char *cacert)
  */
 {
     if (cacert) {
+        if (config->pl_ssl_cacert) free(config->pl_ssl_cacert);
         config->pl_ssl_cacert = ssl_strdup(cacert);
     }
     return config->pl_ssl_cacert;
@@ -259,6 +263,7 @@ ssl_set_certf(PL_SSL *config, const char *certf)
  */
 {
     if (certf) {
+        if (config->pl_ssl_certf) free(config->pl_ssl_certf);
         config->pl_ssl_certf = ssl_strdup(certf);
     }
     return config->pl_ssl_certf;
@@ -271,6 +276,7 @@ ssl_set_keyf(PL_SSL *config, const char *keyf)
  */
 {
     if (keyf) {
+        if (config->pl_ssl_keyf) free(config->pl_ssl_keyf);
         config->pl_ssl_keyf = ssl_strdup(keyf);
     }
     return config->pl_ssl_keyf;
@@ -283,6 +289,7 @@ ssl_set_password(PL_SSL *config, const char *password)
  */
 {
     if (password) {
+        if (config->pl_ssl_password) free(config->pl_ssl_password);
         config->pl_ssl_password = ssl_strdup(password);
     }
     return config->pl_ssl_password;
@@ -295,6 +302,7 @@ ssl_set_host(PL_SSL *config, const char *host)
  */
 {
     if (host) {
+        if (config->pl_ssl_host) free(config->pl_ssl_host);
         config->pl_ssl_host = ssl_strdup(host);
     }
     return config->pl_ssl_host;
