@@ -85,6 +85,7 @@ Section "Base system (required)"
   File pl\library\occurs.pl
   File pl\library\ordsets.pl
   File pl\library\oset.pl
+  File pl\library\assoc.pl
 
 ; WINDOWS
   File pl\library\dde.pl
