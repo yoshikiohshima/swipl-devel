@@ -1666,8 +1666,8 @@ This predicate may be used to build hash-tables as well as to exploit
 argument-indexing to find complex terms more quickly.
 
 The hash-key does not rely on temporary information like addresses of
-atoms and may be assumed constant over different invocations of
-SWI-Prolog.
+atoms and may be assumed constant over different invocations and
+versions of SWI-Prolog.  The hash_term/2 predicate is cycle-safe.
 \end{description}
 
 

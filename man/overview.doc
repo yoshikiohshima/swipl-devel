@@ -1616,7 +1616,7 @@ and in the following predicates: \predref{=}{2}, \predref{==}{2},
 \predref{\==}{2}, \predref{\=}{2}, \predref{=@=}{2}, \predref{\=@=}{2},
 \predref{@<}{2}, \predref{@=<}{2}, \predref{@>}{2}, \predref{@>=}{2},
 compare/3, \predref{=..}{2}, copy_term/2, duplicate_term/2, write/1,
-dif/2, when/2, term_variables/2, numbervars/[3,4].
+dif/2, when/2, term_variables/2, numbervars/[3,4], hash_term/2.
 
 
 \section{System limits}				\label{sec:limits}

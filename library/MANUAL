@@ -2206,7 +2206,7 @@ version supports  cycles terms in the  pure Prolog kernel including  the
 garbage collector  and in the following  predicates:  =/2, ==/2,  \==/2,
 \=/2,  =@=/2,  \=@=/2,  @</2,  @=</2,  @>/2,  @>=/2,  compare/3,  =../2,
 copy_term/2, duplicate_term/2, write/1, dif/2, when/2, term_variables/2,
-numbervars/[3,4].
+numbervars/[3,4], hash_term/2.
 
 
 22..1177 SSyysstteemm lliimmiittss
@@ -4646,8 +4646,8 @@ hhaasshh__tteerrmm((_+_T_e_r_m_, _-_H_a_s_h_K_e_y))
     exploit argument-indexing to find complex terms more quickly.
 
     The  hash-key does not rely on temporary information  like addresses
-    of  atoms and may be assumed constant over different  invocations of
-    SWI-Prolog.
+    of atoms and  may be assumed constant over different invocations and
+    versions of SWI-Prolog.  The hash_term/2 predicate is cycle-safe.
 
 
 44..1144 DDeeccllaarriinngg pprreeddiiccaatteess pprrooppeerrttiieess
@@ -17067,7 +17067,7 @@ halt/[0                                shlib _l_i_b_r_a_r_y, 1093
    1], 126                             show_profile/1, 588
 hash/1, 243, 244                       show_profile/2, 587
 hash_term/2, 237                       show_profile/1, 586
-hash_term/2, 236                       sign/1, 419
+hash_term/2, 71, 236, 237              sign/1, 419
 help/0, 41, 60, 973, 1076              silent, 199
 help/1, 40--42, 58, 60, 1076           sin/1, 409, 441
 helpidx _l_i_b_r_a_r_y, 40                    size_file/2, 533
