@@ -238,7 +238,7 @@ never load different \fileext{chr} files with the same CHR module name.
 
 The SWI-Prolog CHR compiler exploits term_expansion/2 rules to translate
 the constraint handling rules to plain Prolog. These rules are loaded
-from the library \pllib{chr}.   The are activated if the compiled file
+from the library \pllib{chr}.   They are activated if the compiled file
 has the \fileext{chr} extension or after finding a declaration of the
 format below.
 
