@@ -4322,7 +4322,7 @@ be able to access these!
 
 	if ( false(DEF, METAPRED) )
 	  FR->context = DEF->module;
-	if ( false(DEF, SYSTEM) )
+	if ( false(DEF, HIDE_CHILDS) )	/* was SYSTEM */
 	  clear(FR, FR_NODEBUG);
 
 #if O_DYNAMIC_STACKS

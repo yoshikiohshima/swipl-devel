@@ -240,7 +240,12 @@ Used in combination with \cmdlineoption{-c} or \cmdlineoption{-b} to
 determine output file for compilation.
 
     \cmdlineoptionitem{-O}{}
-Optimised compilation. See current_prolog_flag/2.
+Optimised compilation. See current_prolog_flag/2 flag
+\const{optimise} for details.
+
+    \cmdlineoptionitem{-nodebug}{}
+Disable debugging.  See the current_prolog_flag/2 flag
+\const{generate_debug_info} for details.
 
     \cmdlineoptionitem{-s}{file}
 Use \arg{file} as a script-file.  The script file is loaded after
@@ -1073,6 +1078,15 @@ format/[1,2], write_term/[2,3].
 If true (default), the garbage collector is active.  If false, neither
 garbage-collection, nor stack-shifts will take place, even not on
 explicit request.  May be changed.
+
+    \prologflagitem{generate_debug_info}{bool}{rw}
+If \const{true} (default) generate code that can be debugged using
+trace/0, spy/1, etc.  Can be set to \const{false} using the
+\cmdlineoption{-nodebug}.%
+	\footnote{In the current implementation this only causes a flag
+		  to be set on the predicate that causes children to be
+		  hidden from the debugger. The name anticipates on
+		  anticipated changes to the compiler.}
 
     \prologflagitem{gui}{bool}{r}
 Set to \const{true} if XPCE is around and can be used for graphics.
