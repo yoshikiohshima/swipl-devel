@@ -110,7 +110,7 @@ map_assoc(Pred, t(Key,Val,L0,R0), t(Key,Ans,L1,R1)) :- !,
 map_assoc(_, t, t).
 
 
-put_assoc(Key, t(K,V,L,R), Val, New) :-
+put_assoc(Key, t(K,V,L,R), Val, New) :- !,
 	compare(Rel, Key, K),
 	put_assoc(Rel, Key, K, V, L, R, Val, New).
 put_assoc(Key, t, Val, t(Key,Val,t,t)).

@@ -131,7 +131,8 @@ $hide(Name, Arity) :-
 	      catch/3,
 	      once/1,
 	      ignore/1,
-	      call_cleanup/3)).
+	      call_cleanup/3,
+	      (^)/2)).
 
 :- module_transparent
 	';'/2,
