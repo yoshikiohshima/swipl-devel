@@ -35,6 +35,7 @@
 	  portray_clause/1,		% +Clause
 	  portray_clause/2		% +Stream, +Clause
 	]).
+:- set_prolog_flag(generate_debug_info, false).
 
 :- module_transparent
 	listing/0, 
@@ -44,13 +45,15 @@
 :- multifile
 	prolog:locate_clauses/2.	% +Spec, -ClauseRefList
 
-:- system_mode(on).
-
-%   calls listing(Pred) for each current_predicate Pred.
+%	listing
+%	
+%	Lists all predicates defined in the calling module. Imported
+%	predicates are not listed.
 
 listing :-
 	context_module(Context),
-	current_predicate(_, Pred), 
+	current_predicate(_, Pred),
+	\+ predicate_property(Pred, imported_from(_)),
 	'$strip_module'(Pred, Module, Head),
 	functor(Head, Name, _Arity),
 	(   (   predicate_property(Pred, built_in)
@@ -65,7 +68,9 @@ listing :-
 listing.
 
 
-%   listing(PredSpecs)
+%	listing(+PredIndicators)
+%	
+%	List the given predicates
 
 listing(V) :-
 	var(V), !,       % ignore variables

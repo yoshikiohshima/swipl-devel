@@ -7,6 +7,12 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: listing/0 now only lists predicates defined in the target
+    module.  Used to also list imported predicates.  Applications that
+    reply on the old behaviour should use listing/1 on all predicates
+    enumerated by current_predicate/1.
+
+
 VERSION 5.3.8 (Apr 07, 2004)
 ============================
 
