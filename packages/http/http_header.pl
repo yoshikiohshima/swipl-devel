@@ -468,6 +468,8 @@ header_field(Name, Value) -->
 	blanks_to_nl, !,
 	{   int_field(Name)
 	->  number_codes(Value, ValueChars)
+	;   Name == cookie
+	->  phrase(cookies(Value), ValueChars)
 	;   atom_codes(Value, ValueChars)
 	}.
 header_field(Name, Value) -->
@@ -499,7 +501,7 @@ header_fields([H|T]) -->
 field_name(Name) -->
 	{ var(Name)
 	}, !,
-	rd_field_chars(Chars),
+	rd_field_chars(0':, Chars),
 	{ atom_codes(Name, Chars)
 	}.
 field_name(mime_version) --> !,
@@ -509,16 +511,16 @@ field_name(Name) -->
 	},
 	wr_field_chars(Chars).
 
-rd_field_chars([C0|T]) -->
+rd_field_chars(End, [C0|T]) -->
 	[C],
-	{ C \== 0':, !,
+	{ C \== End, !,
 	  (   C == 0'-
 	  ->  C0 = 0'_
 	  ;   code_type(C, to_upper(C0))
 	  )
 	},
-	rd_field_chars(T).
-rd_field_chars([]) -->
+	rd_field_chars(End, T).
+rd_field_chars(_, []) -->
 	[].
 
 wr_field_chars([C|T]) -->
@@ -610,6 +612,36 @@ http_version_number(Major-Minor) -->
 	integer(Major),
 	".",
 	integer(Minor).
+
+
+		 /*******************************
+		 *	      COOKIES		*
+		 *******************************/
+
+%	cookies are of the format NAME=Value; ...
+
+cookies([Name=Value|T]) -->
+	blanks,
+	cookie(Name, Value), !,
+	blanks,
+	(   ";"
+	->  cookies(T)
+	;   { T = [] }
+	).
+
+cookie(Name, Value) -->
+	cookie_name(Name),
+	"=",
+	nonblanks(ValueCodes),
+	{ atom_codes(Value, ValueCodes)
+	}.
+
+cookie_name(Name) -->
+	{ var(Name)
+	}, !,
+	rd_field_chars(0'=, Chars),
+	{ atom_codes(Name, Chars)
+	}.
 
 
 		 /*******************************

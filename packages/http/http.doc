@@ -424,6 +424,12 @@ search-specification.
 If the first line contains the \const{HTTP/}\arg{Major}.\arg{Minor}
 version indicator this element indicate the HTTP version of the
 peer.  Otherwise this field is not present.
+
+    \termitem{cookie}{ListOfNameValue}
+If the header contains a \const{Cookie} line, the value of the
+cookie is broken down in \arg{Name}=\arg{Value} pairs, where the
+\arg{Name} is the lowercase version of the cookie name as used
+for the HTTP fields.
 \end{description}
 
 If the first line of the request is tagged with

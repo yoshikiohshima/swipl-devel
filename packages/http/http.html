@@ -568,6 +568,14 @@ location contains a search-specification.
 If the first line contains the <CODE>HTTP/</CODE><VAR>Major</VAR>.<VAR>Minor</VAR> 
 version indicator this element indicate the HTTP version of the peer. 
 Otherwise this field is not present.
+
+<P>
+<DT><STRONG>cookie</STRONG>(<VAR>ListOfNameValue</VAR>)<DD>
+If the header contains a <CODE>Cookie</CODE> line, the value of the 
+cookie is broken down in <VAR>Name</VAR>=<VAR>Value</VAR> pairs, where 
+the
+<VAR>Name</VAR> is the lowercase version of the cookie name as used for 
+the HTTP fields.
 </DL>
 
 <P>If the first line of the request is tagged with
