@@ -422,8 +422,12 @@ mytimes(X,Y,Z) :-
 		( nonvar(Y) ->
 			Z is X * Y
 		; nonvar(Z) ->
-			0 is Z mod X,
-			Y is Z / X		
+			( X \== 0 -> 
+				0 is Z mod X,
+				Y is Z / X
+			;
+				true
+			)		
 		;
 			get(Y,YL,YU,YExp),
 			get(Z,ZL,ZU,ZExp),
@@ -433,7 +437,8 @@ mytimes(X,Y,Z) :-
 			NZU is min(ZU,max(X * YU,X*YL)),
 			put(Z,NZL,NZU,[mytimes2(X,Y)|ZExp]),
 			( get(Y,YL2,YU2,YExp2) ->
-				NYL is max(YL2,ceiling(min(div(ZL,X),div(ZU,X)))),
+				min_divide(ZL,ZU,X,X,NYLT),
+				NYL is max(YL2,ceiling(NYLT)),
 				NYU is min(YU2,floor(max(div(ZU,X),div(ZL,X)))),
 				put(Y,NYL,NYU,YExp2)
 			;
@@ -453,12 +458,17 @@ mytimes(X,Y,Z) :-
 		NXU is min(XU,floor(TNXU)),		
 		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
 		( get(Y,YL2,YU2,YExp2) ->
-			NYL is max(YL2,ceiling(min(div(Z,NXU),div(Z,NXL)))),
+			min_divide(Z,Z,NXL,NXU,NYLT),
+			NYL is max(YL2,ceiling(NYLT)),
 			NYU is min(YU2,floor(max(div(Z,NXL),div(Z,NXU)))),
 			put(Y,NYL,NYU,YExp2)
 		;
-			0 is Z mod Y,
-			X is Z / Y
+			( Y \== 0 ->
+				0 is Z mod Y,
+				X is Z / Y
+			;
+				true
+			)
 		)
 	;
 		get(X,XL,XU,XExp),
@@ -795,7 +805,8 @@ get(X,L,U,Exp) :-
 put(X,L,U,Exp) :-
 	L =< U,
 	( L == U ->
-		X = L
+		X = L,
+		trigger_exps(Exp,X) 
 	;
 		( get_attr(X,bounds,Attr) ->
 			put_attr(X,bounds,bounds(L,U,Exp)),
