@@ -1163,14 +1163,18 @@ match_object(triple *t, triple *p)
     { case OBJ_RESOURCE:
 	return t->object.resource == p->object.resource;
       case OBJ_STRING:
-	if ( p->object.string && t->object.string != p->object.string )
-	  return FALSE;
         if ( p->qualifier && t->qualifier && t->qualifier != p->qualifier )
 	  return FALSE;
 	if ( p->type_or_lang && t->type_or_lang != p->type_or_lang )
 	  return FALSE;
-        if ( p->match && t->object.string != p->object.string )
-	  return match(p->match, p->object.string, t->object.string);
+	if ( p->object.string )
+	{ if ( t->object.string != p->object.string )
+	  { if ( p->match )
+	      return match(p->match, p->object.string, t->object.string);
+	    else
+	      return FALSE;
+	  }
+	}
 	return TRUE;
       case OBJ_INTEGER:
 	return t->object.integer == p->object.integer;

@@ -1,3 +1,8 @@
+May 22, 2004
+
+  * FIXED: Literal string matching broken with introduction of
+    language support. (Sandro Hawke)
+
 Apr 23, 2004
 
   * ADDED: first version of lang and dataType support.  Improved test-suite

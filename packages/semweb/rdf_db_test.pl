@@ -270,6 +270,24 @@ label(2) :-
 
 
 		 /*******************************
+		 *	       MATCH		*
+		 *******************************/
+
+match(1) :-
+	rdf_assert(a,b,literal('hello there world!')),
+	rdf(a,b,literal(substring('llo'), _)).
+match(2) :-
+	rdf_assert(a,b,literal('hello there world!')),
+	rdf(a,b,literal(word('there'), _)).
+match(3) :-
+	rdf_assert(a,b,literal('hello there world!')),
+	rdf(a,b,literal(word('hello'), _)).
+match(4) :-
+	rdf_assert(a,b,literal('hello there world!')),
+	rdf(a,b,literal(word('world'), _)).
+
+
+		 /*******************************
 		 *	      SCRIPTS		*
 		 *******************************/
 
@@ -347,6 +365,7 @@ testset(typed).
 testset(lang).
 testset(update).
 testset(label).
+testset(match).
 
 %	testdir(Dir)
 %	
