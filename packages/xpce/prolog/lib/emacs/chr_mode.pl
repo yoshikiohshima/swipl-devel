@@ -158,7 +158,7 @@ init_chr_operators(Ops) :-
 	close(In).
 
 read_ops(end_of_file, _, []) :- !.
-read_ops((:- op(Pre, Ass, Ops)), In, [ op(Pre, Ass, Ops) |T]) :-
+read_ops((:- op(Pre, Ass, Ops)), In, [ op(Pre, Ass, Ops) |T]) :- !,
 	read(In, T2),
 	read_ops(T2, In, T).
 read_ops(_, In, Ops) :-
