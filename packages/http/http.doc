@@ -282,6 +282,35 @@ as produced by browsers issuing a POST request from an HTML form.
 \arg{ListOfParameter} is a list of \arg{Name}=\arg{Value} or
 \term{\arg{Name}}{Value}.
 
+	\termitem{form_data}{+ListOfData}
+Send data of the MIME type \const{multipart/form-data} as produced by
+browsers issuing a POST request from an HTML form using \const{enctype}
+\const{multipart/form-data}.  This is a somewhat simplified MIME
+\const{multipart/mixed} encoding used by browser forms including
+file input fields. \arg{ListOfData} is the same as for the \arg{List}
+alternative described below.  Below is an example from the SWI-Prolog
+\url[Sesame]{http://www.openrdf.org} interface.  \arg{Repository}, etc.\
+are atoms providing the value, while the last argument provides a value
+from a file.
+
+\begin{code}
+	...,
+	http_post([ protocol(http),
+		    host(Host),
+		    port(Port),
+		    path(ActionPath)
+		  ],
+		  form_data([ repository = Repository,
+			      dataFormat = DataFormat,
+			      baseURI    = BaseURI,
+			      verifyData = Verify,
+			      data       = file(File)
+			    ]),
+		  _Reply,
+		  []),
+	...,
+\end{code}
+
 	\termitem{List}{}
 If the argument is a plain list, it is sent using the MIME type
 \const{multipart/mixed} and packed using mime_pack/3.  See

@@ -1,5 +1,7 @@
 Aug 12, 2004
 
+  * ADDED: form_data(+List) alternative to http_post/4.
+
   * ADDED: option reply_header(-Header) to get the full replied header for
     GET and POST methods.  Also added decoding of the SetCookie field.
 

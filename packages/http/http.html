@@ -387,6 +387,39 @@ or
 <CODE><VAR>Name</VAR>(Value)</CODE>.
 
 <P>
+<DT><STRONG>form_data</STRONG>(<VAR>+ListOfData</VAR>)<DD>
+Send data of the MIME type <CODE>multipart/form-data</CODE> as produced 
+by browsers issuing a POST request from an HTML form using <CODE>enctype</CODE>
+<CODE>multipart/form-data</CODE>. This is a somewhat simplified MIME
+<CODE>multipart/mixed</CODE> encoding used by browser forms including 
+file input fields. <VAR>ListOfData</VAR> is the same as for the <VAR>List</VAR> 
+alternative described below. Below is an example from the SWI-Prolog
+<A HREF="http://www.openrdf.org">Sesame</A> interface. <VAR>Repository</VAR>, 
+etc. are atoms providing the value, while the last argument provides a 
+value from a file.
+
+<P><P><TABLE WIDTH="90%" ALIGN=center BORDER=6 BGCOLOR="#e0e0e0"><TR><TD NOWRAP>
+<PRE>
+
+        ...,
+        http_post([ protocol(http),
+                    host(Host),
+                    port(Port),
+                    path(ActionPath)
+                  ],
+                  form_data([ repository = Repository,
+                              dataFormat = DataFormat,
+                              baseURI    = BaseURI,
+                              verifyData = Verify,
+                              data       = file(File)
+                            ]),
+                  _Reply,
+                  []),
+        ...,
+</PRE>
+</TABLE>
+
+<P>
 <DT><STRONG>List</STRONG><DD>
 If the argument is a plain list, it is sent using the MIME type
 <CODE>multipart/mixed</CODE> and packed using <A NAME="idx:mimepack3:11"></A><B>mime_pack/3</B>. 
