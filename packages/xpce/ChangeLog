@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* FIXED: PceEmacs: make matching bracket highlighting work after
+  text-modifying commands.
+
 * FIXED: cross-referencer to handle #! script file.
 
 

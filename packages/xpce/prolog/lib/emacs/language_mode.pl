@@ -650,7 +650,11 @@ show_line_numbers(M, Show:bool) :->
 		 *	 MATCHING BRACKETS	*
 		 *******************************/
 
-highlight_matching_bracket(M, Caret:int) :->
+highlight_matching_bracket(M, CaretSpec:[int]) :->
+	(   CaretSpec == @default
+	->  get(M, caret, Caret)
+	;   Caret = CaretSpec
+	),
 	get(M, text_buffer, TB),
 	get(TB, syntax, SyntaxTable),
 	(   (   Here = Caret,

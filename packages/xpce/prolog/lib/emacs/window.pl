@@ -738,7 +738,10 @@ typed(E, Id:'event|event_id') :->
 	"Handle typing via mode"::
 	send(E, start_idle_timer),
 	get(E, mode, Mode),
-	ignore(send(Mode, typed, Id, E)). % don't delegate to frame
+	(   send(Mode, typed, Id, E)
+	->  send(E, highlight_matching_bracket)
+	;   true
+	).
 
 
 caret(E, Caret:[int]) :->
@@ -776,7 +779,17 @@ event(E, Ev:event) :->
 
 paste(E) :->
 	send(E, start_idle_timer),
-	send_super(E, paste).
+	send_super(E, paste),
+	send(E, highlight_matching_bracket).
+
+
+highlight_matching_bracket(E) :->
+	get(E, mode, Mode),
+	(   send(Mode, has_send_method, highlight_matching_bracket),
+	    send(Mode, highlight_matching_bracket)
+	->  true
+	;   true
+	).
 
 
 mode(E, ModeName:mode_name) :->
