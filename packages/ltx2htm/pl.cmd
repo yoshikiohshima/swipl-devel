@@ -141,6 +141,7 @@
 \Sclt
 \Scle
 \Scne
+\Sceq
 \Sequiv
 \Slimpl
 \Srimpl

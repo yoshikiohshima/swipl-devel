@@ -184,8 +184,9 @@ cmd(infixop({RawName}, {Arg1}, {Arg2}),
 	clean_name(RawName, Name),
 	predicate_refname(Name, 2, RefName),
 	add_to_index(RefName, +RefName).
-cmd(constitem({Name}), #defitem(#label(Name, #strong(+Name)))) :-
-	add_to_index(Name, +Name).
+cmd(constitem({Name}), #defitem(#label(RefName, #strong(+Name)))) :-
+	clean_name(Name, RefName),
+	add_to_index(RefName, +RefName).
 cmd(termitem({Name}, {[]}), #defitem(#strong(+Name))).
 cmd(termitem({Name}, {Arg}),
     #defitem([#strong(+Name), #embrace(#var(+Arg))])).
@@ -290,11 +291,24 @@ cmd(g({Term}),	#lref(RefName, Term)) :-
 % library stuff
 cmd(libdoc({Name}, {Summary}),
     [HTML, #label(Name, [], Tag)]) :-
+	filebase(Name, File),
 	translate_section(2, -,
 			  ['library(', Name, '): ', Summary],
 			  HTML,
-			  Name),
+			  File),
 	tex:label_tag(Tag).
+
+filebase(Name, File) :-
+	atom_codes(Name, Codes),
+	select_csym(Codes, Alnums),
+	atom_codes(File, Alnums).
+
+select_csym([], []).
+select_csym([H|T0], [H|T]) :-
+	code_type(H, csymf), !,
+	select_csym(T0, T).
+select_csym([_|T0], T) :-
+	select_csym(T0, T).
 
 
 		 /*******************************
@@ -349,6 +363,7 @@ special('Scge', '#>=').
 special('Sclt', '#<').
 special('Scle', '#=<').
 special('Scne', '#\=').
+special('Sceq', '#=').
 special('Sequiv', '#<=>').
 special('Slimpl', '#<=').
 special('Srimpl', '#=>').
