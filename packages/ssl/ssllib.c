@@ -40,11 +40,16 @@
 
 #include "ssllib.h"
 
-#if 1
+#ifdef __SWI_PROLOG__
 #include <SWI-Stream.h>
 #include <SWI-Prolog.h>
 
 #define perror(x) Sdprintf("%s: %s\n", x, strerror(errno));
+#else
+#define Soutput         stdout
+#define Serror          stderr
+#define Svfprintf       vfprintf
+static int PL_handle_signals(void) { return 0; }
 #endif
 
 #include <openssl/rsa.h>
@@ -596,6 +601,8 @@ ssl_init(PL_SSL_ROLE role)
     if (!ssl_ctx) {
         ERR_print_errors_fp(stderr);
     } else {
+        long ctx_mode = 0L;
+
         if ((config = SSL_CTX_get_ex_data(ssl_ctx, ctx_idx)) == NULL) {
             ssl_err("Cannot read back application data\n");
             SSL_CTX_free(ssl_ctx);
@@ -606,6 +613,14 @@ ssl_init(PL_SSL_ROLE role)
         config->pl_ssl_role = role;
         ssl_set_cert     (config, (role == PL_SSL_SERVER));
         ssl_set_peer_cert(config, (role != PL_SSL_SERVER));
+
+        /*
+         * Set SSL_{read,write} behaviour when a renegotiation takes place
+         * in a blocking transport layer.
+         */
+        ctx_mode  = SSL_CTX_get_mode(ssl_ctx);
+        ctx_mode |= SSL_MODE_AUTO_RETRY;
+        ctx_mode  = SSL_CTX_set_mode(ssl_ctx, ctx_mode);
     }
 
     ssl_deb("Initialized\n");
