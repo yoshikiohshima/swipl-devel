@@ -270,6 +270,7 @@ with  a  structure  that  mimics  a term, but isn't one.
 
 typedef struct _varDef
 { word		functor;		/* mimic a functor (FUNCTOR_var1) */
+  word		saved;			/* saved value */
   Word		address;		/* address of the variable */
   int		times;			/* occurences */
   int		offset;			/* offset in environment frame */
@@ -428,11 +429,12 @@ right_recursion:
 
   deRef(head);
 
-  if ( isVar(*head) )
+  if ( isVar(*head) || (isAttVar(*head) && !ci->islocal) )
   { VarDef vd;
     int index = ((argn >= 0 && argn < arity) ? argn : (arity + nvars++));
 
     vd = getVarDef(index PASS_LD);
+    vd->saved = *head;
     vd->address = head;
     vd->times = 1;
     *head = (index<<LMASK_BITS)|TAG_ATOM|STG_GLOBAL; /* special mark */
@@ -513,7 +515,7 @@ analyse_variables(Word head, Word body, CompileInfo ci ARG_LD)
     if ( !vd->address )
       continue;
     if ( vd->times == 1 && !ci->islocal ) /* ISVOID */
-    { setVar(*(vd->address));
+    { *vd->address = vd->saved;
       vd->address = (Word) NULL;
       if (n >= arity)
 	body_voids++;
@@ -710,7 +712,8 @@ resetVars(ARG1_LD)
   { VarDef vd = LD->comp.vardefs[n];
 
     if ( vd->address )
-      setVar(*(vd->address));
+    { *vd->address = vd->saved;
+    }
   }
 }
 
@@ -1209,6 +1212,7 @@ be a variable, and thus cannot be removed if it is before an I_POPF.
 
   switch(tag(*arg))
   { case TAG_VAR:
+    var:
       if (where & A_BODY)
       { Output_0(ci, B_VOID);
 	return NONVOID;
@@ -1219,7 +1223,7 @@ be a variable, and thus cannot be removed if it is before an I_POPF.
       if ( ci->islocal )
       { goto argvar;
       } else
-      { assert(0);
+      { goto var;
       }
     case TAG_INTEGER:
       if ( storage(*arg) != STG_INLINE )
