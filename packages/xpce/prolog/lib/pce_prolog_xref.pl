@@ -58,6 +58,7 @@
 	(thread_local)/2,		% Head, Src
 	(multifile)/2,			% Head, Src
 	defined/3,			% Head, Src, Line
+	constraint/3,			% Head, Src, Line
 	imported/3,			% Head, Src, From
 	exported/2,			% Head, Src
 	xmodule/2,			% Module, Src
@@ -163,6 +164,7 @@ xref_clean(Source) :-
 	retractall(dynamic(_, Src)),
 	retractall(multifile(_, Src)),
 	retractall(defined(_, Src, _Line)),
+	retractall(constraint(_, Src, _Line)),
 	retractall(imported(_, Src, _From)),
 	retractall(exported(_, Src)),
 	retractall(xmodule(_, Src)),
@@ -222,6 +224,8 @@ xref_defined2((multifile), Src, Called) :-
 	multifile(Called, Src).
 xref_defined2(local(Line), Src, Called) :-
 	defined(Called, Src, Line).
+xref_defined2(constraint(Line), Src, Called) :-
+	constraint(Called, Src, Line).
 xref_defined2(imported(From), Src, Called) :-
 	imported(Called, Src, From).
 
@@ -680,13 +684,21 @@ chr_defined(\(A,B), Src) :- !,
 	chr_defined(A, Src),
 	chr_defined(B, Src).
 chr_defined(#(C,_Id), Src) :- !,
-	assert_defined(Src, C).
+	assert_constraint(Src, C).
 chr_defined(A, Src) :-
-	assert_defined(Src, A).
+	assert_constraint(Src, A).
 
 chr_body('|'(Guard, Goals), Src) :-
 	chr_body(Guard, Src),
 	chr_body(Goals, Src).
+
+assert_constraint(Src, Head) :-
+	constraint(Head, Src, _), !.
+assert_constraint(Src, Head) :-
+	functor(Head, Name, Arity),
+	functor(Term, Name, Arity),
+	flag(xref_src_line, Line, Line),
+	assert(constraint(Term, Src, Line)).
 
 
 		/********************************

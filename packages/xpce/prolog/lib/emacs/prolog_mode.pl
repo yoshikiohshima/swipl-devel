@@ -371,7 +371,9 @@ find_definition(M, For:prolog_predicate, NewWindow:[bool]) :->
 	"Find definition of predicate [in new window]"::
 	get(M, text_buffer, TB),
 	get(For, head, @off, Head),
-	(   xref_defined(TB, Head, local(Line))		% local
+	(   (   xref_defined(TB, Head, local(Line))		% local
+	    ;	xref_defined(TB, Head, constraint(Line))
+	    )
 	->  (   NewWindow == @on
 	    ->	get(M, text_buffer, TB),
 		new(W2, emacs_frame(TB)),

@@ -33,6 +33,7 @@
 :- use_module(library(pce)).
 :- use_module(prolog_mode).
 :- use_module(library(operators)).	% push/pop operators
+:- use_module(library(chr)).		% get CHR operators.
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,18 +69,49 @@ colourise_buffer(M) :->
 		 *******************************/
 
 :- multifile
-	emacs_prolog_colours:term_colours/2.
+	emacs_prolog_colours:term_colours/2,
+	emacs_prolog_colours:goal_colours/2.
+
+%	term_colours(+Term, -Colours)
+%	
+%	Colourisation of a toplevel term as read from the file.
+
+term_colours((_Name @ Rule), delimiter - [ identifier, RuleColours ]) :- !,
+	term_colours(Rule, RuleColours).
+term_colours((Rule pragma _Pragma), delimiter - [RuleColours,pragma]) :- !,
+	term_colours(Rule, RuleColours).
+term_colours((Head <=> Body), delimiter - [ HeadColours, BodyColours ]) :- !,
+	chr_head(Head, HeadColours),
+	chr_body(Body, BodyColours).
+term_colours((Head ==> Body), delimiter - [ HeadColours, BodyColours ]) :- !,
+	chr_head(Head, HeadColours),
+	chr_body(Body, BodyColours).
+
+chr_head(_C#_Id, delimiter - [ head, identifier ]) :- !.
+chr_head((A \ B), delimiter - [ AC, BC ]) :- !,
+	chr_head(A, AC),
+	chr_head(B, BC).
+chr_head((A, B), functor - [ AC, BC ]) :- !,
+	chr_head(A, AC),
+	chr_head(B, BC).
+chr_head(_, head).
+
+chr_body((Guard|Goal), delimiter - [ GuardColour, GoalColour ]) :- !,
+	chr_body(Guard, GuardColour),
+	chr_body(Goal, GoalColour).
+chr_body(_, body).
+
+
+%	goal_colours(+Goal, -Colours)
+%	
+%	Colouring of special goals.
+
+goal_colours(constraints(_),	built_in-[predicates]).
 
 emacs_prolog_colours:term_colours(Term, Colours) :-
 	term_colours(Term, Colours).
-
-term_colours((:- constraints(_Cs)),
-	     [ expanded - [ expanded - [ identifier
-				       ]
-			  ]
-	     ]).
-
-
+emacs_prolog_colours:goal_colours(Term, Colours) :-
+	goal_colours(Term, Colours).
 
 		 /*******************************
 		 *	   SYNTAX HOOKS		*

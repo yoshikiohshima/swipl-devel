@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ADDED: CHR support in the cross-referencer and colours to the
+  PceEmacs chr mode.
+
 * FIXED: Bug#142: Buffer overflow on menus with > 1000 items.  Limit
   has been removed.  Holger Kanwischer.
 

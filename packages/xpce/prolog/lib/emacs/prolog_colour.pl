@@ -44,6 +44,7 @@ User extension hooks.
 
 :- multifile
 	term_colours/2,
+	goal_colours/2,
 	goal_classification/2.
 
 :- emacs_extend_mode(prolog,
@@ -162,6 +163,7 @@ colourise_buffer(M) :-
 
 colourise_buffer(Fd, M) :-
 	get(M, text_buffer, TB),
+	TB = @Src,
 	repeat,
 	    '$set_source_module'(SM, SM),
 	    catch(read_term(Fd, Term,
@@ -171,7 +173,7 @@ colourise_buffer(Fd, M) :-
 			    ]),
 		  E,
 		  syntax_error(E)),
-	    fix_operators(Term),
+	    fix_operators(Term, Src),
 	    (	colourise_term(Term, TB, TermPos),
 		send(M, mark_singletons, Term, Singletons, TermPos)
 	    ->	true
@@ -216,28 +218,40 @@ syntax_error(E) :-
 	),
 	fail.
 
-%	fix_operators(+Term)
+%	fix_operators(+Term, +Src)
 %	
-%	Fix flags that affect the syntax, such as operators and some
-%	style checking options.
+%	Fix flags that affect the  syntax,   such  as operators and some
+%	style checking options. Src is the  canonical source as required
+%	by the cross-referencer.
 
-fix_operators((:-style_check(X))) :- !,
+fix_operators((:-style_check(X)), _) :- !,
 	style_check(X).
-fix_operators((:-module($(Name),_))) :-
+fix_operators((:-module($(Name),_)), _) :-
 	atom(Name),
 	style_check(+dollar),
 	fail.				% allow for other expansions
-fix_operators('$:-'(_)) :- !,		% deal with swi('boot/init.pl')
+fix_operators('$:-'(_), _) :- !,		% deal with swi('boot/init.pl')
 	style_check(+dollar).
-fix_operators((:- Directive)) :- !,
+fix_operators((:- Directive), _) :- !,
 	process_directive(Directive).
-fix_operators((:- module(_, ExportedOps))) :-
+fix_operators((:- module(_, ExportedOps)), _) :-
 	(   member(op(P,A,N), ExportedOps),
 	    catch(emacs_push_op(P,A,N), _, fail),
 	    fail
 	;   true
 	).
-fix_operators(_).
+fix_operators((:- use_module(Spec)), Src) :-
+	process_use_module(Spec, Src).
+fix_operators(_, _).
+
+process_use_module([], _).
+process_use_module([H|T], Src) :-
+	process_use_module(H, Src),
+	process_use_module(T, Src).
+process_use_module(File, Src) :-
+	xref_public_list(File, _Path, Public, Src),
+	forall(member(op(P,T,N), Public),
+	       emacs_push_op(P,T,N)).
 
 
 process_directive(op(P,T,N)) :- !,
@@ -759,8 +773,9 @@ make_fragment(Class, TB, F, L, Style) :-
 	send(Fragment, classification, Classification),
 	(   Arity == 1,
 	    arg(1, Class, Context),
-	    atomic(Context)
-	->  send(Fragment, context, Context)
+	    callable(Context),
+	    functor(Context, ContextName, _)
+	->  send(Fragment, context, ContextName)
 	;   true
 	).
 
@@ -919,6 +934,7 @@ style(goal(extern(_),_),  style(colour	   := blue,
 style(goal(recursion,_),  style(underline  := @on)).
 style(goal(meta,_),	  style(colour	   := red4)). % same as var
 style(goal(local(_),_),	  @default).
+style(goal(constraint(_),_), style(colour := darkcyan)).
 
 style(head(exported),	  style(bold	   := @on, colour := blue)).
 style(head(extern(_)),	  style(bold	   := @on, colour := blue)).
@@ -927,6 +943,7 @@ style(head(multifile),	  style(bold	   := @on, colour := navy_blue)).
 style(head(unreferenced), style(bold	   := @on, colour := red)).
 style(head(hook),	  style(underline  := @on, colour := blue)).
 style(head(meta),	  @default).
+style(head(constraint(_)),style(bold	   := @on, colour := darkcyan)).
 style(head(_),	  	  style(bold	   := @on)).
 
 style(comment,		  style(colour	   := dark_green)).
@@ -954,6 +971,7 @@ style(prolog_data,	  style(colour	   := blue,
 				underline  := @on)).
 
 style(identifier,	  style(bold       := @on)).
+style(delimiter,	  style(bold       := @on)).
 style(expanded,		  style(colour	   := blue,
 				underline  := @on)).
 
@@ -1290,6 +1308,8 @@ has_source(F) :->
 	get(F, head, Head),
 	(   xref_defined(TB, Head, local(_Line))
 	->  true
+	;   xref_defined(TB, Head, constraint(_Line))
+	->  true
 	;   xref_defined(TB, Head, imported(_From))
 	->  true
 	;   get(prolog_predicate(Head), source, _)
@@ -1388,6 +1408,8 @@ identify_pred(autoload, F, Summary) :-	% Autoloaded predicates
 	new(Summary, string('%N: autoload from %s', F, Source)).
 identify_pred(local(Line), F, Summary) :-	% Local predicates
 	new(Summary, string('%N: locally defined at line %d', F, Line)).
+identify_pred(constraint(Line), F, Summary) :-	% Local constraint
+	new(Summary, string('%N: constraint defined at line %d', F, Line)).
 identify_pred(imported(From), F, Summary) :-
 	new(Summary, string('%N: imported from %s', F, From)).
 identify_pred(recursion, _, 'Recursive reference') :- !.
@@ -1628,6 +1650,7 @@ identify_fragment(method(get), _, 'XPCE get method').
 identify_fragment(head(unreferenced), _, 'Unreferenced predicate (from this file)').
 identify_fragment(head(exported), _, 'Exported (Public) predicate').
 identify_fragment(head(multifile), _, 'Multifile predicate').
+identify_fragment(head(constraint), _, 'Constraint').
 identify_fragment(prolog_data, _, 'Pass Prolog term unmodified').
 identify_fragment(Class, _, Summary) :-
 	term_to_atom(Class, Summary).
