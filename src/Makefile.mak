@@ -81,7 +81,7 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	edit.pl emacs_interface.pl shell.pl check.pl \
 	tty.pl readln.pl readutil.pl make.pl option.pl \
 	am_match.pl oset.pl ordsets.pl occurs.pl lists.pl \
-	netscape.pl url.pl win_menu.pl \
+	netscape.pl url.pl win_menu.pl assoc.pl \
 	qpforeign.pl \
 	checklast.pl checkselect.pl \
 	$(PLWINLIBS)

@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: library assoc.pl, Adapted YAP version, originally by Richard
+    O'Keefe.
+
   * FIXED: Bug in unifying cyclic terms.  Kuniaki Mukai.
 
   * ADDED: Support for cyclic terms in ground/1
