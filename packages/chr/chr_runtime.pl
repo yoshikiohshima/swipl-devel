@@ -278,15 +278,37 @@ not_locked( V) :-
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-'chr via_1'( X, V) :- var(X), !, X=V.
-'chr via_1'( T, V) :- compound(T), nonground( T, V), ! .
-'chr via_1'( _, V) :- global_term_ref_1( V).
+'chr via_1'(X,V) :-
+	( var(X) ->
+		X = V
+	; atomic(X) ->
+		global_term_ref_1(V)
+	; nonground(X,V) ->
+		true
+	;
+		global_term_ref_1(V)
+	).
+% 'chr via_1'( X, V) :- var(X), !, X=V.
+% 'chr via_1'( T, V) :- compound(T), nonground( T, V), ! .
+% 'chr via_1'( _, V) :- global_term_ref_1( V).
 
-'chr via_2'( X, _, V) :- var(X), !, X=V.
-'chr via_2'( _, Y, V) :- var(Y), !, Y=V.
-'chr via_2'( T, _, V) :- compound(T), nonground( T, V), ! .
-'chr via_2'( _, T, V) :- compound(T), nonground( T, V), ! .
-'chr via_2'( _, _, V) :- global_term_ref_1( V).
+'chr via_2'(X,Y,V) :- 
+	( var(X) -> 
+		X = V
+	; var(Y) ->
+		Y = V
+	; compound(X), nonground(X,V) ->
+		true
+	; compound(Y), nonground(Y,V) ->
+		true
+	;
+		global_term_ref_1(V)
+	).
+% 'chr via_2'( X, _, V) :- var(X), !, X=V.
+% 'chr via_2'( _, Y, V) :- var(Y), !, Y=V.
+% 'chr via_2'( T, _, V) :- compound(T), nonground( T, V), ! .
+% 'chr via_2'( _, T, V) :- compound(T), nonground( T, V), ! .
+% 'chr via_2'( _, _, V) :- global_term_ref_1( V).
 
 %
 % The second arg is a witness.
@@ -434,14 +456,14 @@ global_term_ref_1(X) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 'chr sbag_member'( Element, [Head|Tail]) :-
-	sbag_member( Element, Tail, Head).
+      sbag_member( Element, Tail, Head).
 
 % auxiliary to avoid choicepoint for last element
 
 sbag_member( E, _,	     E).
 sbag_member( E, [Head|Tail], _) :-
 	sbag_member( E, Tail, Head).
-
+ 
 'chr sbag_del_element'( [],	  _,	[]).
 'chr sbag_del_element'( [X|Xs], Elem, Set2) :-
 	( X==Elem ->
@@ -507,7 +529,7 @@ debug_event(trace,Event) :-
 	set_debug_history([Event|History],NDepth).
 debug_event(trace,redo(Susp)) :- !,
 	get_debug_history(_History,Depth),
-	format('CHR DEBUG EVENT:\t~w\tREDO\t~@\n',[Depth,print_head(Susp)]). 
+	format('CHR:\t~w\tREDO\t~@\n',[Depth,print_head(Susp)]). 
 debug_event(trace,Event) :- 
 	Event = exit(_),!,
 	get_debug_history([_|History],Depth),
@@ -521,11 +543,11 @@ debug_event(trace,Event) :-
 	print_event(Event,Depth),
 	chr_debug_interact(Event,Depth). 
 debug_event(trace,remove(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tREMOVE\t~@\n',[print_head(Susp)]). 
+	format('CHR:\tREMOVE\t~@\n',[print_head(Susp)]). 
 debug_event(trace,insert(_ # Susp)) :- !,
-	format('CHR DEBUG EVENT:\tINSERT\t~@\n',[print_head(Susp)]). 
+	format('CHR:\tINSERT\t~@\n',[print_head(Susp)]). 
 debug_event(trace,try(H1,H2,G,B)) :- !,
-	format('CHR DEBUG EVENT:\tTRY\t~@\n',[print_rule(H1,H2,G,B)]). 
+	format('CHR:\tTRY\t~@\n',[print_rule(H1,H2,G,B)]). 
 debug_event(trace,Event) :- 
 	Event = apply(_,_,_,_),!,
 	get_debug_history(_,Depth),
@@ -600,6 +622,8 @@ handle_debug_command('c',_,_) :- !,
 	true.	
 handle_debug_command('\r',Event,Depth) :- !,
 	handle_debug_command('c',Event,Depth).	
+handle_debug_command(' ',Event,Depth) :- !,
+	handle_debug_command('c',Event,Depth).	
 handle_debug_command('s',Event,Depth) :- !,
 	Event =.. [Type|Rest],
 	( Type \== call,
@@ -635,7 +659,7 @@ handle_debug_command(_,Event,Depth) :-
 print_debug_help :-
 	format('\tCHR debug options:\n',[]),
 	nl,
-	format('\t\t<cr>\tcreep\t\tc\tcreep\n',[]),
+	format('\t\t<cr>\tcreep\t\tc\tcreep\t\t<space>\tcreep\n',[]),
         format('\t\ts\tskip\n',[]),
         format('\t\tg\tancestors\n',[]),
         format('\t\tn\tnodebug\n',[]),
@@ -656,15 +680,15 @@ print_chr_debug_history([Event|Events],Depth) :-
 	print_chr_debug_history(Events,NDepth).
 
 print_event(call(Susp),Depth) :- !,
-	format('CHR DEBUG EVENT:\t~w\tCALL\t~@ ? ',[Depth,print_head(Susp)]).
+	format('CHR:\t~w\tCALL\t~@ ? ',[Depth,print_head(Susp)]).
 print_event(wake(Susp),Depth) :- !,
-	format('CHR DEBUG EVENT:\t~w\tWAKE\t~@ ? ',[Depth,print_head(Susp)]).
+	format('CHR:\t~w\tWAKE\t~@ ? ',[Depth,print_head(Susp)]).
 print_event(exit(Susp),Depth) :- !,
-	format('CHR DEBUG EVENT:\t~w\tEXIT\t~@ ? ',[Depth,print_head(Susp)]). 
+	format('CHR:\t~w\tEXIT\t~@ ? ',[Depth,print_head(Susp)]). 
 print_event(fail(Susp),Depth) :- !,
-	format('CHR DEBUG EVENT:\t~w\tFAIL\t~@ ? ',[Depth,print_head(Susp)]). 
+	format('CHR:\t~w\tFAIL\t~@ ? ',[Depth,print_head(Susp)]). 
 print_event(apply(H1,H2,G,B),Depth) :- !,
-	format('CHR DEBUG EVENT:\t~w\tAPPLY\t~@ ? ',[Depth,print_rule(H1,H2,G,B)]).
+	format('CHR:\t~w\tAPPLY\t~@ ? ',[Depth,print_rule(H1,H2,G,B)]).
 
 get_debug_history(History,Depth) :-
 	nb_getval(chr_debug_history,mutable(History,Depth)).

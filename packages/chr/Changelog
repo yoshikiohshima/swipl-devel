@@ -1,6 +1,7 @@
 Apr 2, 2004
 
   * JW: fixed Undefined procedure: chr_runtime:run_suspensions_loop_d/1
+  * TS: Added <space> for creep and shortened debug line prefix to CHR:
 
 Mar 29, 2004
 
@@ -9,25 +10,25 @@ Mar 29, 2004
 
 Mar 25, 2004
 
-  * Added skip and ancestor debug commands
+  * TS: Added skip and ancestor debug commands
 
 Mar 24, 2004
 
-  * Added bootstrapping process for CHR compiler using CHR.
-  * CHR compiler now uses CHR.
-  * Fixed bug in compilation of multi-headed simpagation rules.
-  * Cleaned up compiler.
-  * Added analysis + optimization for never attached constraints.
-  * Exploit uniqueness (functional dependency) results to detect
+  * TS: Added bootstrapping process for CHR compiler using CHR.
+  * TS: CHR compiler now uses CHR.
+  * TS: Fixed bug in compilation of multi-headed simpagation rules.
+  * TS: Cleaned up compiler.
+  * TS: Added analysis + optimization for never attached constraints.
+  * TS: Exploit uniqueness (functional dependency) results to detect
     set semantics type simpagation rules where one rule can be passive
-  * Compiler generates 'chr debug_event'/1 calls
-  * Rudimentary support for debugging.
+  * TS: Compiler generates 'chr debug_event'/1 calls
+  * TS: Rudimentary support for debugging.
     option(debug,on) causes a trace of CHR events to be printed
 
 Mar 15, 2004
 
-  * Fix operator handling.
+  * TS: Fix operator handling.
 
 Mar 3, 2004
 
-  * Integrated new version from Tom Schrijvers.
+  * TS: Integrated new version from Tom Schrijvers.
