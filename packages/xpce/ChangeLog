@@ -1,9 +1,11 @@
 			   XPCE ChangeLog
 			   ==============
 
-
 VERSION 6.2.25, distributed with SWI-Prolog 5.3.18
 ==================================================
+
+* FIXED: Buffer overrun-by-one in menu->selection.  Caused crashes on Windows
+  version.  Christophe Costa Florencio.
 
 VERSION 6.2.24, distributed with SWI-Prolog 5.3.17
 ==================================================

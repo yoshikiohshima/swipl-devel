@@ -1273,8 +1273,8 @@ selectionMenu(Menu m, Any selection)
 
   DEBUG(NAME_popup, Cprintf("selectionMenu(%s, %s)\n", pp(m), pp(selection)));
 
-  if ( !(is_set = alloca(size*sizeof(char))) )
-  { is_set = pceMalloc(size*sizeof(char));
+  if ( !(is_set = alloca((size+1)*sizeof(char))) )
+  { is_set = pceMalloc((size+1)*sizeof(char));
     do_free = TRUE;
   } else
     do_free = FALSE;
