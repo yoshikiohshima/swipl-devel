@@ -66,6 +66,7 @@ initialiseFrame(FrameObj fr, Name label, Name kind,
   assign(fr, status,	    	    NAME_unmapped);
   assign(fr, can_delete,    	    ON);
   assign(fr, input_focus,   	    OFF);
+  assign(fr, sensitive,   	    ON);
   assign(fr, fitting,		    OFF);
   assign(fr, wm_protocols,  	    newObject(ClassSheet, EAV));
   assign(fr, wm_protocols_attached, OFF);
