@@ -69,11 +69,38 @@
 %%	* Renamed merge/3 --> sbag_merge/3 (name conflict)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- module(chr,[]).
+:- module(chr,
+	  [ 'chr sbag_del_element'/3,
+	    'chr sbag_member'/2,
+	    'chr merge_attributes'/3,
+
+	    'chr run_suspensions'/1,
+	    'chr run_suspensions_loop'/1,
+
+	    'chr insert_constraint_internal'/5,
+	    'chr remove_constraint_internal'/2,
+	    'chr allocate_constraint'/4,
+	    'chr activate_constraint'/3,
+
+	    'chr global_term_ref_1'/1,
+
+	    'chr via_1'/2,
+	    'chr via_2'/3,
+
+	    'chr lock'/1,
+	    'chr unlock'/1,
+	    'chr not_locked'/1,
+
+	    'chr update_mutable'/2,
+	    'chr get_mutable'/2,
+
+	    'chr novel_production'/2,
+	    'chr extend_history'/2
+	  ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                                        
-:- use_module(assoc).
+:- use_module(library(assoc)).
 :- use_module(hprolog).
 :- use_module(library(lists)).
 
@@ -103,20 +130,20 @@ show_store(Mod) :-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-merge_attributes( As, Bs, Cs) :-
+'chr merge_attributes'( As, Bs, Cs) :-
 	sbag_union(As,Bs,Cs).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-run_suspensions( Slots) :-
-	    run_suspensions_( Slots).
+'chr run_suspensions'( Slots) :-
+	    run_suspensions( Slots).
 
-run_suspensions_loop([]).
-run_suspensions_loop([L|Ls]) :-
-	run_suspensions_(L),
-	run_suspensions_loop(Ls).
+'chr run_suspensions_loop'([]).
+'chr run_suspensions_loop'([L|Ls]) :-
+	run_suspensions(L),
+	'chr run_suspensions_loop'(Ls).
 
-run_suspensions_([]).
-run_suspensions_([S|Next] ) :-
+run_suspensions([]).
+run_suspensions([S|Next] ) :-
 	%iter_next( State, S, Next),
 	arg( 2, S, Mref),
 	Mref = mutable(Status), % get_mutable( Status, Mref), % XXX Inlined
@@ -137,13 +164,22 @@ run_suspensions_([S|Next] ) :-
 	;
 	    true
 	),
-	run_suspensions_( Next).
+	run_suspensions( Next).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 locked:attr_unify_hook(_,_) :- fail.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-lock(T) :- 
+'chr lock'(T) :- 
+	lock(T).
+
+'chr unlock'(T) :-
+	unlock(T).
+
+'chr not_locked'(T) :-
+	not_locked(T).
+
+lock(T) :-
 	( var(T) -> 
 		put_attr( T, locked, x)
 	;
@@ -160,7 +196,7 @@ lock_arg( N, T) :-
 	M is N-1,
 	lock_arg( M, T).
 
-unlock( T) :-
+unlock(T) :-
 	( var(T) ->
 		del_attr( T, locked)
 	;
@@ -197,7 +233,7 @@ not_locked( V) :-
 %
 % Eager removal from all chains.
 %
-remove_constraint_internal( Susp, Agenda) :-
+'chr remove_constraint_internal'( Susp, Agenda) :-
 	arg( 2, Susp, Mref),
 	Mref = mutable(State), % get_mutable( State, Mref), % XXX Inlined
 	update_mutable( removed, Mref),		% mark in any case
@@ -215,15 +251,15 @@ remove_constraint_internal( Susp, Agenda) :-
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-via_1( X, V) :- var(X), !, X=V.
-via_1( T, V) :- compound(T), nonground( T, V), ! .
-via_1( _, V) :- global_term_ref_1( V).
+'chr via_1'( X, V) :- var(X), !, X=V.
+'chr via_1'( T, V) :- compound(T), nonground( T, V), ! .
+'chr via_1'( _, V) :- global_term_ref_1( V).
 
-via_2( X, _, V) :- var(X), !, X=V.
-via_2( _, Y, V) :- var(Y), !, Y=V.
-via_2( T, _, V) :- compound(T), nonground( T, V), ! .
-via_2( _, T, V) :- compound(T), nonground( T, V), ! .
-via_2( _, _, V) :- global_term_ref_1( V).
+'chr via_2'( X, _, V) :- var(X), !, X=V.
+'chr via_2'( _, Y, V) :- var(Y), !, Y=V.
+'chr via_2'( T, _, V) :- compound(T), nonground( T, V), ! .
+'chr via_2'( _, T, V) :- compound(T), nonground( T, V), ! .
+'chr via_2'( _, _, V) :- global_term_ref_1( V).
 
 %
 % The second arg is a witness.
@@ -236,7 +272,7 @@ nonground( Term, V) :-
 	Vs = [V|_].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-novel_production( Self, Tuple) :-
+'chr novel_production'( Self, Tuple) :-
 	arg( 5, Self, Ref),
 	Ref = mutable(History), % get_mutable( History, Ref), % XXX Inlined
 	( get_assoc( Tuple, History, _) ->
@@ -249,7 +285,7 @@ novel_production( Self, Tuple) :-
 % Not folded with novel_production/2 because guard checking
 % goes in between the two calls.
 %
-extend_history( Self, Tuple) :-
+'chr extend_history'( Self, Tuple) :-
 	arg( 5, Self, Ref),
 	Ref = mutable(History), % get_mutable( History, Ref), % XXX Inlined
 	put_assoc( Tuple, History, x, NewHistory),
@@ -263,7 +299,7 @@ constraint_generation( Susp, State, Generation) :-
 	Gref = mutable(Generation). % get_mutable( Generation, Gref). 	% not incremented meanwhile % XXX Inlined
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-allocate_constraint( Closure, Self, F, Args) :-
+'chr allocate_constraint'( Closure, Self, F, Args) :-
 	empty_history( History),
 	create_mutable( passive(Args), Mref),
 	create_mutable( 0, Gref),
@@ -272,11 +308,11 @@ allocate_constraint( Closure, Self, F, Args) :-
 	Self =.. [suspension,Id,Mref,Closure,Gref,Href,F|Args].
 
 %
-% activate_constraint( -, +, -).
+% 'chr activate_constraint'( -, +, -).
 %
 % The transition gc->active should be rare
 %
-activate_constraint( Vars, Susp, Generation) :-
+'chr activate_constraint'( Vars, Susp, Generation) :-
 	arg( 2, Susp, Mref),
 	Mref = mutable(State), % get_mutable( State, Mref),  % XXX Inlined
 	update_mutable( active, Mref),
@@ -302,7 +338,7 @@ activate_constraint( Vars, Susp, Generation) :-
 	    Vars = []
 	).
 
-insert_constraint_internal( [Global|Vars], Self, Closure, F, Args) :-
+'chr insert_constraint_internal'( [Global|Vars], Self, Closure, F, Args) :-
 	term_variables( Args, Vars),
 	none_locked( Vars),
 	global_term_ref_1( Global),
@@ -344,18 +380,26 @@ incval(id,Id) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 create_mutable(V,mutable(V)).
  
-get_mutable(V,mutable(V)).  
+'chr get_mutable'(V, mutable(V)).  
  
+'chr update_mutable'(V,M) :-
+	setarg(1,M,V).
+
+get_mutable(V, mutable(V)).  
+
 update_mutable(V,M) :-
-   setarg(1,M,V).
+	setarg(1,M,V).
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'chr global_term_ref_1'(X) :-
+	global_term_ref_1(X).
+
 global_term_ref_1(X) :-
-  nb_getval(chr_global,X).
+	nb_getval(chr_global,X).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sbag_member( Element, [Head|Tail]) :-
+'chr sbag_member'( Element, [Head|Tail]) :-
 	sbag_member( Element, Tail, Head).
 
 % auxiliary to avoid choicepoint for last element
@@ -364,13 +408,13 @@ sbag_member( E, _,	     E).
 sbag_member( E, [Head|Tail], _) :-
 	sbag_member( E, Tail, Head).
 
-sbag_del_element( [],	  _,	[]).
-sbag_del_element( [X|Xs], Elem, Set2) :-
+'chr sbag_del_element'( [],	  _,	[]).
+'chr sbag_del_element'( [X|Xs], Elem, Set2) :-
 	( X==Elem ->
 	    Set2 = Xs
 	;
 	    Set2 = [X|Xss],
-	    sbag_del_element( Xs, Elem, Xss)
+	    'chr sbag_del_element'( Xs, Elem, Xss)
 	).
 
 sbag_union( A, B, C) :-

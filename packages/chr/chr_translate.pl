@@ -111,7 +111,7 @@
 	  ]).
 :- use_module(library(lists)).
 :- use_module(hprolog).
-:- use_module(assoc).
+:- use_module(library(assoc)).
 :- use_module(pairlist).
 :- use_module(library(ordsets)).
 :- include(chr_op).
@@ -431,7 +431,7 @@ generate_detach_a_constraint_1_1(CFct / CAty,Mod,Clause) :-
 	Body =
 	(
 		( get_attr(Var,Mod,Susps) ->
-			chr:sbag_del_element(Susps,Susp,NewSusps),
+			'chr sbag_del_element'(Susps,Susp,NewSusps),
 			( NewSusps == [] ->
 				del_attr(Var,Mod)
 			;
@@ -461,7 +461,7 @@ generate_detach_a_constraint_t_p(Total,Position,CFct / CAty ,Mod,Clause) :-
 	(
 		( get_attr(Var,Mod,Attr) ->
 			( Mask /\ Pattern =:= Pattern ->
-				chr:sbag_del_element(Susps,Susp,NewSusps),
+				'chr sbag_del_element'(Susps,Susp,NewSusps),
 				( NewSusps == [] ->
 					NewMask is Mask /\ DelPattern,
 					( NewMask == 0 ->
@@ -498,7 +498,7 @@ generate_attach_increment_one(Mod,Clause) :-
 	Head = attach_increment([Var|Vars],Susps),
 	Body =
 	(
-		chr:not_locked(Var),
+		'chr not_locked'(Var),
 		( get_attr(Var,Mod,VarSusps) ->
 			sort(VarSusps,SortedVarSusps),
 			merge(Susps,SortedVarSusps,MergedSusps),
@@ -514,13 +514,13 @@ generate_attach_increment_many(N,Mod,Clause) :-
 	make_attr(N,Mask,SuspsList,Attr),
 	make_attr(N,OtherMask,OtherSuspsList,OtherAttr),
 	Head = attach_increment([Var|Vars],Attr),
-	bagof(G,X^Y^SY^M^(member2(SuspsList,OtherSuspsList,X-Y),G = (sort(Y,SY),chr:merge_attributes(X,SY,M))),Gs),
+	bagof(G,X^Y^SY^M^(member2(SuspsList,OtherSuspsList,X-Y),G = (sort(Y,SY),'chr merge_attributes'(X,SY,M))),Gs),
 	list2conj(Gs,SortGoals),
-	bagof(MS,A^B^C^member((A,chr:merge_attributes(B,C,MS)),Gs), MergedSuspsList),
+	bagof(MS,A^B^C^member((A,'chr merge_attributes'(B,C,MS)),Gs), MergedSuspsList),
 	make_attr(N,MergedMask,MergedSuspsList,NewAttr),
 	Body =	
 	(
-		chr:not_locked(Var),
+		'chr not_locked'(Var),
 		( get_attr(Var,Mod,OtherAttr) ->
 			SortGoals,
 			MergedMask is Mask \/ OtherMask,
@@ -553,9 +553,9 @@ generate_attr_unify_hook_one(Mod,Clause) :-
 		        	OtherSusps = []
 			),
 			sort(OtherSusps,SortedOtherSusps),
-			chr:merge_attributes(SortedSusps,SortedOtherSusps,NewSusps),
+			'chr merge_attributes'(SortedSusps,SortedOtherSusps,NewSusps),
 			put_attr(Other,Mod,NewSusps),
-			chr:run_suspensions(NewSusps)
+			'chr run_suspensions'(NewSusps)
 		;
 			( compound(Other) ->
 				term_variables(Other,OtherVars), % SWI
@@ -563,7 +563,7 @@ generate_attr_unify_hook_one(Mod,Clause) :-
 			;
 				true
 			),
-			chr:run_suspensions(Susps)
+			'chr run_suspensions'(Susps)
 		)
 	),
 	Clause = (Head :- Body).
@@ -574,8 +574,11 @@ generate_attr_unify_hook_many(N,Mod,Clause) :-
 	bagof(Sort,A^B^( member(A,SuspsList) , Sort = sort(A,B) ) , SortGoalList),
 	list2conj(SortGoalList,SortGoals),
 	bagof(B, A^member(sort(A,B),SortGoalList), SortedSuspsList),
-	bagof(C, D^E^F^G^( member2(SortedSuspsList,OtherSuspsList,D-E), C = (sort(E,F),chr:merge_attributes(D,F,G)) ), SortMergeGoalList),
-	bagof(G, D^F^H^member((H,chr:merge_attributes(D,F,G)),SortMergeGoalList) , MergedSuspsList),
+	bagof(C, D^E^F^G^(member2(SortedSuspsList,OtherSuspsList,D-E),
+			  C = (sort(E,F),
+			       'chr merge_attributes'(D,F,G)) ),
+	      SortMergeGoalList),
+	bagof(G, D^F^H^member((H,'chr merge_attributes'(D,F,G)),SortMergeGoalList) , MergedSuspsList),
 	list2conj(SortMergeGoalList,SortMergeGoals),
 	make_attr(N,MergedMask,MergedSuspsList,MergedAttr),
 	make_attr(N,Mask,SortedSuspsList,SortedAttr),
@@ -588,10 +591,10 @@ generate_attr_unify_hook_many(N,Mod,Clause) :-
 				SortMergeGoals,
 				MergedMask is Mask \/ OtherMask,
 				put_attr(Other,Mod,MergedAttr),
-				chr:run_suspensions_loop(MergedSuspsList)
+				'chr run_suspensions_loop'(MergedSuspsList)
 			;
 				put_attr(Other,Mod,SortedAttr),
-				chr:run_suspensions_loop(SortedSuspsList)
+				'chr run_suspensions_loop'(SortedSuspsList)
 			)
 		;
 			( compound(Other) ->
@@ -600,7 +603,7 @@ generate_attr_unify_hook_many(N,Mod,Clause) :-
 			;
 				true
 			),
-			chr:run_suspensions_loop(SortedSuspsList)
+			'chr run_suspensions_loop'(SortedSuspsList)
 		)	
 	),	
 	Clause = (Head :- Body).
@@ -660,9 +663,9 @@ gen_cond_attach_goal(Mod,F/A,Goal,AllArgs) :-
 	Goal =
 	(
 		( var(Susp) ->
-			chr:insert_constraint_internal(Vars,Susp,Mod:Closure,F,Args)
+			'chr insert_constraint_internal'(Vars,Susp,Mod:Closure,F,Args)
 		; 
-			chr:activate_constraint(Vars,Susp,_)
+			'chr activate_constraint'(Vars,Susp,_)
 		),
 		Attach
 	).
@@ -672,7 +675,7 @@ gen_uncond_attach_goal(F/A,Susp,_Mod,AttachGoal,Generation) :-
 	Attach =.. [AttachF,Vars,Susp],
 	AttachGoal =
 	(
-		chr:activate_constraint(Vars, Susp, Generation),
+		'chr activate_constraint'(Vars, Susp, Generation),
 		Attach	
 	).
 
@@ -770,7 +773,7 @@ gen_cond_allocation(Vars,Susp,F/A,VarsSusp,Mod,ConstraintAllocationGoal) :-
 	build_head(F,A,[0],VarsSusp,Term),
 	ConstraintAllocationGoal =
 	( var(Susp) ->
-		chr:allocate_constraint(Mod : Term, Susp, F, Vars)
+		'chr allocate_constraint'(Mod : Term, Susp, F, Vars)
 	;  
 		true
 	).
@@ -1206,7 +1209,7 @@ rest_heads_retrieval_and_matching_n([H|Hs],[ID|IDs],Pragmas,PrevHs,PrevSusps,Act
 	create_get_mutable(active,State,GetMutable),
 	Goal1 = 
 	(
-		chr:sbag_member(Susp,VarSusps),
+		'chr sbag_member'(Susp,VarSusps),
 		Susp = Suspension,
 		GetMutable,
 		DiffSuspGoals,
@@ -1270,15 +1273,15 @@ common_variables(T,Ts,Vs) :-
 gen_get_mod_constraints(Mod,L,Goal,Susps) :-
    (   L == [] ->
        Goal = 
-       (   chr:global_term_ref_1(Global),
+       (   'chr global_term_ref_1'(Global),
            get_attr(Global,Mod,Susps)
        )
    ; 
        (    L = [A] ->
-            VIA =  chr:via_1(A,V)
+            VIA =  'chr via_1'(A,V)
        ;    (   L = [A,B] ->
-                VIA = chr:via_2(A,B,V)
-            ;   VIA = chr:via(L,V)
+                VIA = 'chr via_2'(A,B,V)
+            ;   VIA = 'chr via'(L,V)
             )
        ),
        Goal =
@@ -1295,13 +1298,13 @@ code_copies(Rule,VarDict,GuardCopy,BodyCopy) :-
 	;
 		term_variables(Guard,GuardVars),
 		term_variables(GuardCopyCore,GuardCopyVars),
-		( bagof(chr:lock(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
+		( bagof('chr lock'(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
 			true
 		;
 			Locks = []
 		),
 		list2conj(Locks,LockPhase),
-		( bagof(chr:unlock(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
+		( bagof('chr unlock'(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
 			true
 		;
 			Unlocks = []
@@ -1320,13 +1323,13 @@ code_copies2(Rule,VarDict,GuardCopyList,BodyCopy) :-
 	append(GuardPrefixCopy,[RestGuardCopy],GuardCopyList),
 	term_variables(RestGuardList,GuardVars),
 	term_variables(RestGuardListCopyCore,GuardCopyVars),
-	( bagof(chr:lock(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
+	( bagof('chr lock'(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
 		true
 	;
 		Locks = []
 	),
 	list2conj(Locks,LockPhase),
-	( bagof(chr:unlock(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
+	( bagof('chr unlock'(Y),X^(member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
 		true
 	;
 		Unlocks = []
@@ -1402,7 +1405,7 @@ gen_uncond_susp_detachment(Susp,CFct/CAty,SuspDetachment) :-
 	Detach =.. [Fct,Vars,Susp],
 	SuspDetachment = 
 	(
-		chr:remove_constraint_internal(Susp, Vars),
+		'chr remove_constraint_internal'(Susp, Vars),
 		Detach
 	).
 
@@ -1633,7 +1636,7 @@ gen_state_cond_call(Susp,N,Call,Generation,ConditionalCall) :-
       (   Susp = Suspension,
 	  GetState,
           GetGeneration ->
-		  chr:update_mutable(inactive,State),
+		  'chr update_mutable'(inactive,State),
 	          Call
 	      ;   true
       ).
@@ -1695,10 +1698,10 @@ propagation_single_headed(Head,Rule,RuleNb,F/A,Mod,Id,L,T) :-
         ClauseHead :-
 		HeadMatching,
 		Allocation1,
-		chr:novel_production(Susp,RuleNb),	% optimisation of t(RuleNb,Susp)
+		'chr novel_production'(Susp,RuleNb),	% optimisation of t(RuleNb,Susp)
 		GuardCopy,
 		!,
-		chr:extend_history(Susp,RuleNb),
+		'chr extend_history'(Susp,RuleNb),
 		Attachment,
 		BodyCopy,
 		ConditionalNextCall
@@ -1794,7 +1797,7 @@ propagation_body(CurrentHead,PreHeads,Rule,RuleNb,RestHeadNb,F/A,Mod,Id,L,T) :-
    gen_state_cond_call(Susp,A,RecursiveCall,Generation,ConditionalRecursiveCall),
 
    history_susps(RestHeadNb,[OtherSusp|RestSusps],Susp,[],HistorySusps),
-   bagof(chr:novel_production(X,Y),( member(X,HistorySusps), Y = TupleVar) ,NovelProductionsList),
+   bagof('chr novel_production'(X,Y),( member(X,HistorySusps), Y = TupleVar) ,NovelProductionsList),
    list2conj(NovelProductionsList,NovelProductions),
    Tuple =.. [t,RuleNb|HistorySusps],
 
@@ -1806,7 +1809,7 @@ propagation_body(CurrentHead,PreHeads,Rule,RuleNb,RestHeadNb,F/A,Mod,Id,L,T) :-
 	     TupleVar = Tuple,
 	     NovelProductions,
              GuardCopy ->
-	     chr:extend_history(Susp,TupleVar),
+	     'chr extend_history'(Susp,TupleVar),
              Attach,
              BodyCopy,
              ConditionalRecursiveCall
@@ -2059,7 +2062,7 @@ order_score_vars([V|Vs],KnownVars,RestVars,Score,NScore) :-
 %%                              |___/ 
 
 create_get_mutable(V,M,GM) :-
-	% GM = chr:get_mutable(V,M)
+	% GM = 'chr get_mutable'(V,M)
 	( ground(V) ->
 		GM = (M == mutable(V))
 	;

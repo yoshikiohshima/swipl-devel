@@ -30,7 +30,7 @@ INSTALL_DATA=@INSTALL_DATA@
 
 LIBPL=		chr.pl chr_op.pl chr_translate.pl \
 		chr_swi.pl \
-		hprolog.pl pairlist.pl assoc.pl
+		hprolog.pl pairlist.pl
 
 all:		
 		@echo "Nothing to do for this package"
