@@ -610,6 +610,7 @@ COMMON(word) 		checkData(Word p);
 /* pl-proc.c */
 COMMON(Procedure) 	lookupProcedure(functor_t f, Module m);
 COMMON(Procedure) 	isCurrentProcedure(functor_t f, Module m);
+COMMON(int)		importDefinitionModule(Module m, Definition def);
 COMMON(Procedure) 	lookupProcedureToDefine(functor_t def, Module m);
 COMMON(ClauseRef) 	hasClausesDefinition(Definition def);
 COMMON(bool) 		isDefinedProcedure(Procedure proc);

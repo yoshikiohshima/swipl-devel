@@ -75,6 +75,45 @@ lookupProcedure(functor_t f, Module m)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Add (import) a defintion to a module.  Used by loadImport()
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+int
+importDefinitionModule(Module m, Definition def)
+{ functor_t functor = def->functor->functor;
+  Procedure proc;
+  int rc = TRUE;
+  Symbol s;
+
+  LOCKMODULE(m);
+  if ( (s = lookupHTable(m->procedures, (void *)functor)) )
+  { proc = s->value;
+    
+    if ( proc->definition == def )
+      goto done;
+    if ( !isDefinedProcedure(proc) )
+    { proc->definition = def;		/* TBD: what about the old one */
+      goto done;
+    }
+    rc = warning("Failed to import %s into %s",
+		 predicateName(def), PL_atom_chars(m->name));
+    goto done;
+  } else
+  { GET_LD
+
+    proc = (Procedure) allocHeap(sizeof(struct procedure));
+    proc->definition = def;
+    addHTable(m->procedures, (void *)functor, proc);
+  }
+
+done:
+  UNLOCKMODULE(m);
+
+  return rc;
+}
+
+
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 resetProcedure() is called  by  lookupProcedure()   for  new  ones,  and

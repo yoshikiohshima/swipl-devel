@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: import/export issues loading QLF files leading to
+    ERROR: Failed to import ... into ... messages.
+
   * ADDED/MODIFIED: print message if a detached thread dies abnormally.
     After report by Fabien Todescato.
 

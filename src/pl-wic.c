@@ -22,7 +22,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/*#define O_DEBUG 1*/
+#define O_DEBUG 1
 #include "pl-incl.h"
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -950,28 +950,9 @@ loadPredicate(IOSTREAM *fd, int skip ARG_LD)
 static bool
 loadImport(IOSTREAM *fd, int skip ARG_LD)
 { Procedure proc = (Procedure) loadXR(fd);
-  functor_t functor = proc->definition->functor->functor;
-  Procedure old;
 
   if ( !skip )
-  { DEBUG(3, Sdprintf("loadImport(): %s into %s\n",
-		      procedureName(proc), stringAtom(LD->modules.source->name)));
-
-    if ( (old = isCurrentProcedure(functor, LD->modules.source)) )
-    { if ( old->definition == proc->definition )
-	succeed;			/* already done this! */
-      
-      if ( !isDefinedProcedure(old) )
-      { old->definition = proc->definition;
-	succeed;
-      }
-
-      return warning("Failed to import %s into %s", 
-		     procedureName(proc), 
-		     stringAtom(LD->modules.source->name) );
-    }
-    addHTable(LD->modules.source->procedures, (void *)functor, proc);
-  }
+    return importDefinitionModule(LD->modules.source, proc->definition);
 
   succeed;
 }
