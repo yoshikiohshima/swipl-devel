@@ -56,18 +56,24 @@ This class was designed to be used with the library scaledbitmap.pl.
 :- pce_begin_class(url_image, image,
 		   "Image whose source comes from a URL").
 
-variable(url,	name,	get,  "Source of the image").
-variable(cache, bool,   get, "Image is cached").
+variable(url,	 name, get, "Source of the image").
+variable(cache,  bool, get, "Image is cached").
+variable(exists, bool, get, "We succeeded loading the image from URL").
 
 initialise(I, URL:url=name, Cache:cache=[bool], NoImage:no_image=[image]*) :->
 	"Create image from URL data"::
 	send_super(I, initialise),
-	(   send(I, load, URL, Cache)
-	->  true
-	;   send(NoImage, instance_of, image)
-	->  send(I, copy, NoImage)
-	;   NoImage == @default
-	->  send_super(I, load, resource(noimg))
+	(   (   NoImage == @nil
+	    ->	send(I, load, URL, Cache)
+	    ;	pce_catch_error(_, send(I, load, URL, Cache))
+	    )
+	->  send(I, slot, exists, @on)
+	;   send(I, slot, exists, @off),
+	    (	send(NoImage, instance_of, image)
+	    ->  send(I, copy, NoImage)
+	    ;   NoImage == @default
+	    ->  send_super(I, load, resource(noimg))
+	    )
 	).
 
 :- pce_global(@url_image_table, new(hash_table)).
