@@ -1,7 +1,12 @@
+Sep 1, 2004
+
+  * ADDED: rdf_predicate_property/2 new properties rdfs_object_branch_factor
+    and rdfs_subject_branch_factor.
+
 Aug 31, 2004
 
-  * ADDED: rdf_predicate_property/2 new properties object_branch_factor
-    and subject_branch_factor.
+  * ADDED: rdf_predicate_property/2 new properties rdf_object_branch_factor
+    and rdf_subject_branch_factor.
 
 Aug 27, 2004
 

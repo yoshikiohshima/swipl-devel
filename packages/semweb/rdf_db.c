@@ -92,8 +92,10 @@ static functor_t FUNCTOR_like1;
 static functor_t FUNCTOR_symmetric1;
 static functor_t FUNCTOR_inverse_of1;
 static functor_t FUNCTOR_transitive1;
-static functor_t FUNCTOR_subject_branch_factor1; /* S --> BF*O */
-static functor_t FUNCTOR_object_branch_factor1;	/* O --> BF*S */
+static functor_t FUNCTOR_rdf_subject_branch_factor1; /* S --> BF*O */
+static functor_t FUNCTOR_rdf_object_branch_factor1;	/* O --> BF*S */
+static functor_t FUNCTOR_rdfs_subject_branch_factor1; /* S --> BF*O */
+static functor_t FUNCTOR_rdfs_object_branch_factor1;	/* O --> BF*S */
 
 static functor_t FUNCTOR_searched_nodes1;
 static functor_t FUNCTOR_lang2;
@@ -737,18 +739,32 @@ isSubPropertyOf(predicate *sub, predicate *p)
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Branching  factors  are  crucial  in  ordering    the  statements  of  a
-conjunction. 
-
+conjunction. These functions compute  the   average  branching factor in
+both directions ("subject --> P  -->  object"   and  "object  -->  P -->
+subject") by determining the number of unique   values at either side of
+the predicate. This number  is  only   recomputed  if  it  is considered
+`dirty'.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-update_predicate_counts(predicate *p)
-{ long changed = abs(p->triple_count - p->distinct_updated);
+update_predicate_counts(predicate *p, int which)
+{ long total = 0;
 
   if ( !update_hash() )
     return FALSE;
 
-  if ( changed > p->distinct_updated )
+  if ( which == DISTINCT_DIRECT )
+  { long changed = abs(p->triple_count - p->distinct_updated[DISTINCT_DIRECT]);
+
+    if ( changed < p->distinct_updated[DISTINCT_DIRECT] )
+      return TRUE;
+  } else
+  { long changed = generation - p->distinct_updated[DISTINCT_SUB];
+
+    if ( changed < p->distinct_count[DISTINCT_SUB] )
+      return TRUE;
+  }
+
   { avl_tree subject_set;
     avl_tree object_set;
     triple t;
@@ -763,21 +779,31 @@ update_predicate_counts(predicate *p)
     for(byp = table[t.indexed][triple_hash(&t, t.indexed)];
 	byp;
 	byp = byp->next[t.indexed])
-    { if ( byp->predicate == p && !byp->is_duplicate )
-      { avl_insert(&subject_set, byp->subject);
-	avl_insert(&object_set, object_hash(byp)); /* NOTE: not exact! */
+    { if ( !byp->erased && !byp->is_duplicate )
+      { if ( (which == DISTINCT_DIRECT && byp->predicate == p) ||
+	     (which != DISTINCT_DIRECT && isSubPropertyOf(byp->predicate, p)) )
+	{ total++;
+	  avl_insert(&subject_set, byp->subject);
+	  avl_insert(&object_set, object_hash(byp)); /* NOTE: not exact! */
+	}
       }
     }
 
     avl_destroy(&subject_set);
     avl_destroy(&object_set);
 
-    p->distinct_updated  = p->triple_count;
-    p->distinct_subjects = subject_set.size;
-    p->distinct_objects  = object_set.size;
+    p->distinct_count[which]    = total;
+    p->distinct_subjects[which] = subject_set.size;
+    p->distinct_objects[which]  = object_set.size;
 
-    DEBUG(1, Sdprintf("%s: distinct subjects: %ld, objects: %ld\n",
+    if ( which == DISTINCT_DIRECT )
+      p->distinct_updated[DISTINCT_DIRECT] = total;
+    else
+      p->distinct_updated[DISTINCT_SUB] = generation;
+
+    DEBUG(1, Sdprintf("%s: distinct subjects (%s): %ld, objects: %ld\n",
 		      PL_atom_chars(p->name),
+		      (which == DISTINCT_DIRECT ? "rdf" : "rdfs"),
 		      p->distinct_subjects,
 		      p->distinct_objects));
   }
@@ -786,27 +812,47 @@ update_predicate_counts(predicate *p)
 }
 
 
-static double
-subject_branch_factor(predicate *p)
-{ if ( !update_predicate_counts(p) )
-    return FALSE;
+static void
+invalidate_distinct_counts()
+{ predicate **ht;
+  int i;
 
-  if ( p->distinct_subjects == 0 )
-    return 0.0;				/* 0 --> 0 */
+  for(i=0,ht = pred_table; i<pred_table_size; i++, ht++)
+  { predicate *p;
 
-  return (double)p->triple_count / (double)p->distinct_subjects;
+    for( p = *ht; p; p = p->next )
+    { p->distinct_updated[DISTINCT_SUB] = 0;
+      p->distinct_count[DISTINCT_SUB] = 0;
+      p->distinct_subjects[DISTINCT_SUB] = 0;
+      p->distinct_objects[DISTINCT_SUB] = 0;
+    }
+  }
 }
 
 
 static double
-object_branch_factor(predicate *p)
-{ if ( !update_predicate_counts(p) )
+subject_branch_factor(predicate *p, int which)
+{ if ( !update_predicate_counts(p, which) )
     return FALSE;
 
-  if ( p->distinct_objects == 0 )
+  if ( p->distinct_subjects[which] == 0 )
     return 0.0;				/* 0 --> 0 */
 
-  return (double)p->triple_count / (double)p->distinct_objects;
+  return (double)p->distinct_count[which] /
+         (double)p->distinct_subjects[which];
+}
+
+
+static double
+object_branch_factor(predicate *p, int which)
+{ if ( !update_predicate_counts(p, which) )
+    return FALSE;
+
+  if ( p->distinct_objects[which] == 0 )
+    return 0.0;				/* 0 --> 0 */
+
+  return (double)p->distinct_count[which] /
+         (double)p->distinct_objects[which];
 }
 
 
@@ -1271,7 +1317,9 @@ update_hash(void)
     if ( need_update )			/* check again */
     { if ( organise_predicates() )
       { DEBUG(1, Sdprintf("Re-hash ..."));
+	invalidate_distinct_counts();
 	rehash_triples();
+	generation += (created-erased);
 	DEBUG(1, Sdprintf("ok\n"));
       }
       need_update = 0;
@@ -1881,6 +1929,7 @@ load_db(IOSTREAM *in)
 { ld_context ctx;
   int version;
   int c;
+  long created0 = created;
 
   if ( !load_magic(in) )
     return FALSE;
@@ -1920,7 +1969,7 @@ load_db(IOSTREAM *in)
 	  ctx.source->md5 = ctx.md5;
 	}
 
-        generation++;
+        generation += (created-created0);
 	UNLOCK();
 	return TRUE;
       default:
@@ -3093,7 +3142,7 @@ rdf_set_predicate(term_t pred, term_t option)
 }
 
 
-#define PRED_PROPERTY_COUNT 7
+#define PRED_PROPERTY_COUNT 9
 static functor_t predicate_key[PRED_PROPERTY_COUNT];
 
 static int
@@ -3113,12 +3162,18 @@ unify_predicate_property(predicate *p, term_t option, functor_t f)
   } else if ( f == FUNCTOR_triples1 )
   { return PL_unify_term(option, PL_FUNCTOR, f,
 			 PL_INTEGER, p->triple_count);
-  } else if ( f == FUNCTOR_subject_branch_factor1 )
+  } else if ( f == FUNCTOR_rdf_subject_branch_factor1 )
   { return PL_unify_term(option, PL_FUNCTOR, f,
-			 PL_FLOAT, subject_branch_factor(p));
-  } else if ( f == FUNCTOR_object_branch_factor1 )
+			 PL_FLOAT, subject_branch_factor(p, DISTINCT_DIRECT));
+  } else if ( f == FUNCTOR_rdf_object_branch_factor1 )
   { return PL_unify_term(option, PL_FUNCTOR, f,
-			 PL_FLOAT, object_branch_factor(p));
+			 PL_FLOAT, object_branch_factor(p, DISTINCT_DIRECT));
+  } else if ( f == FUNCTOR_rdfs_subject_branch_factor1 )
+  { return PL_unify_term(option, PL_FUNCTOR, f,
+			 PL_FLOAT, subject_branch_factor(p, DISTINCT_SUB));
+  } else if ( f == FUNCTOR_rdfs_object_branch_factor1 )
+  { return PL_unify_term(option, PL_FUNCTOR, f,
+			 PL_FLOAT, object_branch_factor(p, DISTINCT_SUB));
   } else
   { assert(0);
     return FALSE;
@@ -3138,8 +3193,10 @@ rdf_predicate_property(term_t pred, term_t option, control_t h)
     predicate_key[i++] = FUNCTOR_inverse_of1;
     predicate_key[i++] = FUNCTOR_transitive1;
     predicate_key[i++] = FUNCTOR_triples1;
-    predicate_key[i++] = FUNCTOR_subject_branch_factor1;
-    predicate_key[i++] = FUNCTOR_object_branch_factor1;
+    predicate_key[i++] = FUNCTOR_rdf_subject_branch_factor1;
+    predicate_key[i++] = FUNCTOR_rdf_object_branch_factor1;
+    predicate_key[i++] = FUNCTOR_rdfs_subject_branch_factor1;
+    predicate_key[i++] = FUNCTOR_rdfs_object_branch_factor1;
     assert(i < PRED_PROPERTY_COUNT);
   }
 
@@ -3990,8 +4047,10 @@ install_rdf_db()
   MKFUNCTOR(inverse_of, 1);
   MKFUNCTOR(lang, 2);
   MKFUNCTOR(type, 2);
-  MKFUNCTOR(subject_branch_factor, 1);
-  MKFUNCTOR(object_branch_factor, 1);
+  MKFUNCTOR(rdf_subject_branch_factor, 1);
+  MKFUNCTOR(rdf_object_branch_factor, 1);
+  MKFUNCTOR(rdfs_subject_branch_factor, 1);
+  MKFUNCTOR(rdfs_object_branch_factor, 1);
 
   FUNCTOR_colon2 = PL_new_functor(PL_new_atom(":"), 2);
 

@@ -28,7 +28,7 @@
 #include "md5.h"
 #endif
 
-#define RDF_VERSION 20000		/* 2.0.0 */
+#define RDF_VERSION 20100		/* 2.1.0 */
 
 #define URL_subPropertyOf \
 	"http://www.w3.org/2000/01/rdf-schema#subPropertyOf"
@@ -81,6 +81,9 @@ typedef struct list
 } list;
 
 
+#define DISTINCT_DIRECT 0		/* for ->distinct_subjects, etc */
+#define DISTINCT_SUB    1
+
 typedef struct predicate
 { atom_t	    name;		/* name of the predicate */
   list	            subPropertyOf;	/* the one I'm subPropertyOf */
@@ -92,9 +95,11 @@ typedef struct predicate
   struct predicate *inverse_of;		/* my inverse predicate */
   unsigned 	    transitive : 1;	/* P(a,b)&P(b,c) --> P(a,c) */
   long		    triple_count;	/* # triples on this predicate */
-  long		    distinct_updated;	/* Triple count at last update */
-  long		    distinct_subjects;	/* # distinct subject values */
-  long		    distinct_objects;	/* # distinct object values */
+
+  long		    distinct_updated[2];/* Is count still valid? */
+  long		    distinct_count[2];  /* Triple count at last update */
+  long		    distinct_subjects[2];/* # distinct subject values */
+  long		    distinct_objects[2];/* # distinct object values */
 } predicate;
 
 
