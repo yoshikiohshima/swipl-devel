@@ -108,6 +108,7 @@ standardStreamIndexFromStream(IOSTREAM *s)
 		 *******************************/
 
 static void aliasStream(IOSTREAM *s, atom_t alias);
+static void unaliasStream(IOSTREAM *s, atom_t name);
 
 static Table streamAliases;		/* alias --> stream */
 static Table streamContext;		/* stream --> extra data */
@@ -155,7 +156,12 @@ void
 aliasStream(IOSTREAM *s, atom_t name)
 { GET_LD
   stream_context *ctx;
+  Symbol symb;
   alias *a;
+
+					/* ensure name is free (error?) */
+  if ( (symb = lookupHTable(streamAliases, (void *)name)) )
+    unaliasStream(symb->value, name);
 
   ctx = getStreamContext(s);
   addHTable(streamAliases, (void *)name, s);
@@ -1045,7 +1051,6 @@ pl_set_stream(term_t stream, term_t attr)
 
       if ( aname == ATOM_alias )	/* alias(name) */
       { atom_t alias;
-	Symbol symb;
 	int i;
   
 	if ( !PL_get_atom_ex(a, &alias) )
@@ -1059,8 +1064,6 @@ pl_set_stream(term_t stream, term_t attr)
 	}
   
 	LOCK();
-	if ( (symb = lookupHTable(streamAliases, (void *)alias)) )
-	  unaliasStream(symb->value, alias);
 	aliasStream(s, alias);
 	UNLOCK();
 	goto ok;
@@ -2840,6 +2843,131 @@ pl_peek_char1(term_t chr)
 }
 
 
+		 /*******************************
+		 *	    INTERACTION		*
+		 *******************************/
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+set_prolog_OI(+In, +Out, +Error)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+typedef struct wrappedIO
+{ void		   *wrapped_handle;	/* original handle */
+  IOFUNCTIONS      *wrapped_functions;	/* original functions */
+  IOSTREAM	   *wrapped_stream;	/* stream we wrapped */
+  IOFUNCTIONS       functions;		/* new function block */
+} wrappedIO;
+
+
+int
+Sread_user(void *handle, char *buf, int size)
+{ GET_LD
+  wrappedIO *wio = handle;
+
+  if ( LD->prompt.next && ttymode != TTY_RAW )
+  { Sfputs(PrologPrompt(), Suser_output);
+    
+    LD->prompt.next = FALSE;
+  }
+
+  Sflush(Suser_output);
+  size = (*wio->wrapped_functions->read)(wio->wrapped_handle, buf, size);
+  if ( size == 0 )			/* end-of-file */
+  { Sclearerr(Suser_input);
+    LD->prompt.next = TRUE;
+  } else if ( size > 0 && buf[size-1] == '\n' )
+    LD->prompt.next = TRUE;
+
+  return size;
+}
+
+
+static int
+closeWrappedIO(void *handle)
+{ wrappedIO *wio = handle;
+  int rval;
+
+  if ( wio->wrapped_functions->close )
+    rval = (*wio->wrapped_functions->close)(wio->wrapped_handle);
+  else
+    rval = 0;
+  
+  wio->wrapped_stream->functions = wio->wrapped_functions;
+  wio->wrapped_stream->handle = wio->wrapped_handle;
+  PL_free(wio);
+
+  return rval;
+}
+
+
+static void
+wrapIO(IOSTREAM *s,
+       int (*read)(void *, char *, int),
+       int (*write)(void *, char *, int))
+{ wrappedIO *wio = PL_malloc(sizeof(*wio));
+
+  wio->wrapped_functions = s->functions;
+  wio->wrapped_handle =	s->handle;
+  wio->wrapped_stream = s;
+
+  wio->functions = *s->functions;
+  if ( read  ) wio->functions.read  = read;
+  if ( write ) wio->functions.write = write;
+  wio->functions.close = closeWrappedIO;
+
+  s->functions = &wio->functions;
+  s->handle = wio;
+}
+
+
+static
+PRED_IMPL("set_prolog_IO", 3, set_prolog_IO, 0)
+{ PRED_LD
+  IOSTREAM *in = NULL, *out = NULL, *error = NULL;
+  int rval = FALSE;
+
+  if ( !PL_get_stream_handle(A1, &in) ||
+       !PL_get_stream_handle(A2, &out) )
+    goto out;
+
+  if ( PL_compare(A2, A3) == 0 )	/* == */
+  { error = Snew(out->handle, out->flags, out->functions);
+    error->flags &= ~SIO_ABUF;		/* disable buffering */
+    error->flags |= SIO_NBUF;
+  } else
+  { if ( !PL_get_stream_handle(A3, &error) )
+      goto out;
+  }
+
+  LOCK();
+  out->flags &= ~SIO_ABUF;		/* output: line buffered */
+  out->flags |= SIO_LBUF;
+
+  LD->IO.streams[0] = in;		/* user_input */
+  LD->IO.streams[1] = out;		/* user_output */
+  LD->IO.streams[2] = error;		/* user_error */
+  LD->IO.streams[3] = in;		/* current_input */
+  LD->IO.streams[4] = out;		/* current_output */
+
+  wrapIO(in, Sread_user, NULL);
+  LD->prompt.next = TRUE;
+
+  UNLOCK();
+  rval = TRUE;
+
+out:
+  if ( in )
+    releaseStream(in);
+  if ( out )
+    releaseStream(out);
+  if ( error && error != out )
+    releaseStream(error);
+
+  return rval;
+}
+
+
 		/********************************
 		*             FILES             *
 		*********************************/
@@ -3463,3 +3591,11 @@ pl_copy_stream_data2(term_t in, term_t out)
 { return pl_copy_stream_data3(in, out, 0);
 }
 
+
+		 /*******************************
+		 *      PUBLISH PREDICATES	*
+		 *******************************/
+
+BeginPredDefs(file)
+  PRED_DEF("set_prolog_IO", 3, set_prolog_IO, 0)
+EndPredDefs

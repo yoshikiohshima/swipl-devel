@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: set_prolog_OI/3 to handle interactive I/O from arbitrary
+    streams.
+
 VERSION 5.3.7 (Mar 26, 2004)
 ============================
 

@@ -599,6 +599,7 @@ DECL_PLIST(wic);
 DECL_PLIST(attvar);
 DECL_PLIST(gvar);
 DECL_PLIST(win);
+DECL_PLIST(file);
 
 void
 initBuildIns(void)
@@ -619,6 +620,7 @@ initBuildIns(void)
   REG_PLIST(thread);
   REG_PLIST(profile);
   REG_PLIST(wic);
+  REG_PLIST(file);
 #ifdef O_ATTVAR
   REG_PLIST(attvar);
 #endif
