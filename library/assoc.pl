@@ -30,7 +30,7 @@ documented in the SWI-Prolog Reference Manual.
 	  [ assoc_to_list/2,		% +Assoc, -List
 	    empty_assoc/1,		% -Assoc
 	    gen_assoc/3,		% +Assoc, ?Key, ?Value
-	    get_assoc/3,		% +Assoc, +Key, -Value
+	    get_assoc/3,		% +Key, +Assoc, -Value
 	    get_assoc/5,		% +Key, +Assoc, +Old, -NewAssoc, +New
 	    list_to_assoc/2,		% +List, -Assoc
 	    map_assoc/3,		% :Goal, +AssocIn, -AssocOut
