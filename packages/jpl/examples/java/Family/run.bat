@@ -2,8 +2,8 @@
 call ..\env.bat
 
 if not exist Family.class (
-  echo  Compiling Family.class
-  javac Family.class
+  echo  Compiling Family.java
+  javac Family.java
 )
 
 java Family.java

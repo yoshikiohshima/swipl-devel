@@ -2,8 +2,8 @@
 call ..\env.bat
 
 if not exist Test2.class (
-  echo  Compiling Test2.class
-  javac Test2.class
+  echo  Compiling Test2.java
+  javac Test2.java
 )
 
 java Test2.java

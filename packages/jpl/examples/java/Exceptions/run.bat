@@ -2,8 +2,8 @@
 call ..\env.bat
 
 if not exist Exceptions.class (
-  echo  Compiling Exceptions.class
-  javac Exceptions.class
+  echo  Compiling Exceptions.java
+  javac Exceptions.java
 )
 
 java Exceptions.java

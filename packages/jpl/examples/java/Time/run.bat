@@ -2,8 +2,8 @@
 call ..\env.bat
 
 if not exist Time.class (
-  echo  Compiling Time.class
-  javac Time.class
+  echo  Compiling Time.java
+  javac Time.java
 )
 
 java Time.java
