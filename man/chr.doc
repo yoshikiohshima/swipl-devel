@@ -202,6 +202,25 @@ Possible values are \texttt{on} and \texttt{off} (default). See
 derived from the prolog flag \const{generate_debug_info}, which
 is \const{true} by default.  See \cmdlineoption{-nodebug}.
 
+	\termitem{mode}{}
+This option specifies the mode for a particular constraint. The
+value is a term with functor and arity equal to that of a constraint.
+The arguments can be one of \texttt{-}, \texttt{+} or \texttt{?}.
+The latter is the default. The meaning is the following:
+	\begin{description}
+	\termitem{-}{} The corresponding argument of every occurrence
+	of the constraint is always unbound.
+	\termitem{+}{} The corresponding argument of every occurrence
+	of the constraint is always ground.
+	\termitem{?}{} The corresponding argument of every occurrence
+	of the constraint can have any instantiation, which may change
+	over time. This is the default value.
+	\end{description}
+The declaration is used by the compiler for various optimizations. 
+Note that it is up to the user the ensure that the mode declaration
+is correct with respect to the use of the constraint.
+This option may occur once for each constraint.
+
 \end{description}
 
 \section{CHR in SWI-Prolog Programs}		\label{sec:practical}
