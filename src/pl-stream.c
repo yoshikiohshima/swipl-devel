@@ -625,7 +625,6 @@ Sread_pending(IOSTREAM *s, char *buf, int limit, int flags)
   }
 
   n = s->limitp - s->bufp;
-  Sdprintf("Pending: %d\n", n);
   if ( n > limit )
     n = limit;
   memcpy(&buf[done], s->bufp, n);
