@@ -55,18 +55,13 @@ Anticipated features relative to stable 5.2.x release and their status
     implementation.
 
 
-Brief summary of changes since 5.3.3
+Brief summary of changes since 5.3.4
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Improved handling of destructive assignment to avoid
-    trailstack overflows (error found in setarg, but attributed
-    variables use a lot of destructive assignment).
-  * Added when/2 (Tom Schrijvers) and ?=
-  * Support for cyclic terms in term_variables/2 and numbervars/3.
-  * Various patches and cleanup
+  * Fixed very nasty bug in the new copy_term/2 implementation.
 
 Packages
 --------
