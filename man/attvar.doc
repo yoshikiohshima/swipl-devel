@@ -19,6 +19,13 @@ Request the current \arg{value} for the attribute named \arg{Name}.  If
 \arg{Var} is not an attributed variable or the named attribute is not
 associated to \arg{Var} this predicate fails silently.  If \arg{Name}
 is not an atom, a type error is raised.
+
+    \predicate{del_attr}{2}{+Var, +Name}
+Delete the named attribute.  If \arg{Var} looses its last attribute it
+is transformed back into a traditional Prolog variable.  If \arg{Name}
+is not an atom, a type error is raised. In all other cases this
+predicate succeeds regarless whether or not the named attribute is
+present.
 \end{description}
 
 
