@@ -50,26 +50,26 @@ PRED_IMPL("var", 1, var, 0)
   return PL_is_variable(A1);
 }
 
-word
-pl_integer(term_t k)
-{ return PL_is_integer(k);
+static
+PRED_IMPL("integer", 1, integer, 0)
+{ return PL_is_integer(A1);
 }
 
-word
-pl_float(term_t k)
-{ return PL_is_float(k);
+static
+PRED_IMPL("float", 1, float, 0)
+{ return PL_is_float(A1);
 }
 
 #if O_STRING
-word
-pl_string(term_t k)
-{ return PL_is_string(k);
+static
+PRED_IMPL("string", 1, string, 0)
+{ return PL_is_string(A1);
 }
 #endif /* O_STRING */
 
-word
-pl_number(term_t k)
-{ return PL_is_number(k);
+static
+PRED_IMPL("number", 1, number, 0)
+{ return PL_is_number(A1);
 }
 
 static
@@ -111,9 +111,9 @@ PRED_IMPL("ground", 1, ground, 0)
 }
 
 
-word
-pl_compound(term_t k)
-{ return PL_is_compound(k);
+static
+PRED_IMPL("compound", 1, compound, 0)
+{ return PL_is_compound(A1);
 }
 
 
@@ -2899,10 +2899,15 @@ PRED_IMPL("$style_check", 2, style_check, 0)
 BeginPredDefs(prims)
   PRED_DEF("nonvar", 1, nonvar, 0)
   PRED_DEF("var", 1, var, 0)
+  PRED_DEF("integer", 1, integer, 0)
+  PRED_DEF("float", 1, float, 0)
+  PRED_DEF("number", 1, number, 0)
   PRED_DEF("arg", 3, arg, PL_FA_NONDETERMINISTIC)
   PRED_DEF("atomic", 1, atomic, 0)
   PRED_DEF("atom", 1, atom, 0)
+  PRED_DEF("string", 1, string, 0)
   PRED_DEF("ground", 1, ground, 0)
+  PRED_DEF("compound", 1, compound, 0)
   PRED_DEF("callable", 1, callable, 0)
   PRED_DEF("==", 2, equal, 0)
   PRED_DEF("\\==", 2, nonequal, 0)

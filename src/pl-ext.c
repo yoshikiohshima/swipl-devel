@@ -260,11 +260,6 @@ static const PL_extension foreigns[] = {
   FRG("$default_predicate",	2, pl_default_predicate,     META),
   FRG("$clause_from_source",	3, pl_clause_from_source,	0),
 
-  FRG("integer",		1, pl_integer,			0),
-  FRG("float",			1, pl_float,			0),
-  FRG("number",			1, pl_number,			0),
-  FRG("compound",		1, pl_compound,			0),
-
   FRG("unify_with_occurs_check",2, pl_unify_with_occurs_check,  0),
   FRG("\\=",			2, pl_notunify,			0),
 
@@ -338,7 +333,6 @@ static const PL_extension foreigns[] = {
 #endif /*O_DDE*/
 
 #if O_STRING
-  FRG("string",			1, pl_string,		 	0),
   FRG("string_concat",		3, pl_string_concat,	     NDET),
   FRG("string_length",		2, pl_string_length,		0),
   FRG("string_to_atom",		2, pl_string_to_atom,		0),
