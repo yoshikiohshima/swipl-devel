@@ -135,6 +135,7 @@ check::
 
 clean:
 		rm -f $(OBJ) *~ *.o *% a.out core config.log
+		$(RUNTEX) --clean ssl
 
 distclean:	clean
 		rm -f $(TARGETS) config.cache config.h config.status Makefile
