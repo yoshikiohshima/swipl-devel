@@ -86,6 +86,14 @@ typedef enum				/* nbio_setopt() commands */
   TCP_OUTSTREAM
 } nbio_option;
 
+typedef enum
+{ REQ_NONE = 0,				/* no request pending */
+  REQ_ACCEPT,
+  REQ_CONNECT,
+  REQ_READ,
+  REQ_WRITE
+} nbio_request;
+
 					/* nbio_get_flags() mask */
 #define SOCK_INSTREAM	0x01
 #define SOCK_OUTSTREAM	0x02
@@ -97,6 +105,7 @@ typedef enum				/* nbio_setopt() commands */
 #define SOCK_DISPATCH   0x80		/* do not dispatch events */
 #define SOCK_CLOSE_SEEN	0x100		/* FD_CLOSE seen */
 #define SOCK_EOF_SEEN   0x200		/* Seen end-of-file */
+#define SOCK_WAITING	0x400		/* using nbio_wait() */
 
 
 		 /*******************************
@@ -124,6 +133,8 @@ extern int 	nbio_write(int socket, char *buf, int bufSize);
 extern int	nbio_closesocket(int socket);
 extern int 	nbio_close_input(int socket);
 extern int 	nbio_close_output(int socket);
+
+extern int	nbio_wait(int socket, nbio_request);
 
 extern int	nbio_unify_ip4(term_t ip4, unsigned long hip);
 extern int	nbio_get_ip(term_t ip4, struct in_addr *ip);

@@ -52,7 +52,7 @@ prefixed with nbio_*:
 
 and IO is realised using
 
-	nbio_read()
+	nbio_read()		See also below
 	nbio_write()
 
 Overall control of the library:
@@ -74,6 +74,13 @@ Address Converstion
 
 	nbio_get_sockaddr()
 	nbio_get_ip4()
+
+Alternative to nbio_read() and nbio_write(), the application program may
+call  the  low-level  I/O  routines  in    non-blocking  mode  and  call
+nbio_wait(int socket, nbio_request request). This  function returns 0 if
+it thinks the call might  now  succeed   and  -1  if  an error occurred,
+leaving the exception context in Prolog. On  receiving -1, the user must
+return an I/O error as soon as possible.
 
 
 Windows issues
@@ -153,14 +160,6 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #define clear(s, f) ((s)->flags &= ~(f))
 #define true(s, f)  ((s)->flags & (f))
 #define false(s, f) (!true(s, f))
-
-typedef enum
-{ REQ_NONE = 0,				/* no request pending */
-  REQ_ACCEPT,
-  REQ_CONNECT,
-  REQ_READ,
-  REQ_WRITE
-} nbio_request;
 
 #define SOCK_MAGIC 0x38da3f2c
 
@@ -324,12 +323,55 @@ waitRequest(plsocket *s)
   }
 }
 
+
+int
+nbio_wait(int socket, nbio_request request)
+{ plsocket *s = lookupSocket(socket);
+
+  s->flags  |= SOCK_WAITING;
+  s->done    = FALSE;
+  s->error   = 0;
+  s->thread  = GetCurrentThreadId();
+  s->request = request;
+
+  PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
+
+  DEBUG(2, Sdprintf("[%d] (%ld): Waiting ...",
+		    PL_thread_self(), s->thread));
+
+  for(;;)
+  { MSG msg;
+  
+    if ( PL_handle_signals() < 0 )
+    { DEBUG(1, Sdprintf("[%d]: Exception\n", PL_thread_self()));
+      return -1;
+    }
+    if ( s->done )
+    { DEBUG(2, Sdprintf("[%d]: Done\n", PL_thread_self()));
+      return 0;
+    }
+
+    if ( false(s, SOCK_DISPATCH) )
+    { if ( !GetMessage(&msg, NULL, WM_DONE, WM_DONE) )
+	return FALSE;
+    } else if ( GetMessage(&msg, NULL, 0, 0) )
+    { TranslateMessage(&msg);
+      DispatchMessage(&msg);
+    } else
+    { ExitProcess(0);			/* WM_QUIT received */
+      return -1;			/* NOTREACHED */
+    }
+  }
+}
+
+
 static int
 placeRequest(plsocket *s, nbio_request request)
 { s->error   = 0;
   s->done    = FALSE;
   s->thread  = GetCurrentThreadId();
   s->request = request;
+  clear(s, SOCK_WAITING);
 
   PostMessage(State()->hwnd, WM_REQUEST, 0, (LPARAM)s);
   DEBUG(2, Sdprintf("%d (%ld): Placed request %d\n",
@@ -346,6 +388,11 @@ doRequest(plsocket *s)
     case REQ_CONNECT:
       if ( s->w32_flags & FD_CONNECT )
       { s->w32_flags &= ~FD_CONNECT;
+
+	if ( true(s->SOCK_WAITING) )
+	{ doneRequest(s);
+	  break;
+	}
 
 	if ( connect(s->socket,
 		     (struct sockaddr*)&s->rdata.connect.addr,
@@ -374,6 +421,11 @@ doRequest(plsocket *s)
       if ( s->w32_flags & FD_ACCEPT )
       { s->w32_flags &= ~FD_ACCEPT;
 
+	if ( true(s->SOCK_WAITING) )
+	{ doneRequest(s);
+	  break;
+	}
+
 	s->rdata.accept.slave = accept(s->socket,
 				       (struct sockaddr*)&s->rdata.accept.addr,
 				       &s->rdata.accept.addrlen);
@@ -399,6 +451,11 @@ doRequest(plsocket *s)
       if ( s->w32_flags & (FD_READ|FD_CLOSE) )
       { s->w32_flags &= ~FD_READ;
 
+	if ( true(s->SOCK_WAITING) )
+	{ doneRequest(s);
+	  break;
+	}
+
 	s->rdata.read.bytes = recv(s->socket,
 				   s->rdata.read.buffer,
 				   s->rdata.read.size,
@@ -419,6 +476,11 @@ doRequest(plsocket *s)
       if ( s->w32_flags & FD_WRITE )
       { int n;
 	s->w32_flags &= ~FD_WRITE;
+
+	if ( true(s->SOCK_WAITING) )
+	{ doneRequest(s);
+	  break;
+	}
 
 	DEBUG(2, Sdprintf("send() %d bytes\n", s->rdata.write.size));
 	n = send(s->socket,
@@ -607,6 +669,14 @@ wait_socket(plsocket *s, int fd)
     return PL_dispatch(fd, PL_DISPATCH_WAIT);
 
   return TRUE;
+}
+
+
+int
+nbio_wait(int socket, nbio_request request)
+{ plsocket *s = lookupSocket(socket);
+
+  return wait_socket(s, socket) ? 0 : -1;
 }
 
 
