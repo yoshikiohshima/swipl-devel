@@ -58,6 +58,7 @@
 		(#<=>)/2,
 		(#=>)/2,
 		(#<=)/2,
+		(#/\)/2,
 		(in)/2,
 		label/1,
 		all_different/1
@@ -69,6 +70,7 @@
 :- op(760, yfx,user:(#<=>)).
 :- op(750, xfy,user:(#=>)).
 :- op(750, yfx,user:(#<=)).
+:- op(720, yfx, user:(#/\)).
 :- op(700,xfx,user:(#>)).
 :- op(700,xfx,user:(#<)).
 :- op(700,xfx,user:(#>=)).
@@ -118,6 +120,10 @@ R #<= L :-
 	reify(L,BL),
 	reify(R,BR),
 	myimpl(BL,BR).
+L #/\ R :-
+	call(L),
+	call(R).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 reify(B,R) :-
 	var(B), !,
@@ -137,8 +143,8 @@ reify(X #=< Y,B) :-
 	parse_expression(X,XR),
 	parse_expression(Y,YR),
 	reified_geq(YR,XR,B).
-reify(X #> Y,B) :-
-	reify(Y #< X,B).
+reify(X #< Y,B) :-
+	reify(Y #> X,B).
 reify(X #= Y,B) :-
 	parse_expression(X,XR),
 	parse_expression(Y,YR),
@@ -147,6 +153,10 @@ reify(X #\= Y,B) :-
 	parse_expression(X,XR),
 	parse_expression(Y,YR),
 	reified_neq(XR,YR,B).
+reify((X #/\ Y),B) :-
+	reify(X,BX),
+	reify(Y,BY),
+	myand(BX,BY,B).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_expression(Expr,Result) :-
@@ -805,6 +815,37 @@ myimpl(B1,B2) :-
 		B2 in 0..1
 	).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+myand(X,Y,Z) :-
+	( nonvar(X) ->
+		( X == 1 ->
+			Y in 0..1,
+			Y = Z
+		; X == 0 ->
+			Y in 0..1,
+			Z = 0
+		)
+	; nonvar(Y) ->
+		myand(Y,X,Z)
+	; nonvar(Z) ->
+		( Z == 1 ->
+			X = 1,
+			Y = 1
+		; Z == 0 ->
+			X in 0..1,
+			Y in 0..1,
+			X + Y #=< 1
+		)
+	;
+		get(X,LX,UX,ExpX),
+		get(Y,LY,UY,ExpY),
+		get(Z,LZ,UZ,ExpZ),
+		put(X,LX,UX,[myand(Y,Z)|ExpX]),
+		put(Y,LY,UY,[myand(X,Z)|ExpY]),
+		put(Z,LZ,UZ,[myand2(X,Y)|ExpZ]),
+		[X,Y,Z] in 0..1
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get(X,L,U,Exp) :-
 	( get_attr(X,bounds,Attr) ->
 		Attr = bounds(L,U,Exp)
@@ -924,6 +965,11 @@ trigger_exp(myimpl(Y),X) :-
 	myimpl(X,Y).
 trigger_exp(myimpl2(X),Y) :-
 	myimpl(X,Y).
+
+trigger_exp(myand(Y,Z),X) :-
+	myand(X,Y,Z).
+trigger_exp(myand2(X,Y),Z) :-
+	myand(X,Y,Z).
 
 memberchk_eq(X,[Y|Ys],Z) :-
    (   X == Y ->
