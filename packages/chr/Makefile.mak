@@ -12,12 +12,22 @@ PLHOME=..\..
 LIBDIR=$(PLBASE)\library
 EXDIR=$(PKGDOC)\examples\chr
 CHR=$(LIBDIR)\chr
+PL="$(PLBASE)\bin\plcon.exe"
 
 EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
 		bool.chr family.chr fibonacci.chr leq.chr listdom.chr \
 		chrdif.chr
 
-all::		
+all:		chr_translate.pl
+
+chr_translate:	chr_translate.chr
+		$(PL) -q -f chr_swi_bootstrap.pl \
+		      -g "chr_compile_step1('$<','$@'),halt" \
+		      -t 'halt(1)'
+		$(PL) -q -f chr_swi_bootstrap.pl \
+		      -g "chr_compile_step2('$<','$@'),halt" \
+		      -t 'halt(1)'
+
 
 !IF "$(CFG)" == "rt"
 install::
