@@ -103,6 +103,7 @@ pce_ifhostproperty(prolog(swi),
 %:- declare_emacs_mode(outline, library('emacs/outline_mode')).
 %:- declare_emacs_mode(language,library('emacs/language_mode')).
 :- declare_emacs_mode(prolog,	library('emacs/prolog_mode')).
+:- declare_emacs_mode(chr,	library('emacs/chr_mode')).
 :- declare_emacs_mode(latex,	library('emacs/latex_mode')).
 %:- declare_emacs_mode(html,	library('emacs/html_mode')).
 :- declare_emacs_mode(c,	library('emacs/c_mode')).
@@ -152,6 +153,7 @@ make_emacs_mode_list(Sheet) :-
 	
 default_emacs_mode('.*\\.pl~?$',   		   	prolog).
 default_emacs_mode('\\.\\(pl\\|xpce\\|pceemacs\\)rc~?', prolog).
+default_emacs_mode('.*\.chr~?$',			chr).
 default_emacs_mode('.*\\.\\(tex\\|sty\\)~?$', 		latex).
 default_emacs_mode('.*\\.doc~?$',	 		latex).
 default_emacs_mode('.*\\.html~?$',	 		html).
