@@ -175,8 +175,11 @@ SectionEnd
 
 Section "C/C++ Interface"
   SectionIn 1 3 
+  SetOutPath $INSTDIR\lib
+  File pl\lib\libpl.lib
+  File pl\lib\plterm.lib
+  File pl\lib\pthreadVC.lib
   SetOutPath $INSTDIR
-  File /r pl\lib
   File /r pl\include
   SetOutPath $INSTDIR\bin
   File pl\bin\plld.exe
@@ -192,7 +195,11 @@ Section "JPL -- Java <-> Prolog"
   SetOutPath $INSTDIR\lib
   File pl\lib\jpl.jar
   SetOutPath $INSTDIR\library
-  File pl\lib\jpl.pl
+  File pl\library\jpl.pl
+  SetOutPath $INSTDIR\doc\packages
+  File /r pl\doc\packages\jpl
+  SetOutPath $INSTDIR\doc\packages\examples
+  File /r pl\doc\packages\examples\jpl
 SectionEnd
 
 Section "XPCE graphics library"
