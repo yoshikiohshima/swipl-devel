@@ -291,6 +291,7 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
 { GET_LD
   term_t ex = PL_new_term_ref();
   term_t loc = PL_new_term_ref();
+  const char *s, *ll = NULL;
 
   if ( !id_term )
   { id_term = PL_new_term_ref();
@@ -304,12 +305,37 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
 		  PL_TERM, loc);
 
   source_char_no += last_token_start - rdbase;
+  for(s=rdbase; s<(const char*)last_token_start; s++)
+  { if ( *s == '\n' )
+    { source_line_no++;
+      ll = s+1;
+    }
+  }
+
+  if ( ll )
+  { int lp = 0;
+
+    for(s = ll; s<(const char*)last_token_start; s++)
+    { switch(*s)
+      { case '\b':
+	  if ( lp > 0 ) lp--;
+	  break;
+	case '\t':
+	  lp |= 7;
+	default:
+	  lp++;
+      }
+    }
+
+    source_line_pos = lp;
+  }
 
   if ( ReadingSource )			/* reading a file */
   { PL_unify_term(loc,
-		  PL_FUNCTOR, FUNCTOR_file3,
+		  PL_FUNCTOR, FUNCTOR_file4,
 		    PL_ATOM, source_file_name,
 		    PL_INT, source_line_no,
+		    PL_INT, source_line_pos,
 		    PL_LONG, source_char_no);
   } else if ( isStringStream(rb.stream) )
   { PL_unify_term(loc,
@@ -321,9 +347,10 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
 
     PL_unify_stream_or_alias(stream, rb.stream);
     PL_unify_term(loc,
-		  PL_FUNCTOR, FUNCTOR_stream3,
+		  PL_FUNCTOR, FUNCTOR_stream4,
 		    PL_TERM, stream,
 		    PL_INT, source_line_no,
+		    PL_INT, source_line_pos,
 		    PL_LONG, source_char_no);
   }
 
@@ -435,11 +462,13 @@ setCurrentSourceLocation(IOSTREAM *s ARG_LD)
 { atom_t a;
 
   if ( s->position )
-  { source_line_no = s->position->lineno;
-    source_char_no = s->position->charno - 1; /* char just read! */
+  { source_line_no  = s->position->lineno;
+    source_line_pos = s->position->linepos - 1;	/* char just read! */
+    source_char_no  = s->position->charno - 1;	/* char just read! */
   } else
-  { source_line_no = -1;
-    source_char_no = 0;
+  { source_line_no  = -1;
+    source_line_pos = -1;
+    source_char_no  = 0;
   }
 
   if ( (a = fileNameStream(s)) )
@@ -674,7 +703,7 @@ raw_read2(ReadData _PL_rd ARG_LD)
 		    }
 		    do
 		    { if ( something_read ) /* positions */
-			addToBuffer(c == '\n' ? c : ' ', _PL_rd);
+			addToBuffer(c, _PL_rd);
 		      else
 			ensure_space(c);
 		      c = getchr();

@@ -7,6 +7,12 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED/MODIFIED: Syntax errors are now reported using a term
+    file(Path, Line, LinePos, CharPos) or stream/4 if a stream is
+    not associated to a file.  The LinePos element is added to this
+    structure.  Syntax errors are reported using file:line:linepos.
+    After suggestion from David Reitter.
+
   * FIXED: Made when/2 module-aware.
 
   * FIXED: Debug-settings for system predicates defined as discontiguous,

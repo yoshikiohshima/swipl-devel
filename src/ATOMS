@@ -556,6 +556,7 @@ F assert		1
 F asserta		1
 F atan			1
 F atan			2
+F att			3
 F backslash		1
 F bar			2
 F block			3
@@ -593,8 +594,10 @@ F dmutex		1
 F domain_error		2
 F dot			2
 F doublestar		2
+F dprof_node		1
 F dstream		1
 F dthrow		1
+F dwakeup		1
 F e			0
 F end_of_stream		1
 F eof_action		1
@@ -609,7 +612,8 @@ F exited		1
 F exp			1
 F fail			0
 F failure_error		1
-F file			3
+F file			1
+F file			4
 F file_name		1
 F file_no		1
 F float			1
@@ -628,6 +632,7 @@ F io_error		2
 F is			2
 F larger		2
 F larger_equal		2
+F line_count		1
 F list_position		4
 F listing		1
 F log			1
@@ -640,6 +645,7 @@ F minus			1
 F minus			2
 F mod			2
 F mode			1
+F msb			1
 F not_implemented	2
 F not_provable		1
 F obtain		2
@@ -679,7 +685,7 @@ F softcut		2
 F spy			1
 F sqrt			1
 F star			2
-F stream		3
+F stream		4
 F stream_position	3
 F string		2
 F string_position	2
@@ -699,13 +705,7 @@ F type			1
 F type_error		2
 F undefinterc		4
 F var			1
+F wakeup		3
 F warning		3
 F xor			2
 F xpceref		1
-F dprof_node		1
-F file			1
-F line_count		1
-F wakeup		3
-F dwakeup		1
-F att			3
-F msb			1

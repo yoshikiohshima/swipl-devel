@@ -828,7 +828,7 @@ pl_error_message(X, none) :-
  ),
  (
 pl_error_message(error(syntax_error(Id),
-		       stream(_S, _Line, CharNo)),
+		       stream(_S, _Line, _LinePos, CharNo)),
 		 CharNo:Msg) :-
 	message_to_string(error(syntax_error(Id), _), Msg)
  )
