@@ -11,12 +11,15 @@
 PLHOME=..\..
 !include ..\..\src\rules.mk
 PKGDLL=ssl4pl
+EXDIR=		$(PKGDOC)\examples\http
 
 #
 # Constants below are defined in rules.mk
 #
 LIB=$(LIB);$(OPENSSLLIBDIR)
 INCLUDE=$(INCLUDE);$(OPENSSLINCDIR)
+
+EXAMPLES=	client.pl server.pl
 
 OBJ=		ssl4pl.obj ssllib.obj
 
@@ -46,6 +49,11 @@ xpce-install::
 
 html-install::
 		copy odbc.html "$(PKGDOC)"
+
+install-examples::
+		if not exist "$(EXDIR)/$(NULL)" $(MKDIR) "$(EXDIR)"
+		@for %f in ($(EXAMPLES)) do @copy %f "$(EXDIR)"
+		copy /r etc "$(EXDIR)"
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
