@@ -40,6 +40,7 @@ idll::
 		copy $(PKGDLL).dll "$(BINDIR)"
 ilib::
 		copy jpl.pl "$(PLBASE)\library"
+		copy jpl.jar "$(PLBASE)\lib"
 		$(MAKEINDEX)
 
 html-install::
@@ -49,6 +50,7 @@ xpce-install::
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
 		del "$(PLBASE)\library\jpl.pl"
+		del "$(PLBASE)\lib\jpl.jar"
 		$(MAKEINDEX)
 
 clean::
