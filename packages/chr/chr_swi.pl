@@ -102,9 +102,10 @@ chr_compile(From, To) :-
 
 chr_compile(From, To, MsgLevel) :-
 	print_message(MsgLevel, chr(start(From))),
-	read_file_to_terms(From, Declarations,
-			   [ module(chr) 	% get operators from here
-			   ]),
+	read_chr_file_to_terms(From,Declarations),
+	% read_file_to_terms(From, Declarations,
+	% 		   [ module(chr) 	% get operators from here
+	%		   ]),
 	print_message(silent, chr(translate(From))),
 	chr_translate(Declarations,NewDeclarations),
 	print_message(silent, chr(write(To))),
@@ -153,3 +154,26 @@ prolog:message(chr(end(_From, To))) -->
 	{ file_base_name(To, Base)
 	},
 	[ 'Written translation to ~w'-[Base] ].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+read_chr_file_to_terms(Spec, Terms) :-
+	absolute_file_name(Spec, [ access(read) ],
+			   Path),
+	open(Path, read, Fd, []),
+	read_chr_stream_to_terms(Fd, Terms),
+	close(Fd).
+
+read_chr_stream_to_terms(Fd, Terms) :-
+	read_term(Fd, C0, [module(chr)]),
+	read_chr_stream_to_terms(C0, Fd, Terms).
+
+read_chr_stream_to_terms(end_of_file, _, []) :- !.
+read_chr_stream_to_terms(C, Fd, [C|T]) :-
+	( ground(C),
+	  C = (:- op(Priority,Type,Name)) ->
+		op(Priority,Type,Name)
+	;
+		true
+	),
+	read_term(Fd, C2, [module(chr)]),
+	read_chr_stream_to_terms(C2, Fd, T).
