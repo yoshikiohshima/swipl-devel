@@ -39,8 +39,11 @@
 	  ]).
 
 
-:- pce_global(@dynamic_source_buffer,
-	      new(emacs_buffer(@nil, '*dynamic code*'))).
+:- pce_global(@dynamic_source_buffer, make_dynamic_source_buffer).
+
+make_dynamic_source_buffer(G) :-
+	start_emacs,
+	new(G, emacs_buffer(@nil, '*dynamic code*')).
 
 debug(_, _).
 %debug(Fmt, Args) :- format(Fmt, Args), flush.
