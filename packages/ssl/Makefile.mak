@@ -54,7 +54,7 @@ install-examples::
 		if not exist "$(EXDIR)/$(NULL)" $(MKDIR) "$(EXDIR)"
 		@for %f in ($(EXAMPLES)) do @copy %f "$(EXDIR)"
 		xcopy /Q /S /I /Y etc "$(EXDIR)\etc"
-		del "$(EXDIR)\etc\README.TXT"
+		if exist "$(EXDIR)\etc\README.TXT" del "$(EXDIR)\etc\README.TXT"
 		ren "$(EXDIR)\etc\README" "README.TXT"
 
 uninstall::
