@@ -793,8 +793,10 @@ assertProcedure(Procedure proc, Clause clause, int where ARG_LD)
 
 bool
 abolishProcedure(Procedure proc, Module module)
-{ Definition def = proc->definition;
+{ GET_LD
+  Definition def = proc->definition;
 
+  startCritical;
   LOCKDEF(def);
   if ( def->module != module )		/* imported predicate; remove link */
   { GET_LD
@@ -810,6 +812,7 @@ abolishProcedure(Procedure proc, Module module)
     resetProcedure(proc, TRUE);
   } else if ( true(def, P_THREAD_LOCAL) )
   { UNLOCKDEF(def);
+    endCritical;
     return PL_error(NULL, 0, NULL, ERR_PERMISSION_PROC,
 		    ATOM_modify, ATOM_thread_local_procedure, def);
   } else				/* normal Prolog procedure */
@@ -819,6 +822,7 @@ abolishProcedure(Procedure proc, Module module)
     { if ( def->references == 0 )
       { resetProcedure(proc, FALSE);
 	gcClausesDefinitionAndUnlock(def);
+	endCritical;
 	succeed;
       } else				/* dynamic --> static */
       { setDynamicProcedure(proc, FALSE);
@@ -834,6 +838,7 @@ abolishProcedure(Procedure proc, Module module)
     resetProcedure(proc, FALSE);
   }
   UNLOCKDEF(def);
+  endCritical;
 
   succeed;
 }
@@ -1613,10 +1618,12 @@ pl_retract(term_t term, control_t h)
 		       PL_CHARS, "retract",
 		       _PL_PREDICATE_INDICATOR, proc);
 
+      startCritical;
       enterDefinition(def);			/* reference the predicate */
       cref = firstClause(argv, environment_frame, def, &next PASS_LD);
       if ( !cref )
       { leaveDefinition(def);
+	endCritical;
 	fail;
       }
     } else
@@ -1624,6 +1631,7 @@ pl_retract(term_t term, control_t h)
       proc = cref->clause->procedure;
       def  = getProcDefinition(proc);
       cref = findClause(cref, argv, environment_frame, def, &next PASS_LD);
+      startCritical;
     }
 
     Mark(mrk);
@@ -1634,9 +1642,11 @@ pl_retract(term_t term, control_t h)
 	if ( !next )
 	{ PL_reset_term_refs(r0);
 	  leaveDefinition(def);
+	  endCritical;
 	  succeed;
 	}
 
+	endCritical;
 	ForeignRedoPtr(next);
       }
 
@@ -1647,6 +1657,7 @@ pl_retract(term_t term, control_t h)
     }
 
     leaveDefinition(def);
+    endCritical;
     fail;
   }
 }
@@ -1687,10 +1698,12 @@ pl_retractall(term_t head)
     argv = NULL;			/* retract(foobar) */
 
   Mark(m);
+  startCritical;
   enterDefinition(def);
 
   if ( !(cref = firstClause(argv, fr, def, &next PASS_LD)) )
-  { leaveDefinition(def);
+  { endCritical;
+    leaveDefinition(def);
     succeed;
   }
 
@@ -1699,18 +1712,19 @@ pl_retractall(term_t head)
   { if ( decompileHead(cref->clause, thehead) )
       retractClauseProcedure(proc, cref->clause PASS_LD);
 
-    if ( !next )
-    { PL_reset_term_refs(r0);
-      Undo(m);
-      leaveDefinition(def);
-      succeed;
-    }
-
     PL_reset_term_refs(r0);
     Undo(m);
 
+    if ( !next )
+    { leaveDefinition(def);
+      endCritical;
+      succeed;
+    }
+
+
     cref = findClause(next, argv, fr, def, &next PASS_LD);
   }
+  endCritical;
   leaveDefinition(def);
 
   succeed;

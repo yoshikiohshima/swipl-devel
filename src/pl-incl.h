@@ -1074,14 +1074,9 @@ MT/TBD: how to handle this gracefully in the multi-threading case.  Does
 it mean anything?
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#ifdef O_PLMT
-#define startCritical (void)(LD->critical++)
-#define endCritical   (void)(LD->critical--)
-#else
 #define startCritical (void)(LD->critical++)
 #define endCritical   if ( --(LD->critical) == 0 && LD->aborted ) \
 			pl_abort(ABORT_NORMAL)
-#endif
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 LIST processing macros.

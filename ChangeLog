@@ -7,6 +7,12 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#127 (partially), system slowing down after Control-C
+    followed by abort if the Control-C happens inside retract/1.
+    Holger Kanwischer.
+
+  * ENHANCED: CHR compiler and documentation.  By Tom Schrijvers.
+
   * ADDED: dif/2 in the library(dif).  Code contributed by Tom
     Schrijvers.  Thanks!
 
