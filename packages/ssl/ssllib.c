@@ -77,6 +77,10 @@ typedef enum
 #define SSL_WAIT_CHILD       1
 #define SSL_TCP_QUEUE_MAX    5
 
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
 /*
  * Index of our config data in the SSL data
  */
@@ -108,11 +112,12 @@ ssl_error(SSL *ssl, int ssl_ret)
         *colon++ = 0;
     }
 
-    ssl_deb( "SSL error report:\n\t%8s: %s\n\t%8s: %s\n\t%8s: %s\n"
-           ,  "library", component[2]
-           , "function", component[3]
-           ,   "reason", component[4]
-           ) ;
+    ssl_deb(1,
+	    "SSL error report:\n\t%8s: %s\n\t%8s: %s\n\t%8s: %s\n"
+	   ,  "library", component[2]
+	   , "function", component[3]
+	   ,   "reason", component[4]
+	   );
 }
 
 static SSL_SOCK_STATUS
@@ -185,21 +190,21 @@ ssl_cert_print(X509 *cert, const char *role)
     char * str = NULL;
     int i;
 
-    ssl_deb("%s certificate:\n", role);
+    ssl_deb(1, "%s certificate:\n", role);
     str = X509_NAME_oneline(X509_get_subject_name (cert), NULL, 0);
     if (str) {
-        ssl_deb("\t subject: %s\n", str);
+        ssl_deb(1, "\t subject: %s\n", str);
         OPENSSL_free(str);
     }
 
     str = X509_NAME_oneline(X509_get_issuer_name  (cert), NULL, 0);
     if (str) {
-        ssl_deb("\t issuer: %s\n", str);
+        ssl_deb(1, "\t issuer: %s\n", str);
         OPENSSL_free(str);
     }
 
     i = X509_get_signature_type(cert);
-    ssl_deb("\t signature type: %d\n", i);
+    ssl_deb(1, "\t signature type: %d\n", i);
 #endif
 }
 
@@ -224,7 +229,7 @@ ssl_verify_cert(PL_SSL *config)
         if (SSL_get_verify_result(ssl) != X509_V_OK) {
             ssl_err("%s certificate didn't verify, continue anyway\n", role);
         } else {
-            ssl_deb("%s certificate verified ok\n", role);
+            ssl_deb(1, "%s certificate verified ok\n", role);
         }
 
         ssl_cert_print(cert, role);
@@ -273,7 +278,7 @@ ssl_new(void)
         new->pl_ssl_cb_pem_passwd_data  = NULL;
 	new->magic 		        = SSL_CONFIG_MAGIC;
     }
-    ssl_deb("Allocated config structure\n");
+    ssl_deb(1, "Allocated config structure\n");
 
     return new;
 }
@@ -293,12 +298,12 @@ ssl_free(PL_SSL *config)
 	    free(config->pl_ssl_keyf);
 	    free(config->pl_ssl_password);
 	    free(config);
-	    ssl_deb("Released config structure\n");
+	    ssl_deb(1, "Released config structure\n");
 	} else {
 	    assert(0);
 	}
     } else {
-	ssl_deb("No config structure to release\n");
+	ssl_deb(1, "No config structure to release\n");
     }
 }
 
@@ -356,7 +361,7 @@ ssl_config_free( void *            ctx
 {   
     PL_SSL *config = NULL;
 
-    ssl_deb("calling ssl_config_free()\n");
+    ssl_deb(1, "calling ssl_config_free()\n");
     if ((config = SSL_CTX_get_ex_data(ctx, ctx_idx)) != NULL) {
         assert(config->magic == SSL_CONFIG_MAGIC);
         ssl_free(config);
@@ -513,7 +518,7 @@ ssl_cb_cert_verify(int preverify_ok, X509_STORE_CTX *ctx)
     ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
     config = SSL_get_ex_data(ssl, ssl_idx);
 
-    ssl_deb(" ---- INIT Handling certificate verification\n");
+    ssl_deb(1, " ---- INIT Handling certificate verification\n");
     if (!preverify_ok) {
         X509 *cert = NULL;
         int   err;
@@ -557,15 +562,15 @@ ssl_cb_cert_verify(int preverify_ok, X509_STORE_CTX *ctx)
                              , subject, sizeof(subject));
             X509_NAME_oneline( X509_get_issuer_name (cert)
                              , issuer, sizeof(issuer));
-            ssl_deb(  "error:%s\n", error);
-            ssl_deb("subject:%s\n", subject);
-            ssl_deb( "issuer:%s\n", issuer);
+            ssl_deb(1,  "error:%s\n", error);
+            ssl_deb(1, "subject:%s\n", subject);
+            ssl_deb(1, "issuer:%s\n", issuer);
         }
-        ssl_deb("Certificate preverified not ok\n");
+        ssl_deb(1, "Certificate preverified not ok\n");
     } else {
-        ssl_deb("Certificate preverified ok\n");
+        ssl_deb(1, "Certificate preverified ok\n");
     }
-    ssl_deb(" ---- EXIT Handling certificate verification\n");
+    ssl_deb(1, " ---- EXIT Handling certificate verification\n");
 
     return preverify_ok;
 }
@@ -636,7 +641,7 @@ ssl_close(PL_SSL_INSTANCE *instance)
     }
     ERR_free_strings();
 
-    ssl_deb("Controlled close\n");
+    ssl_deb(1, "Controlled close\n");
 
     return ret;
 }
@@ -654,15 +659,15 @@ ssl_exit(PL_SSL *config)
       }
 
       if (config->pl_ssl_ctx)
-      { ssl_deb("Calling SSL_CTX_free()\n");
+      { ssl_deb(1, "Calling SSL_CTX_free()\n");
 	SSL_CTX_free(config->pl_ssl_ctx); 	/* doesn't call free hook? */
       }
       else
-      { ssl_deb("config without CTX encountered\n");
+      { ssl_deb(1, "config without CTX encountered\n");
       }
     }
 
-    ssl_deb("Controlled exit\n");
+    ssl_deb(1, "Controlled exit\n");
 }
 
 PL_SSL *
@@ -724,7 +729,7 @@ ssl_init(PL_SSL_ROLE role)
         ctx_mode  = SSL_CTX_set_mode(ssl_ctx, ctx_mode);
     }
 
-    ssl_deb("Initialized\n");
+    ssl_deb(1, "Initialized\n");
 
     return config;
 }
@@ -739,7 +744,7 @@ ssl_debug(PL_SSL *config)
     /*
      * Get the cipher
      */
-    ssl_deb( "SSL connection using %s\n"
+    ssl_deb(1,  "SSL connection using %s\n"
            , SSL_get_cipher(config->pl_ssl_ssl)
            ) ;
 #endif
@@ -753,14 +758,14 @@ ssl_debug(PL_SSL *config)
         if (config->pl_ssl_peer_cert == NULL) {
             return -8;
         }
-        ssl_deb("got peer certificate\n");
+        ssl_deb(1, "got peer certificate\n");
 
         ssl_verify_cert(config);
-        ssl_deb("verified peer certificate\n");
+        ssl_deb(1, "verified peer certificate\n");
     }
 #endif
 
-    ssl_deb("inspected ssl peer details\n");
+    ssl_deb(1, "inspected ssl peer details\n");
 
     return 0;
 }
@@ -776,7 +781,7 @@ ssl_config(PL_SSL *config)
                                  , config->pl_ssl_cacert
                                  , NULL
                                  ) ;
-    ssl_deb("certificate authority(s) installed (public keys loaded)\n");
+    ssl_deb(1, "certificate authority(s) installed (public keys loaded)\n");
 
     SSL_CTX_set_default_passwd_cb_userdata( config->pl_ssl_ctx
                                           , config
@@ -784,7 +789,7 @@ ssl_config(PL_SSL *config)
     SSL_CTX_set_default_passwd_cb( config->pl_ssl_ctx
                                  , ssl_cb_pem_passwd
                                  ) ;
-    ssl_deb("password handler installed\n");
+    ssl_deb(1, "password handler installed\n");
 
     if (config->pl_ssl_cert_required) {
         if (config->pl_ssl_certf == NULL ||
@@ -809,7 +814,7 @@ ssl_config(PL_SSL *config)
             ssl_err("Private key does not match certificate public key\n");
             return -4;
         }
-        ssl_deb("certificate installed successfully\n");
+        ssl_deb(1, "certificate installed successfully\n");
     }
 
     (void) SSL_CTX_set_verify( config->pl_ssl_ctx
@@ -818,7 +823,7 @@ ssl_config(PL_SSL *config)
                                : SSL_VERIFY_NONE
                              , ssl_cb_cert_verify
                              ) ;
-    ssl_deb("installed certificate verification handler\n");
+    ssl_deb(1, "installed certificate verification handler\n");
 
     return 0;
 }
@@ -865,9 +870,6 @@ ssl_lib_init(void)
      * Initialize the nonblockio library
      */
     nbio_init();
-#ifdef DEBUG
-    nbio_debug(10);
-#endif
 #endif
 
     return 0;
@@ -894,7 +896,7 @@ ssl_ssl(PL_SSL *config, int sock_inst)
     PL_SSL_INSTANCE * instance = NULL;
 
     if ((instance = ssl_instance_new(config, sock_inst)) == NULL) {
-        ssl_deb("ssl instance malloc failed\n");
+        ssl_deb(1, "ssl instance malloc failed\n");
         return NULL;
     }
 
@@ -911,7 +913,7 @@ ssl_ssl(PL_SSL *config, int sock_inst)
     if ((instance->ssl = SSL_new(config->pl_ssl_ctx)) == NULL) {
         return NULL;
     }
-    ssl_deb("allocated ssl layer\n");
+    ssl_deb(1, "allocated ssl layer\n");
 
     /*
      * Store reference to our config data in SSL
@@ -921,17 +923,17 @@ ssl_ssl(PL_SSL *config, int sock_inst)
     if (SSL_set_fd(instance->ssl, sock_inst) == 0) {
         return NULL;
     }
-    ssl_deb("allocated ssl fd\n");
+    ssl_deb(1, "allocated ssl fd\n");
 
     switch (config->pl_ssl_role) {
         case PL_SSL_SERVER:
-            ssl_deb("setting up SSL server side\n");
+            ssl_deb(1, "setting up SSL server side\n");
             do {
                 int ssl_ret = SSL_accept(instance->ssl);
                 switch(ssl_inspect_status(instance->ssl, sock_inst, ssl_ret)) {
                     case SSL_SOCK_OK:
                         /* success */
-                        ssl_deb("established ssl client side\n");
+                        ssl_deb(1, "established ssl client side\n");
                         return instance;
 
                     case SSL_SOCK_RETRY:
@@ -945,13 +947,13 @@ ssl_ssl(PL_SSL *config, int sock_inst)
 
         case PL_SSL_NONE:
         case PL_SSL_CLIENT:
-            ssl_deb("setting up SSL client side\n");
+            ssl_deb(1, "setting up SSL client side\n");
             do {
                 int ssl_ret = SSL_connect(instance->ssl);
                 switch(ssl_inspect_status(instance->ssl, sock_inst, ssl_ret)) {
                     case SSL_SOCK_OK:
                         /* success */
-                        ssl_deb("established ssl client side\n");
+                        ssl_deb(1, "established ssl client side\n");
                         return instance;
 
                     case SSL_SOCK_RETRY:
@@ -992,13 +994,13 @@ ssl_hostaddr(struct sockaddr_in *sa_client, const char *host, int port)
         memcpy(&sa_client->sin_addr, hp->h_addr_list[0], hp->h_length);
         memcpy(&sa_addr.s_addr, hp->h_addr_list[0], hp->h_length);
         if (strcmp(host, hp->h_name)) {
-            ssl_deb( "host '%s' (%s) resolved to '%s'\n"
+            ssl_deb(1,  "host '%s' (%s) resolved to '%s'\n"
                    , host
                    , hp->h_name
                    , inet_ntoa(sa_addr)
                    ) ;
         } else {
-            ssl_deb( "host '%s' resolved to '%s'\n"
+            ssl_deb(1,  "host '%s' resolved to '%s'\n"
                    , host
                    , inet_ntoa(sa_addr)
                    ) ;
@@ -1053,7 +1055,7 @@ ssl_tcp_listen(PL_SSL *config)
         return -4;
     }
 
-    ssl_deb("established tcp server socket\n");
+    ssl_deb(1, "established tcp server socket\n");
 
     config->sock = sock;
 
@@ -1074,7 +1076,7 @@ ssl_tcp_connect(PL_SSL *config)
     }
     config->sock = sock;
 
-    ssl_deb("established tcp client socket\n");
+    ssl_deb(1, "established tcp client socket\n");
 
     return sock;
 }
@@ -1283,16 +1285,24 @@ ssl_err(char *fmt, ...)
 }
 
 
+int
+ssl_set_debug(int level)
+{ return nbio_debug(level);
+}
+
+
 void
-ssl_deb(char *fmt, ...)
+ssl_deb(int level, char *fmt, ...)
 {
 #if DEBUG
-    va_list argpoint;
+    if ( nbio_debug(-1) >= level )
+    { va_list argpoint;
 
-    fprintf(stderr, "Debug: ");
-    va_start(argpoint, fmt);
-	Svfprintf(Serror, fmt, argpoint);
-    va_end(argpoint);
+      fprintf(stderr, "Debug: ");
+      va_start(argpoint, fmt);
+      Svfprintf(Serror, fmt, argpoint);
+      va_end(argpoint);
+    }
 #endif
 }
 

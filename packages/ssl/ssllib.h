@@ -157,6 +157,7 @@ BOOL            ssl_set_cb_pem_passwd
 
 void            ssl_msg          (char *fmt, ...);
 void            ssl_err          (char *fmt, ...);
-void            ssl_deb          (char *fmt, ...);
+int		ssl_set_debug	 (int level);
+void            ssl_deb          (int level, char *fmt, ...);
 
 #endif

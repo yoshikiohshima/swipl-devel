@@ -610,6 +610,19 @@ pl_ssl_open(term_t config, term_t socket, term_t in, term_t out)
 }
 
 
+static foreign_t
+pl_ssl_debug(term_t level)
+{ int l;
+
+  if ( !PL_get_integer(level, &l) )
+    return type_error(level, "integer");
+
+  ssl_set_debug(l);
+
+  return TRUE;
+}
+
+
 
 		 /*******************************
 		 *	     INSTALL		*
@@ -639,10 +652,11 @@ install_ssl4pl()
   FUNCTOR_permission_error3=PL_new_functor(PL_new_atom("permission_error"), 3);
   FUNCTOR_ip4		  = PL_new_functor(PL_new_atom("ip"), 4);
 
-  PL_register_foreign("ssl_init",    3, pl_ssl_init,    PL_FA_TRANSPARENT);
-  PL_register_foreign("ssl_accept",  3, pl_ssl_accept,  0);
-  PL_register_foreign("ssl_open",    4, pl_ssl_open,    0);
-  PL_register_foreign("ssl_exit",    1, pl_ssl_exit,    0);
+  PL_register_foreign("ssl_init",       3, pl_ssl_init,    PL_FA_TRANSPARENT);
+  PL_register_foreign("ssl_accept",     3, pl_ssl_accept,  0);
+  PL_register_foreign("ssl_open",       4, pl_ssl_open,    0);
+  PL_register_foreign("ssl_exit",       1, pl_ssl_exit,    0);
+  PL_register_foreign("user:ssl_debug", 1, pl_ssl_debug,   0);
 
   /*
    * Initialize ssllib

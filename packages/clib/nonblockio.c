@@ -222,7 +222,8 @@ int
 nbio_debug(int level)
 { int old = debugging;
 
-  debugging = level;
+  if ( level >= 0 )			/* -1 --> return current setting */
+    debugging = level;
 
   return old;
 }
