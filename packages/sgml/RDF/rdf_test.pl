@@ -56,12 +56,13 @@ test_file(File) :-
 	format('************* Test ~w ***~n', [File]),
 	cat(File),
 	load_structure(File,
-		       XMLTerm,
+		       [ RDFElement ],
 		       [ dialect(xmlns),
-			 space(remove)
+			 space(sgml)
 		       ]),
-	find_rdf(XMLTerm, RDFElement),
-	xml_to_plrdf(RDFElement, [], RDF),
+	rdf_start_file([], Cleanup),
+	xml_to_plrdf(RDFElement, RDF, []),
+	rdf_end_file(Cleanup),
 	format('============= Prolog term ==============~n', []),
 	pretty_print(RDF),
 	rdf_triples(RDF, Triples),
