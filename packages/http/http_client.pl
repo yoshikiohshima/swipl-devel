@@ -204,7 +204,7 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 	(   select(user_agent(Agent), Options2, Options3)
 	->  true
 	;   user_agent(Agent),
-	    RestOptions = Options2
+	    Options3 = Options2
 	),
 	format(Out, 'User-Agent: ~w~n\
 		     Connection: ~w~n', [Agent, Connection]),
