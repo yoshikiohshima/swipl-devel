@@ -47,6 +47,8 @@ attr_unify_hook(Domain, Y) :-
 	    ->	Y = Value
 	    ;	put_attr(Y, domain, NewDomain)
 	    )
+	;   var(Y)
+	->  put_attr( Y, domain, Domain )
 	;   memberchk(Y, Domain)
 	).
 \end{code}
@@ -187,9 +189,9 @@ The dif/2 predicate provides a constraint stating that \arg{A} and
 dif/2 succeeds deterministically. If \arg{A} and \arg{B} are identical
 it fails immediately and finally, if \arg{A} and \arg{B} can unify,
 goals are delayed that prevent \arg{A} and \arg{B} to become equal. The
-dif/2 predicate behaves as if defined by \exam{dif(X, Y) :- when(?=(X,
-Y), X \== Y)}. See also \predref{?=}{2}.  The implementation can deal
-with cyclic terms.
+dif/2 predicate behaves as if defined by
+\verb$dif(X, Y) :- when(?=(X, Y), X \== Y)$. See also \predref{?=}{2}.
+The implementation can deal with cyclic terms.
 
 The dif/2 predicate is realised using attributed variable associated
 with the module \const{dif}.  It is defined in the autoload library
