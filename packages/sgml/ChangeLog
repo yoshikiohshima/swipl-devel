@@ -1,6 +1,6 @@
 Apr 26, 2004
 
-  * FIXED: Buffer overflow reading too long NAME, NMTOKEN, etc.
+  * FIXED: Bug#149: Buffer overflow reading too long NAME, NMTOKEN, etc.
     Fabien Todescato.
 
 Jan 17, 2004
