@@ -487,7 +487,7 @@ compileTermToHeap__LD(term_t t, int flags ARG_LD)
 #define	REC_64	    0x02		/* word is 64-bits	*/
 #define	REC_INT	    0x04		/* Record just contains	int  */
 #define	REC_ATOM    0x08		/* Record just contains	atom */
-#define	REC_GROUND  0x10		/* Record just contains	atom */
+#define	REC_GROUND  0x10		/* Record is ground */
 #define	REC_VMASK   0xe0		/* Version mask */
 #define	REC_VERSION 0x00		/* Version id */
 
@@ -601,7 +601,7 @@ heep allocation in this case. We could   also  consider using one of the
 other stacks as scratch-area.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define MAX_ALLOCA_VARS 2048		/* most machines should to 8k */
+#define MAX_ALLOCA_VARS 2048		/* most machines should do 8k */
 #define INITCOPYVARS(info, n) \
 { if ( (n) > 0 ) \
   { Word *p; \
