@@ -1,3 +1,8 @@
+Jul 5, 2004
+
+  * CLEANUP: split socket library in two to be able to reuse the
+    non-blocking socket stuff in the SSL library.
+
 May 5, 2004
 
   * FIXED: memory leak in open_memory_file/3.  Fabien Todescato.

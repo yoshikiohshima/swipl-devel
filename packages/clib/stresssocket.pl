@@ -46,7 +46,9 @@ For simple tests, get yourself a free machine and run
 It creates a logfile named <host>-forever.txt
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-:- use_module(library(socket)). :- use_module(library(debug)).
+:- asserta(user:file_search_path(foreign, '.')).
+:- use_module(socket).
+:- use_module(library(debug)).
 
 :- dynamic
 	on_thread/2,

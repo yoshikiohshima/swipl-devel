@@ -52,6 +52,15 @@ These predicates are documented in the source-distribution of the package
 :- initialization
    load_foreign_library(foreign(socket), install_socket).
 
+
+		 /*******************************
+		 *	   COMPATIBILITY	*
+		 *******************************/
+
+tcp_fcntl(Socket, setfl, nonblock) :- !,
+	tcp_setopt(Socket, nonblock).
+
+
 		 /*******************************
 		 *	  HANDLE MESSAGES	*
 		 *******************************/

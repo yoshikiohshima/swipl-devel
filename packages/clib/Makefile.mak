@@ -12,7 +12,7 @@ PLHOME=..\..
 !include $(PLHOME)\src\rules.mk
 PKGDLL=socket
 
-SOCKOBJ=	socket.obj error.obj
+SOCKOBJ=	socket.obj nonblockio.obj error.obj
 CGIOBJ=		error.obj form.obj cgi.obj
 MEMOBJ=		error.obj memfile.obj
 MIMEOBJ=	error.obj mime.obj

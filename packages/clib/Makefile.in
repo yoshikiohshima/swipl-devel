@@ -39,7 +39,7 @@ LIBPL=		@PLTARGETS@ prolog_server.pl
 TARGETS=	@TARGETS@
 
 UNXOBJ=		error.o process.o
-SOCKOBJ=	error.o socket.o
+SOCKOBJ=	error.o socket.o nonblockio.o
 CGIOBJ=		error.o form.o cgi.o
 CRYPTOBJ=	error.o crypt.o
 MEMOBJ=		error.o memfile.o

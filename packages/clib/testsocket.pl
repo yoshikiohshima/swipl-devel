@@ -34,7 +34,10 @@
 	    server/1,			% +Port
 	    client/1			% +Address
 	  ]).
-:- use_module(library(socket)).
+
+:- asserta(user:file_search_path(foreign, '.')).
+
+:- use_module(socket).
 :- use_module(streampool).
 
 tcp_test :-
