@@ -1189,17 +1189,15 @@ vsysError(const char *fm, va_list args)
   Svfprintf(Serror, fm, args);
   if ( gc_status.active )
   { Sfprintf(Serror,
-	    "\n[While in %ld-th garbage collection; skipping stacktrace]\n",
+	    "\n[While in %ld-th garbage collection]\n",
 	    gc_status.collections);
   }
 
 #if defined(O_DEBUGGER)
-  if ( !gc_status.active )
-  { systemMode(TRUE);
-    Sfprintf(Serror, "\n\nPROLOG STACK:\n");
-    backTrace(NULL, 10);
-    Sfprintf(Serror, "]\n");
-  }
+  systemMode(TRUE);
+  Sfprintf(Serror, "\n\nPROLOG STACK:\n");
+  backTrace(NULL, 10);
+  Sfprintf(Serror, "]\n");
 #endif /*O_DEBUGGER*/
 
   if ( GD->bootsession )

@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * Provided limited stack trace for errors during GC.
+
   * FIXED: throw/1 throwing a single variable if the exception is not
     caught (Roberto Bagnara)
 

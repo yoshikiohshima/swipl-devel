@@ -760,7 +760,10 @@ writeFrameGoal(LocalFrame frame, Code PC, unsigned int flags)
 { fid_t cid = PL_open_foreign_frame();
   Definition def = frame->predicate;
 
-  if ( !GD->bootsession && GD->initialised && GD->debug_level == 0 )
+  if ( gc_status.active )
+  { Sfprintf(Serror, " (%d): %s\n",
+	     levelFrame(frame), predicateName(frame->predicate));
+  } else if ( !GD->bootsession && GD->initialised && GD->debug_level == 0 )
   { term_t fr   = PL_new_term_ref();
     term_t port = PL_new_term_ref();
     term_t pc   = PL_new_term_ref();
