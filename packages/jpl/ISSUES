@@ -27,8 +27,8 @@ processor (approx. 7% on  an  AMD  Athon),   how  you  wish  to  arrange
 versioning and how keen you are on memory sharing.
 
 
-Installed components
-====================
+Installed components (Unix)
+===========================
 
 Make install installs the following components:
 
@@ -42,3 +42,17 @@ embedding Prolog in Java or using a  Prolog -> Java -> Prolog callback).
 Unfortunately all the other Prolog .so   files are loaded by explicitely
 searching for them.
 
+
+Finding Java on Windows
+=======================
+
+It appears the following keys are relevant for SUN SDK:
+
+?- win_registry_get_value('HKEY_LOCAL_MACHINE/Software/JavaSoft/Java Development Kit',
+			  'CurrentVersion', X).
+
+   X = 1.4
+
+?- win_registry_get_value('HKEY_LOCAL_MACHINE/Software/JavaSoft/Java Development Kit/1.4', 'JavaHome', X).
+
+   X = 'C:\\j2sdk1.4.2_04'
