@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: On Windows-NT, use Waitable Timers to realise sleep/1,
+    resulting in improved handling of events and timeouts as well as
+    better timer resolution.  Uses old Sleep() based version on older
+    windows platforms.
+
   * ENHANCED: realised native Win32 guarding of thread message queues,
     sponsored by SSS (www.sss.co.nz).
 
