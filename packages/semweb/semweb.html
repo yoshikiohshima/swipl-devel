@@ -634,6 +634,12 @@ not to occur in the current database in any field of any triple and
 starts with '__bnode'.
 
 <P>
+<DT><A NAME="rdf_is_bnode/1"><STRONG>rdf_is_bnode</STRONG>(<VAR>+Id</VAR>)</A><DD>
+Succeeds if <VAR>Id</VAR> is a blank node identifier (also called
+<EM>anonymous resource</EM>). In the current implementation this implies 
+it is an atom starting with a double underscore.
+
+<P>
 <DT><A NAME="rdf_source_location/2"><STRONG>rdf_source_location</STRONG>(<VAR>+Subject, 
 -SourceRef</VAR>)</A><DD>
 Return the source-location as <VAR>File</VAR>:<VAR>Line</VAR> of the 
@@ -1297,6 +1303,7 @@ BUG: The current implementation cannot deal with cycles
 <A HREF="#idx:rdfhas4:1">3</A> <A HREF="#idx:rdfhas4:7">3.1</A>
 <DT>rdf_has/[3,4]<DD>
 <A HREF="#idx:rdfhas34:37">4.1</A> <A HREF="#idx:rdfhas34:38">4.1</A>
+<DT><A HREF="#rdf_is_bnode/1">rdf_is_bnode/1</A><DD>
 <DT><A HREF="#rdf_load/1">rdf_load/1</A><DD>
 <A HREF="#idx:rdfload1:18">3.3</A> <A HREF="#idx:rdfload1:20">3.3</A> <A HREF="#idx:rdfload1:22">3.3</A> <A HREF="#idx:rdfload1:35">3.5</A> <A HREF="#idx:rdfload1:65">5.3</A>
 <DT><A HREF="#rdf_load/2">rdf_load/2</A><DD>
