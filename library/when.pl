@@ -48,6 +48,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Simple implementation. Does not clean up redundant attributes.
+% Now deals with cyclic terms.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 :- module(when,[when/2]).
@@ -88,13 +89,13 @@ trigger_ground(X,Goal) :-
 	).
 
 trigger_determined(X,Y,Goal) :-
-	mgu_variables(X,Y,L),
+	unifyable(X,Y,Unifier),
 	!,
-	( L == [] ->
+	( Unifier == [] ->
 		call(Goal)
 	;
 		put_attr(Det,when,det(trigger_determined(X,Y,Goal))),
-		suspend_list(L,wake_det(Det))
+		suspend_list(Unifier,wake_det(Det))
 	).
 	
 trigger_determined(_,_,Goal) :-
@@ -128,9 +129,9 @@ check_disj(Disj,Goal) :-
 	).
 
 suspend_list([],_Goal).
-suspend_list([V|Vs],Goal) :-
+suspend_list([V=_|Unifier],Goal) :-
 	suspend(V,Goal),
-	suspend_list(Vs,Goal).
+	suspend_list(Unifier,Goal).
 
 suspend(V,Goal) :-
 	( get_attr(V,when,List) ->
@@ -153,37 +154,3 @@ call_list([]).
 call_list([G|Gs]) :-
 	call(G),
 	call_list(Gs).
-
-mgu_variables(X,Y,Set) :-
-	mgu_variables1(X,Y,[],List),
-	sort(List,Set).
-
-mgu_variables1(X,Y,Acc,L) :-
-	( nonvar(X) ->
-		( var(Y) ->
-			L = [Y|Acc]
-		; atomic(X) ->
-			X == Y
-		;
-			functor(X,F,A),
-			functor(Y,F,A),
-			X =.. [_|XArgs],
-			Y =.. [_|YArgs],
-			mgu_variables_list(XArgs,YArgs,Acc,L)
-		)		
-	; 
-		( var(Y) ->
-			( X == Y ->
-				L = Acc
-			;
-				L = [X,Y|Acc]
-			)
-		  ;	
-			L = [X|Acc]
-		)		
-	).
-
-mgu_variables_list([],[],L,L).
-mgu_variables_list([X|Xs],[Y|Ys],Acc,L) :-
-	mgu_variables1(X,Y,Acc,NAcc),
-	mgu_variables_list(Xs,Ys,NAcc,L).

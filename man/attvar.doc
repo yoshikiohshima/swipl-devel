@@ -175,7 +175,7 @@ to \const{true}.
 Execute \arg{Goal} when \arg{Condition} becomes true.  \arg{Condition}
 is one of \term{?=}{X, Y}, \term{nonvar}{X}, \term{ground}{X},
 \term{,}{Cond1, Cond2} or \term{;}{Cond1, Cond2}.  See also freeze/2
-and dif/2.
+and dif/2.  The implementation can deal with cyclic terms.
 
 The when/2 predicate is realised using attributed variable associated
 with the module \const{when}.  It is defined in the autoload library
@@ -185,10 +185,11 @@ with the module \const{when}.  It is defined in the autoload library
 The dif/2 predicate provides a constraint stating that \arg{A} and
 \arg{B} are different terms. If \arg{A} and \arg{B} can never unify
 dif/2 succeeds deterministically. If \arg{A} and \arg{B} are identical
-it fails immediately and finally, if \arg{A} and \arg{B} can unify goals
-are delayed that prevent \arg{A} and \arg{B} to become equal. The dif/2
-predicate behaves as if defined by \exam{dif(X, Y) :- when(?=(X, Y), X
-\== Y)}. See also \predref{?=}{2}.
+it fails immediately and finally, if \arg{A} and \arg{B} can unify,
+goals are delayed that prevent \arg{A} and \arg{B} to become equal. The
+dif/2 predicate behaves as if defined by \exam{dif(X, Y) :- when(?=(X,
+Y), X \== Y)}. See also \predref{?=}{2}.  The implementation can deal
+with cyclic terms.
 
 The dif/2 predicate is realised using attributed variable associated
 with the module \const{dif}.  It is defined in the autoload library

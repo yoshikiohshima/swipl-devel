@@ -38,6 +38,9 @@
 % 	E-mail: 	Tom.Schrijvers@cs.kuleuven.ac.be
 %	Copyright:	2003-2004, K.U.Leuven
 %
+% Update 7/3/2004:
+%   Now uses unifyable/3. It enables dif/2 to work with infinite terms.
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 :- module(dif,[dif/2]).
@@ -72,19 +75,21 @@ dif(X,Y) :-
 %	node(Parent,Children,Variables,Counter)
 
 dif_c_c(X,Y,Parent) :-
-	( functor(X,F,A),
-	  functor(Y,F,A) ->
-	  	X =.. [_|XL],
-		Y =.. [_|YL],
-		dif_c_c_l(XL,YL,A,Parent)
+	( unifyable(X,Y,Unifier) ->
+		( Unifier == [] ->
+			or_one_fail(Parent)
+		;
+			dif_c_c_l(Unifier,Parent)
+		)
 	;
 		or_succeed(Parent)
 	).
 
-dif_c_c_l(Xs,Ys,N,Parent) :-
+dif_c_c_l(Unifier,Parent) :-
+	length(Unifier,N),
 	put_attr(OrNode,dif,node(Parent,[],[],N)),
 	register_child(Parent,OrNode),
-	dif_c_c_l_aux(Xs,Ys,OrNode).	
+	dif_c_c_l_aux(Unifier,OrNode).	
 
 register_child(Parent,Child) :-
 	( var(Parent) ->
@@ -96,11 +101,11 @@ register_child(Parent,Child) :-
 	).
 
 
-dif_c_c_l_aux([],[],_).
-dif_c_c_l_aux([X|Xs],[Y|Ys],OrNode) :-
+dif_c_c_l_aux([],_).
+dif_c_c_l_aux([X=Y|Unifier],OrNode) :-
 	dif2(X,Y,OrNode),
 	( var(OrNode) ->
-		dif_c_c_l_aux(Xs,Ys,OrNode)
+		dif_c_c_l_aux(Unifier,OrNode)
 	;
 		true
 	).

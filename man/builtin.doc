@@ -777,6 +777,19 @@ compared safely, i.e.\ whether the result of \exam{Term1 == Term2}
 can change due to further instantiation of either term.  It is
 defined as by \exam{?=(A,B) :- (A==B ; A \= B), !.}.  See also
 dif/2.
+
+    \predicate{unifyable}{3}{{@}X, {@}Y, -Unifier}
+If \arg{X} and \arg{Y} can unify, unify \arg{Unifier} with a list of
+\mbox{\arg{Var} = \arg{Value}}, representing the bindings required to
+make \arg{X} and \arg{Y} equivalent.%
+	\footnote{This predicate was introduced for the implementation
+		  of dif/2 and when/2 after discussion with Tom
+		  Schrijvers and Bart Demoen.  None of us is really
+		  happy with the name and therefore suggestions for
+		  a new name are welcome.}
+This predicate can handle cyclic terms.  Attributed variables are
+handles as normal variables.  Associated hooks are \emph{not}
+executed.
 \end{description}
 
 \section{Control Predicates}		\label{sec:control}
