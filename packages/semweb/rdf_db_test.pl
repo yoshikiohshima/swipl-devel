@@ -295,6 +295,12 @@ match(3) :-
 match(4) :-
 	rdf_assert(a,b,literal('hello there world!')),
 	rdf(a,b,literal(word('world'), _)).
+match(5) :-
+	rdf_assert(a,b,literal('hello there world!')),
+	rdf(a,b,literal(like('*there*'), _)).
+match(6) :-				% test backtracking
+	rdf_assert(a,b,literal('hello there world there universe!')),
+	rdf(a,b,literal(like('*th*uni*'), _)).
 
 
 		 /*******************************

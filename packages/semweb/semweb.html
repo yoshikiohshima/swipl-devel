@@ -200,6 +200,12 @@ not indexed on <VAR>Object</VAR>.
 <DT><STRONG>prefix</STRONG>(<VAR>+Text</VAR>)<DD>
 Match any literal that starts with <VAR>Text</VAR>. This call is 
 intended for <EM>completion</EM>. The query is not indexed on <VAR>Object</VAR>.
+
+<P>
+<DT><STRONG>like</STRONG>(<VAR>+Pattern</VAR>)<DD>
+Match any literal that matches <VAR>Pattern</VAR> case insensitively, 
+where the `*' character in <VAR>Pattern</VAR> matches zero or more 
+characters.
 </DL>
 
 <P>Backtracking never returns duplicate triples. Duplicates can be 
@@ -724,6 +730,11 @@ Perform exact, but case-insensitive match.
 <P>
 <DT><STRONG>prefix</STRONG><DD>
 <VAR>Text</VAR> start with <VAR>Search</VAR>.
+
+<P>
+<DT><STRONG>like</STRONG><DD>
+<VAR>Text</VAR> matches <VAR>Search</VAR>, case insensitively, where the 
+`*' character in <VAR>Search</VAR> matches zero or more characters.
 </DL>
 
 <P>

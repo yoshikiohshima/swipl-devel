@@ -1,3 +1,7 @@
+Jul 29, 2004
+
+  * ADDED: matching using the SeRQL compatible `like' operator.
+
 Jul 22, 2004
 
   * ADDED: Namespace expansion in rdf(S,P,literal(type(xsd:int, 5))).

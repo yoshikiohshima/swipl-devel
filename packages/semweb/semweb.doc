@@ -159,6 +159,10 @@ For string querying purposes, \arg{Object} can be of the form
 	    Match any literal that starts with \arg{Text}.  This call
 	    is intended for \jargon{completion}.  The query is not
 	    indexed on \arg{Object}.
+	\termitem{like}{+Pattern}
+	    Match any literal that matches \arg{Pattern} case
+	    insensitively, where the `*' character in \arg{Pattern}
+	    matches zero or more characters.
     \end{description}
 
 Backtracking never returns duplicate triples. Duplicates can be
@@ -557,6 +561,10 @@ All matching is performed case-insensitive.  Defines methods are:
 	    \arg{Search} appears as a whole-word in \arg{Text}.
 	\termitem{prefix}{}
 	    \arg{Text} start with \arg{Search}.
+	\termitem{like}{}
+	    \arg{Text} matches \arg{Search}, case insensitively, where
+	    the `*' character in \arg{Search} matches zero or more
+	    characters.
     \end{description}
 
     \predicate{rdf_reset_db}{0}{}

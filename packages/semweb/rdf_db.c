@@ -86,6 +86,7 @@ static functor_t FUNCTOR_exact1;
 static functor_t FUNCTOR_substring1;
 static functor_t FUNCTOR_word1;
 static functor_t FUNCTOR_prefix1;
+static functor_t FUNCTOR_like1;
 
 static functor_t FUNCTOR_symmetric1;
 static functor_t FUNCTOR_inverse_of1;
@@ -100,6 +101,7 @@ static atom_t	ATOM_exact;
 static atom_t	ATOM_prefix;
 static atom_t	ATOM_substring;
 static atom_t	ATOM_word;
+static atom_t	ATOM_like;
 
 static atom_t	ATOM_subPropertyOf;
 
@@ -2159,7 +2161,9 @@ get_partial_triple(term_t subject, term_t predicate, term_t object,
 	t->match = STR_MATCH_WORD;
       else if ( PL_is_functor(a, FUNCTOR_prefix1) )
 	t->match = STR_MATCH_PREFIX;
-      else
+      else if ( PL_is_functor(a, FUNCTOR_like1) )
+	t->match = STR_MATCH_LIKE;
+      else 
 	return domain_error(a, "match_type");
       PL_get_arg(1, a, a);
       if ( !get_atom_or_var_ex(a, &t->object.string) )
@@ -3599,6 +3603,54 @@ match(int how, atom_t search, atom_t label)
   
       return FALSE;
     }
+    case STR_MATCH_LIKE:		/* SeRQL like: * --> wildcart */
+    { typedef struct chp { const char *pattern;
+			   const char *label; } chp;
+      chp chps[MAX_LIKE_CHOICES];
+      int chn=0;
+
+      for( ; *l && *f; l++, f++ )
+      { if ( *f == '*' )
+	{ f++;
+
+	  if ( *f == '\0' )		/* foo* */
+	    return TRUE;
+
+	search_like:
+	  while ( *l && tolower(*l) != tolower(*f) )
+	    l++;
+
+	  if ( *l )
+	  { if ( chn >= MAX_LIKE_CHOICES )
+	    { Sdprintf("rdf_db: too many * in `like' expression (>%d)",
+		       MAX_LIKE_CHOICES);
+	      return FALSE;
+	    }
+	    chps[chn].pattern = f;
+	    chps[chn].label   = l+1;
+	    chn++;
+
+	    continue;
+	  } else
+	    goto retry_like;
+	}
+
+	if ( tolower(*l) != tolower(*f) )
+	  goto retry_like;
+      }
+      if ( *l == '\0' && *f == '\0' )
+	return TRUE;
+  
+retry_like:
+      if ( chn > 0 )
+      { chn--;
+	f = chps[chn].pattern;
+	l = chps[chn].label;
+	goto search_like;
+      }
+
+      return FALSE;
+    }
     default:
       assert(0);
       return FALSE;
@@ -3624,6 +3676,8 @@ match_label(term_t how, term_t search, term_t label)
     type = STR_MATCH_WORD;
   else if ( h == ATOM_prefix )
     type = STR_MATCH_PREFIX;
+  else if ( h == ATOM_like )
+    type = STR_MATCH_LIKE;
   else
     return domain_error(how, "search_method");
 
@@ -3739,6 +3793,7 @@ install_rdf_db()
   MKFUNCTOR(substring, 1);
   MKFUNCTOR(word, 1);
   MKFUNCTOR(prefix, 1);
+  MKFUNCTOR(like, 1);
   MKFUNCTOR(literal, 2);
   MKFUNCTOR(searched_nodes, 1);
   MKFUNCTOR(duplicates, 1);
@@ -3753,6 +3808,7 @@ install_rdf_db()
   ATOM_user	     = PL_new_atom("user");
   ATOM_exact	     = PL_new_atom("exact");
   ATOM_prefix	     = PL_new_atom("prefix");
+  ATOM_like	     = PL_new_atom("like");
   ATOM_substring     = PL_new_atom("substring");
   ATOM_word	     = PL_new_atom("word");
   ATOM_subPropertyOf = PL_new_atom(URL_subPropertyOf);
