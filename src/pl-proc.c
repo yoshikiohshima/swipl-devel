@@ -910,7 +910,9 @@ removeClausesProcedure(Procedure proc, int sfindex)
   for(c = def->definition.clauses; c; c = c->next)
   { Clause cl = c->clause;
 
-    if ( (sfindex == 0 || sfindex == cl->source_no) && false(cl, ERASED) )
+    if ( (sfindex == 0 || sfindex == cl->source_no) &&
+	 cl->line_no > 0 &&		/* == 0: dynamic clauses */
+	 false(cl, ERASED) )
     { set(cl, ERASED);
       set(def, NEEDSCLAUSEGC);		/* only on first */
 
