@@ -136,7 +136,7 @@ suggest predicates from a keyword.
 \predicatesummary{copy_term}{2}{Make a copy of a term}
 \predicatesummary{current_arithmetic_function}{1}{Examine evaluable functions}
 \predicatesummary{current_atom}{1}{Examine existing atoms}
-\predicatesummary{current_atom}{2}{Examine typed atoms (BLOBS)}
+\predicatesummary{current_blob}{2}{Examine typed blobs}
 \predicatesummary{current_char_conversion}{2}{Query input character mapping}
 \predicatesummary{current_flag}{1}{Examine existing flags}
 \predicatesummary{current_foreign_library}{2}{\pllib{shlib} Examine loaded shared libraries (.so files)}

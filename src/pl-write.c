@@ -342,11 +342,31 @@ writeAttVar(term_t av, write_options *options)
 
 
 static bool
+writeBlob(atom_t a, write_options *options)
+{ Atom atom = atomValue(a);
+  unsigned char *s;
+  int i;
+
+  TRY(PutString("<#", options->out));
+  for(i=atom->length, s=atom->name; --i>=0; s++)
+  { static char *digits = "0123456789abcdef";
+
+    TRY(Putc(digits[((*s)>>4) & 0xf], options->out));
+    TRY(Putc(digits[(*s) & 0xf],      options->out));
+  }
+  
+  return PutString(">", options->out);
+}
+
+
+static bool
 writeAtom(atom_t a, write_options *options)
 { Atom atom = atomValue(a);
 
   if ( atom->type->write )
     return (*atom->type->write)(options->out, a, options->flags);
+  if ( false(atom->type, PL_BLOB_TEXT) )
+    return writeBlob(a, options);
 
   if ( true(options, PL_WRT_QUOTED) )
   { switch( atomType(a) )

@@ -90,7 +90,7 @@ PRED_IMPL("$record_bag", 1, record_bag, 0)
 { PRED_LD
   Assoc a = allocHeap(sizeof(*a));
 
-  if ( PL_is_atom(A1) )
+  if ( PL_is_atom(A1) )			/* mark */
   { a->record = 0;
   } else
     a->record = compileTermToHeap(A1, 0);

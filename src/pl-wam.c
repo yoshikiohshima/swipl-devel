@@ -3623,7 +3623,7 @@ Note that compilation does not give contained   atoms a reference as the
 atom is referenced by the goal-term anyway.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	if ( isAtom(goal = *a) )
+	if ( isTextAtom(goal = *a) )
 	{ /*if ( *a == ATOM_cut )		NOT ISO
 	    goto i_cut; */
 	  functor = lookupFunctorDef(goal, 0);
@@ -3691,7 +3691,7 @@ atom is referenced by the goal-term anyway.
 	module = NULL;
 	a = stripModule(a, &module PASS_LD);
 
-	if ( isAtom(goal = *a) )
+	if ( isTextAtom(goal = *a) )
 	{ arity   = 0;
 	  functor = lookupFunctorDef(goal, callargs);
 	  args    = NULL;
@@ -4081,7 +4081,7 @@ the arguments of this term in the frame.
 
 	ARGP = argFrameP(next, 0);
 
-	if ( isAtom(goal) )
+	if ( isTextAtom(goal) )
 	{ functor = goal;
 	  arity = 0;
 	} else if ( isTerm(goal) )

@@ -458,6 +458,7 @@ typedef struct PL_blob_t
   atom_t		atom_name;	/* Name as atom */
 } PL_blob_t;
 
+PL_EXPORT(int)		PL_is_blob(term_t t, PL_blob_t **type);
 PL_EXPORT(int)		PL_unify_blob(term_t t, void *blob, unsigned int len,
 				      PL_blob_t *type);
 PL_EXPORT(void)		PL_put_blob(term_t t, void *blob, unsigned int len,
@@ -468,7 +469,7 @@ PL_EXPORT(int)		PL_get_blob(term_t t, void **blob, unsigned int *len,
 PL_EXPORT(void*)	PL_blob_data(atom_t a,
 				     unsigned int *len,
 				     struct PL_blob_t **type);
-PL_EXPORT(void)		PL_unregister_blob_type(PL_blob_t *type);
+PL_EXPORT(int)		PL_unregister_blob_type(PL_blob_t *type);
 
 
 		 /*******************************

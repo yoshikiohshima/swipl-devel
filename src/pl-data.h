@@ -185,6 +185,7 @@ and while loading .wic files.  It comes at no price.
 /*#define isVar(w)	(tag(w)   == TAG_VAR)*/
 #define isVar(w)	((w)      == (word)0)
 #define isAtom(w)	(tagex(w) == TAG_ATOM)
+#define isTextAtom(w)	(isAtom(w) && true(atomValue(w)->type, PL_BLOB_TEXT))
 #define isInteger(w)	(tag(w)   == TAG_INTEGER)
 #define isReal(w)	(tag(w)   == TAG_FLOAT)
 #define isString(w)	(tag(w)   == TAG_STRING)

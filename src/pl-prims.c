@@ -819,7 +819,7 @@ PRED_IMPL("arg", 3, arg, PL_FA_NONDETERMINISTIC)
       deRef(p);
       if ( isTerm(*p) )
 	arity = arityTerm(*p);
-      else if ( isAtom(*p) && !trueFeature(ISO_FEATURE) )
+      else if ( isTextAtom(*p) && !trueFeature(ISO_FEATURE) )
 	arity = 0;
       else
 	return PL_error("arg", 3, NULL, ERR_TYPE, ATOM_compound, term);

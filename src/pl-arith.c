@@ -575,7 +575,7 @@ arithChar(Word p ARG_LD)
   } else if ( isAtom(*p) )
   { Atom a = atomValue(*p);
     
-    if ( a->length == 1 )
+    if ( true(a->type, PL_BLOB_TEXT) && a->length == 1 )
       return a->name[0] & 0xff;		/* ASCII! */
   }
 

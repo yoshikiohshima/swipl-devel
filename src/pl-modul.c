@@ -231,7 +231,7 @@ stripModule(Word term, Module *module ARG_LD)
   { Word mp;
     mp = argTermP(*term, 0);
     deRef(mp);
-    if ( !isAtom(*mp) )
+    if ( !isTextAtom(*mp) )
       break;
     *module = lookupModule(*mp);
     term = argTermP(*term, 1);

@@ -184,6 +184,8 @@ cmd(infixop({RawName}, {Arg1}, {Arg2}),
 	clean_name(RawName, Name),
 	predicate_refname(Name, 2, RefName),
 	add_to_index(RefName, +RefName).
+cmd(constitem({Name}), #defitem(#label(Name, #strong(+Name)))) :-
+	add_to_index(Name, +Name).
 cmd(termitem({Name}, {[]}), #defitem(#strong(+Name))).
 cmd(termitem({Name}, {Arg}),
     #defitem([#strong(+Name), #embrace(#var(+Arg))])).

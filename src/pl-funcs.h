@@ -80,8 +80,6 @@ word		lookupBlob(const char *s, unsigned int len, PL_blob_t *type);
 word		pl_atom_hashstat(term_t i, term_t n);
 void		initAtoms(void);
 void		cleanupAtoms(void);
-word		pl_current_atom2(term_t a, term_t refs, control_t ctx);
-word		pl_current_atom(term_t a, control_t ctx);
 word		pl_complete_atom(term_t prefix, term_t common, term_t unique);
 word		pl_atom_completions(term_t prefix, term_t alts);
 void		markAtom(atom_t a);

@@ -1457,7 +1457,7 @@ will use the meta-call mechanism for all these types of calls.
       Word mp, g;
 
       mp = argTermP(*arg, 0); deRef(mp);
-      if ( isAtom(*mp) )
+      if ( isTextAtom(*mp) )
       { g = argTermP(*arg, 1); deRef(g);
 	if ( isIndexedVarTerm(*g PASS_LD) < 0 )
 	{ arg = g;
@@ -1575,7 +1575,7 @@ re-definition.
     }
   }
 
-  if ( isAtom(*arg) )
+  if ( isTextAtom(*arg) )
   { if ( *arg == ATOM_cut )
     { if ( ci->cut.var )			/* local cut for \+ */
 	Output_1(ci, ci->cut.instruction, ci->cut.var);
@@ -1726,7 +1726,7 @@ compileArithArgument(Word arg, compileInfo *ci ARG_LD)
     int n, ar;
     Word a;
 
-    if ( isAtom(*arg) )
+    if ( isTextAtom(*arg) )
     { fdef = lookupFunctorDef(*arg, 0);
       ar = 0;
       a = NULL;

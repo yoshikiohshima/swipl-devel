@@ -1772,11 +1772,11 @@ Successively unifies \arg{Atom} with all atoms known to the system.
 Note that current_atom/1 always succeeds if \arg{Atom} is instantiated to
 an atom.
 
-    \predicate{current_atom}{2}{?Atom, ?Type}
-Examine the type or enumerate atoms of the given \arg{Type}.  Typed
-atoms are supported through the foreign language interface for storing
-arbitrary BLOBS (Binary Large Object) or handles to external entities.
-See \secref{blob} for details.
+    \predicate{current_blob}{2}{?Blob, ?Type}
+Examine the type or enumerate blobs of the given \arg{Type}.  Typed
+blobs are supported through the foreign language interface for
+storing arbitrary BLOBS (Binary Large Object) or handles to external
+entities. See \secref{blob} for details.
 
     \predicate{current_functor}{2}{?Name, ?Arity}
 Successively unifies \arg{Name} with the name and \arg{Arity} with the

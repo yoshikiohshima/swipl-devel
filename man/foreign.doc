@@ -1360,7 +1360,7 @@ function pointers that tell Prolog how to handle releasing the atom,
 writing it, sorting it, etc. Two atoms created with different types can
 represent the same sequence of bytes. Atoms are first ordered on the
 rank number of the type and then on the result of the
-\functref{compare}{} function.  Rank numbers are assigned when the
+\funcref{compare}{} function.  Rank numbers are assigned when the
 type is registered.
 
 
@@ -1374,6 +1374,7 @@ displayed above. The structure contains additional fields at the
 \begin{code}
 typedef struct PL_blob_t
 { unsigned long		magic;		/* PL_BLOB_MAGIC */
+  unsigned long		flags;		/* Bitwise or of PL_BLOB_* */
   char *		name;		/* name of the type */
   int			(*release)(atom_t a);
   int			(*compare)(atom_t a, atom_t b);
@@ -1384,11 +1385,30 @@ typedef struct PL_blob_t
 
 For each type exactly one such structure should be allocated.  Its
 first field must be initialised to \const{PL_BLOB_MAGIC}.  The
-\arg{name} field represents the type name as available to Prolog.
-See also current_atom/2.  The other field are function pointers
-that must be initialised to proper functions or \const{NULL} to
-get the default behaviour of builtin atoms.  Below are the defined
-member functions:
+\arg{flags} is a bitwise or of the following constants:
+
+\begin{description}
+    \constitem{PL_BLOB_TEXT}
+If specified the blob is assumed to contain text and is considered
+a normal Prolog atom.
+
+    \constitem{PL_BLOB_UNIQUE}
+If specified the system ensures that the blob-handle is a unique
+reference for a blob with the given type, length and content.
+If this flag is not specified each lookup creates a new blob.
+
+    \constitem{PL_BLOB_NOCOPY}
+By default the content of the blob is copied. Using this flag the blob
+references the external data directly. The user must ensure the provided
+pointer is valid as long as the atom lives.  If \const{PL_BLOB_UNIQUE}
+is also specified uniqueness is determined by comparing the pointer
+rather than the data pointed at.
+\end{description}
+
+The \arg{name} field represents the type name as available to Prolog.
+See also current_blob/2. The other field are function pointers that must
+be initialised to proper functions or \const{NULL} to get the default
+behaviour of builtin atoms. Below are the defined member functions:
 
 \begin{description}
     \cfunction{int}{release}{atom_t a}
@@ -1410,6 +1430,11 @@ or of zero or more of the \const{PL_WRT_*} flags defined in
 \file{SWI-Prolog.h}. This prototype is available if the
 undocumented \file{SWI-Stream.h} is included \emph{before}
 \file{SWI-Prolog.h}.
+
+If this function is not provided, write/1 emits the content
+of the blob for blobs of type \const{PL_BLOB_TEXT} or a
+string of the format \verb$<#$\textit{hex data}\verb$>$
+for binary blobs.
 \end{description}
 
 
@@ -1418,10 +1443,14 @@ or DLL) the blob-type must be deregistered before the object may be
 released.
 
 \begin{description}
-    \cfunction{void}{PL_unregister_blob_type}{PL_blob_t *type}
-Unlink the blob type from the registered type and transform the
-type of possible living blobs to \const{text}, avoiding further
-reference to the type structure and functions referred by it.
+    \cfunction{int}{PL_unregister_blob_type}{PL_blob_t *type}
+Unlink the blob type from the registered type and transform the type of
+possible living blobs to \const{unregistered}, avoiding further
+reference to the type structure, functions referred by it as well as the
+data. This function returns \const{TRUE} if no blobs of this type
+existed and \const{FALSE} otherwise. PL_unregister_blob_type() is
+intended for the uninstall() hook of foreign modules, avoiding further
+references to the module.
 \end{description}
 
 

@@ -7,8 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-  * ADDED: First (incomplete) prototype of binary-blobs-in-atoms after
-    discussion on the mailinglist.  Work in progress.
+  * ADDED: First prototype of binary-blobs-in-atoms after
+    discussion on the mailinglist.
 
   * FIXED: sub_atom/5 with variables sharing in the call.  Emerson.
 

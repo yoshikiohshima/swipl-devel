@@ -161,7 +161,6 @@ static const PL_extension foreigns[] = {
   FRG("current_op",		3, pl_current_op,	NDET|META),
   FRG("$local_op",		3, pl_local_op,	        NDET|META),
   FRG("$builtin_op",		3, pl_builtin_op,	     NDET),
-  FRG("current_atom",		1, pl_current_atom,	     NDET),
   FRG("current_functor",	2, pl_current_functor,	     NDET),
   FRG("$complete_atom",		3, pl_complete_atom,		0),
   FRG("$atom_completions",	2, pl_atom_completions,		0),
@@ -359,7 +358,6 @@ static const PL_extension foreigns[] = {
 #ifdef O_ATOMGC
   FRG("garbage_collect_atoms",	0, pl_garbage_collect_atoms,	0),
   FRG("garbage_collect_clauses", 0, pl_garbage_collect_clauses,	0),
-  FRG("current_atom",		2, pl_current_atom2,	     NDET),
 #ifdef O_DEBUG_ATOMGC
   FRG("track_atom",		2, pl_track_atom,		0),
 #endif
@@ -585,6 +583,7 @@ registerBuiltins(const PL_extension *f)
 #define REG_PLIST(id) \
 	registerBuiltins(PL_predicates_from_ ## id)
 
+DECL_PLIST(atom);
 DECL_PLIST(arith);
 DECL_PLIST(bag);
 DECL_PLIST(comp);
@@ -607,6 +606,7 @@ initBuildIns(void)
   Module m = MODULE_system;
 
   registerBuiltins(foreigns);
+  REG_PLIST(atom);
   REG_PLIST(arith);
   REG_PLIST(bag);
   REG_PLIST(comp);

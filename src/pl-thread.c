@@ -1962,7 +1962,7 @@ get_message_queue(term_t t, message_queue **queue, int create)
     }
   }
 
-  if ( create && isAtom(id) )
+  if ( create && isTextAtom(id) )
   { message_queue *new;
 
     if ( (new = unlocked_message_queue_create(t)) )
@@ -2351,7 +2351,7 @@ get_mutex(term_t t, pl_mutex **mutex, int create)
     }
   }
 
-  if ( create && isAtom(id) )
+  if ( create && isTextAtom(id) )
   { pl_mutex *new;
 
     if ( (new = unlocked_pl_mutex_create(t)) )
