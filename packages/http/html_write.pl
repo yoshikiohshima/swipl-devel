@@ -92,6 +92,10 @@ page(Head, Body) -->
 	  '</html>\n'
 	].
 
+pagebody(Head) -->
+	{ functor(Head, head, _)
+	}, !,
+	html(Head).
 pagehead(Head) -->
 	{ strip_module(Head, M, _),
 	  hook_module(M, head(_,_,_))
@@ -101,6 +105,10 @@ pagehead(Head) -->
 	html(head(Head)).
 
 
+pagebody(Body) -->
+	{ functor(Body, body, _)
+	}, !,
+	html(Body).
 pagebody(Body) -->
 	{ strip_module(Body, M, _),
 	  hook_module(M, body(_,_,_))
