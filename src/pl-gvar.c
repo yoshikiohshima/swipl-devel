@@ -72,6 +72,14 @@ find_var(Word l, atom_t name, Word *vp ARG_LD)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+b_setval(+VarName, +Value)
+
+Assign a backtrackable global variable. We must  be a bit careful as the
+assigned value might be a variable living on the local stack, so we must
+make the reference point the right way just as with unify().
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 static
 PRED_IMPL("b_setval", 2, b_setval, 0)
 { PRED_LD
@@ -105,26 +113,39 @@ PRED_IMPL("b_setval", 2, b_setval, 0)
     int arity = arityFunctor(f->definition);
     unsigned int key = (unsigned int)atomValue(name)->hash_value % arity;
     Word l = &f->arguments[key];
-    Word vp;
+    Word vp, v, xp;
+
+    v = valTermRef(A2);			/* the value */
+    deRef(v);
 
     if ( find_var(l, name, &vp PASS_LD) )
     { TrailAssignment(vp);
-      *vp = linkVal(valTermRef(A2));
-
-      succeed;
+      setVar(*vp);
+      xp = vp;
     } else if ( vp )
-    { Word at = allocGlobal(4);
+    { Word at = allocGlobalNoShift(4);
 
       at[0] = FUNCTOR_att3;
       at[1] = name;
-      at[2] = linkVal(valTermRef(A2));
+      setVar(at[2]);
       at[3] = ATOM_nil;
+      xp = &at[2];
 
       TrailAssignment(vp);
       *vp = consPtr(at, TAG_COMPOUND|STG_GLOBAL);
-
-      succeed;
+    } else
+    { assert(0);
     }
+
+    if ( isVar(*v) )
+    { if ( xp < v )
+	*v = makeRef(xp);
+      else
+	*xp = makeRef(v);
+    } else
+      *xp = needsRef(*v) ? makeRef(v) : *v;
+
+    succeed;
   }
 
   assert(0);
