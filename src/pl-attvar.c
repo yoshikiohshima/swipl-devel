@@ -77,8 +77,6 @@ assignAttVar(Word av, Word value ARG_LD)
 { Word wake, a;				/*  */
   Word tail = valTermRef(LD->attvar.tail);
 
-  if ( !isAttVar(*av) )
-    backTrace(0,10);
   assert(isAttVar(*av));
   assert(!isRef(*value));
 
