@@ -23,7 +23,7 @@ EXPLS=		jpl_colour_choose_demo.pl \
 		jpl_versions_demo.pl
 EXJAVA=		$(EXDIR)\java
 EXJAVAS=	Exceptions Exceptions2 Family FamilyMT Test Test2 Time \
-		Versions Zahed
+		Versions Zahed SemWeb
 
 
 CFLAGS =	$(CFLAGS) \
