@@ -249,10 +249,6 @@ cpdata(to, from, type, n)
 #define unix 1
 #endif
 
-#if defined(__sun__) && !defined(sun)
-#define sun 1
-#endif
-
 		 /*******************************
 		 *	 LIBRARY PROBLEMS	*
 		 *******************************/
