@@ -292,6 +292,7 @@ open_foreign_frame(ARG1_LD)
   fr->size = 0;
   Mark(fr->mark);
   fr->parent = fli_context;
+  fr->magic = FLI_MAGIC;
   fli_context = fr;
 
   return consTermRef(fr);
@@ -302,6 +303,8 @@ static void
 close_foreign_frame(fid_t id ARG_LD)
 { FliFrame fr = (FliFrame) valTermRef(id);
 
+  assert(fr->magic == FLI_MAGIC);
+  fr->magic = FLI_MAGIC_CLOSED;
   fli_context = fr->parent;
   lTop = (LocalFrame) fr;
 }
@@ -331,6 +334,7 @@ PL_open_signal_foreign_frame()
 
   requireStack(local, sizeof(struct fliFrame));
   lTop = addPointer(lTop, sizeof(struct fliFrame));
+  fr->magic = FLI_MAGIC;
   fr->size = 0;
   Mark(fr->mark);
   fr->parent = fli_context;
@@ -518,6 +522,7 @@ retry:
 					/* open foreign frame */
   ffr  = (FliFrame)argFrameP(frame, argc);
   lTop = addPointer(ffr, sizeof(struct fliFrame));
+  ffr->magic = FLI_MAGIC;
   ffr->size = 0;
   Mark(ffr->mark);
   ffr->parent = fli_context;
@@ -829,7 +834,12 @@ __do_undo(mark *m ARG_LD)
   }
 
   tTop = mt;
-  gTop = (LD->frozen_bar > m->globaltop ? LD->frozen_bar : m->globaltop);
+  if ( LD->frozen_bar > m->globaltop )
+  { SECURE(assert(gTop >= LD->frozen_bar));
+    gTop = LD->frozen_bar;
+  } else
+  { gTop = m->globaltop;
+  }
 }
 
 

@@ -1415,8 +1415,12 @@ struct queryFrame
 };
 
 
+#define FLI_MAGIC 		0x82c4a821
+#define FLI_MAGIC_CLOSED	0x42424242
+
 struct fliFrame
-{ int		size;			/* # slots on it */
+{ long		magic;			/* Magic code */
+  int		size;			/* # slots on it */
   FliFrame	parent;			/* parent FLI frame */
   mark		mark;			/* data-stack mark */
 };

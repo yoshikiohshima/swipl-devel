@@ -10,6 +10,9 @@
 VERSION 5.3.17 (August 2, 2004)
 ===============================
 
+  * FIXED: global-variables related GC bug.  Thanks to David Reitter for
+    producing an reproducable case.
+
   * FIXED: reconsulting a file with dynamic predicate declaration no
     longer deletes the clauses added with assert.
 
