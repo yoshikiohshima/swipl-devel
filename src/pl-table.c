@@ -24,8 +24,13 @@
 
 /*#define O_DEBUG 1*/
 #include "pl-incl.h"
+#ifdef O_PLMT
 #define LOCK_TABLE(t)   if ( t->mutex ) simpleMutexLock(t->mutex)
 #define UNLOCK_TABLE(t)	if ( t->mutex ) simpleMutexUnlock(t->mutex)
+#else
+#define LOCK_TABLE(t) (void)0
+#define UNLOCK_TABLE(t) (void)0
+#endif
 
 static inline Symbol rawAdvanceTableEnum(TableEnum e);
 
@@ -84,10 +89,13 @@ newHTable(int buckets)
 
 void
 destroyHTable(Table ht)
-{ if ( ht->mutex )
+{
+#ifdef O_PLMT
+  if ( ht->mutex )
   { simpleMutexDelete(ht->mutex);
     freeHeap(ht->mutex, sizeof(*ht->mutex));
   }
+#endif
 
   clearHTable(ht);
   freeHeap(ht->entries, ht->buckets * sizeof(Symbol));
@@ -406,7 +414,9 @@ rawAdvanceTableEnum(TableEnum e)
 Symbol
 advanceTableEnum(TableEnum e)
 { Symbol s;
+#ifdef O_PLMT
   Table ht = e->table;
+#endif
 
   LOCK_TABLE(ht);
   s = rawAdvanceTableEnum(e);
