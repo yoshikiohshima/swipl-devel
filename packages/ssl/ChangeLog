@@ -1,8 +1,10 @@
 Jun 28, 2004
 
-  * FIXED: Order of closing connection.
+  * FIXED: (JW) release of config structure
 
-  * FIXED: pass length for certificate in callback.
+  * FIXED: (JW) Order of closing connection.
+
+  * FIXED: (JW) pass length for certificate in callback.
 
   * ADDED: (JW) https.pl demoing a simple HTTPS server
 

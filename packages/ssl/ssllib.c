@@ -179,14 +179,21 @@ ssl_free(PL_SSL *config)
  */
 {
     if (config) {
-        free(config->pl_ssl_host);
-        free(config->pl_ssl_cacert);
-        free(config->pl_ssl_certf);
-        free(config->pl_ssl_keyf);
-        free(config->pl_ssl_password);
+        if ( config->magic == SSL_CONFIG_MAGIC ) {
+	    config->magic = 0;
+	    free(config->pl_ssl_host);
+	    free(config->pl_ssl_cacert);
+	    free(config->pl_ssl_certf);
+	    free(config->pl_ssl_keyf);
+	    free(config->pl_ssl_password);
+	    free(config);
+	    ssl_deb("Released config structure\n");
+	} else {
+	    assert(0);
+	}
+    } else {
+	ssl_deb("No config structure to release\n");
     }
-    free(config);
-    ssl_deb("Released config structure\n");
 }
 
 static int
@@ -240,8 +247,17 @@ ssl_config_free( void *            ctx
                , long  argl
                , void *argp
                )
-{
-    ssl_free((PL_SSL *) argp);
+{   
+    ssl_deb("calling ssl_config_free()\n");
+#if 0
+    ssl_free((PL_SSL *) argp);		/* JW: wrong */
+#else
+    PL_SSL *config = NULL;		/* JW: but this is also wrong? */
+    if ( (config = SSL_get_ex_data(ctx, parent_ctx_idx)) )
+    { assert(config->magic == SSL_CONFIG_MAGIC);
+      ssl_free(config);
+    }
+#endif
 }
 
 char *
@@ -535,8 +551,10 @@ ssl_exit(PL_SSL *config)
       }
 
       if (config->pl_ssl_ctx)
-      { SSL_CTX_free(config->pl_ssl_ctx);
-      }
+      { ssl_deb("Calling SSL_CTX_free()\n");
+	SSL_CTX_free(config->pl_ssl_ctx); 	/* doesn't call free hook? */
+      } /*else					   ... so we do it here (JW) */
+	ssl_free(config);
     }
 
     ssl_deb("Controlled exit\n");
