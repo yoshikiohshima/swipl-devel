@@ -1,3 +1,8 @@
+Sep 21, 2004
+
+  * FIXED: cgi_get_form/1 for www-form-encoded strings with lowercase
+    %xx.  John Paolillo.
+
 Jul 18, 2004
 
   * CLEANUP: ensure mimimal library dependency.  After discussion on
