@@ -96,7 +96,9 @@
 	    'chr get_mutable'/2,
 
 	    'chr novel_production'/2,
-	    'chr extend_history'/2
+	    'chr extend_history'/2,
+
+	    'chr debug_event'/1
 	  ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,6 +106,7 @@
 :- use_module(library(assoc)).
 :- use_module(hprolog).
 :- use_module(library(lists)).
+:- include(chr_op).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -130,7 +133,6 @@
 
 run_suspensions([]).
 run_suspensions([S|Next] ) :-
-	%iter_next( State, S, Next),
 	arg( 2, S, Mref),
 	Mref = mutable(Status), % get_mutable( Status, Mref), % XXX Inlined
 	( Status==active ->
@@ -152,6 +154,48 @@ run_suspensions([S|Next] ) :-
 	),
 	run_suspensions( Next).
 
+'chr run_suspensions_d'( Slots) :-
+	    run_suspensions_d( Slots).
+
+'chr run_suspensions_loop_d'([]).
+'chr run_suspensions_loop_d'([L|Ls]) :-
+	run_suspensions_d(L),
+	'run_suspensions_loop_d'(Ls).
+
+run_suspensions_d([]).
+run_suspensions_d([S|Next] ) :-
+	arg( 2, S, Mref),
+	Mref = mutable(Status), % get_mutable( Status, Mref), % XXX Inlined
+	( Status==active ->
+	    update_mutable( triggered, Mref),
+	    arg( 4, S, Gref),
+	    Gref = mutable(Gen), % get_mutable( Gen, Gref), % XXX Inlined
+	    Generation is Gen+1,
+	    update_mutable( Generation, Gref),
+	    arg( 3, S, Goal),
+	    ( 
+		'chr debug_event'(wake(S)),
+	        call( Goal)
+	    ;
+		'chr debug_event'(fail(S)), !,
+		fail
+	    ),
+	    (
+		'chr debug_event'(exit(S))
+	    ;
+		'chr debug_event'(redo(S)),
+		fail
+	    ),	
+	    					% get_mutable( Post, Mref), % XXX Inlined
+	    ( Mref = mutable(triggered) ->	% Post==triggered ->
+		update_mutable( removed, Mref)
+	    ;
+		true
+	    )
+	;
+	    true
+	),
+	run_suspensions_d( Next).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 locked:attr_unify_hook(_,_) :- fail.
 
@@ -418,4 +462,58 @@ sbag_merge([X | Xs],YL,R) :-
        R = [X | Xs]
   ).
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+'chr debug_event'(Event) :-
+	debug_event(Event).
+
+debug_event(call(Susp)) :- !,
+	format('CHR DEBUG EVENT:\tCALL\t~@\n',[print_head(Susp)]). 
+debug_event(redo(Susp)) :- !,
+	format('CHR DEBUG EVENT:\tREDO\t~@\n',[print_head(Susp)]). 
+debug_event(exit(Susp)) :- !,
+	format('CHR DEBUG EVENT:\tEXIT\t~@\n',[print_head(Susp)]). 
+debug_event(fail(Susp)) :- !,
+	format('CHR DEBUG EVENT:\tFAIL\t~@\n',[print_head(Susp)]). 
+debug_event(remove(Susp)) :- !,
+	format('CHR DEBUG EVENT:\tREMOVE\t~@\n',[print_head(Susp)]). 
+debug_event(insert(_ # Susp)) :- !,
+	format('CHR DEBUG EVENT:\tINSERT\t~@\n',[print_head(Susp)]). 
+debug_event(try(H1,H2,G,B)) :- !,
+	format('CHR DEBUG EVENT:\tTRY\t~@\n',[print_rule(H1,H2,G,B)]). 
+debug_event(apply(H1,H2,G,B)) :- !,
+	format('CHR DEBUG EVENT:\tAPPLY\t~@\n',[print_rule(H1,H2,G,B)]). 
+debug_event(Event) :-
+	format('CHR DEBUG EVENT:\t~w.\n',[Event]).
+
+print_rule(H1,H2,G,B) :-
+	( H1 \== [] ->
+		( H2 \== [] ->
+			print_heads(H2),
+			write(' \\ ')
+		;
+			true
+		),
+		print_heads(H1),
+		write(' <=> ')
+	;
+		print_heads(H2),
+		write(' ==> ')
+	),	
+	( G \== true ->
+		format('~w | ~w.',[G,B])
+	;
+		format('~w.',[B])
+	).
+
+print_heads([S]) :- !,
+	print_head(S).
+print_heads([S|Ss]) :-
+	print_head(S),
+	write(', '),
+	print_heads(Ss).
+
+print_head(Susp) :-
+	Susp =.. [_,ID,_,_,_,_,F|Args],
+	Goal =.. [F|Args],
+	format('~w # <~w>',[Goal,ID]).
 

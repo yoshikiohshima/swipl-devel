@@ -67,5 +67,3 @@ chr_show_store(Mod) :-
 	    )
 	;   true
 	).
-
-

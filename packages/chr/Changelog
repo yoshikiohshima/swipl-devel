@@ -1,6 +1,15 @@
 Mar 24, 2004
 
   * Added bootstrapping process for CHR compiler using CHR.
+  * CHR compiler now uses CHR.
+  * Fixed bug in compilation of multi-headed simpagation rules.
+  * Cleaned up compiler.
+  * Added analysis + optimization for never attached constraints.
+  * Exploit uniqueness (functional dependency) results to detect
+    set semantics type simpagation rules where one rule can be passive
+  * Compiler generates 'chr debug_event'/1 calls
+  * Rudimentary support for debugging.
+    option(debug,on) causes a trace of CHR events to be printed
 
 Mar 15, 2004
 
