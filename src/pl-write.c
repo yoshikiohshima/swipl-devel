@@ -616,7 +616,8 @@ writeTerm2(term_t t, int prec, write_options *options)
 	if ( functor == ATOM_isovar &&			/* $VAR/1 */
 	     true(options, PL_WRT_NUMBERVARS) )
 	{ int n;
-  
+	  atom_t a;
+
 	  PL_get_arg(1, t, arg);
 	  if ( PL_get_integer(arg, &n) && n >= 0 )
 	  { int i = n % 26;
@@ -632,6 +633,12 @@ writeTerm2(term_t t, int prec, write_options *options)
 
 	    return PutToken(buf, out);
 	  }
+	  if ( PL_get_atom(arg, &a) )
+	  { write_options o2 = *options;
+	    clear(&o2, PL_WRT_QUOTED);
+	    
+	    return writeAtom(a, &o2);
+	  }	    
 	}
 					  /* op <term> */
 	if ( currentOperator(options->module, functor, OP_PREFIX,

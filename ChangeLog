@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: write_term/3 using option numbervars(true) writes atoms
+    appearing as argument to '$VAR'(X) without quotes.  I.e.
+    write_term(x('$VAR'('Foo')), [quoted(true), numbervars(true)])
+    writes "x(Foo)".
+
   * FIXED: throw/1 crashed on attributed variables in the ball.
 
   * ADDED: option list to numbervars/4.

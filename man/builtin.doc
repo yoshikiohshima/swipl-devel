@@ -2703,8 +2703,10 @@ as the operator definitions to use.  See also op/3.
 
     \termitem{numbervars}{Bool}
 If \const{true}, terms of the format \verb|$VAR(N)|, where <N> is a
-positive integer, will be written as a variable name. The default is
-\const{false}.
+positive integer, will be written as a variable name.  If \arg{N}
+is an atom it is written without quotes.  This extension allows for
+writing variables with user-provided names.  The default is
+\const{false}.  See also numbervars/3.
 
     \termitem{portray}{Bool}
 If \const{true}, the hook portray/1 is called before printing a term
