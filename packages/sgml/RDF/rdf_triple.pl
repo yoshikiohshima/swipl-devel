@@ -369,9 +369,9 @@ rdf_end_file(Cleanup) :-
 set_bnode_sharing(Options, erase(Ref)) :-
 	option(blank_nodes(Share), Options, noshare),
 	(   Share == share
-	->  assert(share_blank_nodes(true), Ref)
+	->  assert(share_blank_nodes(true), Ref), !
 	;   Share == noshare
-	->  true
+	->  fail			% next clause
 	;   throw(error(domain_error(share, Share), _))
 	).
 set_bnode_sharing(_, true).
