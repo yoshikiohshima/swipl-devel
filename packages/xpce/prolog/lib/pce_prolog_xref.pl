@@ -233,6 +233,10 @@ xref_defined_class(Source, Class, file(File)) :-
 
 collect(Src) :-
 	open_source(Src, Fd),
+	(   peek_char(Fd, #)		% skip #! script line
+	->  skip(Fd, 10)
+	;   true
+	),
 	'$style_check'(Old, Old),
 	style_check(+dollar),
 	repeat,

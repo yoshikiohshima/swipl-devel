@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* FIXED: cross-referencer to handle #! script file.
+
+
 VERSION 6.2.15, distributed with SWI-Prolog 5.3.6
 =================================================
 
