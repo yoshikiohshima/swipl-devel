@@ -95,7 +95,7 @@ ord_list_to_assoc(Keys, Assoc) :-
 	length(Keys, L),
 	ord_list_to_assoc(L, Keys, Assoc, []).
 
-ord_list_to_assoc(0, List, t, List).
+ord_list_to_assoc(0, List, t, List) :- !.
 ord_list_to_assoc(N, List, t(Key,Val,L,R), Rest) :-
 	A is (N-1)//2,
 	Z is (N-1)-A,
