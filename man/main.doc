@@ -172,6 +172,7 @@ Copyright \copyright\ 1990--\vyear, University of Amsterdam
 \include{builtin}
 \include{module}
 \include{attvar}
+\include{chr}
 \include{threads}
 \include{foreign}
 \include{runtime}
