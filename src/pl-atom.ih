@@ -530,3 +530,4 @@
 #define ATOM_attributes   MK_ATOM(529)
 #define ATOM_dots         MK_ATOM(530)
 #define ATOM_write_attributes MK_ATOM(531)
+#define ATOM_inf          MK_ATOM(532)

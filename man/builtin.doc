@@ -3442,7 +3442,14 @@ of a function are expressions.  The functions are described in
 \arg{Low} and \arg{High} are integers, $\arg{High} \geq \arg{Low}$. If
 \arg{Value} is an integer, $\arg{Low} \leq \arg{Value} \leq \arg{High}$.
 When \arg{Value} is a variable it is successively bound to all integers
-between \arg{Low} and \arg{High}.
+between \arg{Low} and \arg{High}.  If \arg{High} is \const{inf} or
+\const{infinite}%
+	\footnote{We prefer \const{infinite}, but some other Prolog
+		  systems already use \const{inf} for infinity we
+		  accept both for the time being.}
+between/3 is true iff $\arg{Value} \geq \arg{Low}$, a feature that
+is particularly interesting for generating integers from a certain
+value.
 
     \predicate{succ}{2}{?Int1, ?Int2}
 Succeeds if $\arg{Int2} = \arg{Int1} + 1$ and $\arg{Int1} \geq 0$.

@@ -822,10 +822,10 @@ set_system_thread_id(PL_thread_info_t *info)
 
 
 static const opt_spec make_thread_options[] = 
-{ { ATOM_local,		OPT_LONG },
-  { ATOM_global,	OPT_LONG },
-  { ATOM_trail,	        OPT_LONG },
-  { ATOM_argument,	OPT_LONG },
+{ { ATOM_local,		OPT_LONG|OPT_INF },
+  { ATOM_global,	OPT_LONG|OPT_INF },
+  { ATOM_trail,	        OPT_LONG|OPT_INF },
+  { ATOM_argument,	OPT_LONG|OPT_INF },
   { ATOM_alias,		OPT_ATOM },
   { ATOM_detached,	OPT_BOOL },
   { ATOM_stack,		OPT_LONG },
@@ -936,11 +936,13 @@ pl_thread_create(term_t goal, term_t id, term_t options)
     fail;
   }
 
-  info->local_size    *= 1024;
-  info->global_size   *= 1024;
-  info->trail_size    *= 1024;
-  info->argument_size *= 1024;
-  stack		      *= 1024;
+#define MK_KBYTES(v) if ( v < (PLMAXINT/1024) ) v *= 1024
+
+  MK_KBYTES(info->local_size);
+  MK_KBYTES(info->global_size);
+  MK_KBYTES(info->trail_size);
+  MK_KBYTES(info->argument_size);
+  MK_KBYTES(stack);
 
   info->goal = PL_record(goal);
   info->module = PL_context();

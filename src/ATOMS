@@ -542,6 +542,7 @@ A comment_start		"/*"
 A attributes		"attributes"
 A dots			"dots"
 A write_attributes	"write_attributes"
+A inf			"inf"
 
 F abs			1
 F access		1

@@ -128,7 +128,11 @@ pl_between(term_t low, term_t high, term_t n, control_t ctx)
 	if ( !PL_get_long(low, &l) )
 	  return PL_error("between", 3, NULL, ERR_TYPE, ATOM_integer, low);
 	if ( !PL_get_long(high, &h) )
-	  return PL_error("between", 3, NULL, ERR_TYPE, ATOM_integer, high);
+	{ if ( PL_is_inf(high) )
+	    h = PLMAXINT;
+	  else
+	    return PL_error("between", 3, NULL, ERR_TYPE, ATOM_integer, high);
+	}
 
 	if ( PL_get_long(n, &i) )
 	{ if ( i >= l && i <= h )

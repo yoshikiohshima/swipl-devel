@@ -874,8 +874,9 @@ enforce_limit(long *size, long maxarea, const char *name)
 { if ( *size == 0 )
     *size = maxarea;
   else if ( *size > MAXTAGGEDPTR+1 )
-  { Sdprintf("WARNING: Maximum stack size for %s stack is %d MB\n",
-	     name, (MAXTAGGEDPTR+1) / (1 MB));
+  { if ( *size != PLMAXINT )		/* user demanded maximum */
+      Sdprintf("WARNING: Maximum stack size for %s stack is %d MB\n",
+	       name, (MAXTAGGEDPTR+1) / (1 MB));
     *size = MAXTAGGEDPTR;
   }
 }

@@ -1059,6 +1059,19 @@ PL_get_long(term_t t, long *i)
 
 
 int
+PL_is_inf(term_t t)
+{ GET_LD
+  atom_t a;
+
+  if ( PL_get_atom(t, &a) &&
+       (a == ATOM_inf || a == ATOM_infinite) )
+    succeed;
+
+  fail;
+}
+
+
+int
 PL_get_float(term_t t, double *f)
 { GET_LD
   word w = valHandle(t);

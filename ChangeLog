@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: inf/infinite for stack options in create_thread/3 as well as for
+    the `High' in between/3.
+
   * ENHANCED: use right-recursion optimisation in $e_free_variables/2
     used by bagof/3 and setof/3.  Alan Baljeu.
 

@@ -197,6 +197,7 @@ typedef union
   void *ptr;				/* anonymous pointer */
 } optvalue;
 
+
 bool
 scan_options(term_t options, int flags, atom_t optype,
 	     const opt_spec *specs, ...)
@@ -241,7 +242,7 @@ scan_options(term_t options, int flags, atom_t optype,
 
     for( n=0, s = specs; s->name; n++, s++ )
     { if ( s->name == name )
-      { switch(s->type)
+      { switch((s->type & OPT_TYPE_MASK))
 	{ case OPT_BOOL:
 	  { atom_t aval;
 
@@ -263,7 +264,11 @@ scan_options(term_t options, int flags, atom_t optype,
 	  }
 	  case OPT_LONG:
 	  { if ( !PL_get_long(val, values[n].l) )
-	      goto itemerror;
+	    { if ( (s->type & OPT_INF) && PL_is_inf(val) )
+		*values[n].l = PLMAXINT;
+	      else
+		goto itemerror;
+	    }
 
 	    break;
 	  }
