@@ -9,7 +9,7 @@ Files and their roles:
 	Include file containing the operator declaractions
 
 	# chr_translate.pl
-	Core translation module.  Defined chr_translate/2.	
+	Core translation module.  Defines chr_translate/2.	
 
 	# chr_swi.pl
 	Hook the CHR compiler into the SWI compiler
