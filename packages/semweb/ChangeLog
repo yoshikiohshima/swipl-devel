@@ -1,5 +1,8 @@
 Sep 2, 2004
 
+  * FIXED: rdfs_subclass_of(+Class, -Super) to relate all classes 
+    implicitely to rdfs:Resource (rdfs entailment rule).
+
   * FIXED: Bug#182: After rdf_retractall(_,_,_) database cannot be refilled.
     Sandro Hawke.
 

@@ -105,9 +105,10 @@ rdfs_subproperty_of(SubProperty, Property) :-
 %	rdfs_subclass_of(+Class, ?Super)
 %	rdfs_subclass_of(?Class, +Super)
 %	
-%	Generate sub/super classes.  rdf_reachable/3 considers the
-%	rdfs:subPropertyOf relation as well as cycles.  Note that by
-%	definition all classes are subclass of rdfs:Resource.
+%	Generate  sub/super  classes.  rdf_reachable/3    considers  the
+%	rdfs:subPropertyOf relation as well  as   cycles.  Note  that by
+%	definition all classes are  subclass   of  rdfs:Resource, a case
+%	which is dealt with by the 1st and 3th clauses :-(
 
 rdfs_subclass_of(Class, Super) :-
 	rdf_equal(rdfs:'Resource', Resource),
@@ -118,6 +119,12 @@ rdfs_subclass_of(Class, Super) :-
 	).
 rdfs_subclass_of(Class, Super) :-
 	rdf_reachable(Class, rdfs:subClassOf, Super).
+rdfs_subclass_of(Class, Super) :-
+	nonvar(Class),
+	var(Super),
+	\+ rdf_reachable(Class, rdfs:subClassOf, rdfs:'Resource'),
+	rdfs_individual_of(Class, rdfs:'Class'),
+	rdf_equal(Super, rdfs:'Resource').
 
 
 		 /*******************************
