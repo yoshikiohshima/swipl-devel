@@ -2187,7 +2187,10 @@ allocSimpleMutex(const char *name)
 #ifdef O_CONTENTION_STATISTICS
   m->collisions = 0L;
 #endif
-  m->name = store_string(name);
+  if ( name )
+    m->name = store_string(name);
+  else
+    m->name = NULL;
   LOCK();
   m->next = GD->thread.mutexes;
   GD->thread.mutexes = m;

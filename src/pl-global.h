@@ -335,7 +335,8 @@ typedef struct PL_local_data
 
 #ifdef O_GVAR
   struct
-  { term_t	table;			/* global variables table */
+  { term_t	b_vars;			/* backtrackable global variables */
+    Table	nb_vars;		/* atom --> global stack */
   } gvar;
 #endif
 

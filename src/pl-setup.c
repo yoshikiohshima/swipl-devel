@@ -941,7 +941,7 @@ emptyStacks()
   LD->attvar.tail       = PL_new_term_ref();
 #endif
 #ifdef O_GVAR
-  LD->gvar.table	= PL_new_term_ref();
+  LD->gvar.b_vars	= PL_new_term_ref();
 #endif
 
   LD->mark_bar          = gLimit;
@@ -1780,4 +1780,9 @@ freeLocalData(PL_local_data_t *ld)
 
     memset(&ld->comp, 0, sizeof(ld->comp));
   }
+
+#ifdef O_GVAR
+  if ( ld->gvar.nb_vars )
+    destroyHTable(ld->gvar.nb_vars);
+#endif
 }

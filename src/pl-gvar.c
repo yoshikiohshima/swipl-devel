@@ -29,6 +29,11 @@
 #undef LD
 #define LD LOCAL_LD
 
+
+		 /*******************************
+		 *  BACKTRACKABLE GLOBAL VARS	*
+		 *******************************/
+
 #ifndef GVAR_HASHSIZE
 #define GVAR_HASHSIZE 256
 #endif
@@ -76,7 +81,7 @@ PRED_IMPL("b_setval", 2, b_setval, 0)
   if ( !PL_get_atom_ex(A1, &name) )
     fail;
 
-  t = valTermRef(LD->gvar.table);
+  t = valTermRef(LD->gvar.b_vars);
   deRef(t);
   
   if ( isVar(*t) )			/* first global variable */
@@ -87,7 +92,7 @@ PRED_IMPL("b_setval", 2, b_setval, 0)
     for(i=1; i<=GVAR_HASHSIZE; i++)
       table[i] = ATOM_nil;
 	
-    t = valTermRef(LD->gvar.table);
+    t = valTermRef(LD->gvar.b_vars);
     deRef(t);
     *t = consPtr(table, TAG_COMPOUND|STG_GLOBAL);
     Trail(t);
@@ -136,7 +141,7 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
   if ( !PL_get_atom_ex(A1, &name) )
     fail;
   
-  t = valTermRef(LD->gvar.table);
+  t = valTermRef(LD->gvar.b_vars);
   deRef(t);
 
   if ( isTerm(*t) )
@@ -155,12 +160,84 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
 
 
 		 /*******************************
+		 * NON-BACKTRACKABLE GLOBAL VARS*
+		 *******************************/
+
+static void
+freezeGlobal()
+{ Sdprintf("freezeGlobal(): to be implemented\n");
+}
+
+
+static
+PRED_IMPL("nb_setval", 2, nb_setval, 0)
+{ PRED_LD
+  atom_t name;
+  Word p;
+  Symbol s;
+
+  if ( !PL_get_atom_ex(A1, &name) )
+    fail;
+
+  if ( !LD->gvar.nb_vars )
+  { LD->gvar.nb_vars = newHTable(32|TABLE_UNLOCKED);
+  }
+
+  p = valTermRef(A2);
+  deRef(p);
+
+  if ( (s=lookupHTable(LD->gvar.nb_vars, (void*)name)) )
+  { s->value = (void*)*p;
+  } else
+  { addHTable(LD->gvar.nb_vars, (void*)name, (void*)*p);
+    PL_register_atom(name);
+  }
+
+  if ( isTerm(*p) ||
+       isReal(*p) ||
+       isString(*p) ||
+       isAttVar(*p) ||
+       isBignum(*p) )
+    freezeGlobal();
+
+  succeed;
+}
+
+
+static
+PRED_IMPL("nb_getval", 2, nb_getval, 0)
+{ PRED_LD
+  atom_t name;
+
+  if ( !PL_get_atom_ex(A1, &name) )
+    fail;
+
+  if ( LD->gvar.nb_vars )
+  { Symbol s = lookupHTable(LD->gvar.nb_vars, (void*)name);
+    
+    if ( s )
+    { word w = (word)s->value;
+
+      if ( !isVar(w) )
+	return unify_ptrs(valTermRef(A2), &w PASS_LD);
+
+      succeed;
+    }
+  }
+
+  fail;
+}
+
+
+		 /*******************************
 		 *	    REGISTRATION	*
 		 *******************************/
 
 BeginPredDefs(gvar)
   PRED_DEF("b_setval", 2, b_setval, 0)
   PRED_DEF("b_getval", 2, b_getval, 0)
+  PRED_DEF("nb_setval", 2, nb_setval, 0)
+  PRED_DEF("nb_getval", 2, nb_getval, 0)
 EndPredDefs
 
 #endif /*O_ATTVAR*/

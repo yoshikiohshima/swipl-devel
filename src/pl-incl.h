@@ -461,6 +461,9 @@ sizes  of  the  hash  tables are defined.  Note that these should all be
 #define FLAGHASHSIZE		16	/* global flag/3 table */
 #define ARITHHASHSIZE		64	/* arithmetic function table */
 
+#define TABLE_UNLOCKED		0x10000000L /* do not create mutex for table */
+#define TABLE_MASK		0xf0000000L
+
 #define pointerHashValue(p, size) ((((long)(p) >> LMASK_BITS) ^ \
 				    ((long)(p) >> (LMASK_BITS+5)) ^ \
 				    ((long)(p))) & \
@@ -1494,6 +1497,9 @@ struct table
 { int		buckets;	/* size of hash table */
   int		size;		/* # symbols in the table */
   TableEnum	enumerators;	/* Handles for enumeration */
+#ifdef O_PLMT
+  simpleMutex  *mutex;		/* Mutex to guard table */
+#endif
   void 		(*copy_symbol)(Symbol s);
   void 		(*free_symbol)(Symbol s);
   Symbol	*entries;	/* array of hash symbols */
