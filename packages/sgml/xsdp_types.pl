@@ -151,9 +151,9 @@ xsd_local_ids.
 %	type and return the Prolog value in Value.
 
 xsdp_convert(URI, Content, Value) :-
-	(   xsd_local_id(URI, Type),
-	    convert(Type, Content, Value)
-	;   convert(Type, Content, Value)
+	(   xsd_local_id(URI, Type)
+	->  convert(Type, Content, Value)
+	;   convert(URI, Content, Value)
 	).
 
 convert(anyType, Term, Term) :- !.
