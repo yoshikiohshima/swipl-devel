@@ -353,6 +353,15 @@ print_request([H|T]) :-
 	print_request(T).
 \end{code}
 
+
+\subsubsection{Returning special status codes}
+
+To process requests with the header \const{If-Modified-Since}, the
+wrapper allows the `Body' to throw an exception of the format
+\term{status}{not_modified}.  This causes the server to respond with
+a \const{304 Not Modified} page.
+
+
 \subsection{Request format}			\label{sec:request}
 
 The body-code (see \secref{body}) is driven by a \arg{Request}.  This

@@ -1,9 +1,13 @@
+Jun 15, 2004
+
+  * ADDED: Map body throw(status(not_modified)) onto a "304 Not Modified"
+    page.  Mike Elston.
+
 May 20, 2003
 
   * DOCS: Documented http_post_data/3
 
   * ADDED: form([Name=Value, ...]) input type to http_post_data/3
-
 
 May 12, 2003
 

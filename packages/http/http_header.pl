@@ -166,6 +166,17 @@ http_reply(authorise(Method, Realm), Out, HrdExtra) :- !,
 	phrase(reply_header(authorise(Method, Realm, HTML), HrdExtra), Header),
 	format(Out, '~s', [Header]),
 	print_html(Out, HTML).
+http_reply(server_error(http(not_modified)), Out, HrdExtra) :- !,
+	phrase(page([ title('304 Not Modified')
+		    ],
+		    [ h1('Not Modified'),
+		      p(['The resource has not changed']),
+		      address(httpd)
+		    ]),
+	       HTML),
+	phrase(reply_header(status(not_modified, HTML), HrdExtra), Header),
+	format(Out, '~s', [Header]),
+	print_html(Out, HTML).
 http_reply(server_error(ErrorTerm), Out, HrdExtra) :-
 	message_to_html(ErrorTerm, Tokens),
 	phrase(page([ title('500 Internal server error')
@@ -365,6 +376,7 @@ vstatus(Status) -->
 
 status_number(ok)	    --> "200".
 status_number(moved)	    --> "301".
+status_number(not_modified) --> "304". 
 status_number(not_found)    --> "404".
 status_number(forbidden)    --> "403".
 status_number(authorise)    --> "401".
@@ -374,6 +386,8 @@ status_comment(ok) -->
 	"OK".
 status_comment(moved) -->
 	"Moved Permanently".
+status_comment(not_modified) --> 
+	"Not Modified".
 status_comment(not_found) -->
 	"Not Found".
 status_comment(forbidden) -->
