@@ -232,10 +232,11 @@ setupGNUEmacsInferiorMode()
 
 static void
 initPaths()
-{ char plp[MAXPATHLEN];
+{ char plp1[MAXPATHLEN];
+  char plp[MAXPATHLEN];
   char *symbols = NULL;			/* The executable */
 
-  if ( !(symbols = findExecutable(GD->cmdline.argv[0], plp)) ||
+  if ( !(symbols = findExecutable(GD->cmdline.argv[0], plp1)) ||
        !(symbols = DeRefLink(symbols, plp)) )
     symbols = GD->cmdline.argv[0];
 

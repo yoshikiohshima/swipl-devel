@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * CLEANUP: some errors reported by the valgrind tool.
+
+
 VERSION 5.3.10 (Apr 29, 2004)
 =============================
 

@@ -1677,7 +1677,8 @@ DirName(const char *f, char *dir)
     else
       strcpy(dir, ".");
   } else
-  { strncpy(dir, f, base-f);
+  { if ( dir != f )			/* otherwise it is in-place */
+      strncpy(dir, f, base-f);
     dir[base-f] = EOS;
   }
   
