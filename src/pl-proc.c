@@ -2058,9 +2058,6 @@ pl_set_predicate_attribute(term_t pred,
     { clear(def, att);
     } else
     { set(def, att);
-      if ( (att == DYNAMIC || att == MULTIFILE) && SYSTEM_MODE )
-      { set(def, SYSTEM|HIDE_CHILDS);
-      }
     }
   
     rc = TRUE;
@@ -2074,10 +2071,14 @@ pl_set_predicate_attribute(term_t pred,
 		      predicateName(def), PL_atom_chars(source_file_name)));
     addProcedureSourceFile(lookupSourceFile(source_file_name), proc);
 
-    if ( trueFeature(DEBUGINFO_FEATURE) )
-      clear(def, HIDE_CHILDS);
-    else
-      set(def, HIDE_CHILDS);
+    if ( SYSTEM_MODE )
+    { set(def, SYSTEM|HIDE_CHILDS);
+    } else
+    { if ( trueFeature(DEBUGINFO_FEATURE) )
+	clear(def, HIDE_CHILDS);
+      else
+	set(def, HIDE_CHILDS);
+    }
   }
 
   return rc;

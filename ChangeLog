@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Debug-settings for system predicates defined as discontiguous,
+    etc.  Tom Schrijvers.
+
   * FIXED: bug in b_setvar/2 when assigning a local-stack hosted variable.
     David Reitter.
 
@@ -27,7 +30,7 @@
 
   * MODIFIED: listing/0 now only lists predicates defined in the target
     module.  Used to also list imported predicates.  Applications that
-    reply on the old behaviour should use listing/1 on all predicates
+    rely on the old behaviour should use listing/1 on all predicates
     enumerated by current_predicate/1.
 
 
