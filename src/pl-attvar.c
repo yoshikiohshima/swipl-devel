@@ -67,6 +67,9 @@ that should be awoken.
 
 Before calling, av *must* point to   a  dereferenced attributed variable
 and value to a legal value.
+
+The predicate unifyable/3 relies on  the   trailed  pattern left by this
+function. If you change this you must also adjust unifyable/3.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
@@ -89,7 +92,7 @@ assignAttVar(Word av, Word value ARG_LD)
   }
 
   a = valPAttVar(*av);
-  wake    = allocGlobal(4);		/* may NOT shift the stacks!!! */
+  wake    = allocGlobalNoShift(4);	/* may NOT shift the stacks!!! */
   wake[0] = FUNCTOR_wakeup3;
   wake[1] = needsRef(*a) ? makeRef(a) : *a;
   wake[2] = needsRef(*value) ? makeRef(value) : *value;

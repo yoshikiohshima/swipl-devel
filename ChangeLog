@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: experimental	predicate unifyable/3.
+
   * ADDED: when/2
 
   * ADDED: ?=/2

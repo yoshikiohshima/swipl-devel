@@ -1226,6 +1226,91 @@ pl_e_free_variables(term_t t, term_t vars)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+unifyable(@X, @Y, -Substitution)
+
+If X can be unified to Y, unify   Substitution with a list of Variable =
+value for the substitutions that must be made to make X and Y identical.
+
+The implementation extracts the substitutions  from the trail, rewinding
+the trail at the same  time.  This   is  fairly  trivial, except for the
+assignments of attributed variables (assignAttVar()). The last operation
+of assignAttVar() is a trailed assignment  replacing the attvar with its
+value. Before that it performs two trailed  actions to update the wakeup
+list. These two must be skipped.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static
+PRED_IMPL("unifyable", 3, unifyable, 0)
+{ PRED_LD
+  mark m;
+
+  Mark(m);
+  if ( PL_unify(A1, A2) )
+  { TrailEntry tt = tTop;
+    TrailEntry mt = m.trailtop;
+
+    if ( tt > mt )
+    { Word list = allocGlobalNoShift((tt-mt)*6+1);
+      Word gp = list+1;
+      Word tail = list;
+
+      *list = ATOM_nil;
+      while(--tt >= mt)
+      { Word p = tt->address;
+
+	*tail = consPtr(&gp[0], TAG_COMPOUND|STG_GLOBAL);
+	gp[0] = FUNCTOR_dot2;
+	gp[1] = consPtr(&gp[3], TAG_COMPOUND|STG_GLOBAL);
+	gp[2] = ATOM_nil;
+	tail = &gp[2];
+	gp[3] = FUNCTOR_equals2;
+	if ( isTrailVal(p) )
+	{ Word p2 = tt[-1].address;
+	  gp[4] = makeRef(p2);
+	  gp[5] = *p2;
+	} else
+	{ gp[4] = makeRef(p);
+	  gp[5] = *p;
+	}
+	gp += 6;
+
+	if ( !isTrailVal(p) )
+	{ setVar(*p);
+	} else
+	{ assert(isAttVar(trailVal(p)));
+
+	  tt--;				/* re-insert the attvar */
+	  *tt->address = trailVal(p);
+
+	  tt--;				/* restore tail of wakeup list */
+	  p = tt->address;
+	  assert(isTrailVal(p));
+	  tt--;
+	  *tt->address = trailVal(p);
+
+	  tt--;				/* restore head of wakeup list */
+	  p = tt->address;
+	  if ( isTrailVal(p) )
+	  { tt--;
+	    *tt->address = trailVal(p);
+	  } else
+	  { setVar(*p);
+	  }
+
+	  assert(tt>=mt);
+	}
+      }
+      gTop = gp;			/* may not have used all space */
+      tTop = m.trailtop;
+
+      return PL_unify(wordToTermRef(list), A3);
+    } else
+      return PL_unify_atom(A3, ATOM_nil);
+  } else
+    fail;
+}
+
 #if O_CYCLIC
 
 		 /*******************************
@@ -3035,6 +3120,7 @@ BeginPredDefs(prims)
   PRED_DEF("?=", 2, can_compare, 0)
   PRED_DEF("functor", 3, functor, 0)
   PRED_DEF("term_variables", 2, term_variables, 0)
+  PRED_DEF("unifyable", 3, unifyable, 0)
 #ifdef O_HASHTERM
   PRED_DEF("hash_term", 2, hash_term, 0)
 #endif
