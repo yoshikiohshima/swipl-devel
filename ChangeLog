@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: ensure a thread is considered to exist before it actually
+    starts running.
+
   * ADDED: experimental	predicate unifyable/3.  New versions of dif/2
     and when/2 based on this predicate by Tom Schrijvers.
 

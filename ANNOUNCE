@@ -3,7 +3,7 @@ SWI-Prolog 5.3.3/XPCE 6.2.14 development snapshot
 Status
 ======
   
-  * Variosu users have reported their old programs to run fine on
+  * Various users have reported their old programs to run fine on
     this experimental version.
 
   * Be careful on production systems.  Should be fine for running normal
@@ -22,14 +22,34 @@ Status
 Please report all trouble you encounter.
 
 
-Features relative to stable 5.2.x release
-=========================================
+Anticipated features relative to stable 5.2.x release and their status
+======================================================================
 
   * Attributed variables
-  * Corouting: freeze/2 and dif/2
+    Complete.
+
+  * Corouting.
+    Lacking call_residue/2.  Unclear whether this is feasible and
+    whether or not we want that.
+
   * Global variables
-  * Partial support for infinite trees (cyclic terms)
+    Complete.
+
+  * Infinite terms (cyclic terms)
+    Incomplete but useable.
+
+    Supported: =/2, ==/2, @>/2 (and friends), copy_term/2, =../2,
+               duplicate_term/2, ground/2, dif/2, when/2
+
+    Unsupported: term_variables/2, recorda/2 (and friends), write/1
+		 (and friends, partial support), asserta/1 (and friends).
+
   * CHR constraint language support
+    Lacking some options and the described debugger.
+
+  * Domain specific constraint libraries
+    Not yet available.  If you have code available or want to develop,
+    please contact me (jan@swi-prolog.org).
 
 
 Brief summary of changes since 5.3.2

@@ -953,7 +953,9 @@ pl_thread_create(term_t goal, term_t id, term_t options)
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
   if ( stack )
     pthread_attr_setstacksize(&attr, stack);
+  LOCK();
   rc = pthread_create(&info->tid, &attr, start_thread, info);
+  UNLOCK();
   pthread_attr_destroy(&attr);
   if ( rc != 0 )
   { free_thread_info(info);
@@ -984,7 +986,8 @@ get_thread(term_t t, PL_thread_info_t **info, int warn)
 
   if ( i < 0 || i >= MAX_THREADS || threads[i].status == PL_THREAD_UNUSED )
   { if ( warn )
-      return PL_error(NULL, 0, NULL, ERR_EXISTENCE, ATOM_thread, t);
+      return PL_error(NULL, 0, "no info record",
+		      ERR_EXISTENCE, ATOM_thread, t);
     else
       return FALSE;
   }
@@ -1095,6 +1098,7 @@ pl_thread_join(term_t thread, term_t retcode)
   { case 0:
       break;
     case ESRCH:
+      Sdprintf("ESRCH from %d\n", info->tid);
       return PL_error("thread_join", 2, NULL,
 		      ERR_EXISTENCE, ATOM_thread, thread);
     default:
