@@ -433,8 +433,9 @@ COMMON(void) 		clearUninitialisedVarsFrame(LocalFrame, Code);
 COMMON(word) 		check_foreign(void);	/* O_SECURE stuff */
 COMMON(void) 		markAtomsOnStacks(PL_local_data_t *ld);
 COMMON(void) 		markPredicatesInEnvironments(PL_local_data_t *ld);
-#ifdef O_SECURE
+#if defined(O_SECURE) || defined(SECURE_GC)
 COMMON(word) 		checkStacks(LocalFrame fr, Choice ch);
+COMMON(bool)		scan_global(int marked);
 #endif
 
 /* pl-glob.c */
