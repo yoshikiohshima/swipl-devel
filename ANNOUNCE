@@ -82,6 +82,10 @@ Packages
   * Clib: added library(prolog_server) to interact with Prolog using
     a TCP/IP connection via telnet.
 
+  * Semweb: save anonymous resources.  Second argument of rdf_save/2
+    is now a list of options.  Old-style calls are mapped to the new
+    one for compatibility.
+
 Development environment
 -----------------------
 
