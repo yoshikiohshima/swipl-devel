@@ -19,7 +19,7 @@ EXDIR=		$(PKGDOC)\examples\http
 LIB=$(LIB);$(OPENSSLLIBDIR)
 INCLUDE=$(INCLUDE);$(OPENSSLINCDIR)
 
-EXAMPLES=	client.pl server.pl
+EXAMPLES=	client.pl server.pl https.pl
 
 OBJ=		ssl4pl.obj ssllib.obj
 
