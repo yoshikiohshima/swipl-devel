@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: protect write/1 from looping on cyclic terms.  Short-term
+    solution writes ** if it detects a cycle.
+
   * FIXED: Hanging atom garbage collector in multi-threaded execution
     on Unix platforms.  With lots of help from Sergey Tikhonov.
 

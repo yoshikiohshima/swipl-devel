@@ -49,7 +49,14 @@ address_of(term_t t)
 { Word adr = valTermRef(t);
 
   deRef(adr);
-  return adr;
+  switch(tag(*adr))
+  { case TAG_ATTVAR:
+      return adr;
+    case TAG_COMPOUND:
+      return valPtr(*adr);
+    default:
+      return NULL;			/* non-recursive structure */
+  }
 }
 
 
@@ -488,8 +495,21 @@ writeTerm(term_t t, int prec, write_options *options)
 
   if ( ++options->depth > options->max_depth && options->max_depth )
     rval = PutString("...", options->out);
-  else
-    rval = writeTerm2(t, prec, options);
+  else if ( PL_is_compound(t) )
+  { visited v;
+
+    v.address = address_of(t);
+    if ( has_visited(options->visited, v.address) )
+    { rval = PutString("**", options->out);
+    } else
+    { v.next = options->visited;
+      options->visited = &v;
+      rval = writeTerm2(t, prec, options);
+      options->visited = v.next;
+    }
+  } else
+  { rval = writeTerm2(t, prec, options);
+  }
 
   options->depth = levelSave;
   PL_close_foreign_frame(fid);
