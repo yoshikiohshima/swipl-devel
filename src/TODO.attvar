@@ -1,0 +1,50 @@
+Realising attributed variables
+
+Places dealt with:
+
+	* Implemented attvar/1, make_new_attvar/1, get_attr/2 and put_attr/2.
+	* Adjusted write/1 to write AttVar{L,G}<N>{Attribute}
+	* Adjusted recorded database (recorda, recorded, findall, ...)
+	* checkData to deal with recursive structures.
+	* Adjusted the garbage collector
+
+Places to deal with them
+
+	* se_record(): structural equivalence of records
+	* Garbage collector
+
+
+		 /*******************************
+		 *	   THE WAKE LIST	*
+		 *******************************/
+
+	* Using a global variable containing pairs:
+
+		Attribute, Value
+		
+	  Where Attribute is the format attribute value and Value is the
+	  new value of the attributed variable, possibly another attributed
+	  variable.
+
+	  	wakeup(A, V, <Tail>)
+	
+
+
+
+
+
+		 /*******************************
+		 *	  GLOBAL VARIABLES	*
+		 *******************************/
+
+GNU:
+
+	g_link(+Callable, ?Term)
+	g_read(+Callable, ?Term)
+
+Options:
+
+	# alloc_global(-I)		(- index)
+	Allocated at the bottom of the local stack.  Implies we need the
+	stack-shifter to grow the number of reserved entries.  Can be static
+	for now.
