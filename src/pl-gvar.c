@@ -206,11 +206,7 @@ PRED_IMPL("nb_setval", 2, nb_setval, 0)
     PL_register_atom(name);
   }
 
-  if ( isTerm(*p) ||
-       isReal(*p) ||
-       isString(*p) ||
-       isAttVar(*p) ||
-       isBignum(*p) )
+  if ( storage(*p) == STG_GLOBAL )
     freezeGlobal(PASS_LD1);
 
   succeed;

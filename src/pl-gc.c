@@ -584,6 +584,94 @@ mark_foreign_trail_refs()
 }
 
 
+#ifdef O_GVAR
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Dealing  with  nb_setval/2  and   nb_getval/2  non-backtrackable  global
+variables as defined  in  pl-gvar.c.  We   cannot  mark  and  sweep  the
+hash-table itself as the  reversed   pointers  cannot  address arbitrary
+addresses returned by allocHeap(). Therefore we   turn all references to
+the global stack  into  term-references  and   reply  on  the  available
+mark-and-sweep for foreign references. If none   of  the global variable
+refers to the global stack we  can   `unfreeze'  the  global stack right
+away.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+fid_t
+gvars_to_term_refs()
+{ GET_LD
+
+  if ( LD->gvar.nb_vars )
+  { fid_t fid = PL_open_foreign_frame();
+    TableEnum e = newTableEnum(LD->gvar.nb_vars);
+    int found = 0;
+    Symbol s;
+
+    while( (s=advanceTableEnum(e)) )
+    { Word p = (Word)&s->value;
+
+      if ( isGlobalRef(*p) )
+      { term_t t = PL_new_term_ref();
+
+	*valTermRef(t) = *p;
+	found++;
+      }
+    }
+
+    freeTableEnum(e);
+
+    if ( found )
+    { DEBUG(1, Sdprintf("Found %d global variables on global stack\n", found));
+      
+      return fid;
+    } else
+    { LD->frozen_bar = 0;		/* unless used elsewhere */
+      PL_close_foreign_frame(fid);
+      return 0;
+    }
+  }
+
+  return 0;
+}
+
+
+static void
+term_refs_to_gvars(fid_t fid)
+{ GET_LD
+
+  if ( fid )
+  { FliFrame fr = (FliFrame) valTermRef(fid);
+    Word fp = (Word)(fr+1);
+    TableEnum e = newTableEnum(LD->gvar.nb_vars);
+    int found = 0;
+    Symbol s;
+
+    while( (s=advanceTableEnum(e)) )
+    { Word p = (Word)&s->value;
+
+      if ( isGlobalRef(*p) )
+      { *p = *fp++;
+	found++;
+      }
+    }
+    assert(found == fr->size);
+
+    freeTableEnum(e);
+    PL_close_foreign_frame(fid);
+
+    if ( LD->frozen_bar > gTop )
+      LD->frozen_bar = gTop;
+  }
+}
+
+#else /*O_GVAR*/
+
+#define gvars_to_term_refs() 0
+#define term_refs_to_gvars(f) (void)0
+
+#endif /*O_GVAR*/
+
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 clearUninitialisedVarsFrame(LocalFrame fr, Code PC);
 
@@ -1704,6 +1792,7 @@ garbageCollect(LocalFrame fr, Choice ch)
   double t = CpuTime(CPU_USER);
   int verbose = trueFeature(TRACE_GC_FEATURE);
   sigset_t mask;
+  fid_t fid;
 
   DEBUG(0, verbose = TRUE);
 
@@ -1751,6 +1840,7 @@ garbageCollect(LocalFrame fr, Choice ch)
   setVar(*gTop);
   tTop->address = 0;
 
+  fid = gvars_to_term_refs();
   tag_trail();
   mark_phase(fr, ch);
   tgar = trailcells_deleted * sizeof(struct trail_entry);
@@ -1764,6 +1854,7 @@ garbageCollect(LocalFrame fr, Choice ch)
 
   collect_phase(fr, ch);
   untag_trail();
+  term_refs_to_gvars(fid);
 #if O_SECURE
   assert(trailtops_marked == 0);
   if ( !scan_global(FALSE) )

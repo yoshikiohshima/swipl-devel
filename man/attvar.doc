@@ -39,7 +39,43 @@ freeze/2 is equivalent to call/1.
 \end{description}
 
 
-\section{Backtrackable global variables}	\label{sec:gvar}
+\section{Global variables}			\label{sec:gvar}
+
+Global variables are associations between names (atoms) and terms living
+on the global stack. They come in two flavours. \jargon{Backtrackable}
+global variables as implemented by b_setval/2 and b_getval/2 have the
+same semantics as compound term argument using setarg/3: normal Prolog
+terms can be assigned and backtracking reverses the assignment.  They
+avoid the requirement to pass variables around in all intermediate
+predicates.  \jargon{Non-backtrackable} global variables are also
+associations between atoms and terms, but the assignment is retained
+over backtracking. Unifications performed on parts (\emph{inside}) the
+value however adhere to the normal backtracking rules. This applies
+to assignment \emph{after} the nb_setval/2 call, but also to assignment
+\emph{before} this call as illustrated by the following program:
+
+\begin{code}
+demo_nb_setval :-
+	T = nice(N),
+	(   N = world,
+	    nb_setval(myvar, T),
+	    fail
+	;   nb_getval(myvar, V),
+	    writeln(V)
+	).
+\end{code}
+
+\begin{code}
+?- demo_nb_setval.
+nice(_G283)
+
+Yes
+\end{code}
+
+In multi-threaded execution, both flavours of global variables are
+strickly local to the calling thread.  The two flavours of attributed
+variables have their own namespace and therefore an atom may both
+have a backtrackable and non-backtrackable value associated.
 
 \begin{description}
     \predicate{b_setval}{2}{+Name, +Value}
@@ -54,4 +90,13 @@ Get the value associated with the backtrackable global variable
 may further instantiate the value of the global variable.  If this
 is undesirable the normal precautions (double negation or copy_term/2)
 must be taken.
+\end{description}
+
+\begin{description}
+    \predicate{nb_setval}{2}{+Name, +Value}
+Associates \arg{Value} with the atom \arg{Name}.
+
+    \predicate{nb_getval}{2}{+Name, -Value}
+Unify \arg{Value} with the non-backtrackable value associated to
+\arg{Name}.
 \end{description}
