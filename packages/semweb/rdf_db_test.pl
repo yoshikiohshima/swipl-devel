@@ -49,6 +49,26 @@ data(term, [let, us, test, another, list]).
 
 
 		 /*******************************
+		 *	      LOAD/SAVE		*
+		 *******************************/
+
+save_reload_db :-
+	tmp_file(rdf, File),
+	rdf_save_db(File),
+	rdf_reset_db,
+	rdf_load_db(File),
+	delete_file(File).
+
+
+save_reload :-
+	tmp_file(rdf, File),
+	rdf_save(File),
+	rdf_reset_db,
+	rdf_load(File, [base_uri([])]),		% do not qualify
+	delete_file(File).
+
+
+		 /*******************************
 		 *	      RESOURCE		*
 		 *******************************/
 
@@ -79,20 +99,26 @@ typed(1) :-
 	findall(type(T,V), data(T, V), TVs),
 	forall(member(Value, TVs),
 	       rdf_assert(x, a, literal(Value))),
-	findall(V, data(_, V), Vs),
 	findall(V, (rdf(x, a, X), X = literal(V)), V2),
-	V2 == Vs.
+	V2 == TVs.
 typed(2) :-
 	findall(type(T,V), data(T, V), TVs),
 	forall(member(Value, TVs),
 	       rdf_assert(x, a, literal(Value))),
-	findall(V, data(_, V), Vs),
 	findall(V, rdf(x, a, literal(V)), V2),
-	V2 == Vs.
+	V2 == TVs.
 typed(3) :-
 	findall(type(T,V), data(T, V), TVs),
 	forall(member(Value, TVs),
 	       rdf_assert(x, a, literal(Value))),
+	X = type(T,V),
+	findall(X, rdf(x, a, literal(X)), TV2),
+	TV2 == TVs.
+typed(save) :-
+	findall(type(T,V), data(T, V), TVs),
+	forall(member(Value, TVs),
+	       rdf_assert(x, a, literal(Value))),
+	save_reload_db,
 	X = type(T,V),
 	findall(X, rdf(x, a, literal(X)), TV2),
 	TV2 == TVs.
@@ -110,7 +136,10 @@ lang_data :-
 lang(1) :-
 	lang_data,
 	findall(X, rdf(x, a, literal(X)), Xs),
-	Xs == [ 'Jan', 'John', 'Johannes' ].
+	Xs == [ lang(nl, 'Jan'),
+		lang(en, 'John'),
+		'Johannes'
+	      ]. 
 lang(2) :-
 	lang_data,
 	findall(X, rdf(x, a, literal(lang(nl, X))), Xs),
@@ -119,14 +148,13 @@ lang(3) :-
 	lang_data,
 	X = lang(_,_),
 	findall(X, rdf(x, a, literal(X)), Xs),
-	Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ].
-lang(save) :-
-	tmp_file(rdf, File),
+	Xs =@= [ lang(nl, 'Jan'),
+		 lang(en, 'John'),
+		 lang(_,  'Johannes')
+	       ].
+lang(save_db) :-
 	lang_data,
-	rdf_save_db(File),
-	rdf_reset_db,
-	rdf_load_db(File),
-	delete_file(File),
+	save_reload_db,
 	X = lang(_,_),
 	findall(X, rdf(x, a, literal(X)), Xs),
 	(   Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ]
@@ -134,7 +162,16 @@ lang(save) :-
 	;   format(user_error, 'Xs = ~w~n', [Xs]),
 	    fail
 	).
-
+lang(save) :-
+	lang_data,
+	save_reload,
+	X = lang(_,_),
+	findall(X, rdf(x, a, literal(X)), Xs),
+	(   Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ]
+	->  true
+	;   format(user_error, 'Xs = ~w~n', [Xs]),
+	    fail
+	).
 
 		 /*******************************
 		 *	      SCRIPTS		*

@@ -1440,6 +1440,8 @@ write_triple(IOSTREAM *out, triple *t)
       save_int(out, len);
       while(--len >= 0)
 	Sputc(*s++, out);
+
+      break;
     }
     default:
       assert(0);
@@ -2207,94 +2209,70 @@ unify_source(term_t src, triple *t)
 
 
 static int
-unify_lang(term_t lit, triple *t)
-{ if ( PL_is_functor(lit, FUNCTOR_lang2) )
-  { term_t a = PL_new_term_ref();
-    
-    if ( t->has_lang && t->type_or_lang )
-    { PL_get_arg(1, lit, a);
-      if ( !PL_unify_atom(a, t->type_or_lang) )
-	return FALSE;
-    }
-    PL_get_arg(2, lit, a);
-
-    return PL_unify_atom(a, t->object.string);
-  } else
-  { return PL_unify_atom(lit, t->object.string);
-  }
-}
-
-
-static int
-unify_value(term_t v, triple *t)
+put_value(term_t v, triple *t)
 { switch(t->objtype)
   { case OBJ_STRING:
-      return PL_unify_atom(v, t->object.string);
+      PL_put_atom(v, t->object.string);
+      break;
     case OBJ_INTEGER:
-      return PL_unify_integer(v, t->object.integer);
+      PL_put_integer(v, t->object.integer);
+      break;
     case OBJ_DOUBLE:
-      return PL_unify_float(v, t->object.real);
+      PL_put_float(v, t->object.real);
+      break;
     case OBJ_TERM:
-    { term_t term = PL_new_term_ref();
-
-      PL_recorded_external(t->object.term.record, term);
-      return PL_unify(v, term);
-    }
+      PL_recorded_external(t->object.term.record, v);
+      break;
     default:
       assert(0);
       return FALSE;
   }
-}
 
-
-
-static int
-unify_typed(term_t lit, triple *t)
-{ if ( PL_is_functor(lit, FUNCTOR_type2) )
-  { term_t a = PL_new_term_ref();
-
-    if ( t->type_or_lang && !t->has_lang )
-    { PL_get_arg(1, lit, a);
-
-      if ( !PL_unify_atom(a, t->type_or_lang) )
-	return FALSE;
-    }
-
-    PL_get_arg(2, lit, a);
-    return unify_value(a, t);
-  } else
-    return unify_value(lit, t);
+  return TRUE;
 }
 
 
 
 static int
 unify_object(term_t object, triple *t)
-{ term_t a;
+{ if ( t->objtype == OBJ_RESOURCE )
+  { return PL_unify_atom(object, t->object.resource);
+  } else
+  { term_t v = PL_new_term_ref();
+    term_t lit = PL_new_term_ref();
 
-  switch(t->objtype)
-  { case OBJ_RESOURCE:
-      return PL_unify_atom(object, t->object.resource);
-    case OBJ_STRING:
-      if ( PL_is_functor(object, FUNCTOR_literal2) )
-      { a = PL_new_term_ref();
+    put_value(v, t);
 
-	PL_get_arg(2, object, a);
+    if ( PL_unify_functor(object, FUNCTOR_literal1) )
+      PL_get_arg(1, object, lit);
+    else if ( PL_is_functor(object, FUNCTOR_literal2) )
+      PL_get_arg(2, object, lit);
 
-	return unify_lang(a, t);
-      }
+    if ( t->type_or_lang )
+    { functor_t qf;
+
+      if ( t->has_lang )
+	qf = FUNCTOR_lang2;
+      else
+	qf = FUNCTOR_type2;
+
+      return PL_unify_term(lit, PL_FUNCTOR, qf,
+			     PL_ATOM, t->type_or_lang,
+			     PL_TERM, v);
+    } else if ( PL_unify(lit, v) )
+    { return TRUE;
+    } else if ( PL_is_functor(lit, FUNCTOR_lang2) &&
+		t->objtype == OBJ_STRING )
+    { term_t a = PL_new_term_ref();
+      PL_get_arg(2, lit, a);
+      return PL_unify(a, v);
+    } else if ( PL_is_functor(lit, FUNCTOR_type2) )
+    { term_t a = PL_new_term_ref();
+      PL_get_arg(2, lit, a);
+      return PL_unify(a, v);
+    } else
+      return FALSE;
   }
-
-  if ( !PL_unify_functor(object, FUNCTOR_literal1) )
-    return FALSE;
-
-  a = PL_new_term_ref();
-  PL_get_arg(1, object, a);
-
-  if ( t->objtype == OBJ_STRING && unify_lang(a, t) )
-    return TRUE;
-
-  return unify_typed(a, t);
 }
 
 
@@ -3645,6 +3623,17 @@ rdf_debug(term_t level)
 
 #endif
 
+
+		 /*******************************
+		 *	       VERSION		*
+		 *******************************/
+
+static foreign_t
+rdf_version(term_t v)
+{ return PL_unify_integer(v, RDF_VERSION);
+}
+
+
 		 /*******************************
 		 *	     REGISTER		*
 		 *******************************/
@@ -3704,6 +3693,7 @@ install_rdf_db()
 					/* setup database */
   init_tables();
 
+  PL_register_foreign("rdf_version",    1, rdf_version,     0);
   PL_register_foreign("rdf_assert",	3, rdf_assert3,	    0);
   PL_register_foreign("rdf_assert",	4, rdf_assert4,	    0);
   PL_register_foreign("rdf_update",	4, rdf_update,      0);

@@ -30,7 +30,9 @@
 */
 
 :- module(rdf_db,
-	  [ rdf/3,			% ?Subject, ?Predicate, ?Object
+	  [ rdf_version/1,		% -Version
+
+	    rdf/3,			% ?Subject, ?Predicate, ?Object
 	    rdf/4,			% ?Subject, ?Predicate, ?Object, ?DB
 	    rdf_has/3,			% ?Subject, +Pred, ?Obj
 	    rdf_has/4,			% ?Subject, +Pred, ?Obj, -RealPred
@@ -863,7 +865,7 @@ save_attributes(Atts, DefNS, Out, Element, Indent, DB) :-
 
 split_attributes(Atts, HeadAttr, BodyAttr) :-
 	duplicate_attributes(Atts, Dupls, Singles),
-	literal_attributes(Singles, HeadAttr, Rest),
+	simple_literal_attributes(Singles, HeadAttr, Rest),
 	append(Dupls, Rest, BodyAttr).
 
 %	duplicate_attributes(+Attrs, -Duplicates, -Singles)
@@ -890,19 +892,20 @@ named_attributes(Name, [H|T], D, R) :-
 	    named_attributes(Name, T, D, RT)
 	).
 
-%	literal_attributes(+Attributes, -Inline, -Body)
+%	simple_literal_attributes(+Attributes, -Inline, -Body)
 %
 %	Split attributes for (literal) attributes to be used in the
 %	begin-tag and ones that have to go into the body of the description.
 
-literal_attributes([], [], []).
-literal_attributes([H|TA], [H|TI], B) :-
+simple_literal_attributes([], [], []).
+simple_literal_attributes([H|TA], [H|TI], B) :-
 	in_tag_attribute(H), !,
-	literal_attributes(TA, TI, B).
-literal_attributes([H|TA], I, [H|TB]) :-
-	literal_attributes(TA, I, TB).
+	simple_literal_attributes(TA, TI, B).
+simple_literal_attributes([H|TA], I, [H|TB]) :-
+	simple_literal_attributes(TA, I, TB).
 
 in_tag_attribute(_=literal(Text)) :-
+	atom(Text),			% may not have lang qualifier
 	atom_length(Text, Len),
 	Len < 60.
 
@@ -920,10 +923,21 @@ save_attribute(tag, Name=literal(Value), DefNS, Out, Indent, _DB) :-
 	rdf_att_id(Name, DefNS, NameText),
 	xml_quote_attribute(Value, QVal),
 	format(Out, '~N~*|~w="~w"', [AttIndent, NameText, QVal]).
-save_attribute(body, Name=literal(Value), DefNS, Out, Indent, _DB) :- !,
+save_attribute(body, Name=literal(Literal), DefNS, Out, Indent, _DB) :- !,
 	rdf_id(Name, DefNS, NameText),
-	xml_quote_cdata(Value, QVal),
-	format(Out, '~N~*|<~w>~w</~w>', [Indent, NameText, QVal, NameText]).
+	(   Literal = lang(Lang, Value)
+	->  rdf_id(Lang, DefNS, LangText),
+	    format(Out, '~N~*|<~w xml:lang="~w">',
+		   [Indent, NameText, LangText])
+	;   Literal = type(Type, Value)
+	->  rdf_id(Type, DefNS, TypeText),
+	    format(Out, '~N~*|<~w rdf:dataType="~w">',
+		   [Indent, NameText, TypeText])
+	;   format(Out, '~N~*|<~w>', [Indent, NameText]),
+	    Value = Literal
+	),
+	save_attribute_value(Value, Out),
+	format(Out, '</~w>', [NameText]).
 save_attribute(body, Name=Value, DefNS, Out, Indent, DB) :-
 	anonymous_subject(Value), !,
 	rdf_id(Name, DefNS, NameText),
@@ -941,6 +955,16 @@ save_attribute(body, Name=Value, DefNS, Out, Indent, _DB) :-
 	rdf_value(Value, QVal),
 	rdf_id(Name, DefNS, NameText),
 	format(Out, '~N~*|<~w rdf:resource="~w"/>', [Indent, NameText, QVal]).
+
+save_attribute_value(Value, Out) :-	% strings
+	atom(Value), !,
+	xml_quote_cdata(Value, QVal),
+	write(Out, QVal).
+save_attribute_value(Value, Out) :-	% numbers
+	atomic(Value), !,
+	write(Out, Value).
+save_attribute_value(Value, _Out) :-
+	throw(error(save_attribute_value(Value), _)).
 
 rdf_save_list(_, List, _, _, _) :-
 	rdf_equal(List, rdf:nil), !.
