@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: nb_linkval/2 (and therefore nb_setval/2) if value is an
+    attributed variable.  David Reitter.
+
+
 VERSION 5.3.12 (June 15, 2004)
 ==============================
 

@@ -1117,6 +1117,18 @@ avar(hash_term-1) :-
 
 
 		 /*******************************
+		 *	  GLOBAL VARIABLES	*
+		 *******************************/
+
+gvar(avar-1) :-
+	freeze(A, fail),
+	nb_setval(gvar1, A),
+	nb_getval(gvar1, B),
+	A = B.			% wrong test
+%	A =@= B.		% ... but =@= is broken on attvar
+
+
+		 /*******************************
 		 *	     COPY-TERM		*
 		 *******************************/
 
@@ -1515,6 +1527,7 @@ testset(depth_limit) :-
 testset(type_test).
 testset(meta).
 testset(avar).
+testset(gvar).
 testset(copy_term).
 testset(cyclic).
 testset(cleanup).

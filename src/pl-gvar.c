@@ -236,7 +236,7 @@ PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
   deRef(p);
   w = *p;
 
-  if ( isVar(w) )
+  if ( canBind(w) )
   { if ( onStackArea(local, p) )
     { Word p2 = allocGlobal(1);
 
