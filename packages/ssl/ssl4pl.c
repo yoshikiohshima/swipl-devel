@@ -477,39 +477,24 @@ pl_ssl_init(term_t config, term_t role, term_t options)
   if ( !PL_get_nil(tail) )
     return type_error(tail, "list");
 
+  if ( ssl_socket(conf) < 0 )
+    return FALSE;			/* TBD: error */
+
   return unify_conf(config, conf);
 }
 
 
 static foreign_t
-pl_ssl_socket(term_t config, term_t sock)
+pl_ssl_accept(term_t config, term_t sock_inst, term_t peer)
 { PL_SSL *conf;
-  int fd;
-
-  if ( !get_conf(config, &conf) )
-    return FALSE;
-
-  if ( (fd=ssl_socket(conf)) < 0 )
-    return FALSE;			/* TBD: error */
-  
-  return PL_unify_integer(sock, fd);
-}
-
-
-static foreign_t
-pl_ssl_accept(term_t config, term_t sock, term_t sock_inst, term_t peer)
-{ PL_SSL *conf;
-  int s, si;
+  int si;
   struct sockaddr_in sa_client;
   size_t             client_len = sizeof(sa_client);
 
   if ( !get_conf(config, &conf) )
     return FALSE;
 
-  if ( !get_sock(sock, &s) )
-    return FALSE;
-  
-  if ( (si = ssl_accept(conf, s, &sa_client, &client_len)) < 0 )
+  if ( (si = ssl_accept(conf, &sa_client, &client_len)) < 0 )
     return FALSE;			/* TBD: error */
   
   if ( PL_unify_integer(sock_inst, si) &&
@@ -518,24 +503,6 @@ pl_ssl_accept(term_t config, term_t sock, term_t sock_inst, term_t peer)
 
   close(si);
   return FALSE;				/* exception? */
-}
-
-
-static foreign_t
-pl_ssl_connect(term_t config, term_t sock, term_t sock_inst)
-{ PL_SSL *conf;
-  int s, si;
-
-  if ( !get_conf(config, &conf) )
-    return FALSE;
-
-  if ( !get_sock(sock, &s) )
-    return FALSE;
-  
-  if ( (si = ssl_connect(conf, s)) < 0 )
-    return FALSE;			/* TBD: error */
-  
-  return PL_unify_integer(sock_inst, si);
 }
 
 
@@ -573,7 +540,7 @@ static IOFUNCTIONS ssl_funcs =
 
 
 static foreign_t
-pl_ssl_open(term_t config, term_t sock_inst, term_t in, term_t out)
+pl_ssl_open(term_t config, term_t socket, term_t in, term_t out)
 { PL_SSL *conf;
   PL_SSL_INSTANCE *instance;
   int si;
@@ -582,9 +549,13 @@ pl_ssl_open(term_t config, term_t sock_inst, term_t in, term_t out)
   if ( !get_conf(config, &conf) )
     return FALSE;
 
-  if ( !get_sock(sock_inst, &si) )
-    return FALSE;
-
+  if ( conf->pl_ssl_role == PL_SSL_SERVER )
+  { if ( !get_sock(socket, &si) )
+      return FALSE;
+  } else
+  { if ( (si=ssl_connect(conf)) < 0 )
+      return FALSE;			/* TBD: error */
+  }
   if ( !(instance = ssl_ssl(conf, si)) )
     return FALSE;			/* TBD: error */
 
@@ -642,9 +613,7 @@ install_ssl4pl()
   FUNCTOR_ip4		  = PL_new_functor(PL_new_atom("ip"), 4);
 
   PL_register_foreign("ssl_init",    3, pl_ssl_init,    PL_FA_TRANSPARENT);
-  PL_register_foreign("ssl_socket",  2, pl_ssl_socket,  0);
-  PL_register_foreign("ssl_accept",  4, pl_ssl_accept,  0);
-  PL_register_foreign("ssl_connect", 3, pl_ssl_connect, 0);
+  PL_register_foreign("ssl_accept",  3, pl_ssl_accept,  0);
   PL_register_foreign("ssl_open",    4, pl_ssl_open,    0);
   PL_register_foreign("ssl_exit",    1, pl_ssl_exit,    0);
 }

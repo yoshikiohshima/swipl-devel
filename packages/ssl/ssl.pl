@@ -31,12 +31,14 @@
 
 :- module(ssl,
 	  [ ssl_init/3,			% -Config, +Role, +Options
-	    ssl_socket/2,		% +Config, -Socket
-	    ssl_accept/4,		% +Config, +Socket, -Socket, -Peer
-	    ssl_connect/3,		% +Config, +Socket, -Socket
+	    ssl_accept/3,		% +Config, -Socket, -Peer
+	    ssl_open/3,			% +Config, -In, -Out
 	    ssl_open/4,			% +Config, +Socket, -In, -Out
 	    ssl_exit/1			% +Config
 	  ]).
 
 :- initialization
    load_foreign_library(foreign(ssl4pl)).
+
+ssl_open(Config, In, Out) :-
+	ssl_open(Config, -, In, Out).

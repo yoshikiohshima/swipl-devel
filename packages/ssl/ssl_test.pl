@@ -66,21 +66,20 @@ server :-
 %		   password('apenoot1'),
 		   pem_password_hook(get_server_pwd)
 		 ]),
-	ssl_socket(SSL, Socket),
 	thread_send_message(main, started),
-	server_loop(SSL, Socket),
+	server_loop(SSL),
 	ssl_exit(SSL).
 
-server_loop(SSL, Socket) :-
-	ssl_accept(SSL, Socket, SocketInst, Peer),
+server_loop(SSL) :-
+	ssl_accept(SSL, Socket, Peer),
 	debug(connection, 'Connection from ~p', [Peer]),
-	ssl_open(SSL, SocketInst, In, Out),
+	ssl_open(SSL, Socket, In, Out),
 	copy_client(In, Out),
 	close(In),
 	close(Out),
 	(   retract(stop_server)
 	->  true
-	;   server_loop(SSL, Socket)
+	;   server_loop(SSL)
 	).
 
 copy_client(In, Out) :-
@@ -121,13 +120,11 @@ client :-
 %		   password('apenoot2'),
 		   pem_password_hook(get_client_pwd)
 		 ]),
-	ssl_socket(SSL, Socket),
-	client_loop(SSL, Socket),
+	client_loop(SSL),
         ssl_exit(SSL).
 
-client_loop(SSL, Socket) :-
-	ssl_connect(SSL, Socket, SocketInst),
-	ssl_open(SSL, SocketInst, In, Out),
+client_loop(SSL) :-
+	ssl_open(SSL, In, Out),
 	Message = 'Hello world',
 	write_server(Message, In, Out),
 	write_server(Message, In, Out),

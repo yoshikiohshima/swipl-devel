@@ -1,5 +1,8 @@
 Jun 24, 2004
  
+  * MODIFIED: Role of SSL and sockets.  The primary socket of a server
+    or client is kept in the SSL structure.
+
   * FIXED: close socket on ssl_exit/1 on server site.
 
   * ADDED: ssl_thread_setup() to allow for multi-threaded apps.

@@ -956,7 +956,7 @@ ssl_socket(PL_SSL *config)
 }
 
 int
-ssl_accept(PL_SSL *config, int sock, void *addr, size_t *addrlen)
+ssl_accept(PL_SSL *config, void *addr, size_t *addrlen)
 /*
  * We set the TCP layer to accept mode,
  */
@@ -977,7 +977,7 @@ ssl_accept(PL_SSL *config, int sock, void *addr, size_t *addrlen)
      * don't like, giving an EINTR. In that case give connect()
      * another chance.
      */
-    while ((fd = accept( sock, addr, addrlen )) < 0) {
+    while ((fd = accept( config->sock, addr, addrlen )) < 0) {
         if (errno == EINTR) {
             if ( PL_handle_signals() < 0 ) {
                 return -1;
@@ -992,12 +992,13 @@ ssl_accept(PL_SSL *config, int sock, void *addr, size_t *addrlen)
 }
 
 int
-ssl_connect(PL_SSL *config, int sock)
+ssl_connect(PL_SSL *config)
 /*
  * We set the TCP layer to connect mode.
  */
 {
     struct sockaddr_in sa_client = {0};
+    int sock = config->sock;
 
     if (!ssl_hostaddr(&sa_client, config->pl_ssl_host, config->pl_ssl_port)) {
         return -1;
