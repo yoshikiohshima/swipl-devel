@@ -1265,9 +1265,11 @@ bind_existential_vars(Word t, Word *plain ARG_LD)
   { Functor f = valueTerm(*t);
     int arity;
 
+# if 0
     if ( visited(f PASS_LD) )
       return;				/* cyclic term in existential */
 					/* defs.  Error?  How? */
+#endif
 
     if ( f->definition == FUNCTOR_hat2 )
     { dobind_vars(&f->arguments[0], ATOM_nil PASS_LD);
