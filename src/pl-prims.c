@@ -636,6 +636,7 @@ static bool
 structeql(Word t1, Word t2, TmpBuffer buf ARG_LD)
 { int todo = 1;
   UChoice nextch = NULL, tailch = NULL;
+  int arity;
 
   for(;;)
   { Word p1, p2;
@@ -677,9 +678,15 @@ structeql(Word t1, Word t2, TmpBuffer buf ARG_LD)
 
     switch(tag(w1))
     { case TAG_VAR:
-      case TAG_ATTVAR:
       case TAG_ATOM:
 	fail;
+      case TAG_ATTVAR:
+      { p1 = valPAttVar(w1);
+	p2 = valPAttVar(w2);
+	arity = 1;
+
+	goto compound;
+      }
       case TAG_INTEGER:
 	if ( storage(w1) == STG_INLINE ||
 	     storage(w2) == STG_INLINE )
@@ -690,32 +697,46 @@ structeql(Word t1, Word t2, TmpBuffer buf ARG_LD)
 	  continue;
         fail;
       case TAG_COMPOUND:
-      { functor_t fd = functorTerm(w1);
-	int arity;
+      { Functor f1 = (Functor)valPtr(w1);
+	Functor f2 = (Functor)valPtr(w2);
 
-	if ( !hasFunctor(w2, fd) )
-	  fail;
-
-	arity = arityFunctor(fd);
-	p1 = argTermP(w1, 0);
-	p2 = argTermP(w2, 0);
-	if ( todo == 0 )		/* right-most argument recursion */
-	{ todo = arity;
-	  t1 = p1;
-	  t2 = p2;
-	} else if ( arity > 0 )
-	{ UChoice next = alloca(sizeof(*next));
-
-	  next->size   = arity;
-	  next->alist1 = p1;
-	  next->alist2 = p2;
-	  next->next   = NULL;
-	  if ( !nextch )
-	    nextch = tailch = next;
-	  else
-	  { tailch->next = next;
-	    tailch = next;
+#if O_CYCLIC
+        while ( isRef(f1->definition) )
+	  f1 = (Functor)unRef(f1->definition);
+	while ( isRef(f2->definition) )
+	  f2 = (Functor)unRef(f2->definition);
+	if ( f1 == f2 )
+	  continue;
+#endif
+	
+	if ( f1->definition == f2->definition )
+	{ arity = arityFunctor(f1->definition);
+	  
+	  p1 = f1->arguments;
+	  p2 = f2->arguments;
+	  linkTermsCyclic(f1, f2 PASS_LD);
+	  
+	compound:
+	  if ( todo == 0 )		/* right-most argument recursion */
+	  { todo = arity;
+	    t1 = p1;
+	    t2 = p2;
+	  } else if ( arity > 0 )
+	  { UChoice next = alloca(sizeof(*next));
+  
+	    next->size   = arity;
+	    next->alist1 = p1;
+	    next->alist2 = p2;
+	    next->next   = NULL;
+	    if ( !nextch )
+	      nextch = tailch = next;
+	    else
+	    { tailch->next = next;
+	      tailch = next;
+	    }
 	  }
+	} else
+	{ fail;
 	}
       }
     }
@@ -731,6 +752,7 @@ PRED_IMPL("=@=", 2, structural_eq, 0)
   Reset r;
   Word p1 = valTermRef(A1);
   Word p2 = p1+1;
+  Word *m = aTop;
 
   deRef(p1);
   deRef(p2);
@@ -745,6 +767,7 @@ PRED_IMPL("=@=", 2, structural_eq, 0)
     setVar(*r->v2);
   }
   discardBuffer(&buf);
+  exitCyclic(m PASS_LD);
 
   return rval;
 }

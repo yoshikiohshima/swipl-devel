@@ -111,6 +111,8 @@ unify(cycle-2) :-			% Kuniaki Mukai
 cyclic(hash_term-1) :-
 	X = f(X), hash_term(X, T),
 	integer(T).
+cyclic(streq-1) :-
+	X = [X], Y = [Y], X =@= Y.
 
 
 		 /*******************************
@@ -1122,6 +1124,13 @@ avar(findall-1) :-
 	L=[aap],
 	retract(avar_findall(X)),
 	X == aap.
+avar(streq-1) :-
+	freeze(X, write(x)), freeze(Y, write(x)), X =@= Y.
+avar(streq-2) :-
+	freeze(X, write(x)), freeze(Y, write(y)), X \=@= Y.
+avar(streq-3) :-
+	freeze(X, write(X)), freeze(Y, write(Y)), X =@= Y.
+
 
 
 		 /*******************************
@@ -1168,8 +1177,7 @@ gvar(avar-1) :-
 	freeze(A, fail),
 	nb_setval(gvar1, A),
 	nb_getval(gvar1, B),
-	A = B.			% wrong test
-%	A =@= B.		% ... but =@= is broken on attvar
+	A =@= B.		% ... but =@= is broken on attvar
 
 
 

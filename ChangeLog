@@ -7,9 +7,12 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: Support for attributed variables and cyclic terms for =@= and
+    \=@=.
+
+
 VERSION 5.3.18 (August 16, 2004)
 ================================
-
 
   * MODIFIED: perform goal expansion relative to indicated module for
     goals of the format Module:Goal where Module is known at compiletime.
