@@ -276,10 +276,9 @@ initialise_prolog :-
 	$clean_history,
 	set_associated_file,
 	$set_file_search_paths,
-	set_prolog_flag(toplevel_print_options,
-			[quoted(true), portray(true), max_depth(10)]),
-	set_prolog_flag(debugger_print_options,
-			[quoted(true), portray(true), max_depth(10)]),
+	once(print_predicate(_, [print], PrintOptions)),
+	set_prolog_flag(toplevel_print_options, PrintOptions),
+	'$set_debugger_print_options'(print),
 	$run_at_initialization,
 	$load_system_init_file,
 	$load_gnu_emacs_interface,
@@ -583,7 +582,11 @@ answer_respons(Char, again) :-
 	print_message(query, no_action(Char)).
 
 print_predicate(0'w, [write], [quoted(true)]).
-print_predicate(0'p, [print], [quoted(true), portray(true), max_depth(10)]).
+print_predicate(0'p, [print], [ quoted(true),
+				portray(true),
+				attributes(dots),
+				max_depth(10)
+			      ]).
 
 
 		 /*******************************

@@ -351,10 +351,16 @@ $calleventhook(Term) :-
 
 $set_debugger_print_options(write) :- !,
 	set_prolog_flag(debugger_print_options,
-			[quoted(true)]).
+			[ quoted(true),
+			  attributes(write)
+			]).
 $set_debugger_print_options(print) :- !,
 	set_prolog_flag(debugger_print_options,
-			[quoted(true), portray(true), max_depth(10)]).
+			[ quoted(true),
+			  portray(true),
+			  max_depth(10),
+			  attributes(dots)
+			]).
 $set_debugger_print_options(Depth) :-
 	current_prolog_flag(debugger_print_options, Options0),
 	(   $select(max_depth(_), Options0, Options)
