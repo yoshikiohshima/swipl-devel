@@ -530,7 +530,7 @@ keyboard_event_frame(FrameObj fr, Any id,
        !(sw = getKeyboardFocusFrame(fr)) )
     receiver = fr;
   else
-    receiver = sw;
+    receiver = userWindow(sw);
 
   markAnswerStack(mark);
 
