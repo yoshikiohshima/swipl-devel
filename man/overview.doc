@@ -1356,6 +1356,9 @@ Hook in help/0, help/1 and apropos/1 to extend the help-system.
 Defines a new resource (not really a hook, but similar) (SWI).    
     \item [exception/3]
 Old attempt to a generic hook mechanism.  Handles undefined predicates (SWI).
+    \item [attr_unify_hook/2]
+Unification hook for attributed variables. Can be defined in any
+module.  See \secref{attvar} for details.
 \end{itemlist}
 
 
@@ -1566,6 +1569,19 @@ written as \exam{<radix>'<number>}, where <radix> is a number between 2
 and 36. ISO defines binary, octal and hexadecimal numbers using
 \exam{0{\em [bxo]}<number>}. For example: \verb$A is 0b100 \/ 0xf00$ is
 a valid expression. Such numbers are always unsigned.
+
+
+\section{Infinite trees (cyclic terms)}
+
+\index{infinite trees}\index{cyclic terms}\index{terms,cyclic}%
+SWI-Prolog has limited support for infinite trees, also known as cyclic
+terms. Full support requires special code in all builtin predicates that
+require recursive exploration of a term. The current version supports
+cycles terms in the pure Prolog kernel including the garbage collector
+and in the following predicates: \predref{=}{2}, \predref{==}{2},
+\predref{\==}{2}, \predref{\=}{2}, \predref{=@=}{2}, \predref{\=@=}{2},
+\predref{@<}{2}, \predref{@=<}{2}, \predref{@>}{2}, \predref{@>=}{2},
+compare/3, \predref{=..}{2}, copy_term/2, duplicate_term/2, write/1.
 
 
 \section{System limits}				\label{sec:limits}

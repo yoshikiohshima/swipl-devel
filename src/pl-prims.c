@@ -112,10 +112,40 @@ unvisit(Word *base ARG_LD)
   aTop = base;
 }
 
+
+					/* see also pl-wam.c, unify() */
+static inline void
+linkTermsCyclic(Functor f1, Functor f2 ARG_LD)
+{ Word p1 = (Word)&f1->definition;
+  Word p2 = (Word)&f2->definition;
+
+  *p1 = makeRefG(p2);
+  requireStack(argument, sizeof(Word));
+  *aTop++ = p1;
+}
+
+
+static inline void
+exitCyclic(Word *base ARG_LD)
+{ Word *sp = aTop;
+
+  while(sp>base)
+  { Word p;
+
+    sp--;
+    p = *sp;
+    *p = *unRef(*p);
+  }
+
+  aTop = base;
+}
+
 #else
 
 static inline visited(Functor f ARG_LD) { fail; }
 static inline unvisit(Word *base ARG_LD) { }
+static inline void exitCyclic(ARG1_LD) {}
+static inline void linkTermsCyclic(Functor f1, Functor f2 ARG_LD) {}
 
 #endif /*O_CYCLIC*/
 
@@ -338,8 +368,8 @@ tests (alphabetical order) are skipped and the call returns NOTEQ.
 #define GREATER  1
 #define NOTEQ    2
 
-int
-compareStandard(Word p1, Word p2, int eq ARG_LD)
+static int
+do_compare(Word p1, Word p2, int eq ARG_LD)
 { word w1, w2;
   int t1, t2;
 
@@ -401,6 +431,15 @@ tail_recursion:
     { Functor f1 = (Functor)valPtr(w1);
       Functor f2 = (Functor)valPtr(w2);
 
+#if O_CYCLIC
+      while ( isRef(f1->definition) )
+	f1 = (Functor)unRef(f1->definition);
+      while ( isRef(f2->definition) )
+	f2 = (Functor)unRef(f2->definition);
+      if ( f1 == f2 )
+	return EQUAL;
+#endif
+
       if ( f1->definition != f2->definition )
       { FunctorDef fd1 = valueFunctor(f1->definition);
 	FunctorDef fd2 = valueFunctor(f2->definition);
@@ -415,8 +454,9 @@ tail_recursion:
 	
 	p1 = f1->arguments;
 	p2 = f2->arguments;
+	linkTermsCyclic(f1, f2 PASS_LD);
 	for( ; --arity > 0; p1++, p2++ )
-	{ if ((rval = compareStandard(p1, p2, eq PASS_LD)) != EQUAL)
+	{ if ((rval = do_compare(p1, p2, eq PASS_LD)) != EQUAL)
 	    return rval;
 	}
         goto tail_recursion;
@@ -426,6 +466,18 @@ tail_recursion:
       assert(0);
       return EQUAL;
   }
+}
+
+
+int
+compareStandard(Word p1, Word p2, int eq ARG_LD)
+{ Word *m = aTop;
+  int rc;
+
+  rc = do_compare(p1, p2, eq PASS_LD);
+  exitCyclic(m PASS_LD);
+
+  return rc;
 }
 
 
@@ -1223,7 +1275,7 @@ TrailCyclic(Word p ARG_LD)
 
 
 static inline void
-exitCyclic(ARG1_LD)
+exitCyclicCopy(ARG1_LD)
 { Word p, *sp = aTop;
 
   while((p = *--sp))
@@ -1353,7 +1405,7 @@ PRED_IMPL("copy_term", 2, copy_term, 0)
 
   initCyclic(PASS_LD1);
   do_copy_term(valTermRef(A1), valTermRef(copy), TRUE PASS_LD);
-  exitCyclic(PASS_LD1);
+  exitCyclicCopy(PASS_LD1);
   
   return PL_unify(copy, A2);
 }
@@ -1366,7 +1418,7 @@ PRED_IMPL("duplicate_term", 2, duplicate_term, 0)
 
   initCyclic(PASS_LD1);
   do_copy_term(valTermRef(A1), valTermRef(copy), FALSE PASS_LD);
-  exitCyclic(PASS_LD1);
+  exitCyclicCopy(PASS_LD1);
   
   return PL_unify(copy, A2);
 }

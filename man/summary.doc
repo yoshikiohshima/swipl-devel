@@ -214,6 +214,7 @@ suggest predicates from a keyword.
 \predicatesummary{get0}{1}{Read next character}
 \predicatesummary{get0}{2}{Read next character from a stream}
 \predicatesummary{get_attr}{3}{Fetch named attribute from a variable}
+\predicatesummary{get_attrs}{2}{Fetch all attributes of a variable}
 \predicatesummary{get_byte}{1}{Read next byte (ISO)}
 \predicatesummary{get_byte}{2}{Read next byte from a stream (ISO)}
 \predicatesummary{get_char}{1}{Read next character as an atom (ISO)}
@@ -374,6 +375,7 @@ suggest predicates from a keyword.
 \predicatesummary{put}{1}{Write a character}
 \predicatesummary{put}{2}{Write a character on a stream}
 \predicatesummary{put_attr}{3}{Put attribute on a variable}
+\predicatesummary{put_attrs}{2}{Set/replace all attributes on a variable}
 \predicatesummary{put_byte}{1}{Write a byte}
 \predicatesummary{put_byte}{2}{Write a byte on a stream}
 \predicatesummary{put_char}{1}{Write a character}

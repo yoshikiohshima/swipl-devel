@@ -116,6 +116,25 @@ the two attribute and associates the combined attribute with
 \end{description}
 
 
+\subsection{Accessing all attributes}
+
+Normal user code should deal with put_attr/3, get_attr/3 and del_attr/2.
+The routines in this section fetch or set the entire attribute list of a
+variables. Use of these predicates is anticipated to be restricted to
+printing and other special purpose operations.
+
+\begin{description}
+    \predicate{get_attrs}{2}{+Var, -Attributes}
+Get all attributes of \arg{Var}. \arg{Attributes} is a term of the form
+\term{att}{Module, Value, MoreAttributes}, where \arg{MoreAttributes} is
+\const{[]} for the last attribute.
+
+    \predicate{put_attrs}{2}{+Var, -Attributes}
+Set all attributes of \arg{Var}.  See get_attrs/2 for a description of
+\arg{Attributes}.
+\end{description}
+
+
 \section{Corouting}				\label{sec:corouting}
 
 Corouting deals with having Prolog goals scheduled for execution as

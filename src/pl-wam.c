@@ -957,14 +957,7 @@ unifications of a realistic program are   covered by unify() and involve
 deep unification the overall impact of performance is small (< 3%).
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-
-static inline void
-initCyclic(ARG1_LD)
-{ requireStack(argument, sizeof(Word));
-  *aTop++ = NULL;			/* marker */
-}
-
-
+					/* also in pl-prims.c.  Should merge */
 static inline void
 linkTermsCyclic(Functor f1, Functor f2 ARG_LD)
 { Word p1 = (Word)&f1->definition;
@@ -977,18 +970,21 @@ linkTermsCyclic(Functor f1, Functor f2 ARG_LD)
 
 
 static inline void
-exitCyclic(ARG1_LD)
-{ Word p, *sp = aTop;
+exitCyclic(Word *base ARG_LD)
+{ Word *sp = aTop;
 
-  while((p = *--sp))
-  { Word p2 = unRef(*p);
-    *p = *p2;
+  while(sp>base)
+  { Word p;
+
+    sp--;
+    p = *sp;
+    *p = *unRef(*p);
   }
-  aTop = sp;
+
+  aTop = base;
 }
 
 #else /*O_CYCLIC*/
-static inline void initCyclic(ARG1_LD) {}
 static inline void exitCyclic(ARG1_LD) {}
 static inline void linkTermsCyclic(Functor f1, Functor f2 ARG_LD) {}
 #endif /*O_CYCLIC*/
@@ -1126,10 +1122,10 @@ right_recursion:
 static bool
 unify(Word t1, Word t2 ARG_LD)
 { bool rc;
+  Word *m = aTop;
 
-  initCyclic(PASS_LD1);
   rc = do_unify(t1, t2 PASS_LD);
-  exitCyclic(PASS_LD1);
+  exitCyclic(m PASS_LD);
 
   return rc;
 }

@@ -317,6 +317,18 @@ PRED_IMPL("attvar", 1, attvar, 0)
 
 
 static
+PRED_IMPL("get_attrs", 2, get_attrs, 0)
+{ PRED_LD
+  term_t al = PL_new_term_ref();
+
+  if ( !PL_get_attr(A1, al) )
+    fail;
+
+  return PL_unify(al, A2);
+}
+
+
+static
 PRED_IMPL("get_attr", 3, get_attr3, 0) /* +Var, +Name, -Value */
 { PRED_LD
   term_t al = PL_new_term_ref();
@@ -353,6 +365,30 @@ PRED_IMPL("put_attr", 3, put_attr3, 0)	/* +Var, +Name, +Value */
   } else
   { return PL_error("put_attr", 3, NULL, ERR_TYPE, ATOM_var, A1);
   }
+}
+
+
+static
+PRED_IMPL("put_attrs", 2, put_attrs, 0)
+{ PRED_LD
+  Word av, vp;
+
+  requireStack(global, 4*sizeof(word));
+  av = valTermRef(A1);
+  deRef(av);
+
+  if ( isVar(*av) )
+  { make_new_attvar(av PASS_LD);
+    deRef(av);
+  } else if ( !isAttVar(*av) )
+  { return PL_error("put_attrs", 2, NULL, ERR_TYPE, ATOM_var, A1);
+  }
+
+  vp = valPAttVar(*av);
+  TrailAssignment(vp);
+  *vp = linkVal(valTermRef(A2));
+
+  succeed;
 }
 
 
@@ -460,11 +496,13 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 		 *******************************/
 
 BeginPredDefs(attvar)
-  PRED_DEF("attvar", 1, attvar, 0)
-  PRED_DEF("put_attr", 3, put_attr3, 0)
-  PRED_DEF("get_attr", 3, get_attr3, 0)
-  PRED_DEF("del_attr", 2, del_attr2, 0)
-  PRED_DEF("$freeze", 2, freeze, PL_FA_TRANSPARENT)
+  PRED_DEF("attvar",    1, attvar,    0)
+  PRED_DEF("put_attr",  3, put_attr3, 0)
+  PRED_DEF("get_attr",  3, get_attr3, 0)
+  PRED_DEF("del_attr",  2, del_attr2, 0)
+  PRED_DEF("get_attrs", 2, get_attrs, 0)
+  PRED_DEF("put_attrs", 2, put_attrs, 0)
+  PRED_DEF("$freeze",   2, freeze,    PL_FA_TRANSPARENT)
 EndPredDefs
 
 #endif /*O_ATTVAR*/
