@@ -1396,13 +1396,15 @@ findStartChoice(LocalFrame fr, Choice ch)
     Within the same query, find the choice-point that was created at the
     start of this frame.  This is used for the debugger at the fail-port
     as well as for realising retry.
+
+    Note that older versions also considered the initial choicepoint a
+    choicepoint for the initial frame, but this is not correct as the
+    frame may be replaced due to last-call optimisation.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static Choice
 findStartChoice(LocalFrame fr, Choice ch)
-{ for( ;
-       (void *)ch > (void *)fr || (ch && ch->type == CHP_TOP);
-       ch = ch->parent )
+{ for( ; (void *)ch > (void *)fr; ch = ch->parent )
   { if ( ch->frame == fr )
     { switch ( ch->type )
       { case CHP_JUMP:
@@ -2875,6 +2877,7 @@ the moment the code marked (**) handles this not very elegant
         catchfr = findCatcher(FR, catcher PASS_LD);
 
 	SECURE(checkData(catcher));	/* verify all data on stacks stack */
+	SECURE(checkStacks(FR, LD->choicepoints));
 
 #if O_DEBUGGER
 	if ( !catchfr &&
@@ -2909,6 +2912,7 @@ the moment the code marked (**) handles this not very elegant
 
 					/* needed to avoid destruction */
 					/* in the undo */
+	      SECURE(checkStacks(FR, ch));
 	      dbg_discardChoicesAfter((LocalFrame)ch PASS_LD);
 	      undo_while_saving_term(&ch->mark, catcher);
 	      except = *catcher;

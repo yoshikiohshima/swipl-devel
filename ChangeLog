@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: possibility to crash the debugger on exceptions in callback
+    from C.  Salvador Fandiño.
+
+
 VERSION 5.3.14 (July 1, 2004)
 =============================
 
