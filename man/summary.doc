@@ -63,6 +63,7 @@ suggest predicates from a keyword.
 \predicatesummary{assertz}{2}{Add a clause to the database (last)}
 \predicatesummary{assume}{1}{Make assertions about your program}
 \predicatesummary{attach_console}{0}{Attach I/O console to thread}
+\predicatesummary{attvar}{1}{Type test for attributed variable}
 \predicatesummary{at_end_of_stream}{0}{Test for end of file on input}
 \predicatesummary{at_end_of_stream}{1}{Test for end of file on stream}
 \predicatesummary{at_halt}{1}{Register goal to run at halt/1}
@@ -198,6 +199,7 @@ suggest predicates from a keyword.
 \predicatesummary{format}{3}{Formatted output on a stream}
 \predicatesummary{format_predicate}{2}{Program format/[1,2]}
 \predicatesummary{free_variables}{2}{Find unbound variables in a term}
+\predicatesummary{freeze}{2}{Delay execution until variable is bound}
 \predicatesummary{functor}{3}{Get name and arity of a term or construct a term }
 \predicatesummary{garbage_collect}{0}{Invoke the garbage collector}
 \predicatesummary{garbage_collect_atoms}{0}{Invoke the atom garbage collector}
@@ -206,6 +208,7 @@ suggest predicates from a keyword.
 \predicatesummary{get}{2}{Read first non-blank character from a stream}
 \predicatesummary{get0}{1}{Read next character}
 \predicatesummary{get0}{2}{Read next character from a stream}
+\predicatesummary{get_attr}{3}{Fetch named attribute from a variable}
 \predicatesummary{get_byte}{1}{Read next byte (ISO)}
 \predicatesummary{get_byte}{2}{Read next byte from a stream (ISO)}
 \predicatesummary{get_char}{1}{Read next character as an atom (ISO)}
@@ -360,6 +363,7 @@ suggest predicates from a keyword.
 \predicatesummary{protocolling}{1}{On what file is user interaction logged}
 \predicatesummary{put}{1}{Write a character}
 \predicatesummary{put}{2}{Write a character on a stream}
+\predicatesummary{put_attr}{3}{Put attribute on a variable}
 \predicatesummary{put_byte}{1}{Write a byte}
 \predicatesummary{put_byte}{2}{Write a byte on a stream}
 \predicatesummary{put_char}{1}{Write a character}

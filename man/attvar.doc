@@ -1,0 +1,32 @@
+\chapter{Attributed variables}			\label{sec:attvar}
+
+\begin{description}
+    \predicate{attvar}{1}{{@}Term}
+Succeeds if \arg{Term} is an attributed variable. Note that var/1 also
+succeeds on attributed variables.  Attributed variables are created with
+put_attr/3.
+
+    \predicate{put_attr}{3}{+Var, +Name, +Value}
+If \arg{Var} is a variable or attributed variable, set the value for the
+attribute named \arg{Name} to \arg{Value}. If an attribute with this
+name is already associated with \var{Var}, the old value is replaced.
+Backtracking will restore the old value (i.e.\ an attribute is a mutable
+term. See also set_arg/3). This predicate raises a type error if
+\arg{Var} is not a variable or \arg{Name} is not an atom.
+
+    \predicate{get_attr}{3}{+Var, +Name, -Value}
+Request the current \arg{value} for the attribute named \arg{Name}.  If
+\arg{Var} is not an attributed variable or the named attribute is not
+associated to \arg{Var} this predicate fails silently.  If \arg{Name}
+is not an atom, a type error is raised.
+\end{description}
+
+
+\section{Corouting}				\label{sec:corouting}
+
+\begin{description}
+    \predicate{freeze}{2}{+Var, :Goal}
+Delay the execution of \arg{Goal} until \arg{Var} is bound (i.e. is
+not a variable or attributed variable).	 If \arg{Var} is bound on entry
+freeze/2 is equivalent to call/1.
+\end{description}
