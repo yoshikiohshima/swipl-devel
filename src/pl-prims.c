@@ -1039,8 +1039,13 @@ start:
     
     n++;
   } else if ( isTerm(*p) )
-  { int arity = arityFunctor(functorTerm(*p));
+  { Functor f = valueTerm(*p);
+    int arity;
 
+    if ( visited(f PASS_LD) )
+      return n;
+
+    arity = arityFunctor(f->definition);
     if ( arity == 1 )
     { _PL_get_arg(1, t, t);
       goto start;
@@ -1068,7 +1073,9 @@ start:
 int
 numberVars(term_t t, functor_t functor, int n ARG_LD)
 { term_t h2 = PL_copy_term_ref(t);
+  Word *m = aTop;
   int rval = do_number_vars(h2, functor, n PASS_LD);
+  unvisit(m PASS_LD);
 
   PL_reset_term_refs(h2);
 
@@ -1118,10 +1125,16 @@ right_recursion:
     return n+1;
   }
   if ( isTerm(*t) )
-  { int arity = arityFunctor(functorTerm(*t));
+  { int arity;
+    Functor f = valueTerm(*t);
 
+    if ( visited(f PASS_LD) )
+      return n;
+    
+    arity = arityFunctor(f->definition);
     for(t = argTermP(*t, 0); --arity > 0; t++)
       n = term_variables(t, l, n PASS_LD);
+
     goto right_recursion;
   }
     
@@ -1135,7 +1148,11 @@ PRED_IMPL("term_variables", 2, term_variables, 0)
   term_t head = PL_new_term_ref();
   term_t vars = PL_copy_term_ref(A2);
   term_t v0   = PL_new_term_refs(0);
-  int i, n    = term_variables(valTermRef(A1), v0, 0 PASS_LD);
+  Word *m     = aTop;
+  int i, n;
+
+  n = term_variables(valTermRef(A1), v0, 0 PASS_LD);
+  unvisit(m PASS_LD);
 
   for(i=0; i<n; i++)
   { if ( !PL_unify_list(vars, head, vars) ||

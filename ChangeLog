@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: handle cycles in term_variables/2 and numbervars/3.
+
   * ENHANCED: Cleanup of dif/2 by Tom Schrijvers.
 
   * FIXED: ensure a thread is considered to exist before it actually

@@ -1587,7 +1587,8 @@ cycles terms in the pure Prolog kernel including the garbage collector
 and in the following predicates: \predref{=}{2}, \predref{==}{2},
 \predref{\==}{2}, \predref{\=}{2}, \predref{=@=}{2}, \predref{\=@=}{2},
 \predref{@<}{2}, \predref{@=<}{2}, \predref{@>}{2}, \predref{@>=}{2},
-compare/3, \predref{=..}{2}, copy_term/2, duplicate_term/2, write/1.
+compare/3, \predref{=..}{2}, copy_term/2, duplicate_term/2, write/1,
+term_variables/2, numbervars/[3,4].
 
 
 \section{System limits}				\label{sec:limits}
