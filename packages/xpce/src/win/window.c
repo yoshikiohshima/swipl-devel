@@ -680,7 +680,7 @@ postEventWindow(PceWindow sw, EventObj ev)
     rval = mapWheelMouseEvent(ev, obj);
   }
     
-  if ( !rval && notNil(sw->popup) && isDownEvent(ev) )
+  if ( !rval && isDownEvent(ev) )
     rval = postEvent(ev, (Graphical) sw, popupGesture());
 
 out:

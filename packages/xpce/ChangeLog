@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ENHANCED: Allow redefinition of `window<-popup' for associating popups
+  rather than using hardwired slot.
+
 * FIXED: Busy cursor handling for MS-Windows (Cursor was not properly
   updated).  Holger Kanwischer.
 
