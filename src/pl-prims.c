@@ -1496,60 +1496,6 @@ formatInteger(bool split, int div, int radix, bool small, long int n,
 }	  
 
 
-word
-pl_format_number(term_t format, term_t number, term_t string)
-{ char *fmt;
-  int arg;
-  char conv;
-
-  if ( !PL_get_chars(format, &fmt, CVT_ALL) )
-    return warning("$format_number/2: instantiation fault");
-  if ( *fmt == EOS )
-    return warning("$format_number/3: illegal format");
-  arg = atoi(fmt);
-  conv = fmt[strlen(fmt)-1];
-
-  switch(conv)
-  { case 'D':
-    case 'd':
-    case 'r':
-    case 'R':
-      { long i;
-	char result[50];
-
-	if ( !PL_get_long(number, &i) )
-	  return warning("format_number/3: 2nd argument is not an integer");
-	if (conv == 'd' || conv == 'D')
-	  formatInteger(conv == 'D', arg, 10, TRUE, i, result);
-	else
-	  formatInteger(FALSE, 0, arg, conv == 'r', i, result);
-
-	return PL_unify_list_codes(string, result);
-      }
-    case 'e':
-    case 'E':
-    case 'f':
-    case 'g':
-    case 'G':
-      { double f;
-	char tmp[100];
-	char form2[10];
-
-	if ( fmt[1] == EOS )
-	  arg = 6;
-	if ( !PL_get_float(number, &f) )
-	  return warning("$format_number/3: 2nd argument is not a float");
-	Ssprintf(form2, "%%.%d%c", arg, conv);
-	Ssprintf(tmp, form2, f);
-
-	return PL_unify_list_codes(string, tmp);
-      }
-    default:
-      return warning("$format_number/3: illegal conversion code");
-  }
-}
-
-
 #define X_AUTO   0x00
 #define X_ATOM   0x01
 #define X_NUMBER 0x02
