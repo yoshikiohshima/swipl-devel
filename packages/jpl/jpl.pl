@@ -4178,6 +4178,54 @@ libjpl(File) :-
 	;   File = foreign(jpl)
 	).
 
+%	add_java_to_ldpath/0
+%	
+%	Adds the directories holding jvm.dll and java.dll to the %PATH%.
+%	This appears to work on Windows. Unfortunately most Unix systems
+%	appear to inspect the content of LD_LIBRARY_PATH only once.
+
+add_java_to_ldpath :-
+	current_prolog_flag(windows, true), !,
+	add_java_dir(jvm, '\\jre\\bin\\client', Extra1),
+	add_java_dir(java, '\\jre\\bin', Extra2),
+	append(Extra1, Extra2, Extra),
+	(   Extra \== []
+	->  print_message(informational,
+			  format('Added ~w to %PATH%', [Extra])),
+	    getenv('PATH', Path0),
+	    concat_atom([Path0|Extra], ';', Path),
+	    setenv('PATH', Path)
+	;   true
+	).
+add_java_to_ldpath.
+
+add_java_dir(DLL, SubPath, Dir) :-
+	(   check_shared_object(DLL, _, _Var, Abs),
+	    Abs \== (-)
+	->  Dir = []
+	;   java_home(JavaHome)
+	->  atom_concat(JavaHome, SubPath, ClientDir),
+	    Dir = [ClientDir]
+	;   Dir = []
+	).
+	    
+java_home(Home) :-
+	getenv('JAVA_HOME', Home),
+	exists_directory(Home), !.
+java_home(Home) :-
+	current_prolog_flag(windows, true), !,
+	Key0 = 'HKEY_LOCAL_MACHINE/Software/JavaSoft/Java Development Kit',
+	win_registry_get_value(Key0, 'CurrentVersion', Version),
+	concat_atom([Key0, Version], /, Key),
+	win_registry_get_value(Key, 'JavaHome', Home),
+	exists_directory(Home), !.
+java_home(Home) :-
+	current_prolog_flag(unix, true),
+	member(Home, [ '/usr/lib/java',
+		       '/usr/local/lib/java'
+		     ]),
+	exists_directory(Home), !.
+
 :- dynamic
 	jvm_ready/0.
 :- volatile
@@ -4187,6 +4235,7 @@ setup_jvm :-
 	jvm_ready, !.
 setup_jvm :-
 	add_jpl_to_classpath,
+	add_java_to_ldpath,
 	libjpl(JPL),
 	catch(load_foreign_library(JPL), E, report_java_setup_problem(E)),
 	assert(jvm_ready).
