@@ -4160,9 +4160,10 @@ library_search_path(Path, 'PATH') :-
 add_jpl_to_classpath :-
 	absolute_file_name(swi('lib/jpl.jar'), [access(read)], JplJAR),
 	(   getenv('CLASSPATH', Old)
-	->  concat_atom([JplJAR, Old], :, New)
-	;   New = JplJAR
+	->  true
+	;   Old = '.'
 	),
+	concat_atom([JplJAR, Old], :, New),
 	setenv('CLASSPATH', New).
 
 %	libjpl(-Spec)
