@@ -38,7 +38,10 @@ EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
 		chrdif.chr
 
 all:		
-		@echo "Nothing to do for this package"
+		$(PL) -q -f chr_swi_bootstrap.pl -g "chr_compile_step1('chr_translate.chr','chr_translate.pl'),halt" \
+		      -t 'halt(1)'
+		$(PL) -q -f chr_swi_bootstrap.pl -g "chr_compile_step2('chr_translate.chr','chr_translate.pl'),halt" \
+		      -t 'halt(1)'
 
 install:	$(CHRDIR) $(LIBPL)
 		$(INSTALL) -m 644 $(LIBPL) $(CHRDIR)
@@ -95,7 +98,7 @@ $(TEX):		$(DOCTOTEX)
 ################################################################
 
 clean:
-		rm -f *~ *% Tests/*.pl config.log
+		rm -f *~ *% Tests/*.pl config.log chr_translate.pl
 
 distclean:	clean
 		rm -f $(TARGETS) config.h config.cache config.status Makefile

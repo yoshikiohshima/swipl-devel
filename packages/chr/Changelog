@@ -1,6 +1,10 @@
+Mar 24, 2004
+
+  * Added bootstrapping process for CHR compiler using CHR.
+
 Mar 15, 2004
 
-  * Fix operator handling
+  * Fix operator handling.
 
 Mar 3, 2004
 
