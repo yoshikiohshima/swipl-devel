@@ -161,7 +161,9 @@ http_do_get(Parts, _Data, _Options) :-
 	throw(error(failed(http_get, Parts), _)).
 
 http_read_reply(In, Data, Options) :-
-	http_read_reply_header(In, Fields),
+	between(0, 1, _),
+	    http_read_reply_header(In, Fields),
+	\+ memberchk(status(continue, _), Fields), !,
 	http_read_data(In, Fields, Data, Options),
 	(   memberchk(connection(Connection), Fields),
 	    downcase_atom(Connection, 'keep-alive')
@@ -170,7 +172,7 @@ http_read_reply(In, Data, Options) :-
 	    connection(Address, Self, In, _Out)
 	->  disconnect(Address)
 	;   true
-	), !.
+	).
 http_read_reply(In, _Data, _Options) :-
 	format(user_error, 'Get FAILED~n', []),
 	throw(error(failed(read_reply, In), _)).
@@ -195,7 +197,7 @@ http_write_header(Out, Method, Location, Host, Options, RestOptions) :-
 	    Options1 = Options
 	),
 	format(Out, '~w ~w HTTP/~w.~w\r\n', [Method, Location, Major, Minor]),
-	format(Out, 'Host: ~w~n', [Host]),
+	format(Out, 'Host: ~w\r\n', [Host]),
 	(   select(connection(Connection), Options1, Options2)
 	->  true
 	;   Connection = 'Keep-Alive',

@@ -283,20 +283,22 @@ http_post_data(List, Out, HdrExtra) :-		% multipart-mixed
 	close(In),
 	free_memory_file(MemFile).
 
+%	post_header//2: DCG for generating the POST request
+
 post_header(html(Tokens), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(html(Tokens)),
 	content_type(text/html),
-	"\n".
+	"\r\n". 
 post_header(file(Type, File), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(file(File)),
 	content_type(Type),
-	"\n".
+	"\r\n". 
 post_header(cgi_data(Size), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(Size),
-	"\n".
+	"\r\n". 
 
 
 		 /*******************************
@@ -314,14 +316,14 @@ reply_header(string(Type, String), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(ascii_string(String)),
 	content_type(Type),
-	"\n".
+	"\r\n".
 reply_header(html(Tokens), HdrExtra) -->
 	vstatus(ok),
 	date(now),
 	header_fields(HdrExtra),
 	content_length(html(Tokens)),
 	content_type(text/html),
-	"\n".
+	"\r\n".
 reply_header(file(Type, File), HdrExtra) -->
 	vstatus(ok),
 	date(now),
@@ -329,20 +331,20 @@ reply_header(file(Type, File), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(file(File)),
 	content_type(Type),
-	"\n".
+	"\r\n".
 reply_header(tmp_file(Type, File), HdrExtra) -->
 	vstatus(ok),
 	date(now),
 	header_fields(HdrExtra),
 	content_length(file(File)),
 	content_type(Type),
-	"\n".
+	"\r\n".
 reply_header(cgi_data(Size), HdrExtra) -->
 	vstatus(ok),
 	date(now),
 	header_fields(HdrExtra),
 	content_length(Size),
-	"\n".
+	"\r\n".
 reply_header(moved(To, Tokens), HdrExtra) -->
 	vstatus(moved),
 	date(now),
@@ -350,14 +352,14 @@ reply_header(moved(To, Tokens), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(html(Tokens)),
 	content_type(text/html),
-	"\n".
+	"\r\n".
 reply_header(status(Status, Tokens), HdrExtra) -->
 	vstatus(Status),
 	date(now),
 	header_fields(HdrExtra),
 	content_length(html(Tokens)),
 	content_type(text/html),
-	"\n".
+	"\r\n".
 reply_header(authorise(Method, Realm, Tokens), HdrExtra) -->
 	vstatus(authorise),
 	date(now),
@@ -365,15 +367,16 @@ reply_header(authorise(Method, Realm, Tokens), HdrExtra) -->
 	header_fields(HdrExtra),
 	content_length(html(Tokens)),
 	content_type(text/html),
-	"\n".
+	"\r\n".
 
 vstatus(Status) -->
 	"HTTP/1.1 ",
 	status_number(Status),
 	" ",
 	status_comment(Status),
-	"\n".
+	"\r\n".
 
+status_number(continue)	    --> "100".
 status_number(ok)	    --> "200".
 status_number(moved)	    --> "301".
 status_number(not_modified) --> "304". 
@@ -382,6 +385,8 @@ status_number(forbidden)    --> "403".
 status_number(authorise)    --> "401".
 status_number(server_error) --> "500".
 
+status_comment(continue) -->
+	"Continue".
 status_comment(ok) -->
 	"OK".
 status_comment(moved) -->
@@ -410,7 +415,7 @@ date(Time) -->
 	->  now
 	;   rfc_date(Time)
 	),
-	"\n".
+	"\r\n".
 	
 modified(file(File)) --> !,
 	{ time_file(File, Time)
@@ -422,7 +427,7 @@ modified(Time) -->
 	->  now
 	;   rfc_date(Time)
 	),
-	"\n".
+	"\r\n".
 
 content_length(ascii_string(String)) --> !,
 	{ length(String, Len)
@@ -439,18 +444,19 @@ content_length(html(Tokens)) --> !,
 content_length(Len) -->
 	{ number_codes(Len, LenChars)
 	},
-	"Content-Length: ", string(LenChars), "\n".
+	"Content-Length: ", string(LenChars),
+	"\r\n".
 
 content_type(Main/Sub) --> !,
 	"Content-Type: ",
 	atom(Main),
 	"/",
 	atom(Sub),
-	"\n".
+	"\r\n".
 content_type(Type) --> !,
 	"Content-Type: ",
 	atom(Type),
-	"\n".
+	"\r\n".
 
 header_field(Name, Value) -->
 	{ var(Name)
@@ -468,7 +474,7 @@ header_field(Name, Value) -->
 	field_name(Name),
 	": ",
 	atom(Value),
-	"\n".
+	"\r\n".
 
 int_field(content_length).
 
@@ -483,7 +489,7 @@ header_fields([H|T]) -->
 	field_name(Name),
 	": ",
 	atom(Value),
-	"\n",
+	"\r\n",
 	header_fields(T).
 
 %	field_name(?PrologName)
@@ -668,4 +674,3 @@ header([Att|T]) -->
 header([]) -->
 	blanks,
 	[].
-
