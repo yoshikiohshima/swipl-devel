@@ -1025,20 +1025,10 @@ ssl_tcp_listen(PL_SSL *config)
         perror("socket");
         return -1;
     }
+
     nbio_setopt(sock, TCP_NONBLOCK);
-
-
     if ( config->pl_ssl_reuseaddr )
-    { int sockopt = 1;
-
-      if (setsockopt( sock
-		    , SOL_SOCKET, SO_REUSEADDR,
-		      (const void *) &sockopt, sizeof(sockopt)) < 0)
-      { perror("setsockopt");
-	closesocket(sock);
-        return -2;
-      }
-    }
+        nbio_setopt(sock, TCP_REUSEADDR);
 
     if (!ssl_hostaddr(&sa_server, config->pl_ssl_host, config->pl_ssl_port)) {
 	closesocket(sock);
@@ -1122,7 +1112,6 @@ ssl_accept(PL_SSL *config, void *addr, size_t *addrlen)
 {
     struct sockaddr_in sa_client;
     size_t             client_len;
-    int                fd = -1;
 
     if ( !addr ) {
 	addr = (struct  sockaddr *)&sa_client;
@@ -1130,24 +1119,7 @@ ssl_accept(PL_SSL *config, void *addr, size_t *addrlen)
 	addrlen = &client_len;
     }
 
-    /*
-     * Accept a new connection.
-     * We might still be in a signal handler which most UNIX's
-     * don't like, giving an EINTR. In that case give connect()
-     * another chance.
-     */
-    while ((fd = accept( config->sock, addr, addrlen )) < 0) {
-        if (errno == EINTR) {
-            if ( PL_handle_signals() < 0 ) {
-                return -1;
-            }
-            continue;
-        }
-        perror("accept");
-        return -1;
-    }
-
-    return fd;
+    return nbio_accept(config->sock, addr, addrlen);
 }
 
 int
@@ -1163,17 +1135,8 @@ ssl_connect(PL_SSL *config)
         return -1;
     }
 
-    while (connect(sock, (struct sockaddr*) &sa_client, sizeof(sa_client)) < 0)
-    {
-        if (errno == EINTR) {
-            if ( PL_handle_signals() < 0 ) {
-                return -1;
-            }
-            continue;
-        }
-        perror("connect");
-        return -1;
-    }
+    if ( nbio_connect(sock, (struct sockaddr*) &sa_client, sizeof(sa_client)) < 0)
+      return -1;
 
     return sock;
 }

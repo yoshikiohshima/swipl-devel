@@ -116,7 +116,7 @@ extern int	nbio_init(void);
 extern int	nbio_cleanup(void);
 extern int	nbio_debug(int level);
 
-extern int	nbio_socket(void);
+extern int	nbio_socket(int domain, int type, int protocol);
 extern int	nbio_connect(int socket,
 			    const struct sockaddr *serv_addr,
 			    size_t addrlen);

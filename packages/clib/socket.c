@@ -254,7 +254,7 @@ pl_open_socket(term_t Socket, term_t Read, term_t Write)
 
 static foreign_t
 pl_socket(term_t socket)
-{ int sock = nbio_socket();
+{ int sock = nbio_socket(AF_INET, SOCK_STREAM, 0);
 
   if ( sock < 0 )
     return FALSE;

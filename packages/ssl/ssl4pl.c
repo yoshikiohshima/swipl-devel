@@ -531,6 +531,20 @@ pl_ssl_close(PL_SSL_INSTANCE *instance)
 }
 
 
+static int
+pl_ssl_control(PL_SSL_INSTANCE *instance, int action, void *data)
+{ switch(action)
+  { case SIO_GETFILENO:
+    { int *p = data;
+
+      *p = instance->sock;
+    }
+    default:
+      return -1;
+  }
+}
+
+
 static foreign_t
 pl_ssl_exit(term_t config)
 { PL_SSL *conf;
@@ -549,7 +563,7 @@ static IOFUNCTIONS ssl_funcs =
   (Swrite_function) ssl_write,		/* write */
   NULL,					/* seek */
   (Sclose_function) pl_ssl_close,	/* close */
-  NULL					/* control */
+  (Scontrol_function) pl_ssl_control	/* control */
 };
 
 

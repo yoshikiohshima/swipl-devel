@@ -207,6 +207,14 @@ static plsocket   *lookupExistingSocket(int socket);
 static const char *WinSockError(unsigned long eno);
 #endif
 
+inline int
+need_retry(int error)
+{ if ( error == EINTR || error == EAGAIN || error == EWOULDBLOCK )
+    return TRUE;
+
+  return FALSE;
+}
+
 #ifdef O_DEBUG
 static int debugging;
 
@@ -666,7 +674,21 @@ without dispatching if no input is available.
 static int
 wait_socket(plsocket *s, int fd)
 { if ( true(s, SOCK_DISPATCH) )
-    return PL_dispatch(fd, PL_DISPATCH_WAIT);
+  { if ( true(s, SOCK_NONBLOCK) && !PL_dispatch(fd, PL_DISPATCH_INSTALLED) )
+    { fd_set rfds;
+      struct timeval tv;
+
+      FD_ZERO(&rfds);
+      FD_SET(fd, &rfds);
+      tv.tv_sec = 0;
+      tv.tv_usec = 250000;
+      
+      select(fd+1, &rfds, NULL, NULL, &tv) != 0;
+      return TRUE;
+    } else
+    { return PL_dispatch(fd, PL_DISPATCH_WAIT);
+    }
+  }
 
   return TRUE;
 }
@@ -947,6 +969,7 @@ nbio_error(int code, nbio_error_map mapid)
       map = NULL;
   }
 
+  {
 #ifdef WIN32
   msg = WinSockError(code);
 #else
@@ -973,6 +996,7 @@ nbio_error(int code, nbio_error_map mapid)
 		  CompoundArg("socket_error", 1),
 		    AtomArg(msg),
 		  PL_VARIABLE);
+  }
 
   return PL_raise_exception(except);
 }
@@ -1029,14 +1053,14 @@ socket(-Socket)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
-nbio_socket(void)
+nbio_socket(int domain, int type, int protocol)
 { int sock;
   plsocket *s;
 	
   if ( !nbio_init() )
     return FALSE;
 
-  if ( (sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+  if ( (sock = socket(domain, type , protocol)) < 0)
   { nbio_error(errno, TCP_ERRNO);
     return -1;
   }
@@ -1310,7 +1334,7 @@ nbio_connect(int socket,
 #else /*!WIN32*/
   for(;;)
   { if ( connect(socket, serv_addr, addrlen) )
-    { if ( errno == EINTR )
+    { if ( need_retry(errno) )
       { if ( PL_handle_signals() < 0 )
 	  return -1;
 	continue;
@@ -1366,7 +1390,7 @@ nbio_accept(int master, struct sockaddr *addr, size_t *addrlen)
     slave = accept(master, addr, addrlen);
 
     if ( slave == SOCKET_ERROR )
-    { if ( errno == EINTR )
+    { if ( need_retry(errno) )
       { if ( PL_handle_signals() < 0 )
 	  return -1;
 
@@ -1381,6 +1405,8 @@ nbio_accept(int master, struct sockaddr *addr, size_t *addrlen)
 
   { plsocket *s = lookupSocket(slave);
     s->flags |= SOCK_ACCEPT;
+    if ( true(s, SOCK_NONBLOCK) )
+      nbio_setopt(slave, TCP_NONBLOCK);
   }
 
 #endif /*WIN32*/
@@ -1448,7 +1474,7 @@ nbio_read(int socket, char *buf, int bufSize)
 
     n = recv(socket, buf, bufSize, 0);
 
-    if ( n == -1 && errno == EINTR )
+    if ( n == -1 && need_retry(errno) )
     { if ( PL_handle_signals() < 0 )
       { errno = EPLEXCEPTION;
 	return -1;
@@ -1512,7 +1538,7 @@ nbio_write(int socket, char *buf, int bufSize)
 
     n = send(socket, str, len, 0);
     if ( n < 0 )
-    { if ( errno == EINTR )
+    { if ( need_retry(errno) )
       { if ( PL_handle_signals() < 0 )
 	{ errno = EPLEXCEPTION;
 	  return -1;
