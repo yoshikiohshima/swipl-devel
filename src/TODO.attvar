@@ -48,17 +48,24 @@ Places to deal with them
 	
 
 		 /*******************************
+		 *	    CYCLIC TERMS	*
+		 *******************************/
+
+Cyclic terms, especially over attributed variables are very common.
+Places where we support them:
+
+	# =/2
+	# copy_term/2
+
+
+		 /*******************************
 		 *	  GLOBAL VARIABLES	*
 		 *******************************/
+
+Copied semantics from hProlog.
 
 GNU:
 
 	g_link(+Callable, ?Term)
 	g_read(+Callable, ?Term)
 
-Options:
-
-	# alloc_global(-I)		(- index)
-	Allocated at the bottom of the local stack.  Implies we need the
-	stack-shifter to grow the number of reserved entries.  Can be static
-	for now.
