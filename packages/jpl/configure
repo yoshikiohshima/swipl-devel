@@ -3279,8 +3279,9 @@ done
 for d in $JNI_INCLUDE_DIRS; do
   CIFLAGS="$CIFLAGS -I$d"
 done
+
 for d in $JNI_CLIENT_DIRS; do
-  LDSOFLAGS="$LDSOFLAGS -L$d"
+  LDSOFLAGS="$LDSOFLAGS -L$d -Wl,-rpath,$d"
 done
 
 if test "$java_abs_paths" = yes; then

@@ -4147,28 +4147,28 @@ multimap_to_atom_1( [K-V|KVs], T, Cs1, Cs0) :-
 	 *******************************/
 
 :- dynamic
-    user:file_search_path/2.
+	user:file_search_path/2.
 :- multifile
-    user:file_search_path/2.
+	user:file_search_path/2.
 
 
 user:file_search_path(java, JavaHOME) :-
-    (	getenv('JAVA_HOME', JavaHOME)
-    ;	current_prolog_flag(unix, true),
-	(   JavaHOME = '/usr/lib/java'
-	;   JavaHOME = '/usr/local/lib/java'
-	)
-    ),
-    exists_directory(JavaHOME), !.
+	(   getenv('JAVA_HOME', JavaHOME)
+	;   current_prolog_flag(unix, true),
+	    (   JavaHOME = '/usr/lib/java'
+	    ;   JavaHOME = '/usr/local/lib/java'
+	    )
+	),
+	exists_directory(JavaHOME), !.
 user:file_search_path(jre, java(jre)).
 user:file_search_path(jre_client, jre(Client)) :-
-    java_cpu(CPU),
-    concat_atom([lib,CPU,client], /, Client).
+	java_cpu(CPU),
+	concat_atom([lib,CPU,client], /, Client).
 
 java_cpu(CPU) :-
-    current_prolog_flag(arch, Arch),
-    concat_atom([PrologCPU|_], -, Arch),
-    java_cpu(PrologCPU, CPU).
+	current_prolog_flag(arch, Arch),
+	concat_atom([PrologCPU|_], -, Arch),
+	java_cpu(PrologCPU, CPU).
 
 java_cpu(i386,	i386).
 java_cpu(i486,	i386).
@@ -4179,31 +4179,31 @@ java_cpu(sparc, sparc).
 java_cpu(mips,	mips).
 
 setup_ld_library_path :-
-    absolute_file_name(jre_client(.),
-	       [ file_type(directory),
-		 access(read)
-	       ],
-	       ClientDir),
-    file_directory_name(ClientDir, NativeDir),
-    JavaDirs = [ClientDir, NativeDir],
-    (	getenv('LD_LIBRARY_PATH', Path0)
-    ->	append([Path0], JavaDirs, Parts)
-    ;	Parts = JavaDirs
-    ),
-    concat_atom(Parts, ':', Path),
-    setenv('LD_LIBRARY_PATH', Path).
+	absolute_file_name(jre_client(.),
+			   [ file_type(directory),
+			     access(read)
+			   ],
+			   ClientDir),
+	file_directory_name(ClientDir, NativeDir),
+	JavaDirs = [ClientDir, NativeDir],
+	(   getenv('LD_LIBRARY_PATH', Path0)
+	->  append([Path0], JavaDirs, Parts)
+	;   Parts = JavaDirs
+	),
+	concat_atom(Parts, ':', Path),
+	setenv('LD_LIBRARY_PATH', Path).
 
 :- dynamic
-    jvm_ready/0.
+	jvm_ready/0.
 :- volatile
-    jvm_ready/0.
+	jvm_ready/0.
 
 setup_jvm :-
-    jvm_ready, !.
+	jvm_ready, !.
 setup_jvm :-
-    setup_ld_library_path,
-    load_foreign_library(foreign(jpl)),
-    assert(jvm_ready).
+	setup_ld_library_path,
+	load_foreign_library(foreign(jpl)),
+	assert(jvm_ready).
 
 :- initialization
-    setup_jvm.
+   setup_jvm.

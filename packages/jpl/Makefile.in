@@ -46,7 +46,7 @@ OBJ=		src/c/jpl.o
 all:		$(TARGETS)
 
 jpl.@SO@:	$(OBJ)
-		$(LD) $(LDFLAGS) -o $@ $(OBJ) -ljvm
+		$(LD) $(LDFLAGS) -o $@ $(OBJ) -ljava -lverify -ljvm
 
 check::
 
