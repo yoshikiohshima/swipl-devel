@@ -1,3 +1,7 @@
+Jul 22, 2004
+
+  * FIXED: rdf(X,X,X) and similar queries.
+
 Jul 15, 2004
 
   * ENHANCED: Added triple garbage collector.  After Bug#161 by Sandro Hawke.

@@ -105,6 +105,16 @@ literal(1) :-
 
 
 		 /*******************************
+		 *	   UNIFYING ARGS	*
+		 *******************************/
+
+same(1) :-
+	rdf_assert(a,b,c),
+	rdf_assert(x,x,x),
+	rdf(X,X,X),
+	X == x.
+
+		 /*******************************
 		 *	   TYPED LITERALS	*
 		 *******************************/
 
@@ -361,6 +371,7 @@ script_failed(File, Except) :-
 
 testset(resource).
 testset(literal).
+testset(same).
 testset(typed).
 testset(lang).
 testset(update).

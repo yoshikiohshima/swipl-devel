@@ -2347,6 +2347,7 @@ static int
 unify_triple(term_t subject, term_t pred, term_t object,
 	     term_t src, triple *t, int inversed)
 { predicate *p = t->predicate;
+  fid_t fid;
 
   if ( inversed )
   { term_t tmp = object;
@@ -2357,15 +2358,18 @@ unify_triple(term_t subject, term_t pred, term_t object,
       return FALSE;
   }
 
+  fid = PL_open_foreign_frame();
+
   if ( !PL_unify_atom(subject, t->subject) ||
        !PL_unify_atom(pred, p->name) ||
-       !unify_object(object, t) )
+       !unify_object(object, t) ||
+       (src && !unify_source(src, t)) )
+  { PL_discard_foreign_frame(fid);
     return FALSE;
-
-  if ( src )
-    return unify_source(src, t);
-
-  return TRUE;
+  } else
+  { PL_close_foreign_frame(fid);
+    return TRUE;
+  }
 }
 
 
