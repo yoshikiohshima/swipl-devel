@@ -62,6 +62,16 @@ TestJPL.class:	TestJPL.java
 # Installation
 ################################################################
 
+DOCDIRS=	. ./java_api ./java_api/javadoc ./java_api/javadoc/jpl \
+		./java_api/javadoc/jpl/class-use \
+		./java_api/javadoc/jpl/fli \
+		./java_api/javadoc/jpl/fli/class-use \
+		./java_api/javadoc/resources \
+		./prolog_api \
+		./prolog_api/overview
+DOCFILES=	$(shell cd ./docs && find . -name '*.html' -o -name '*.gif' -o -name '*.jpg')
+
+
 install:	$(TARGETS) $(LIBPL)
 		mkdir -p $(PLBASE)/lib/$(PLARCH)
 		for f in $(TARGETS); do \
@@ -77,8 +87,17 @@ install:	$(TARGETS) $(LIBPL)
 rpm-install:	install
 
 html-install::
-		mkdir -p $(PKGDOC)
-		$(INSTALL) -m 644 clib.html $(PKGDOC)
+		mkdir -p $(PKGDOC)/jpl
+		@echo -n "Creating directories "
+		@for d in $(DOCDIRS); do \
+		    mkdir -p $(PKGDOC)/jpl/$$d; echo -n .; \
+		done
+		@echo "ok"
+		@echo -n "Copying documentation files "
+		@for f in $(DOCFILES); do \
+		    $(INSTALL_DATA) docs/$$f $(PKGDOC)/jpl/$$f; echo -n .; \
+		done
+		@echo "ok"
 
 pdf-install::
 		mkdir -p $(PKGDOC)
@@ -123,6 +142,7 @@ clean:
 		(cd src/java && $(MAKE) clean)
 
 distclean:	clean
+		rm -rf autom4te.cache
 		rm -f $(TARGETS) config.cache config.h config.status Makefile
 		rm -f clib.aux clib.log clib.out clib.toc
 		rm -rf html
