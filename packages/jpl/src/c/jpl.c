@@ -4913,7 +4913,7 @@ Java_jpl_fli_Prolog_get_1jpl_1term(
     jobject     ref;            // the object referred to by Tag
     
     return  jpl_ensure_pvm_init(env)
-        &&  getLongValue(env,jterm,&(long)term)
+        &&  getLongValue(env,jterm,(long*)&term)
         &&  PL_get_functor(term,&fn)       // succeeds iff jterm is atom or compound
         &&  fn == JNI_functor_at_1         // jterm is @(Something)
         &&  ( a1 = PL_new_term_ref(),
