@@ -131,6 +131,11 @@ clean::
 	    if [ -r $$p/Makefile ]; then ( cd $$p && $(MAKE) $@ ); fi; \
         done
 
+check::
+	for p in $(PKG); do \
+	    if [ -r $$p/Makefile ]; then ( cd $$p && $(MAKE) $@ ); fi; \
+        done
+
 # test environment
 
 printenv::

@@ -69,6 +69,8 @@ files.@SO@:	$(FILESOBJ)
 rlimit.@SO@:	$(RLIMITOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(RLIMITOBJ) $(LIBS)
 
+check::
+
 install:	$(TARGETS) $(LIBPL)
 		mkdir -p $(PLBASE)/lib/$(PLARCH)
 		for f in $(TARGETS); do \

@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: Central "make check" to run regression tests in main system and
+    all packages.
+
   * CLEANED: handle command history per thread.
 
   * FIXED: handling of attributed variables in meta-calls.  Tom Schrijvers.
