@@ -23,7 +23,7 @@
 */
 
 #include <math.h>
-#define O_DEBUG 1
+/*#define O_DEBUG 1*/
 #include "pl-incl.h"
 #include "pl-ctype.h"
 
