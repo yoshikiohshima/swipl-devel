@@ -1344,7 +1344,10 @@ isvar:
     k = varFrameP(lTop, voffset);
 
     requireStack(local, (voffset+1)*sizeof(word));
-    *k = *arg;
+    if ( isAttVar(*arg) )		/* attributed variable: must make */
+      *k = makeRef(arg);		/* a reference to avoid binding a */
+    else				/* copy! */
+      *k = *arg;
     if ( ci->argvar < 3 )
     { Output_0(ci, B_VAR0 + ci->argvar);
     } else
