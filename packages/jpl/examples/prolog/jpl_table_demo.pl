@@ -1,3 +1,5 @@
+:- use_module(library(jpl)).
+
 % jpl_table_demo :-
 %	displays the names and values of all current Prolog flags
 %	in a new JTable (within a new JScrollPane, within a new JFrame)

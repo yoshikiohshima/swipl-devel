@@ -1,3 +1,5 @@
+:- use_module(library(jpl)).
+
 jpl_jlist_demo :-
 	jpl_new( 'javax.swing.JFrame', ['modules'], F),
 	jpl_new( 'javax.swing.DefaultListModel', [], DLM),

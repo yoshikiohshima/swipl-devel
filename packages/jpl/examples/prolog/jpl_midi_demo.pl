@@ -1,3 +1,5 @@
+:- use_module(library(jpl)).
+
 jpl_midi_demo :-
 	jpl_midi_demo( 20).	% play 20 random notes
 

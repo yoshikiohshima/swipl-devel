@@ -1,3 +1,5 @@
+:- use_module(library(jpl)).
+
 jpl_versions_demo :-
 	jpl_call( 'jpl.JPL', version_string, [], Vj),
 	jpl_c_lib_version( Vc),

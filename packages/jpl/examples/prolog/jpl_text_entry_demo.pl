@@ -1,3 +1,5 @@
+:- use_module(library(jpl)).
+
 % shows a JOptionPane dialog, on top of a (necessary) new JFrame,
 % and awaits text entry and OK/Cancel button click
 

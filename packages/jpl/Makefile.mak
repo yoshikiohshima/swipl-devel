@@ -10,7 +10,19 @@
 
 PLHOME=..\..
 !include ..\..\src\rules.mk
+
 PKGDLL=jpl
+
+EXDIR=		$(PKGDOC)\examples\jpl
+EXPL=		$(EXDIR)\prolog
+EXPLS=		jpl_colour_choose_demo.pl \
+		jpl_jlist_demo.pl \
+		jpl_midi_demo.pl \
+		jpl_table_demo.pl \
+		jpl_text_entry_demo.pl \
+		jpl_versions_demo.pl \
+		README.TXT
+
 CFLAGS =	$(CFLAGS) \
 		-I"$(JAVA_HOME)\include" \
 		-I"$(JAVA_HOME)\include\win32"
@@ -43,9 +55,15 @@ ilib::
 		copy jpl.jar "$(PLBASE)\lib"
 		$(MAKEINDEX)
 
-html-install::
+html-install::	install-examples
 
 xpce-install::
+
+install-examples::
+		if not exist "$(EXDIR)/$(NULL)" $(MKDIR) "$(EXDIR)"
+		if not exist "$(EXPL)/$(NULL)" $(MKDIR) "$(EXPL)"
+		cd examples\prolog & \
+			@for %f in ($(EXPLS)) do @copy %f "$(EXPL)"
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
