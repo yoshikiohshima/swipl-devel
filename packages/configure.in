@@ -32,6 +32,7 @@ if [ -z "$PKG" ]; then
 fi
 
 if findexe javac; then
+  echo "Found javac.  Including JPL in target packages"
   PKG="$PKG jpl"
 fi
 
@@ -50,7 +51,7 @@ done
 
 sed "s@^PKG=.*@PKG=$PKG@" Makefile > Makefile.pkg
 if cmp -s Makefile Makefile.pkg; then
-   rm Makefile
+   rm Makefile.pkg
 else
    mv Makefile.pkg Makefile
 fi
