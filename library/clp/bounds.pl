@@ -59,6 +59,9 @@
 		(#=>)/2,
 		(#<=)/2,
 		(#/\)/2,
+		(#\/)/2,
+		(#\)/2,
+		(#\)/1,
 		(in)/2,
 		label/1,
 		all_different/1
@@ -67,10 +70,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % operator declarations
 
-:- op(760, yfx,user:(#<=>)).
-:- op(750, xfy,user:(#=>)).
-:- op(750, yfx,user:(#<=)).
-:- op(720, yfx, user:(#/\)).
+:- op(760,yfx,user:(#<=>)).
+:- op(750,xfy,user:(#=>)).
+:- op(750,yfx,user:(#<=)).
+:- op(740,yfx,user:(#\/)).
+:- op(730,yfx,user:(#\)).
+:- op(720,yfx,user:(#/\)).
+:- op(710, fy,user:(#\)).
 :- op(700,xfx,user:(#>)).
 :- op(700,xfx,user:(#<)).
 :- op(700,xfx,user:(#>=)).
@@ -123,7 +129,18 @@ R #<= L :-
 L #/\ R :-
 	call(L),
 	call(R).
+L #\/ R :-
+	reify(L,BL),
+	reify(R,BR),
+	myor(BL,BR,1).	
+L #\ R :-
+	reify(L,BL),
+	reify(R,BR),
+	myxor(BL,BR,1).
 
+#\ C :-
+	reify(C,B),
+	mynot(B,1).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 reify(B,R) :-
 	var(B), !,
@@ -157,6 +174,17 @@ reify((X #/\ Y),B) :-
 	reify(X,BX),
 	reify(Y,BY),
 	myand(BX,BY,B).
+reify((X #\/ Y),B) :-
+	reify(X,BX),
+	reify(Y,BY),
+	myor(BX,BY,B).
+reify((X #\ Y),B) :-
+	reify(X,BX),
+	reify(Y,BY),
+	myxor(BX,BY,B).
+reify(#\ C, B) :-
+	reify(C,BC),
+	mynot(BC,B).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_expression(Expr,Result) :-
@@ -846,6 +874,68 @@ myand(X,Y,Z) :-
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+myor(X,Y,Z) :-
+	( nonvar(X) ->
+		( X == 0 ->
+			Y in 0..1,
+			Y = Z
+		; X == 1 ->
+			Y in 0..1,
+			Z = 1
+		)
+	; nonvar(Y) ->
+		myor(Y,X,Z)
+	; nonvar(Z) ->
+		( Z == 0 ->
+			X = 0,
+			Y = 0
+		; Z == 1 ->
+			X in 0..1,
+			Y in 0..1,
+			X + Y #>= 1
+		)
+	;
+		get(X,LX,UX,ExpX),
+		get(Y,LY,UY,ExpY),
+		get(Z,LZ,UZ,ExpZ),
+		put(X,LX,UX,[myor(Y,Z)|ExpX]),
+		put(Y,LY,UY,[myor(X,Z)|ExpY]),
+		put(Z,LZ,UZ,[myor2(X,Y)|ExpZ]),
+		[X,Y,Z] in 0..1
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+myxor(X,Y,Z) :-
+	( nonvar(X) ->
+		( X == 0 ->
+			Y in 0..1,
+			Y = Z
+		; X == 1 ->
+			mynot(Y,Z)
+		)
+	; nonvar(Y) ->
+		myxor(Y,X,Z)
+	; nonvar(Z) ->
+		( Z == 0 ->
+			X = Y,
+			[X,Y] in 0..1
+		; Z == 1 ->
+			X in 0..1,
+			Y in 0..1,
+			X + Y #= 1
+		)
+	;
+		get(X,LX,UX,ExpX),
+		get(Y,LY,UY,ExpY),
+		get(Z,LZ,UZ,ExpZ),
+		put(X,LX,UX,[myxor(Y,Z)|ExpX]),
+		put(Y,LY,UY,[myxor(X,Z)|ExpY]),
+		put(Z,LZ,UZ,[myxor2(X,Y)|ExpZ]),
+		[X,Y,Z] in 0..1
+	).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get(X,L,U,Exp) :-
 	( get_attr(X,bounds,Attr) ->
 		Attr = bounds(L,U,Exp)
@@ -970,6 +1060,16 @@ trigger_exp(myand(Y,Z),X) :-
 	myand(X,Y,Z).
 trigger_exp(myand2(X,Y),Z) :-
 	myand(X,Y,Z).
+
+trigger_exp(myor(Y,Z),X) :-
+	myor(X,Y,Z).
+trigger_exp(myor2(X,Y),Z) :-
+	myor(X,Y,Z).
+
+trigger_exp(myxor(Y,Z),X) :-
+	myxor(X,Y,Z).
+trigger_exp(myxor2(X,Y),Z) :-
+	myxor(X,Y,Z).
 
 memberchk_eq(X,[Y|Ys],Z) :-
    (   X == Y ->
