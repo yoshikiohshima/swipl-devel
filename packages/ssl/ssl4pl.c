@@ -564,10 +564,9 @@ pl_ssl_open(term_t config, term_t socket, term_t in, term_t out)
   instance->close_needed++;
 
   if ( !PL_unify_stream(in, i) )
-  { Sclose(i);				/* TBD: doesn't close (count) */
+  { Sclose(i);
     return FALSE;
   }
-
   
   if ( !(o=Snew(instance, SIO_OUTPUT, &ssl_funcs)) )
     return FALSE;
