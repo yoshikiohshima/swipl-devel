@@ -344,15 +344,15 @@ writeAttVar(term_t av, write_options *options)
 static bool
 writeBlob(atom_t a, write_options *options)
 { Atom atom = atomValue(a);
-  unsigned char *s;
-  int i;
+  unsigned char const *s, *e;
 
   TRY(PutString("<#", options->out));
-  for(i=atom->length, s=atom->name; --i>=0; s++)
+  s = (unsigned char const *)atom->name;
+  for (e = s + atom->length; s != e; s++)
   { static char *digits = "0123456789abcdef";
 
-    TRY(Putc(digits[((*s)>>4) & 0xf], options->out));
-    TRY(Putc(digits[(*s) & 0xf],      options->out));
+    TRY(Putc(digits[(*s >> 4) & 0xf], options->out));
+    TRY(Putc(digits[(*s     ) & 0xf], options->out));
   }
   
   return PutString(">", options->out);
@@ -436,9 +436,9 @@ writePrimitive(term_t t, write_options *options)
     }
 #endif
 
-    if ( s )
+    if ( s ) {
       return PutToken(s, out);
-    else
+    } else
     { char buf[100];
       char *q;
 
@@ -462,8 +462,6 @@ writePrimitive(term_t t, write_options *options)
 
       return PutToken(buf, out);
     }
-
-    succeed;
   }
 
 #if O_STRING

@@ -499,7 +499,6 @@ pl_current_predicate(term_t name, term_t spec, control_t h)
       continue;
 
     ForeignRedoPtr(e);
-    succeed;
   }
 
   freeTableEnum(e);

@@ -215,7 +215,7 @@ Add a signed long value. First byte   is  number of bytes, remaining are
 value-bytes, starting at most-significant.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define PLMINLONG   ((long)(1L<<(LONGBITSIZE-1)))
+#define PLMINLONG   ((long)(-1L<<(LONGBITSIZE-1)))
 
 static void
 addLong(CompileInfo info, long v)
@@ -223,7 +223,7 @@ addLong(CompileInfo info, long v)
 
   if ( v != PLMINLONG )
   { long absn = (v >= 0 ? v : -v);
-    long mask = 0x1ffL << (LONGBITSIZE-9);
+    long mask = -1L << (LONGBITSIZE-9);
 
     for(; i>1; i--, mask >>= 8)
     { if ( absn & mask )

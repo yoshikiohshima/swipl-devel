@@ -93,7 +93,7 @@ static unsigned long mask_mask[] =
 #ifdef DONOT_AVOID_SHIFT_WARNING
     IDX_MASK(1),
 #else
-    ~0L,
+    ~0UL,
 #endif
     IDX_MASK(2), IDX_MASK(3), IDX_MASK(4)
   };

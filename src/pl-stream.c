@@ -1784,7 +1784,7 @@ Sfileno(IOSTREAM *s)
 		      EOF, SIO_MAGIC, 0, f, {0, 0, 0}, NULL, \
 		      ((void *)(n)), &Sfilefunctions, \
 		      0, NULL, \
-		      NULL, NULL, \
+		      (void (*)(void *))0, NULL, \
 		      -1 \
 		    }
 
@@ -1869,7 +1869,7 @@ Sclose_pipe(void *handle)
 IOFUNCTIONS Spipefunctions =
 { Sread_pipe,
   Swrite_pipe,
-  NULL,
+  (Sseek_function)0,
   Sclose_pipe
 };
 
@@ -2160,7 +2160,7 @@ Sclose_string(void *handle)
 IOFUNCTIONS Sstringfunctions =
 { Sread_string,
   Swrite_string,
-  NULL,
+  (Sseek_function)0,
   Sclose_string
 };
 

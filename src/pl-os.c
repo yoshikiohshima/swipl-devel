@@ -63,7 +63,7 @@
 #ifdef HAVE_FTIME
 #include <sys/timeb.h>
 #endif
-
+#include <time.h>
 #include <fcntl.h>
 #ifndef __WATCOMC__			/* appears a conflict */
 #include <errno.h>
@@ -257,7 +257,7 @@ CpuTime(cputime_kind which)
     used = 0.0;				/* happens when running under GDB */
 
   return used;
-#endif
+#else
 
 #if OS2 && EMX
   DATETIME i;
@@ -267,13 +267,17 @@ CpuTime(cputime_kind which)
                  + (i.minutes * 60) 
 		 + i.seconds
 	         + (i.hundredths / 100.0)) - initial_time);
-#endif
+#else
 
 #ifdef HAVE_CLOCK
   return (real) (clock() - clock_wait_ticks) / (real) CLOCKS_PER_SEC;
-#endif
+#else
 
   return 0.0;
+
+#endif
+#endif
+#endif
 }
 
 #endif /*__WIN32__*/
@@ -1833,7 +1837,7 @@ ChDir(const char *path)
 struct tm *
 LocalTime(long int *t, struct tm *r)
 {
-#ifdef HAVE_LOCALTIME_R
+#if defined(_REENTRANT) && defined(HAVE_LOCALTIME_R)
   return localtime_r(t, r);
 #else
   *r = *localtime((const time_t *) t);

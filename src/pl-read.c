@@ -291,7 +291,7 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
 { GET_LD
   term_t ex = PL_new_term_ref();
   term_t loc = PL_new_term_ref();
-  const char *s, *ll = NULL;
+  unsigned char const *s, *ll = NULL;
 
   if ( !id_term )
   { id_term = PL_new_term_ref();
@@ -305,7 +305,7 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
 		  PL_TERM, loc);
 
   source_char_no += last_token_start - rdbase;
-  for(s=rdbase; s<(const char*)last_token_start; s++)
+  for(s=rdbase; s<last_token_start; s++)
   { if ( *s == '\n' )
     { source_line_no++;
       ll = s+1;
@@ -315,7 +315,7 @@ errorWarning(const char *id_str, term_t id_term, ReadData _PL_rd)
   if ( ll )
   { int lp = 0;
 
-    for(s = ll; s<(const char*)last_token_start; s++)
+    for(s = ll; s<last_token_start; s++)
     { switch(*s)
       { case '\b':
 	  if ( lp > 0 ) lp--;
@@ -1009,7 +1009,7 @@ escape_char(cucharp in, ucharp *end, unsigned int quote)
   int chr;
   unsigned c;
 
-#define OK(v)	do { chr = (v); goto ok; } while(0) 
+#define OK(v) if (1) {chr = (v); goto ok;} else (void)0
 
 again:
   switch((c = *in++))
@@ -1028,7 +1028,8 @@ again:
 	  goto again;
 	}
 	if ( c == quote )		/* \c ' --> no output */
-	  OK(EOF);
+	{ OK(EOF);
+	}
 	in++;
 	OK(c);
       }
@@ -1261,14 +1262,14 @@ get_number(cucharp in, ucharp *end, Number value, int escape)
 
 
 static void
-checkASCII(const char *name, int len, const char *type)
+checkASCII(unsigned char *name, int len, const char *type)
 { int i;
 
   for(i=0; i<len; i++)
-  { if ( (name[i] & 0xff) >= 128 )
+  { if ( (name[i]) >= 128 )
     { printMessage(ATOM_warning,
 		   PL_FUNCTOR_CHARS, "non_ascii", 2,
-		     PL_NCHARS, len, name,
+                   PL_NCHARS, len, (char const *)name,
 		     PL_CHARS, type);
       return;
     }

@@ -10,6 +10,9 @@
 VERSION 5.3.17 (August 2, 2004)
 ===============================
 
+  * CLEANUP: Many stylistic issues to the C-source, removing warnings
+    especially for Sun CC.  Richard O'Keefe.
+
   * ADDED: nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
     assignments on terms.
 

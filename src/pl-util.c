@@ -82,8 +82,8 @@ procedureName(Procedure proc)
 
 
 const char *
-atom_summary(atom_t name, int maxlen)
-{ int len;
+atom_summary(atom_t name, unsigned int maxlen)
+{ unsigned int len;
   const char *nm = PL_atom_nchars(name, &len);
 
   if ( maxlen < 10 )
