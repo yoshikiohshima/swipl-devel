@@ -35,6 +35,12 @@
 :- use_module(pce_boot(pce_operator)).	% push/pop operators
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+This module deals with colourisation of  .chr files. CHR introduces many
+operators and requires different rules for colouring objects.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
 		 /*******************************
 		 *	      CHR MODE		*
 		 *******************************/
@@ -55,6 +61,24 @@ colourise_buffer(M) :->
 		     pop_chr_operators).
 
 :- emacs_end_mode.
+
+
+		 /*******************************
+		 *	   SYNTAX RULES		*
+		 *******************************/
+
+:- multifile
+	emacs_prolog_colours:term_colours/2.
+
+emacs_prolog_colours:term_colours(Term, Colours) :-
+	term_colours(Term, Colours).
+
+term_colours((:- constraints(_Cs)),
+	     [ expanded - [ expanded - [ identifier
+				       ]
+			  ]
+	     ]).
+
 
 
 		 /*******************************

@@ -252,7 +252,7 @@ colourise_term((:- Directive), TB, Pos) :- !,
 	To is EOL+1,
 	colour_item(directive, TB, F-To),
 	arg(5, Pos, [ArgPos]),
-	colourise_body(Directive, TB, ArgPos).
+	colourise_directive(Directive, TB, ArgPos).
 colourise_term((?- Directive), TB, Pos) :- !,
 	colourise_term((:- Directive), TB, Pos).
 colourise_term(end_of_file, _, _) :- !.
@@ -312,6 +312,15 @@ functor_position(term_position(_,_,FF,FT,ArgPos), FF-FT, ArgPos) :- !.
 functor_position(list_position(F,_T,Elms,none), F-FT, Elms) :- !,
 	FT is F + 1.
 functor_position(Pos, Pos, []).
+
+
+%	colourise_directive(+Body, +TB, +Pos)
+%	
+%	Colourise the body of a directive.
+
+colourise_directive(Body, TB, Pos) :-
+	colourise_body(Body, TB, Pos).
+
 
 %	colourise_body(+Body, +TB, +Pos)
 %	
@@ -718,7 +727,7 @@ body_compiled(\+_).
 %	goal_classification(+TB, +Goal, +Origin, -Class)
 %	
 %	Classify Goal appearing in TB and called from a clause with head
-%	Origin.
+%	Origin.  For directives Origin is [].
 
 goal_classification(_, Goal, _, meta) :-
 	var(Goal), !.
@@ -1564,6 +1573,7 @@ identify_fragment(method(send), _, 'XPCE send method').
 identify_fragment(method(get), _, 'XPCE get method').
 identify_fragment(head(unreferenced), _, 'Unreferenced predicate (from this file)').
 identify_fragment(head(exported), _, 'Exported (Public) predicate').
+identify_fragment(head(multifile), _, 'Multifile predicate').
 identify_fragment(prolog_data, _, 'Pass Prolog term unmodified').
 identify_fragment(Class, _, Summary) :-
 	term_to_atom(Class, Summary).
