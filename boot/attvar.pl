@@ -31,7 +31,8 @@
 
 :- module($attvar,
 	  [ '$wakeup'/1,		% +Wakeup list
-	    freeze/2			% +Var, :Goal
+	    freeze/2,			% +Var, :Goal
+	    frozen/2			% @Var, -Goal
 	  ]).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -92,7 +93,7 @@ unfreeze('$and'(A,B)) :- !,
 unfreeze(Goal) :-
 	Goal.
 
-%	freeze(+Var, :Goal)
+%	freeze(@Var, :Goal)
 %	
 %	Suspend execution of Goal until Var is unbound.
 
@@ -102,3 +103,17 @@ freeze(Var, Goal) :-
 	'$freeze'(Var, Goal), !.	% Succeeds if delayed
 freeze(_, Goal) :-
 	Goal.
+
+%	frozen(@Var, -Goals)
+%	
+%	Unify Goals with the goals frozen on Var or true if no
+%	goals are grozen on Var.
+
+frozen(Var, Goals) :-
+	get_attr(Var, freeze, Goals0), !,
+	make_conjunction(Goals0, Goals).
+frozen(_, true).
+
+make_conjunction('$and'(A, B0), (A, B)) :- !,
+	make_conjunction(B0, B).
+make_conjunction(G, G).

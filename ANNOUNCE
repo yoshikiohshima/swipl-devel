@@ -3,7 +3,21 @@ SWI-Prolog 5.3.2/XPCE 6.2.13 development snapshot
 Status
 ======
   
-  * 
+  * Be careful on production systems.  Should be fine for running normal
+    Prolog code for development.  Especially =/2, ==/2, @>/2, copy_term/2,
+    recorda and friends have been modified significantly to deal with
+    cyclic terms and attributed variables.
+  
+  * The implementation of global variables is new, but few problems are
+    expected.
+
+  * Expect problems with builtin predicates handling attributed variables.
+    Three types of incorrect behaviour are to be expected: crash (normally
+    on an assertion error), refusing to bind (the attvar is treated as a
+    instantiated term) or refusing to wakeup the unification handler.
+    
+Please report all trouble you encounter.
+
 
 Features relative to stable 5.2.x release
 =========================================
@@ -15,20 +29,21 @@ Features relative to stable 5.2.x release
   * CHR constraint language support
 
 
-Brief summary of changes since 5.2.10
-=====================================
+Brief summary of changes since 5.3.1
+====================================
 
 SWI-Prolog
 ----------
 
-  * Small patches
+  * Cleanup issues around nb_setval/2
+  * More support for cyclic terms
+  * Added CHR package to the standard distribution
+  * Various patches
 
 Packages
 --------
 
-  * XPCE: Added library(scaledbitmap) and library(url_image).
-
-  * RDF support: various minor problems.
+  (none)
 
 Development environment
 -----------------------

@@ -7,8 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-VERSION 5.3.2 (Feb 3, 2003)
+VERSION 5.3.2 (Feb 4, 2003)
 ===========================
+
+  * ADDED: frozen/2.
 
   * FIXED/ADDED: Merged win_shell issues from main branch
 

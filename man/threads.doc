@@ -786,19 +786,4 @@ For further information about XPCE in threaded applications, please
 visit
 \url{http://gollem.swi.psy.uva.nl/twiki/pl/bin/view/Development/MultiThreadsXPCE}
 
-\section{Threaded Prolog: Status and plans}
-\label{sec:threadplans}
-
-
-With SWI-Prolog 5.1.0 Prolog threads have become portable and the
-performance gap between the single and multi-threaded version has
-become acceptable.%
-    \footnote{Dual AMD 1600+ running SuSE Linux 7.3: 18\%,
-	      Single P-III 733 running SuSE Linux 8.0: 12\%,
-	      Single P-III 450 running NT-4/TSE: 1\%.}
-Most of the basic machinery and API have been tested on some large
-applications and appear to be stable. Especially as we do not anticipate
-problems as long as multi-threading is not used or threads do not
-interact much we believe it is time to move towards making the
-multi-threaded version the default distribution.
 
