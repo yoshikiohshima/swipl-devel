@@ -1,3 +1,7 @@
+Aug 30, 2004
+
+  * FIXED: Bug#179: Avoid XPCE dependency on strip_module/3.  Sandro Hawke.
+
 Aug 16, 2004
 
   * FIXED: Remove " from boundary=... HTTP-POST requests.  Appears necessary
