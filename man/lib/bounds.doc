@@ -70,6 +70,8 @@ The following constraints are supported:
 	The difference of two expressions.
 	\predicate{max}{2}{?Expr,?Expr}
 	The maximum of two expressions.
+	\predicate{min}{2}{?Expr,?Expr}
+	The minimum of two expressions.
 	\predicate{abs}{1}{?Expr}
 	The absolute value of an expression.
 \end{description}

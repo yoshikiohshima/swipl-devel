@@ -208,6 +208,10 @@ parse_expression(Expr,Result) :-
 		parse_expression(L,RL),
 		parse_expression(R,RR),
 		mymax(RL,RR,Result,yes)
+	; Expr = min(L,R) ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		mymin(RL,RR,Result,yes)
 	; Expr = abs(E) ->
 		parse_expression(E,RE),
 		myabs(RE,Result)
@@ -590,8 +594,6 @@ mymax(X,Y,Z,New) :-
 				Z = X
 			; X < ZL ->
 				Y = Z
-			; YU < ZL ->
-				X = Z
 			;
 				( New == yes -> 
 					put(Y,YL,YU,[mymax(X,Z)|YExp]) 
@@ -682,6 +684,120 @@ mymax(X,Y,Z,New) :-
 			)
 		; 
 			mymax(X,Y,Z,no)
+		)
+	).
+
+mymin(X,Y,Z,New) :-
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			Z is min(X,Y)
+		; nonvar(Z) ->
+			( Z == X ->		
+				leq(X,Y,yes)
+			; Z < X ->
+				Y = Z
+			%; Z > X
+			%	fail
+			)
+		;
+			get(Y,YL,YU,YExp),
+			get(Z,ZL,ZU,ZExp),
+			( YL >= X ->
+				Z = X
+			; X >= YU ->
+				Z = Y
+			; X > ZU ->
+				Y = Z
+			;
+				( New == yes -> 
+					put(Y,YL,YU,[mymin(X,Z)|YExp]) 
+				; 
+					true
+				),
+				NZL is max(ZL,YL),
+				NZU is min(ZU,X),
+				( New == yes ->
+					put(Z,NZL,NZU,[mymin2(X,Y)|ZExp])
+				;
+					put(Z,NZL,NZU,ZExp)
+				),
+				( get(Y,YL2,YU2,YExp2) ->
+					NYL is max(YL2,NZL),
+					put(Y,NYL,YU2,YExp2)
+				;
+					true
+				)
+			)
+		)
+	; nonvar(Y) ->
+		mymin(Y,X,Z,New)
+	; nonvar(Z) ->
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		( XL > Z ->
+			Y = Z
+		; % XL =< Z ->
+		  YL > Z ->
+		  	X = Z
+		; % YL =< Z
+		  XU =< YL ->
+			Z = X
+		; YU =< XL ->
+			Z = Y
+		;
+			( New == yes ->
+				put(Y,YL,YU,[mymin(X,Z)|YExp]),
+				put(X,Z,XU,[mymin(Y,Z)|XExp])
+			;
+				put(X,Z,XU,XExp)
+			),
+			( get(Y,YL2,YU2,YExp2) ->
+				NYL is max(YL2,Z),
+				put(Y,NYL,YU2,YExp2)
+			;
+				true
+			)
+		)
+	; X == Y ->
+		Z = X
+	; Z == X ->
+		leq(X,Y,yes)
+	; Z == Y ->
+		leq(Y,X,yes)
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		get(Z,ZL,ZU,ZExp),
+		NZL is max(ZL,min(XL,YL)),
+		NZU is min(ZU,min(XU,YU)),
+		( New == yes ->
+			put(X,XL,XU,[mymin(Y,Z)|XExp]),
+			put(Y,YL,YU,[mymin(X,Z)|YExp]),
+			put(Z,NZL,NZU,[mymin2(X,Y)|ZExp])
+		;
+			put(Z,NZL,NZU,ZExp)
+		),
+		( get(X,XL2,XU2,XExp2) ->
+			( XL2 > NZU ->
+				Y = Z
+			; YL  > NZU ->
+				X = Z
+			; YU < XL2 ->
+				Y = Z
+			; XU2 < YL ->
+				X = Z
+			;
+				NXL is max(XL2,NZL),
+				put(X,NXL,XU2,XExp2),
+				( get(Y,YL2,YU2,YExp2) ->
+					NYL is max(YL2,NZL),
+					put(Y,NYL,YU2,YExp2)
+				;
+					mymin(Y,X,Z,no)
+				)
+			)
+		; 
+			mymin(X,Y,Z,no)
 		)
 	).
 
@@ -1086,6 +1202,11 @@ trigger_exp(mymax(Y,Z),X) :-
 	mymax(X,Y,Z,no).
 trigger_exp(mymax2(X,Y),Z) :-
 	mymax(X,Y,Z,no).
+
+trigger_exp(mymin(Y,Z),X) :-
+	mymin(X,Y,Z,no).
+trigger_exp(mymin2(X,Y),Z) :-
+	mymin(X,Y,Z,no).
 
 trigger_exp(reified_leq(X,B),Y) :-
 	reified_geq(X,Y,B).
