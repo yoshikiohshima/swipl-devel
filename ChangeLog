@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: Support for cyclic terms in the recorded term representation,
+    providing cyclic-safe recorda/3, findall/3, bagof/3, setof/3, exceptions
+    and Prolog terms in XPCE objects.
+
   * ADDED: inf/infinite for stack options in create_thread/3 as well as for
     the `High' in between/3.
 

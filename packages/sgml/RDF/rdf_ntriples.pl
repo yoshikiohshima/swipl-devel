@@ -10,13 +10,14 @@
     Copyright (C) 1990-2002 SWI, University of Amsterdam. All rights reserved.
 */
 
-:- module(rdf_nt,
-	  [ load_rdf_nt/2		% +File, -Triples
+:- module(rdf_ntriples,
+	  [ load_rdf_ntriples/2,	% +File, -Triples
+	    rdf_ntriple_part/4		% +Field, -Value, <DCG>
 	  ]).
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-This module parses n-tuple files as defined   by  the W3C RDF working in
+This module parses n-triple files as defined   by the W3C RDF working in
 http://www.w3.org/TR/rdf-testcases/#ntriples.   This   format     is   a
 simplified version of the RDF N3 notation   used  in the *.nt files that
 are used to describe the normative outcome of the RDF test-cases.
@@ -38,7 +39,11 @@ where
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-load_rdf_nt(File, Triples) :-
+%	load_rdf_ntriples(+Source, -Triples)
+%	
+%	Load a file or stream to a list of rdf(S,P,O) triples.
+
+load_rdf_ntriples(File, Triples) :-
 	open_nt_file(File, In, Close),
 	call_cleanup(stream_to_triples(In, Triples), Close).
 
@@ -55,6 +60,22 @@ open_nt_file(Spec, Stream, close(Stream)) :-
 			     extensions([nt,''])
 			   ], Path),
 	open(Path, read, Stream).
+
+
+%	rdf_ntriple_part(+Type, -Value, <DCG>)
+%	
+%	Parse one of the fields of  an   ntriple.  This  is used for the
+%	SWI-Prolog Sesame (www.openrdf.org) implementation   to  realise
+%	/servlets/removeStatements. I do not think   public  use of this
+%	predicate should be stimulated.
+
+rdf_ntriple_part(subject, Subject) -->
+	subject(Subject).
+rdf_ntriple_part(predicate, Predicate) -->
+	predicate(Predicate).
+rdf_ntriple_part(object, Object) -->
+	predicate(Object).
+
 
 %	stream_to_triples(+Stream, -ListOfTriples)
 %	

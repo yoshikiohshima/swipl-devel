@@ -154,6 +154,7 @@ typedef struct
 #define PL_TYPE_EXT_FLOAT	(11)	/* float in standard-byte order */
 #define PL_TYPE_ATTVAR		(12)	/* Attributed variable */
 #define PL_REC_ALLOCVAR		(13)	/* Allocate a variable on global */
+#define PL_REC_CYCLE		(14)	/* cyclic reference */
 
 #define addUnalignedBuf(b, ptr, type) \
 	do \
@@ -337,6 +338,17 @@ compile_term_to_heap(Word p, CompileInfo info ARG_LD)
 right_recursion:
   w = *p;
 
+#if O_CYCLIC
+  if ( is_marked(p) )
+  { addOpCode(info, PL_REC_CYCLE);
+    addSizeInt(info, valInt(w));
+    
+    DEBUG(1, Sdprintf("Added cycle for offset = %d\n", valInt(w)));
+
+    return;
+  }
+#endif
+
   switch(tag(w))
   { case TAG_VAR:
     { long n = info->nvars++;
@@ -415,10 +427,31 @@ right_recursion:
     }
     case TAG_COMPOUND:
     { Functor f = valueTerm(w);
-      int arity = arityFunctor(f->definition);
+      int arity;
+      word functor;
 
+#if O_CYCLIC
+      if ( isInteger(f->definition) )
+      { addOpCode(info, PL_REC_CYCLE);
+	addSizeInt(info, valInt(f->definition));
+
+	Sdprintf("Added cycle for offset = %d\n", valInt(f->definition));
+
+	return;
+      } else
+      { arity   = arityFunctor(f->definition);
+	functor = f->definition;
+
+	requireStack(argument, sizeof(Word)*2);
+	*aTop++ = (Word)f;
+	*aTop++ = (Word)f->definition;
+	f->definition = (functor_t)consInt(info->size);
+	assert(valInt(f->definition) == info->size); /* overflow test */
+      }
+#endif
+      
       info->size += arity+1;
-      addFunctor(info, f->definition);
+      addFunctor(info, functor);
       p = f->arguments;
       for(; --arity > 0; p++)
 	compile_term_to_heap(p, info PASS_LD);
@@ -433,6 +466,31 @@ right_recursion:
 }
 
 
+#if O_CYCLIC
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Argument stack contains pairs of pointer to   term and first word of the
+term (functor) before entering. The first  word itself contains a Prolog
+integer with the current stack-offset for the new term.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static void
+unvisit(Word *base ARG_LD)
+{ Word *p = aTop;
+  Word gp;
+
+  while(p>base)
+  { p -= 2;
+
+    gp  = p[0];
+    *gp = (word)p[1];
+  }
+
+  aTop = base;
+}
+
+#endif
+
 
 Record
 compileTermToHeap__LD(term_t t, int flags ARG_LD)
@@ -441,6 +499,9 @@ compileTermToHeap__LD(term_t t, int flags ARG_LD)
   Word *p;
   int size;
   int rsize = SIZERECORD(flags);
+#if O_CYCLIC
+  Word *m = aTop;
+#endif
 
   SECURE(checkData(valTermRef(t)));
 
@@ -461,6 +522,10 @@ compileTermToHeap__LD(term_t t, int flags ARG_LD)
       setVar(**p);
   }
   discardBuffer(&info.vars);
+  
+#if O_CYCLIC
+  unvisit(m PASS_LD);
+#endif
   
   size = rsize + sizeOfBuffer(&info.code);
   record = allocHeap(size);
@@ -511,6 +576,9 @@ PL_record_external(term_t t, unsigned int *len)
   int scode, shdr;
   char *rec;
   int first = REC_SZ|REC_VERSION;
+#if O_CYCLIC
+  Word *m = aTop;
+#endif
 
   SECURE(checkData(valTermRef(t)));
   p = valTermRef(t);
@@ -559,6 +627,10 @@ PL_record_external(term_t t, unsigned int *len)
   if ( info.nvars == 0 )
     first |= REC_GROUND;
 
+#if O_CYCLIC
+  unvisit(m PASS_LD);
+#endif
+
   initBuffer(&hdr);
   addBuffer(&hdr, first, uchar);		/* magic code */
   addUintBuffer((Buffer)&hdr, scode);		/* code size */
@@ -588,7 +660,8 @@ typedef struct
 { const char   *data;
   const char   *base;			/* start of data */
   Word	       *vars;
-  Word 		gstore;
+  Word		gbase;			/* base of term on global stack */
+  Word 		gstore;			/* current storage location */
 					/* for se_record() */
   uint  	nvars;			/* Variables seen */
   TmpBuffer 	avars;			/* Values stored for attvars */
@@ -821,6 +894,16 @@ right_recursion:
 
       return;
     }
+#ifdef O_CYCLIC
+    case PL_REC_CYCLE:
+    { unsigned offset = fetchSizeInt(b);
+      Word ct = b->gbase+offset;
+
+      *p = consPtr(ct, TAG_COMPOUND|STG_GLOBAL);
+
+      return;
+    }
+#endif
   { word fdef;
     long arity;
     case PL_TYPE_COMPOUND:
@@ -868,7 +951,7 @@ copyRecordToGlobal(term_t copy, Record r ARG_LD)
   DEBUG(3, Sdprintf("PL_recorded(%p)\n", r));
 
   b.base = b.data = dataRecord(r);
-  b.gstore = allocGlobal(r->gsize);
+  b.gbase = b.gstore = allocGlobal(r->gsize);
 
   INITCOPYVARS(b, r->nvars);
   copy_record(valTermRef(copy), &b PASS_LD);
@@ -917,6 +1000,7 @@ right_recursion:
 
   switch( fetchOpCode(b) )
   { case PL_TYPE_VARIABLE:
+    case PL_REC_CYCLE:
     { skipSizeInt(b);
       return;
     }
@@ -1266,7 +1350,7 @@ PL_recorded_external(const char *rec, term_t t)
 
   skipSizeInt(&b);			/* code-size */
   gsize = fetchSizeInt(&b);
-  b.gstore = allocGlobal(gsize);
+  b.gbase = b.gstore = allocGlobal(gsize);
   if ( !(m & REC_GROUND) )
   { uint nvars = fetchSizeInt(&b);
 
@@ -1687,6 +1771,9 @@ undo_while_saving_term(mark *m, Word term)
   copy_info b;
   uint n;
   Word *p;
+#if O_CYCLIC
+  Word *cycle_mark = aTop;
+#endif
 
   SECURE(checkData(term));
   assert(onStack(local, term));
@@ -1703,10 +1790,14 @@ undo_while_saving_term(mark *m, Word term)
   while(n-- > 0)
     setVar(**p++);
 
+#if O_CYCLIC
+  unvisit(cycle_mark PASS_LD);
+#endif
+
   Undo(*m);
   
   b.data = info.code.base;
-  b.gstore = allocGlobal(info.size);
+  b.gbase = b.gstore = allocGlobal(info.size);
   INITCOPYVARS(b, info.nvars);
   copy_record(term, &b PASS_LD);
   FREECOPYVARS(b, info.nvars);
