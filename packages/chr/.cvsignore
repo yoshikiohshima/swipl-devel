@@ -1,3 +1,5 @@
 Makefile
 config.h
 config.log
+chr.pl
+chr_translate.pl
