@@ -1159,19 +1159,20 @@ srcdir=`cd $srcdir && pwd`
 # Prepare the package configuration if present
 
 if test -r ../packages/Makefile.in; then
-  OutputFiles="$OutputFiles ../packages/Makefile"
+  OutputFiles="$OutputFiles ../packages/Makefile ../packages/plld.sh"
 fi
 
 if test -r ../packages/configure.in; then
   OutputFiles="$OutputFiles ../packages/configure"
 fi
 
+AC_CONFIG_COMMANDS([exe],
+		   [ if test -r ../packages/configure; then
+		       chmod +x ../packages/configure
+		       chmod +x ../packages/plld.sh
+		     fi
+		   ])
 AC_OUTPUT($OutputFiles)
-
-if test -r ../packages/configure; then
-  chmod +x ../packages/configure
-fi
-
 
 if test "$readline_ok" = no; then
 cat << _EOM_

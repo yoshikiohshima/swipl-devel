@@ -22,7 +22,6 @@
 #	* make install-arch	Install machine dependent files
 #	* make install-libs	Install machine independent files
 #	* make install-lman	Install man files in Prolog lib hierarchy
-#	* make install-mt	Install multi-threaded version next to normal
 #	* make check		Run some tests
 #
 # Copyright (C) University of Amsterdam, all rights reserved
@@ -275,10 +274,6 @@ install:	@INSTALLTARGET@
 install-version: install-arch install-libs install-vbins
 
 dv-install:	install-arch install-libs install-bins
-
-install-mt:	
-		$(INSTALL_PROGRAM) $(PL) $(PLBASE)/bin/$(ARCH)/pl-mt
-		$(REL_LN) $(PLBASE)/bin/$(ARCH)/pl-mt $(bindir)
 
 install-bins:	install-arch
 		-if [ ! -d $(bindir)  ]; then $(MKDIR) $(bindir); fi

@@ -11,8 +11,7 @@
 # packages  install  additional  graphics  support  if  they  find  xpce
 # installed.
 
-PKG=	xpce \
-	clib \
+PKG=	clib \
 	cpp \
 	odbc \
 	table \
@@ -20,7 +19,8 @@ PKG=	xpce \
 	sgml/RDF \
 	semweb \
 	http \
-	chr
+	chr \
+	xpce
 
 # Define additional config options.  If you wish to build the multi-threaded
 # version of SWI-Prolog and pl-mt to the same install-base, you must provide
@@ -45,7 +45,9 @@ PKGDOC=$(PLBASE)/doc/packages
 PLLIBS=@LIBS@
 PLARCH=@ARCH@
 PLLDFLAGS=@LDFLAGS@
-PLINCL=$(shell dirname `pwd`)/include
+PLDIR=$(shell dirname `pwd`)
+PLINCL=$(PLDIR)/include
+LIBDIR=$(PLDIR)/lib/$(PLARCH)
 PLSHARED=@PLSHARED@
 INSTALL=@INSTALL@
 INSTALL_DATA=@INSTALL_DATA@
@@ -70,6 +72,7 @@ CONFIG=	env PL="$(PL)" PLBASE="$(PLBASE)" PLARCH="$(PLARCH)" \
 	    PLLIBS="$(PLLIBS)" PLLDFLAGS="$(PLLDFLAGS)" \
 	    PLINCL="$(PLINCL)" PLSHARED="$(PLSHARED)" \
 	    PLSOEXT="$(SO)" BUILDDIR="$(BUILDDIR)" \
+	    LD_LIBRARY_PATH="$(LIBDIR):$$LD_LIBRARY_PATH" \
 	    MAKE="$(MAKE)" \
 	    ./configure $(CNFG) $(CNFGPASSED) --prefix=$(prefix)
 
