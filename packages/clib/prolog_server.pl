@@ -80,8 +80,12 @@ prolog_server(Port, Options) :-
 server_loop(ServerSocket, Options) :-
 	tcp_accept(ServerSocket, Slave, Peer),
 	tcp_open_socket(Slave, InStream, OutStream),
+	tcp_host_to_address(Host, Peer),
+	atom_concat('client@', Host, Alias),
 	thread_create(service_client(InStream, OutStream, Peer, Options),
-		      _, []),
+		      _,
+		      [ alias(Alias)
+		      ]),
 	server_loop(ServerSocket, Options).
  
 service_client(InStream, OutStream, Peer, Options) :-
