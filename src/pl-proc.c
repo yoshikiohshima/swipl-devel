@@ -2030,7 +2030,7 @@ pl_set_predicate_attribute(term_t pred,
   Procedure proc;
   Definition def;
   atom_t key;
-  int val;
+  int val, rc;
   unsigned long att;
 
   if ( !PL_get_atom(what, &key) )
@@ -2050,20 +2050,32 @@ pl_set_predicate_attribute(term_t pred,
   def = proc->definition;
 
   if ( att == DYNAMIC )
-    return setDynamicProcedure(proc, val);
-  if ( att == P_THREAD_LOCAL )
-    return set_thread_local_procedure(proc, val);
-
-  if ( !val )
-  { clear(def, att);
+  { rc = setDynamicProcedure(proc, val);
+  } else if ( att == P_THREAD_LOCAL )
+  { rc = set_thread_local_procedure(proc, val);
   } else
-  { set(def, att);
-    if ( (att == DYNAMIC || att == MULTIFILE) && SYSTEM_MODE )
-    { set(def, SYSTEM|HIDE_CHILDS);
+  { if ( !val )
+    { clear(def, att);
+    } else
+    { set(def, att);
+      if ( (att == DYNAMIC || att == MULTIFILE) && SYSTEM_MODE )
+      { set(def, SYSTEM|HIDE_CHILDS);
+      }
     }
+  
+    rc = TRUE;
   }
 
-  succeed;
+  if ( rc && val &&
+       (att & (DYNAMIC|METAPRED|DISCONTIGUOUS|VOLATILE|P_THREAD_LOCAL)) &&
+       false(def, FILE_ASSIGNED) &&
+       ReadingSource )
+  { DEBUG(2, Sdprintf("Associating %s to %s\n",
+		      predicateName(def), PL_atom_chars(source_file_name)));
+    addProcedureSourceFile(lookupSourceFile(source_file_name), proc);
+  }
+
+  return rc;
 }
 
 
@@ -2336,18 +2348,30 @@ indexToSourceFile(int index)
 }
 
 
+static int
+hasProcedureSourceFile(SourceFile sf, Procedure proc)
+{ ListCell cell;
+
+  if ( true(proc->definition, FILE_ASSIGNED) )
+  { for(cell=sf->procedures; cell; cell = cell->next)
+    { if ( cell->value == proc )
+	succeed;
+    }
+  }
+
+  fail;
+}
+
+
+
 void
 addProcedureSourceFile(SourceFile sf, Procedure proc)
 { ListCell cell;
 
   LOCK();
-  if ( true(proc->definition, FILE_ASSIGNED) )
-  { for(cell=sf->procedures; cell; cell = cell->next)
-    { if ( cell->value == proc )
-      { UNLOCK();
-	return;
-      }
-    }
+  if ( hasProcedureSourceFile(sf, proc) )
+  { UNLOCK();
+    return;
   }
 
   { GET_LD
@@ -2386,7 +2410,7 @@ redefineProcedure(Procedure proc, SourceFile sf)
 	printMessage(ATOM_warning,
 		     PL_FUNCTOR_CHARS, "discontiguous", 1,
 		       _PL_PREDICATE_INDICATOR, proc);
-    } else
+    } else if ( !hasProcedureSourceFile(sf, proc) )
     { abolishProcedure(proc, def->module);
 
       if ( def->references )
@@ -2583,6 +2607,8 @@ startConsult(SourceFile f)
 	{ def->references = 0;
 	  GD->procedures.active_marked--;
 	}
+
+	clear(def, FILE_ASSIGNED);
       }
       freeHeap(cell, sizeof(struct list_cell));
     }

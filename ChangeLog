@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Bug#140, various problems with complicated reload of files.
+    Hans van de Koot.
+
   * FIXED: clause garbage collection for references from retract/1,
     clause/2, etc.
 
