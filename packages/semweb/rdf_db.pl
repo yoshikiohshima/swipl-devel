@@ -66,6 +66,7 @@
 	    rdf_unload/1,		% +File
 
 	    rdf_md5/2,			% +DB, -MD5
+	    rdf_atom_md5/3,		% +Text, +Times, -MD5
 
 	    rdf_source/1,		% ?File
 	    rdf_make/0,			% Reload modified databases

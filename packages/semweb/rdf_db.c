@@ -1963,6 +1963,33 @@ rdf_md5(term_t file, term_t md5)
 }
 
 
+static foreign_t
+rdf_atom_md5(term_t text, term_t times, term_t md5)
+{ char *s;
+  int n, i, len;
+  md5_byte_t digest[16];
+
+  if ( !PL_get_nchars(text, &len, &s, CVT_ALL) )
+    return type_error(text, "text");
+  if ( !PL_get_integer(times, &n) )
+    return type_error(times, "integer");
+  if ( n < 1 )
+    return domain_error(times, "positive_integer");
+
+  for(i=0; i<n; i++)
+  { md5_state_t state;
+    md5_init(&state);
+    md5_append(&state, (const md5_byte_t *)s, len);
+    md5_finish(&state, digest);
+    s = digest;
+    len = sizeof(digest);
+  }
+
+  return md5_unify_digest(md5, digest);
+}
+
+
+
 #endif /*WITH_MD5*/
 
 
@@ -3852,5 +3879,6 @@ install_rdf_db()
 #endif
 #ifdef WITH_MD5
   PL_register_foreign("rdf_md5",	2, rdf_md5,	    0);
+  PL_register_foreign("rdf_atom_md5",	3, rdf_atom_md5,    0);
 #endif
 }

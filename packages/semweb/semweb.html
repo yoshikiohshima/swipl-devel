@@ -548,6 +548,23 @@ and <A NAME="idx:rdfretractall34:30"></A><A HREF="#rdf_retractall/3">rdf_retract
 Checking whether the digest has changed since the last <A NAME="idx:rdfload12:31"></A><A HREF="#rdf_load/1">rdf_load/[1,2]</A> 
 call provides a practical means for checking whether the file needs to 
 be saved.
+
+<P>
+<DT><A NAME="rdf_atom_md5/3"><STRONG>rdf_atom_md5</STRONG>(<VAR>+Text, 
++Times, -MD5</VAR>)</A><DD>
+Computes the MD5 hash from <VAR>Text</VAR>, which is an atom, string or 
+list of character codes. <VAR>Times</VAR> is an integer <VAR>&gt;= 1</VAR>. 
+When
+<VAR>&gt; 0</VAR>, the MD5 algorithm is repeated <VAR>Times</VAR> times 
+on the generated hash. This can be used for password encryption 
+algorithms to make generate-and-test loops slow.
+
+<P>This predicate bears little relation to RDF handling. It is provided 
+because the RDF library already contains the MD5 algorithm and semantic 
+web services may involve security and consistency checking. This 
+predicate provides a platform independant alternative to the
+<CODE>library(crypt)</CODE> library provided with the <TT>clib</TT> 
+package.
 </DL>
 
 <H3><A NAME="sec:3.4">3.4 Namespace Handling</A></H3>
@@ -1286,6 +1303,7 @@ BUG: The current implementation cannot deal with cycles
 <A HREF="#idx:rdfassert4:9">3.2</A>
 <DT>rdf_assert/[3,4]<DD>
 <A HREF="#idx:rdfassert34:29">3.3.3</A>
+<DT><A HREF="#rdf_atom_md5/3">rdf_atom_md5/3</A><DD>
 <DT><A HREF="#rdf_bnode/1">rdf_bnode/1</A><DD>
 <A HREF="#idx:rdfbnode1:43">4.2</A>
 <DT><A HREF="#rdfe_assert/3">rdfe_assert/3</A><DD>

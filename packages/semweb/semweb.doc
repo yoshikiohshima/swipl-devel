@@ -426,6 +426,19 @@ digest incrementally on rdf_load/[1,2], rdf_load_db/1, rdf_assert/[3,4]
 and rdf_retractall/[3,4].  Checking whether the digest has changed since
 the last rdf_load/[1,2] call provides a practical means for checking
 whether the file needs to be saved.
+
+    \predicate{rdf_atom_md5}{3}{+Text, +Times, -MD5}
+Computes the MD5 hash from \arg{Text}, which is an atom, string or
+list of character codes.  \arg{Times} is an integer $\geq 1$.  When
+$> 0$, the MD5 algorithm is repeated \arg{Times} times on the
+generated hash.  This can be used for password encryption algorithms
+to make generate-and-test loops slow.
+
+This predicate bears little relation to RDF handling. It is provided
+because the RDF library already contains the MD5 algorithm and semantic
+web services may involve security and consistency checking. This
+predicate provides a platform independant alternative to the
+\pllib{crypt} library provided with the \texttt{clib} package.
 \end{description}
 
 
