@@ -1,29 +1,26 @@
 //tabstop=4
 
-import jpl.Query;				// empirically, we need this, but I don't know why...
-import jpl.fli.Prolog;
 import jpl.*;
 
 public class Test2
-{
-	public static void
-	main( java.lang.String argv[] )
-	{
-		
-		/*
-		Prolog.set_default_init_args(		// in case Prolog isn't started
-			new String[] {
-				"libpl.dll",
-				"-L8m",
-				"-G16m",
-				"-f", "library(jpl)"
-			}
-		);
-		 */
+{ public static int fac(int n)
+  { if (n == 1)
+    { return 1;
+    } else
+    { return n * ((jpl.Integer)
+		  new Query(new Compound("jpl_test_fac", new Term[]
+					 { new jpl.Integer(n - 1),
+					   new Variable("F")
+					 })).oneSolution().get("F")).intValue();
+    }
+  }
 
-		System.out.print( "calling Prolog to call Java to call Prolog...\n" );
+  public static void
+  main( java.lang.String argv[] )
+  { new Query("consult('test2.pl')").oneSolution();
 
-		System.out.println( "factorial(10) = " + jpl.Test.fac(10));
-	}
-	
+    System.out.print( "calling Prolog to call Java to call Prolog...\n" );
+
+    System.out.println( "factorial(10) = " + fac(10));
+  }
 }
