@@ -1915,11 +1915,14 @@ Sfree(void *ptr)			/* Windows: must free from same */
 }
 
 
-static int
-S__memfile_nextsize(int needed)
-{ needed += needed/4;
+static long
+S__memfile_nextsize(long needed)
+{ long size = 512;
 
-  return (needed + 255) & ~255;
+  while ( size < needed )
+    size *= 2;
+
+  return size;
 }
 
 
@@ -1928,7 +1931,7 @@ Swrite_memfile(void *handle, char *buf, int size)
 { memfile *mf = handle;
 
   if ( mf->here + size + 1 >= mf->allocated )
-  { long ns = S__memfile_nextsize(mf->here + size);
+  { long ns = S__memfile_nextsize(mf->here + size + 1);
     char *nb;
 
     if ( mf->allocated == 0 || !mf->malloced )
