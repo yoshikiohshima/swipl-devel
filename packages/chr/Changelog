@@ -1,3 +1,7 @@
+Mar 25, 2004
+
+  * Added skip and ancestor debug commands
+
 Mar 24, 2004
 
   * Added bootstrapping process for CHR compiler using CHR.

@@ -122,7 +122,10 @@
    nb_setval(chr_global,_).
 
 ?- initialization
-   nb_setval(chr_debug,off).
+   nb_setval(chr_debug,mutable(off)).
+
+?- initialization
+   nb_setval(chr_debug_history,mutable([],0)).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr merge_attributes'( As, Bs, Cs) :-
 	sbag_union(As,Bs,Cs).
@@ -469,40 +472,88 @@ sbag_merge([X | Xs],YL,R) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr debug_event'(Event) :-
-	nb_getval(chr_debug,D),
-	( D == on ->
-		debug_event(Event)
-	;
+	nb_getval(chr_debug,mutable(State)),
+	( State == off ->
 		true
+	;
+		debug_event(State,Event)
 	).
 
 chr_trace :-
-	nb_setval(chr_debug,on).
+	nb_setval(chr_debug,mutable(trace)).
 chr_notrace :-
-	nb_setval(chr_debug,off).
+	nb_setval(chr_debug,mutable(off)).
 
-debug_event(call(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tCALL\t~@ ? ',[print_head(Susp)]),
-	chr_debug_interact. 
-debug_event(redo(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tREDO\t~@\n',[print_head(Susp)]). 
-debug_event(exit(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tEXIT\t~@ ? ',[print_head(Susp)]), 
-	chr_debug_interact. 
-debug_event(fail(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tFAIL\t~@ ? ',[print_head(Susp)]), 
-	chr_debug_interact. 
-debug_event(remove(Susp)) :- !,
+set_chr_debug(State) :-
+	nb_getval(chr_debug,Mutable),
+	setarg(1,Mutable,State).
+
+debug_event(trace,Event) :- 
+	Event = call(_), !,
+	get_debug_history(History,Depth),
+	NDepth is Depth + 1,
+	print_event(Event,NDepth),
+	chr_debug_interact(Event,NDepth), 
+	set_debug_history([Event|History],NDepth).
+debug_event(trace,Event) :- 
+	Event = wake(_), !,
+	get_debug_history(History,Depth),
+	NDepth is Depth + 1,
+	print_event(Event,NDepth),
+	chr_debug_interact(Event,NDepth), 
+	set_debug_history([Event|History],NDepth).
+debug_event(trace,redo(Susp)) :- !,
+	get_debug_history(_History,Depth),
+	format('CHR DEBUG EVENT:\t~w\tREDO\t~@\n',[Depth,print_head(Susp)]). 
+debug_event(trace,Event) :- 
+	Event = exit(_),!,
+	get_debug_history([_|History],Depth),
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth),
+	NDepth is Depth - 1,
+	set_debug_history(History,NDepth). 
+debug_event(trace,Event) :- 
+	Event = fail(_),!,
+	get_debug_history(_,Depth),
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth). 
+debug_event(trace,remove(Susp)) :- !,
 	format('CHR DEBUG EVENT:\tREMOVE\t~@\n',[print_head(Susp)]). 
-debug_event(insert(_ # Susp)) :- !,
+debug_event(trace,insert(_ # Susp)) :- !,
 	format('CHR DEBUG EVENT:\tINSERT\t~@\n',[print_head(Susp)]). 
-debug_event(try(H1,H2,G,B)) :- !,
+debug_event(trace,try(H1,H2,G,B)) :- !,
 	format('CHR DEBUG EVENT:\tTRY\t~@\n',[print_rule(H1,H2,G,B)]). 
-debug_event(apply(H1,H2,G,B)) :- !,
-	format('CHR DEBUG EVENT:\tAPPLY\t~@ ? ',[print_rule(H1,H2,G,B)]), 
-	chr_debug_interact. 
-debug_event(Event) :-
-	format('CHR DEBUG EVENT:\t~w.\n',[Event]).
+debug_event(trace,Event) :- 
+	Event = apply(_,_,_,_),!,
+	get_debug_history(_,Depth),
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth). 
+
+debug_event(skip(_,_),Event) :- 
+	Event = call(_), !,
+	get_debug_history(History,Depth),
+	NDepth is Depth + 1,
+	set_debug_history([Event|History],NDepth).
+debug_event(skip(_,_),Event) :- 
+	Event = wake(_), !,
+	get_debug_history(History,Depth),
+	NDepth is Depth + 1,
+	set_debug_history([Event|History],NDepth).
+debug_event(skip(SkipSusp,SkipDepth),Event) :- 
+	Event = exit(Susp),!,
+	get_debug_history([_|History],Depth),
+	( SkipDepth == Depth,
+	  SkipSusp == Susp -> 
+		set_chr_debug(trace),
+		print_event(Event,Depth),
+		chr_debug_interact(Event,Depth)
+	;
+		true
+	),
+	NDepth is Depth - 1,
+	set_debug_history(History,NDepth). 
+debug_event(skip(_,_),_) :- !,
+	true.
 
 print_rule(H1,H2,G,B) :-
 	( H1 \== [] ->
@@ -536,40 +587,87 @@ print_head(Susp) :-
 	Goal =.. [F|Args],
 	format('~w # <~w>',[Goal,ID]).
 
-chr_debug_interact :-
+chr_debug_interact(Event,Depth) :-
 	get_single_char(CharCode),
 	nl,
 	char_code(Command,CharCode),
-	handle_debug_command(Command).
+	handle_debug_command(Command,Event,Depth).
 
-handle_debug_command('\r') :- !,
+handle_debug_command('c',_,_) :- !,
 	true.	
-handle_debug_command('n') :- !,
+handle_debug_command('\r',Event,Depth) :- !,
+	handle_debug_command('c',Event,Depth).	
+handle_debug_command('s',Event,Depth) :- !,
+	Event =.. [Type|Rest],
+	( Type \== call,
+	  Type \== wake ->
+		handle_debug_command('c',Event,Depth)
+	;
+		Rest = [Susp],
+		set_chr_debug(skip(Susp,Depth))
+	).
+	
+handle_debug_command('g',Event,Depth) :- !,
+	print_chr_debug_history,
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth).	
+handle_debug_command('n',_,_) :- !,
 	chr_notrace.
-handle_debug_command('a') :- !,
+handle_debug_command('a',_,_) :- !,
 	abort.
-handle_debug_command('f') :- !,
+handle_debug_command('f',_,_) :- !,
 	fail.
-handle_debug_command('?') :- !,
+handle_debug_command('?',Event,Depth) :- !,
 	print_debug_help,
-	writeln('Enter debug option?'),
-	chr_debug_interact.	
-handle_debug_command('h') :- !,
-	print_debug_help,
-	writeln('Enter debug option?'),
-	chr_debug_interact.	
-handle_debug_command(_) :- 
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth).	
+handle_debug_command('h',Event,Depth) :- !,
+	handle_debug_command('?',Event,Depth).
+handle_debug_command(_,Event,Depth) :- 
 	writeln('% Not a valid debug option.'),
 	print_debug_help,
 	writeln('Enter debug option?'),
-	chr_debug_interact.	
+	chr_debug_interact(Event,Depth).	
 
 print_debug_help :-
 	format('\tCHR debug options:\n',[]),
 	nl,
 	format('\t\t<cr>\tcreep\t\tc\tcreep\n',[]),
+        format('\t\ts\tskip\n',[]),
+        format('\t\tg\tancestors\n',[]),
         format('\t\tn\tnodebug\n',[]),
         format('\t\ta\tabort\n',[]),
         format('\t\tf\tfail\n',[]),
 	format('\t\t?\thelp\t\th\thelp\n',[]),
 	nl.
+
+print_chr_debug_history :-
+	get_debug_history(History,Depth),
+	format('\tAncestors:\n',[]),
+	print_chr_debug_history(History,Depth).
+
+print_chr_debug_history([],_) :- nl.
+print_chr_debug_history([Event|Events],Depth) :-
+	print_event(Event,Depth), nl,
+	NDepth is Depth - 1,
+	print_chr_debug_history(Events,NDepth).
+
+print_event(call(Susp),Depth) :- !,
+	format('CHR DEBUG EVENT:\t~w\tCALL\t~@ ? ',[Depth,print_head(Susp)]).
+print_event(wake(Susp),Depth) :- !,
+	format('CHR DEBUG EVENT:\t~w\tWAKE\t~@ ? ',[Depth,print_head(Susp)]).
+print_event(exit(Susp),Depth) :- !,
+	format('CHR DEBUG EVENT:\t~w\tEXIT\t~@ ? ',[Depth,print_head(Susp)]). 
+print_event(fail(Susp),Depth) :- !,
+	format('CHR DEBUG EVENT:\t~w\tFAIL\t~@ ? ',[Depth,print_head(Susp)]). 
+print_event(apply(H1,H2,G,B),Depth) :- !,
+	format('CHR DEBUG EVENT:\t~w\tAPPLY\t~@ ? ',[Depth,print_rule(H1,H2,G,B)]).
+
+get_debug_history(History,Depth) :-
+	nb_getval(chr_debug_history,mutable(History,Depth)).
+
+set_debug_history(History,Depth) :-
+	nb_getval(chr_debug_history,Mutable),
+	setarg(1,Mutable,History),
+	setarg(2,Mutable,Depth).
+
