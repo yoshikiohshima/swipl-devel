@@ -1130,251 +1130,208 @@ pl_e_free_variables(term_t t, term_t vars)
   }  
 }
   
-#undef LD
-#define LD GLOBAL_LD
-
 
 		 /*******************************
-		 *	      COPY-TERM		*
+		 *	    COPY TERM		*
 		 *******************************/
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Term copying is used to create a  term with `fresh' variables. The ideal
-algorithm should take care of sharing  variables   in  the term and copy
-ground parts of the term by  sharing   them  with the original term. The
-implementation below satisfies these requirements,  passes the term only
-twice, is safe to stack-shifting and garbage-collection while in progres
-and is efficient for both large and small terms. Here is how it works.
+copy_term(+Term, -Copy)
 
-Phase *1* analyses the term. It will   make  a foreign term-reference to
-any variable found in the term. It  will add a foreign-reference holding
-the index-number of a ground term encountered. While numbering the tree,
-only compound terms are numbered and a ground term counts as one.
+Copy a term, renaming its  variables.   Attributed  variables have their
+attributed copied, so futher modification of the attribute list does not
+affect the copy  and  visa  versa.   The  algorithm  deals  with  shared
+variables as well as cyclic  terms.  It   works,  like  unify for cyclic
+terms, by creating references from  the   original  to the reference and
+restoring the references using the argument stack.
 
-Next, the array of foreign references   is  sorted. Variables are placed
-first, ordered on their address and  ground-term indices after them. The
-variable array is then  scanned  and   for  each  shared  variable (i.e.
-reference to the same address), two  term-references are made. The first
-points to the old term's shared variable and   the  other is set to NULL
-(var). This field will be  used  to   store  a  reference  to the copied
-variable.
+There are three types of references between the original and the copy:
 
-Finally, the term is copied. If a variable  is found, it is looked up in
-the shared variable database.  When  present   and  already  copied, the
-reference is copied. When present, but not   copied, a reference is made
-from  the  free  cell  to  the  copy.  Otherwise  no  action  is  needed
-(singleton). If a term is found and it  is in the ground-list, just copy
-the term-reference, otherwise, recurse into the term.  Finally, copy all
-other (atomic) data by reference.
+	* For variables we set the new variable to VAR_MARK and
+	  make a reference to it.  This means that if we find a
+	  reference to a variable VAR_MARK we must create a reference
+	  to the same address.
+	* For attributed variables we create an TAG_ATTVAR link to the
+	  copy.  If we find a TAG_ATTVAR pointing to a TAG_ATTVAR we
+	  no we found a copy.  Unfortunately just trailing the old
+	  location doesn't suffice as we must recreate the link to
+	  the old address, so we push this one first.
+	* Compunds use the old trick to make the functor a reference
+	  to the copy.
 
-NOTE: the variable detection could be  more efficient by introducing two
-special constants. Finding a variable,  assign   the  first, finding the
-first, assign the second and make a  reference in the variable array. To
-be considered.
+do_copy_term() returns TRUE if the term can   be shared and FALSE if not
+(i.e. it is a variable or attributed variable). If, in sharing mode, the
+copying routine copied a shareable term it   discards the copy and links
+the original.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#define VAR_MARK (0x1<<LMASK_BITS|TAG_VAR)
+
+static inline void
+initCyclic(ARG1_LD)
+{ requireStack(argument, sizeof(Word));
+  *aTop++ = NULL;			/* marker */
+}
+
+
+static inline void
+TrailCyclic(Word p ARG_LD)
+{ requireStack(argument, sizeof(Word));
+  *aTop++ = p;
+}
+
+
+static inline void
+exitCyclic(ARG1_LD)
+{ Word p, *sp = aTop;
+
+  while((p = *--sp))
+  { if ( isRef(*p) )
+    { Word p2 = unRef(*p);
+
+      if ( *p2 == VAR_MARK )		/* sharing variables */
+      { setVar(*p2);
+	setVar(*p);
+      } else
+      { *p = *p2;			/* cyclic terms */
+      }
+    } else				/* attributed variable */
+    { Word old = *--sp;
+      *p = consPtr(old, STG_GLOBAL|TAG_ATTVAR);
+    }
+  }
+  aTop = sp;
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+FALSE: term cannot be shared
+TRUE:  term can be shared (ground)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-pre_copy_analysis(Word t, int *index)
-{ deRef(t);
+do_copy_term(Word from, Word to, int share ARG_LD)
+{ 
 
-  if ( isVar(*t) )
-  { term_t h = PL_new_term_ref();
-    Word p = valTermRef(h);
+again:
+  switch(tag(*from))
+  { case TAG_REFERENCE:
+    { Word p2 = unRef(*from);
 
-    *p = makeRef(t);
-    return 1;				/* 1 variable */
-  }
-
-  if ( isTerm(*t) )
-  { int arity = arityFunctor(functorTerm(*t));
-    int subvars = 0;
-    int thisindex = (*index)++;
-    term_t thisterm = PL_new_term_refs(0);
-    
-    t = argTermP(*t, 0);
-    for( ; --arity >= 0; t++ )
-      subvars += pre_copy_analysis(t, index);
-    
-    if ( subvars == 0 )			/* ground term */
-    { term_t h;
-
-      PL_reset_term_refs(thisterm);
-      h = PL_new_term_ref();
-      PL_put_integer(h, thisindex);
-      *index = thisindex+1;		/* don't number in ground! */
-    }
-
-    return subvars;
-  }
-    
-  return 0;
-}
-
-
-static int
-cmp_copy_refs(const void *h1, const void *h2)
-{ word w1 = *((Word) h1);
-  word w2 = *((Word) h2);
-
-  if ( isRef(w1) )
-  { if ( isRef(w2) )
-      return unRef(w1) - unRef(w2);
-    return -1;
-  }
-  if ( isRef(w2) )
-    return 1;
-
-  return valInt(w1) - valInt(w2);
-}
-
-
-typedef struct
-{ term_t shared_variables;		/* handle of first shared var */
-  int    nshared;			/* # shared variables */
-  term_t ground_terms;			/* index of first ground term */
-  int	 nground;			/* # ground terms */
-  int    index;				/* index of current compound */
-} copy_info, *CopyInfo;
-
-
-static Word
-lookup_shared_var(CopyInfo info, Word v)
-{ if ( info->nshared )
-  { Word v0 = valTermRef(info->shared_variables);
-    int n;
-
-    for(n = info->nshared; n > 0; n--, v0 += 2)
-    { if ( unRef(*v0) == v )
-	return v0;
-    }
-  }
-
-  return NULL;
-}
-
-
-static int
-lookup_ground(CopyInfo info)
-{ if ( info->nground )
-  { Word g0 = valTermRef(info->ground_terms);
-
-    if ( valInt(*g0) == info->index )
-    { info->nground--;
-      info->ground_terms++;
-      succeed;
-    }
-  }
-
-  fail;
-}
-
-
-static void
-do_copy(term_t from, term_t to, CopyInfo info)
-{ Word p = valTermRef(from);
-
-  deRef(p);
-  if ( isVar(*p) )
-  { Word p2 = lookup_shared_var(info, p);
-
-    if ( p2 )
-    { Word t = valTermRef(to);
-
-      deRef(t);
-      if ( p2[1] )
-	*t = p2[1];
-      else
-      { setVar(*t);
-	p2[1] = makeRef(t);
+      if ( *p2 == VAR_MARK )
+      { *to = makeRef(p2);
+        return FALSE;
+      } else
+      { from = p2;
+	goto again;
       }
     }
-  } else if ( isTerm(*p) )
-  { if ( lookup_ground(info) )
-    { info->index++;
-      PL_unify(to, from);
-    } else
-    { functor_t fd = functorTerm(*p);
-      int n, arity = arityFunctor(fd);
-      term_t af = PL_new_term_ref();
-      term_t at = PL_new_term_ref();
+    case TAG_VAR:
+      *to = VAR_MARK;
+      *from = makeRef(to);
+      TrailCyclic(from PASS_LD);
+      return FALSE;
+    case TAG_ATTVAR:
+    { Word p = valPAttVar(*from);
+      
+      if ( isAttVar(*p) )		/* already copied */
+      { *to = makeRefG(p);
+        return FALSE;
+      } else
+      { Word attr;			/* the new attributes */
 
-      info->index++;
-      PL_unify_functor(to, fd);
-      for(n=0; n<arity; n++)
-      { PL_get_arg(n+1, from, af);
-	PL_get_arg(n+1, to, at);
-	do_copy(af, at, info);
+	if ( !onStackArea(global, to) )
+	{ Word t = allocGlobal(1);
+	  
+	  *to = makeRefG(t);
+	  to = t;
+	}
+	attr = allocGlobal(1);
+	TrailCyclic(p PASS_LD);
+	TrailCyclic(from PASS_LD);
+	*from = consPtr(to, STG_GLOBAL|TAG_ATTVAR);
+	*to = consPtr(attr, STG_GLOBAL|TAG_ATTVAR);
+
+	do_copy_term(p, attr, FALSE PASS_LD);	/* copy attribute value */
+	return FALSE;
       }
     }
-  } else
-    PL_unify(to, from);
+    case TAG_ATOM:
+    case TAG_FLOAT:
+    case TAG_INTEGER:
+    case TAG_STRING:
+      *to = *from;
+      return TRUE;
+    case TAG_COMPOUND:
+    { Functor f1 = valueTerm(*from);
+
+      if ( isRef(f1->definition) )
+      { *to = consPtr(unRef(f1->definition), TAG_COMPOUND|STG_GLOBAL);
+      } else
+      { int arity = arityFunctor(f1->definition);
+	Word oldtop = gTop;
+	Word to0 = to;
+	Word from0 = from;
+	Functor f2 = (Functor)allocGlobal(arity+1);
+	int ground = TRUE;
+
+	f2->definition = f1->definition;
+	f1->definition = makeRefG((Word)f2);
+	TrailCyclic(&f1->definition PASS_LD);
+	*to = consPtr(unRef(f1->definition), TAG_COMPOUND|STG_GLOBAL);
+	
+	from = &f1->arguments[0];
+	to   = &f2->arguments[0];
+	while(--arity > 0)
+	  ground &= do_copy_term(from++, to++, share PASS_LD);
+	if ( share && ground )
+	{ ground &= do_copy_term(from, to, share PASS_LD);
+	  if ( ground )
+	  { gTop = oldtop;
+	    *to0 = *from0;
+	    DEBUG(2, Sdprintf("Shared\n"));
+	    return TRUE;
+	  } else
+	    return FALSE;
+	} else
+	  goto again;
+      }
+    }
+    default:
+      assert(0);
+      return FALSE;
+  }
 }
 
 
-word
-pl_copy_term(term_t from, term_t to)
-{ Word f = valTermRef(from);
+static
+PRED_IMPL("copy_term", 2, copy_term, 0)
+{ PRED_LD
   term_t copy = PL_new_term_ref();
-  term_t ha = copy+1;			/* next free one */
-  int hn;
-  Word p, q;
-  copy_info info;
-  int n, index = 1;
 
-  pre_copy_analysis(f, &index);
-  hn = PL_new_term_refs(0) - ha;
-  info.shared_variables = ha;
-  info.index = 1;
-  if ( hn > 0 )
-  { q = p = valTermRef(ha);
-
-    qsort(p, hn, sizeof(word), cmp_copy_refs);
-    for( n = hn; n > 0; n--)
-    { if ( isRef(*p) )
-      { Word v = unRef(*p);
-	int shared = 1;
-
-	while(n > 1 && isRef(p[shared]) && unRef(p[shared]) == v )
-	{ shared++;
-	  n--;
-	}
-
-	if ( shared > 1 )
-	{ *q++ = *p;
-	  *q++ = 0;			/* reserved for new one */
-	}
-	p += shared;
-      } else				/* hit ground terms */
-      { info.nshared = (q-valTermRef(ha))/2;
-	info.nground = n;
-	info.ground_terms = consTermRef(q);
-
-	while(n-- > 0)
-	  *q++ = *p++;
-	goto end_analysis;
-      }
-    }
-    info.nshared = (q-valTermRef(ha))/2;
-    info.nground = 0;
-  } else
-  { info.nshared = 0;
-    info.nground = 0;
-  }
-end_analysis:
-
-  DEBUG(5, Sdprintf("%d shared variables and %d ground terms:\n",
-		    info.nshared, info.nground);
-	for(n=0; n<info.nground; n++)
-	{ Sdprintf("\t");
-	  pl_write(info.ground_terms+n);
-	  Sdprintf("\n");
-	});
-
-  do_copy(from, copy, &info);
-
-  return PL_unify(to, copy);
+  initCyclic(PASS_LD1);
+  do_copy_term(valTermRef(A1), valTermRef(copy), TRUE PASS_LD);
+  exitCyclic(PASS_LD1);
+  
+  return PL_unify(copy, A2);
 }
 
+
+static
+PRED_IMPL("really_copy_term", 2, really_copy_term, 0)
+{ PRED_LD
+  term_t copy = PL_new_term_ref();
+
+  initCyclic(PASS_LD1);
+  do_copy_term(valTermRef(A1), valTermRef(copy), FALSE PASS_LD);
+  exitCyclic(PASS_LD1);
+  
+  return PL_unify(copy, A2);
+}
+
+
+#undef LD
+#define LD GLOBAL_LD
 
 		 /*******************************
 		 *	       ATOMS		*
@@ -2952,6 +2909,8 @@ BeginPredDefs(prims)
 #ifdef O_HASHTERM
   PRED_DEF("hash_term", 2, hash_term, 0)
 #endif
+  PRED_DEF("copy_term", 2, copy_term, 0)
+  PRED_DEF("really_copy_term", 2, really_copy_term, 0)
 #ifdef O_LIMIT_DEPTH
   PRED_DEF("$depth_limit_except", 3, depth_limit_except, 0)
   PRED_DEF("$depth_limit_false",  3, depth_limit_false, 0)

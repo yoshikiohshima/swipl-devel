@@ -520,7 +520,6 @@ word		pl_numbervars(term_t t, term_t atom,
 			      term_t start, term_t end);
 word		pl_free_variables(term_t t, term_t l);
 word		pl_e_free_variables(term_t t, term_t l);
-word		pl_copy_term(term_t f, term_t t);
 word		stringToList(char *s);
 word		pl_atom_length(term_t w, term_t n);
 word		pl_int_to_atom(term_t number, term_t base,

@@ -686,9 +686,6 @@ consPtr(void *p, int ts)
 #define consPtr(p, s) __consPtr(p, s)
 #endif
 
-#define makeRefL(p) consPtr(p, TAG_REFERENCE|STG_LOCAL)
-#define makeRefG(p) consPtr(p, TAG_REFERENCE|STG_GLOBAL)
-
 static inline word
 __makeRef(Word p ARG_LD)
 { if ( p >= (Word) lBase )
