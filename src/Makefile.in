@@ -133,7 +133,8 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	am_match.pl oset.pl ordsets.pl occurs.pl lists.pl \
 	netscape.pl url.pl main.pl assoc.pl \
 	threadutil.pl qpforeign.pl dif.pl when.pl \
-	checklast.pl checkselect.pl operators.pl
+	checklast.pl checkselect.pl operators.pl \
+	prolog_stack.pl
 CLP=	bounds.pl
 PLWIN=	wise.pl dde.pl progman.pl registry.pl
 builddirs = ../lib ../lib/$(ARCH)
