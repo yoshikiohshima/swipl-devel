@@ -237,14 +237,45 @@ print_triple_source(triple *t)
     Sdprintf("%s:%ld: ", PL_atom_chars(t->source), t->line);
 }
   
+
+static void
+print_object(triple *t)
+{ switch(t->objtype)
+  { case OBJ_RESOURCE:
+      Sdprintf("%s", PL_atom_chars(t->object.resource));
+      break;
+    case OBJ_STRING:
+      Sdprintf("\"%s\"", PL_atom_chars(t->object.string));
+      break;
+    case OBJ_INTEGER:
+      Sdprintf("%ld", t->object.integer);
+      break;
+    case OBJ_DOUBLE:
+      Sdprintf("%f", t->object.real);
+      break;
+    case OBJ_TERM:
+    { fid_t fid = PL_open_foreign_frame();
+      term_t term = PL_new_term_ref();
+
+      PL_recorded_external(t->object.term.record, term);
+      PL_write_term(Serror, term, 1200,
+		    PL_WRT_QUOTED|PL_WRT_NUMBERVARS|PL_WRT_PORTRAY);
+      break;
+      PL_discard_foreign_frame(fid);
+      break;
+    }
+    default:
+      assert(0);
+  }
+}
+
+
 static void
 print_triple(triple *t)
-{ char *sep = t->objtype == OBJ_RESOURCE ? "" : "\"";
-
-  Sdprintf("<%s %s %s%s%s>",
+{ Sdprintf("<%s %s ",
 	   PL_atom_chars(t->subject),
-	   PL_atom_chars(t->predicate->name),
-	   sep, PL_atom_chars(t->object), sep);
+	   PL_atom_chars(t->predicate->name));
+  print_object(t);
 }
 
 #endif
@@ -884,9 +915,16 @@ static unsigned long
 object_hash(triple *t)
 { switch(t->objtype)
   { case OBJ_RESOURCE:
-      return t->object;
-    case OBJ_LITERAL:
-      return case_insensitive_atom_hash(t->object);
+      return t->object.resource;
+    case OBJ_STRING:
+      return case_insensitive_atom_hash(t->object.string);
+    case OBJ_INTEGER:
+      return t->object.integer;
+    case OBJ_DOUBLE:
+      return t->object.integer;		/* TBD: get all bits */
+    case OBJ_TERM:
+      return string_hash((const char*)t->object.term.record,
+			 t->object.term.len);
     default:
       assert(0);
       return 0;
@@ -1011,7 +1049,7 @@ link_triple(triple *t)
   if ( t->predicate->name == ATOM_subPropertyOf &&
        t->objtype == OBJ_RESOURCE )
   { predicate *me    = lookup_predicate(t->subject);
-    predicate *super = lookup_predicate(t->object);
+    predicate *super = lookup_predicate(t->object.resource);
 
     addSubPropertyOf(me, super);
   }
@@ -1070,9 +1108,9 @@ update_hash()
 
     if ( need_update )			/* check again */
     { if ( organise_predicates() )
-      { Sdprintf("Re-hash ...");
+      { DEBUG(1, Sdprintf("Re-hash ..."));
 	rehash_triples();
-	Sdprintf("ok\n");
+	DEBUG(1, Sdprintf("ok\n"));
       }
       need_update = 0;
     }
@@ -1095,7 +1133,7 @@ erase_triple(triple *t)
     if ( t->predicate->name == ATOM_subPropertyOf &&
 	 t->objtype == OBJ_RESOURCE )
     { predicate *me    = lookup_predicate(t->subject);
-      predicate *super = lookup_predicate(t->object);
+      predicate *super = lookup_predicate(t->object.resource);
 
       delSubPropertyOf(me, super);
     }
@@ -1114,6 +1152,42 @@ erase_triple(triple *t)
 }
 
 
+static int
+match_object(triple *t, triple *p)
+{ if ( p->objtype )			/* something is filled in */
+  { if ( p->objtype != t->objtype )
+      return FALSE;
+
+    switch( p->objtype )
+    { case OBJ_RESOURCE:
+	return t->object.resource == p->object.resource;
+      case OBJ_STRING:
+	if ( t->object.string == p->object.string )
+	  return TRUE;
+        if ( p->match )
+	  return match(p->match, p->object.string, t->object.string);
+	return FALSE;
+      case OBJ_INTEGER:
+	return t->object.integer == p->object.integer;
+      case OBJ_DOUBLE:
+	return t->object.real == p->object.real;
+      case OBJ_TERM:
+	if ( p->object.term.len != t->object.term.len )
+	  return FALSE;
+	return memcmp(t->object.term.record, p->object.term.record,
+		      p->object.term.len);
+      default:
+	assert(0);
+    }
+
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Match triple t to pattern p.  Erased triples are always skipped.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -1128,13 +1202,7 @@ match_triples(triple *t, triple *p, unsigned flags)
     return FALSE;
   if ( p->subject && t->subject != p->subject )
     return FALSE;
-  if ( p->object && t->object != p->object )
-  { if ( p->match && match(p->match, p->object, t->object) )
-      return TRUE;
-
-    return FALSE;
-  }
-  if ( p->objtype && t->objtype != p->objtype )
+  if ( !match_object(t, p) )
     return FALSE;
   if ( flags & MATCH_SRC )
   { if ( p->source && t->source != p->source )
@@ -1317,6 +1385,13 @@ save_atom(IOSTREAM *out, atom_t a)
 }
 
 
+#ifdef WORDS_BIGENDIAN
+static const int double_byte_order[] = { 7,6,5,4,3,2,1,0 };
+#else
+static const int double_byte_order[] = { 0,1,2,3,4,5,6,7 };
+#endif
+
+
 static void
 write_triple(IOSTREAM *out, triple *t)
 { Sputc('T', out);
@@ -1327,14 +1402,39 @@ write_triple(IOSTREAM *out, triple *t)
   switch(t->objtype)
   { case OBJ_RESOURCE:
       Sputc('R', out);
+      save_atom(out, t->object.resource);
       break;
-    case OBJ_LITERAL:
+    case OBJ_STRING:
       Sputc('L', out);
+      save_atom(out, t->object.string);
       break;
+    case OBJ_INTEGER:
+      Sputc('I', out);
+      save_int(out, t->object.integer);
+      break;
+    case OBJ_DOUBLE:
+    { double f = t->object.real;
+      unsigned char *cl = (unsigned char *)&f;
+      unsigned int i;
+      
+      Sputc('F', out);
+      for(i=0; i<sizeof(double); i++)
+	Sputc(cl[double_byte_order[i]], out);
+
+      break;
+    }
+    case OBJ_TERM:
+    { const char *s = t->object.term.record;
+      int len = t->object.term.len;
+      
+      Sputc('T', out);
+      save_int(out, len);
+      while(--len >= 0)
+	Sputc(*s++, out);
+    }
     default:
       assert(0);
   }
-  save_atom(out, t->object);
 
   save_atom(out, t->source);
   save_int(out, t->line);
@@ -1503,6 +1603,24 @@ load_atom(IOSTREAM *in, ld_context *ctx)
 }
 
 
+static double
+load_double(IOSTREAM *fd)
+{ double f;
+  unsigned char *cl = (unsigned char *)&f;
+  unsigned int i;
+
+  for(i=0; i<sizeof(double); i++)
+  { int c = Sgetc(fd);
+    
+    assert(c != EOF);
+      
+    cl[double_byte_order[i]] = c;
+  }
+  
+  return f;
+}
+
+
 static int
 load_triple(IOSTREAM *in, ld_context *ctx)
 { triple *t = PL_malloc(sizeof(*t));
@@ -1513,14 +1631,35 @@ load_triple(IOSTREAM *in, ld_context *ctx)
   switch(Sgetc(in))
   { case 'R':
       t->objtype = OBJ_RESOURCE;
+      t->object.resource = load_atom(in, ctx);
       break;
     case 'L':
-      t->objtype = OBJ_LITERAL;
+      t->objtype = OBJ_STRING;
+      t->object.resource = load_atom(in, ctx);
       break;
+    case 'I':
+      t->objtype = OBJ_INTEGER;
+      t->object.integer = load_int(in);
+      break;
+    case 'F':
+      t->objtype = OBJ_DOUBLE;
+      t->object.real = load_double(in);
+      break;
+    case 'T':
+    { int i;
+      t->objtype = OBJ_TERM;
+      t->object.term.len = load_int(in);
+      t->object.term.record = PL_malloc(t->object.term.len);
+      char *s = (char *)t->object.term.record;
+
+      for(i=0; i<t->object.term.len; i++)
+	s[i] = Sgetc(in);
+
+      break;
+    }
     default:
       assert(0);
   }
-  t->object = load_atom(in, ctx);
   t->source = load_atom(in, ctx);
   t->line   = load_int(in);
   link_triple(t);
@@ -1631,7 +1770,28 @@ md5_triple(triple *t, md5_byte_t *digest)
   tmp[0] = 'O';
   tmp[1] = (char)t->objtype;
   md5_append(&state, tmp, 2);
-  s = PL_atom_nchars(t->object, &len);
+  switch(t->objtype)
+  { case OBJ_RESOURCE:
+      s = PL_atom_nchars(t->object.resource, &len);
+      break;
+    case OBJ_STRING:
+      s = PL_atom_nchars(t->object.string, &len);
+      break;
+    case OBJ_INTEGER:			/* TBD: byte order issues */
+      s = (const char *)&t->object.integer;
+      len = sizeof(t->object.integer);
+      break;
+    case OBJ_DOUBLE:
+      s = (const char *)&t->object.real;
+      len = sizeof(t->object.real);
+      break;
+    case OBJ_TERM:
+      s = (const char *)t->object.term.record;
+      len = t->object.term.len;
+      break;
+    default:
+      assert(0);
+  }
   md5_append(&state, (const md5_byte_t *)s, len);
   if ( t->source )
   { md5_append(&state, "S", 2);
@@ -1739,13 +1899,28 @@ in the predicate structure.
 static void
 lock_atoms(triple *t)
 { PL_register_atom(t->subject);
-  PL_register_atom(t->object);
+  switch(t->objtype)
+  { case OBJ_RESOURCE:
+      PL_register_atom(t->object.resource);
+      break;
+    case OBJ_STRING:
+      PL_register_atom(t->object.string);
+      break;
+  }
 }
+
 
 static void
 unlock_atoms(triple *t)
 { PL_unregister_atom(t->subject);
-  PL_unregister_atom(t->object);
+  switch(t->objtype)
+  { case OBJ_RESOURCE:
+      PL_unregister_atom(t->object.resource);
+      break;
+    case OBJ_STRING:
+      PL_unregister_atom(t->object.string);
+      break;
+  }
 }
 
 
@@ -1754,16 +1929,31 @@ unlock_atoms(triple *t)
 		 *******************************/
 
 static int
+get_literal(term_t lit, triple *t)
+{ if ( PL_get_atom(lit, &t->object.string) )
+  { t->objtype = OBJ_STRING;
+  } else if ( PL_is_integer(lit) && PL_get_long(lit, &t->object.integer) )
+  { t->objtype = OBJ_INTEGER;
+  } else if ( PL_get_float(lit, &t->object.real) )
+  { t->objtype = OBJ_DOUBLE;
+  } else				/* TBD: check groundness */
+  { t->object.term.record = PL_record_external(lit, &t->object.term.len);
+    t->objtype = OBJ_TERM;
+  }
+
+  return TRUE;
+}
+
+
+static int
 get_object(term_t object, triple *t)
-{ if ( PL_get_atom(object, &t->object) )
+{ if ( PL_get_atom(object, &t->object.resource) )
     t->objtype = OBJ_RESOURCE;
   else if ( PL_is_functor(object, FUNCTOR_literal1) )
   { term_t a = PL_new_term_ref();
     
     PL_get_arg(1, object, a);
-    if ( !get_atom_ex(a, &t->object) )
-      return FALSE;
-    t->objtype = OBJ_LITERAL;
+    return get_literal(a, t);
   } else
     return type_error(object, "rdf_object");
 
@@ -1829,33 +2019,32 @@ get_partial_triple(term_t subject, term_t predicate, term_t object,
     return FALSE;
 					/* the object */
   if ( object && !PL_is_variable(object) )
-  { if ( PL_get_atom(object, &t->object) )
+  { if ( PL_get_atom(object, &t->object.resource) )
       t->objtype = OBJ_RESOURCE;
     else if ( PL_is_functor(object, FUNCTOR_literal1) )
     { term_t a = PL_new_term_ref();
       
       PL_get_arg(1, object, a);
-      if ( !get_atom_or_var_ex(a, &t->object) )
+      if ( !get_literal(a, t) )		/* TBD: what if non-ground? */
 	return FALSE;
-      t->objtype = OBJ_LITERAL;
     } else if ( PL_is_functor(object, FUNCTOR_literal2) )
     { term_t a = PL_new_term_ref();
       
       PL_get_arg(1, object, a);
       if ( PL_is_functor(a, FUNCTOR_exact1) )
-	t->match = MATCH_EXACT;
+	t->match = STR_MATCH_EXACT;
       else if ( PL_is_functor(a, FUNCTOR_substring1) )
-	t->match = MATCH_SUBSTRING;
+	t->match = STR_MATCH_SUBSTRING;
       else if ( PL_is_functor(a, FUNCTOR_word1) )
-	t->match = MATCH_WORD;
+	t->match = STR_MATCH_WORD;
       else if ( PL_is_functor(a, FUNCTOR_prefix1) )
-	t->match = MATCH_PREFIX;
+	t->match = STR_MATCH_PREFIX;
       else
 	return domain_error(a, "match_type");
       PL_get_arg(1, a, a);
-      if ( !get_atom_or_var_ex(a, &t->object) )
+      if ( !get_atom_or_var_ex(a, &t->object.string) )
 	return FALSE;
-      t->objtype = OBJ_LITERAL;
+      t->objtype = OBJ_STRING;
     } else
       return type_error(object, "rdf_object");
   }
@@ -1867,7 +2056,7 @@ get_partial_triple(term_t subject, term_t predicate, term_t object,
     t->indexed |= BY_S;
   if ( t->predicate )
     t->indexed |= BY_P;
-  if ( t->object && t->match <= MATCH_EXACT )
+  if ( t->objtype == OBJ_STRING && t->match <= STR_MATCH_EXACT )
     t->indexed |= BY_O;
 
   indexed[t->indexed]++;		/* statistics */
@@ -1891,10 +2080,10 @@ inverse_partial_triple(triple *t)
 
   if ( !t->inversed &&
        (!t->predicate || (i=t->predicate->inverse_of)) &&
-       t->objtype != OBJ_LITERAL )
-  { atom_t o = t->object;
+       t->objtype <= OBJ_RESOURCE )	/* also allow OBJ_UNTYPED */
+  { atom_t o = t->object.resource;
 
-    if ( (t->object = t->subject) )
+    if ( (t->object.resource = t->subject) )
       t->objtype = OBJ_RESOURCE;
     t->subject = o;
 
@@ -1979,23 +2168,45 @@ unify_triple(term_t subject, term_t pred, term_t object,
 
   switch(t->objtype)
   { case OBJ_RESOURCE:
-      if ( !PL_unify_atom(object, t->object) )
+      if ( !PL_unify_atom(object, t->object.resource) )
 	return FALSE;
       break;
-    case OBJ_LITERAL:
+    case OBJ_STRING:
       if ( PL_is_functor(object, FUNCTOR_literal2) )
       { term_t a = PL_new_term_ref();
 
 	PL_get_arg(2, object, a);
-	if ( !PL_unify_atom(a, t->object) )
+	if ( !PL_unify_atom(a, t->object.string) )
 	  return FALSE;
       } else
       { if ( !PL_unify_term(object,
 			    PL_FUNCTOR, FUNCTOR_literal1,
-			      PL_ATOM, t->object) )
+			      PL_ATOM, t->object.string) )
 	  return FALSE;
       }
       break;
+    case OBJ_INTEGER:
+      if ( !PL_unify_term(object,
+			  PL_FUNCTOR, FUNCTOR_literal1,
+			    PL_INTEGER, t->object.integer) )
+	return FALSE;
+      break;
+    case OBJ_DOUBLE:
+      if ( !PL_unify_term(object,
+			  PL_FUNCTOR, FUNCTOR_literal1,
+			    PL_FLOAT, t->object.real) )
+	return FALSE;
+      break;
+    case OBJ_TERM:
+    { term_t term = PL_new_term_ref();
+
+      PL_recorded_external(t->object.term.record, term);
+      if ( !PL_unify_term(object,
+			  PL_FUNCTOR, FUNCTOR_literal1,
+			    PL_TERM, term) )
+	return FALSE;
+      break;
+    }
     default:
       assert(0);
   }
@@ -2339,11 +2550,11 @@ update_triple(term_t action, triple *t)
 
     if ( !get_object(a, &t2) )
       return FALSE;
-    if ( t2.object == tmp.object && t2.objtype == tmp.objtype )
+    if ( match_object(&t2, &tmp) )
       return TRUE;
 
     tmp.objtype = t2.objtype;
-    tmp.object = t2.object;
+    tmp.object = t2.object;		/* Union copy.  Portable? */
   } else if ( PL_is_functor(action, FUNCTOR_source1) )
   { triple t2;
 
@@ -2795,7 +3006,7 @@ can_reach_target(agenda *a)
   triple *p;
 
   if ( indexed & BY_S )			/* subj ---> */
-  { a->pattern.object = a->target;
+  { a->pattern.object.resource = a->target;
     indexed |= BY_O;
   } else
   { a->pattern.subject = a->target;
@@ -2811,7 +3022,7 @@ can_reach_target(agenda *a)
   }
 
   if ( a->pattern.indexed & BY_S )	
-  { a->pattern.object = 0;
+  { a->pattern.object.resource = 0;
   } else
   { a->pattern.subject = 0;
   }
@@ -2830,7 +3041,7 @@ bf_expand(agenda *a, atom_t resource)
   if ( indexed & BY_S )			/* subj ---> */
   { a->pattern.subject = resource;
   } else
-  { a->pattern.object = resource;
+  { a->pattern.object.resource = resource;
   }
 
   if ( a->target && can_reach_target(a) )
@@ -2840,7 +3051,7 @@ bf_expand(agenda *a, atom_t resource)
   p = table[indexed][triple_hash(&a->pattern, indexed)];
   for( ; p; p = p->next[indexed])
   { if ( match_triples(p, &a->pattern, MATCH_SUBPROPERTY) )
-    { atom_t found = (indexed & BY_S) ? p->object : p->subject;
+    { atom_t found = (indexed & BY_S) ? p->object.resource : p->subject;
       visited *v;
 
       v = append_agenda(a, found);
@@ -2902,7 +3113,7 @@ rdf_reachable(term_t subj, term_t pred, term_t obj, control_t h)
       if ( !PL_is_variable(subj) )		/* subj .... obj */
       { if ( !get_partial_triple(subj, pred, 0, 0, &a.pattern) )
 	  return FALSE;
-	a.target = a.pattern.object;
+	a.target = a.pattern.object.resource;
 	target_term = obj;
       } else if ( !PL_is_variable(obj) ) 	/* obj .... subj */
       {	if ( !get_partial_triple(0, pred, obj, 0, &a.pattern) )
@@ -2917,7 +3128,7 @@ rdf_reachable(term_t subj, term_t pred, term_t obj, control_t h)
       if ( (a.pattern.indexed & BY_S) ) 	/* subj ... */
 	append_agenda(&a, a.pattern.subject);
       else
-	append_agenda(&a, a.pattern.object);
+	append_agenda(&a, a.pattern.object.resource);
       a.to_return = a.head;
       a.to_expand = a.head;
 
@@ -3171,7 +3382,7 @@ match(int how, atom_t search, atom_t label)
   const char *f = PL_atom_chars(search);
 
   switch(how)
-  { case MATCH_EXACT:
+  { case STR_MATCH_EXACT:
     { for( ; *l && *f; l++, f++ )
       { if ( tolower(*l) != tolower(*f) )
 	  return FALSE;
@@ -3181,7 +3392,7 @@ match(int how, atom_t search, atom_t label)
   
       return FALSE;
     }
-    case MATCH_PREFIX:
+    case STR_MATCH_PREFIX:
     { for( ; *l && *f; l++, f++ )
       { if ( tolower(*l) != tolower(*f) )
 	  return FALSE;
@@ -3191,7 +3402,7 @@ match(int how, atom_t search, atom_t label)
   
       return FALSE;
     }
-    case MATCH_SUBSTRING:		/* use Boyle-More! */
+    case STR_MATCH_SUBSTRING:		/* use Boyle-More! */
     { const char *h;
       const char *f0 = f;
   
@@ -3208,7 +3419,7 @@ match(int how, atom_t search, atom_t label)
   
       return FALSE;
     }
-    case MATCH_WORD:
+    case STR_MATCH_WORD:
     { const char *h;
       const char *f0 = f;
   
@@ -3245,13 +3456,13 @@ match_label(term_t how, term_t search, term_t label)
     return FALSE;
 
   if ( h == ATOM_exact )
-    type = MATCH_EXACT;
+    type = STR_MATCH_EXACT;
   else if ( h == ATOM_substring )
-    type = MATCH_SUBSTRING;
+    type = STR_MATCH_SUBSTRING;
   else if ( h == ATOM_word )
-    type = MATCH_WORD;
+    type = STR_MATCH_WORD;
   else if ( h == ATOM_prefix )
-    type = MATCH_PREFIX;
+    type = STR_MATCH_PREFIX;
   else
     return domain_error(how, "search_method");
 
