@@ -78,6 +78,11 @@ resize(W, Tab:[tab]) :->
 	;   send(Tab, size, size(Width,TabH))
 	).
     
+layout_dialog(W, _Gap:[size], _Size:[size], _Border:[size]) :->
+	"Overrule to deal with nested tabbed windows"::
+	new(S0, size(0,0)),
+	send_super(W, layout_dialog, S0, S0, S0).
+
 :- pce_group(stack).
 
 on_top(W, Name:name) :->
@@ -168,6 +173,7 @@ initialise(T, Window:window=[window], Name:name=[name]) :->
 	    get(Decor, unlock, _)
 	;   true
 	),
+	send(Decor, slot, tile, @nil),
 	send_super(T, initialise, TheName),
 	send(T, border, size(0,0)),
 	send_super(T, display, Decor),
@@ -177,17 +183,28 @@ initialise(T, Window:window=[window], Name:name=[name]) :->
 
 :- pce_group(resize).
 
+%	->size
+%	
+%	This method must update the size of  the window. For some, to me
+%	unknown,  reason  this  does  not    work  correctly  when  done
+%	immediately.  Possibly  this  has  something   to  do  with  X11
+%	synchronisation. We use the hack   in_pce_thread/1 to reschedule
+%	the window resize in the event loop.
+
 size(T, Size:size) :->
 	"Adjust size of tab and window"::
+	in_pce_thread(send(T, resize_window)),
+	send_super(T, size, Size).
+
+resize_window(T) :->
+	get(T, size, size(W, H)),
 	get(T, window, Window),
-	get(Size, width, W),
-	get(Size, height, H),
 	(   get(Window, decoration, Decor),
 	    Decor \== @nil
-	->  send(Decor, do_set, 0,0,W,H)
-	;   send(Window, do_set, 0,0,W,H)
+	->  Resize = Decor
+	;   Resize = Window
 	),
-	send_super(T, size, Size).
+	send(Resize, do_set, 0,0,W,H).
 
 %layout_dialog(T) :->
 %	(   get(T, window, Window),
@@ -203,10 +220,8 @@ status(T, Status:{on_top,hidden}) :->
 	send_super(T, status, Status),
 	(   Status == on_top,
 	    get(T, is_displayed, @on),
-	    get(T, frame, Frame)
-	->  get(T, window, Window),
-	    send(Window, resize),
-	    send(Frame, keyboard_focus, Window)
+	    get(T, container, tabbed_window, TabbedWindow)
+	->  send(TabbedWindow, resize, T)
 	;   true
 	).
 

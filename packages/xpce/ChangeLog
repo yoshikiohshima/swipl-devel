@@ -2,6 +2,12 @@
 			   ==============
 
 
+* ADDED/FIXED: untab/retab of tabs in the class tabbed_window.
+
+* FIXED: Scrollbar update for windows used as graphicals (i.e. displayed
+  on other windows).
+
+
 VERSION 6.2.20, distributed with SWI-Prolog 5.3.13
 ==================================================
 

@@ -360,6 +360,7 @@ updatePositionWindow(PceWindow sw)
       TRY(send(sw, NAME_create, parent, EAV));
 
     ws_geometry_window(sw, x, y, w, h, pen);
+    updateScrollbarValuesWindow(sw);
   } else
   { uncreateWindow(sw);
     assign(sw, displayed, ON);
