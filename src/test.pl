@@ -1048,20 +1048,25 @@ avar(type-5) :-
 		 *	     COPY-TERM		*
 		 *******************************/
 
-copy_term(ct-1) :-
+copy_term(rct-1) :-
 	really_copy_term(a, X), X == a.
-copy_term(ct-2) :-
+copy_term(rct-2) :-
 	really_copy_term(X, Y), X \== Y.
-copy_term(ct-3) :-
+copy_term(rct-3) :-
 	really_copy_term(f(a), Y), Y == f(a).
-copy_term(ct-4) :-
+copy_term(rct-4) :-
 	really_copy_term(f(X), Y), Y = f(Z), X \== Z.
-copy_term(ct-5) :-
+copy_term(rct-5) :-
 	really_copy_term(f(X, X), Y), Y = f(A,B), A == B.
-copy_term(ct-5) :-
+copy_term(rct-6) :-
 	X = f(X),
 	really_copy_term(X, Y),
 	X = Y.
+copy_term(ct-1) :-
+	T = (A=foo(bar(A), y:x(A, b, c))),
+	copy_term(T, B),
+	numbervars(B, 0, _),
+	\+ ground(T).
 copy_term(av-1) :-			% copy attributed variables
 	X = foo(V),
 	put_attr(V, test, y),

@@ -1156,7 +1156,7 @@ There are three types of references between the original and the copy:
 	  no we found a copy.  Unfortunately just trailing the old
 	  location doesn't suffice as we must recreate the link to
 	  the old address, so we push this one first.
-	* Compunds use the old trick to make the functor a reference
+	* Compounds use the old trick to make the functor a reference
 	  to the copy.
 
 do_copy_term() returns TRUE if the term can   be shared and FALSE if not
@@ -1292,7 +1292,7 @@ again:
 	to   = &f2->arguments[0];
 	while(--arity > 0)
 	  ground &= do_copy_term(from++, to++, share PASS_LD);
-	if ( share && ground )
+	if ( share )
 	{ ground &= do_copy_term(from, to, share PASS_LD);
 	  if ( ground )
 	  { gTop = oldtop;
