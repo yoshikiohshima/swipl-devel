@@ -987,24 +987,10 @@ exitCyclic(ARG1_LD)
   aTop = sp;
 }
 
-
-static inline int
-linkedTermsCyclic(Functor f1, Functor f2 ARG_LD)
-{ if ( isRef(f1->definition) &&
-       (Functor)unRef(f1->definition) == f2 )
-    succeed;
-  if ( isRef(f2->definition) &&
-       (Functor)unRef(f2->definition) == f1 )
-    succeed;
-
-  fail;
-}
-
 #else /*O_CYCLIC*/
 static inline void initCyclic(ARG1_LD) {}
 static inline void exitCyclic(ARG1_LD) {}
 static inline void linkTermsCyclic(Functor f1, Functor f2 ARG_LD) {}
-static inline int  linkedTermsCyclic(Functor f1, Functor f2 ARG_LD) { fail; }
 #endif /*O_CYCLIC*/
 
 
@@ -1108,9 +1094,15 @@ right_recursion:
       Functor f2 = valueTerm(w2);
       Word e;
 
-      if ( linkedTermsCyclic(f1, f2 PASS_LD) )
+#if O_CYCLIC
+      while ( isRef(f1->definition) )
+	f1 = (Functor)unRef(f1->definition);
+      while ( isRef(f2->definition) )
+	f2 = (Functor)unRef(f2->definition);
+      if ( f1 == f2 )
 	succeed;
-      
+#endif
+
       if ( f1->definition != f2->definition )
 	fail;
 

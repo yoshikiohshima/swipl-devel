@@ -88,6 +88,8 @@ syntax(number-2) :-
 
 unify(cycle-1) :-			% Kuniaki Mukai
 	X = f(Y), Y=f(X), X=Y.
+unify(cycle-2) :-			% Kuniaki Mukai
+	X = f(X), Y=f(Y), X=f(Y).
 
 
 		 /*******************************
