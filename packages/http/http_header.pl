@@ -493,6 +493,7 @@ header_field(Name, Value) -->
 field_to_prolog(content_length, ValueChars, ContentLength) :- !,
 	number_codes(ContentLength, ValueChars).
 field_to_prolog(cookie, ValueChars, Cookies) :- !,
+	debug(cookie, 'Cookie: ~s', [ValueChars]),
 	phrase(cookies(Cookies), ValueChars).
 field_to_prolog(set_cookie, ValueChars, SetCookie) :- !,
 	phrase(set_cookie(SetCookie), ValueChars).
