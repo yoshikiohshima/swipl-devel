@@ -596,6 +596,8 @@ atom_handling(current-1) :-
 
 string_handling(sub-1) :-
 	\+ sub_string(`HTTP/1.1 404 Not Found`, _, _, _, `OK`).
+string_handling(cmp-1) :-
+	`hello` == `hello`.
 
 :- set_prolog_flag(backquoted_string, false).
 

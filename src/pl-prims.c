@@ -464,7 +464,7 @@ tail_recursion:
     case TAG_ATOM:
       return eq ? NOTEQ : compareAtoms(w1, w2);
     case TAG_STRING:
-      return eq ? NOTEQ : compareStrings(w1, w2 PASS_LD);
+      return compareStrings(w1, w2 PASS_LD);
     case TAG_COMPOUND:
     { Functor f1 = (Functor)valPtr(w1);
       Functor f2 = (Functor)valPtr(w2);

@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: A == B if A and B are equal string objects.
+    (typo when providing support for cyclic terms)  Jacques Abel.
+
+
 VERSION 5.3.16 (July 21, 2004)
 ==============================
 
