@@ -29,6 +29,7 @@
     the GNU General Public License.
 */
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Simple integer solver that keeps track of upper and lower bounds
@@ -40,9 +41,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Todo:
-%	- division by zero
 %	- reduce redundant propagation work
 %	- other labelling functions
+%	- abs, mod, ...
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -52,8 +53,11 @@
 		(#<)/2,
 		(#>=)/2,
 		(#=<)/2,
-		(#=:=)/2,
-		(#=\=)/2,
+		(#=)/2,
+		(#\=)/2,
+		(#<=>)/2,
+		(#=>)/2,
+		(#<=)/2,
 		(in)/2,
 		label/1,
 		all_different/1
@@ -62,12 +66,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % operator declarations
 
+:- op(760, yfx,user:(#<=>)).
+:- op(750, xfy,user:(#=>)).
+:- op(750, yfx,user:(#<=)).
 :- op(700,xfx,user:(#>)).
 :- op(700,xfx,user:(#<)).
 :- op(700,xfx,user:(#>=)).
 :- op(700,xfx,user:(#=<)).
-:- op(700,xfx,user:(#=:=)).
-:- op(700,xfx,user:(#=\=)).
+:- op(700,xfx,user:(#=)).
+:- op(700,xfx,user:(#\=)).
 :- op(700,xfx,user:(in)).
 :- op(550,xfx,user:(..)).
 
@@ -81,15 +88,15 @@ X #=< Y :-
 	parse_expression(X,RX),
 	parse_expression(Y,RY),
 	leq(RX,RY,yes).
-X #=:= Y :-
+X #= Y :-
 	parse_expression(X,RX),
 	parse_expression(Y,RX). 
-X #=\= Y :-
+X #\= Y :-
 	parse_expression(X,RX),
 	parse_expression(Y,RY), 
 	neq(RX,RY,yes).
 X #> Y :-
-	Z #=:= Y + 1,
+	Z #= Y + 1,
 	X #>= Z.
 X #< Y :-
 	Y #> X.
@@ -99,6 +106,47 @@ X in L .. U :-
 	;
 		domain(X,L,U)
 	).
+
+L #<=> R :-
+	reify(L,B),
+	reify(R,B).
+L #=> R :-
+	reify(L,BL),
+	reify(R,BR),
+	myimpl(BL,BR).
+R #<= L :-
+	reify(L,BL),
+	reify(R,BR),
+	myimpl(BL,BR).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+reify(B,R) :-
+	var(B), !,
+	R = B.
+reify(B,R) :-
+	number(B), !,
+	R = B.
+reify(X #>= Y,B) :-
+	parse_expression(X,XR),
+	parse_expression(Y,YR),
+	reified_geq(XR,YR,B).
+reify(X #> Y,B) :-
+	parse_expression(X,XR),
+	Z #= Y + 1,
+	reified_geq(XR,Z,B).
+reify(X #=< Y,B) :-
+	parse_expression(X,XR),
+	parse_expression(Y,YR),
+	reified_geq(YR,XR,B).
+reify(X #> Y,B) :-
+	reify(Y #< X,B).
+reify(X #= Y,B) :-
+	parse_expression(X,XR),
+	parse_expression(Y,YR),
+	reified_eq(XR,YR,B).
+reify(X #\= Y,B) :-
+	parse_expression(X,XR),
+	parse_expression(Y,YR),
+	reified_neq(XR,YR,B).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_expression(Expr,Result) :-
@@ -205,8 +253,8 @@ geq(X,Y,New) :-
 			),
 			NXL is max(XL,YL),
 			put(X,NXL,XU,ExpX1),
-			( get(Y,YL2,_YU2,ExpY2) -> % JW: singleton YU2
-				NYU is min(YU,XU),
+			( get(Y,YL2,YU2,ExpY2) ->
+				NYU is min(YU2,XU),
 				put(Y,YL2,NYU,ExpY2)
 			;
 				true
@@ -343,13 +391,35 @@ myplus(X,Y,Z,New) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % X * Y = Z
 
+:- arithmetic_function(div/2).
+div(X,Y,Z) :-
+	( max_inf(X) ->
+		( Y >= 0 ->
+			Z = X
+		;
+			min_inf(Z)
+		)
+	; min_inf(X) ->
+		( Y >= 0 ->
+			Z = X
+		;
+			max_inf(Z)
+		)
+	; Y \== 0 ->
+		Z is X / Y
+	; X >= 0 ->
+		max_inf(Z)
+	; X < 0 ->
+		min_inf(Z)
+	).	
+
 mytimes(X,Y,Z) :-
 	( nonvar(X) ->
 		( nonvar(Y) ->
 			Z is X * Y
 		; nonvar(Z) ->
 			0 is Z mod X,
-			Y is Z // X		
+			Y is Z / X		
 		;
 			get(Y,YL,YU,YExp),
 			get(Z,ZL,ZU,ZExp),
@@ -359,8 +429,8 @@ mytimes(X,Y,Z) :-
 			NZU is min(ZU,max(X * YU,X*YL)),
 			put(Z,NZL,NZU,[mytimes2(X,Y)|ZExp]),
 			( get(Y,YL2,YU2,YExp2) ->
-				NYL is max(YL2,ceiling(min(ZL/X,ZU/X))),
-				NYU is min(YU2,floor(max(ZU/X,ZL/X))),
+				NYL is max(YL2,ceiling(min(div(ZL,X),div(ZU,X)))),
+				NYU is min(YU2,floor(max(div(ZU,X),div(ZL,X)))),
 				put(Y,NYL,NYU,YExp2)
 			;
 				Z is X * Y
@@ -373,12 +443,12 @@ mytimes(X,Y,Z) :-
 		get(Y,YL,YU,YExp),
 		YExp1 = [mytimes(X,Z)|YExp],
 		put(Y,YL,YU,YExp1),
-		NXL is max(XL,ceiling(min(Z/YU,Z/YL))),
-		NXU is min(XU,floor(max(Z/YL,Z/YU))),		
+		NXL is max(XL,ceiling(min(div(Z,YU),div(Z,YL)))),
+		NXU is min(XU,floor(max(div(Z,YL),div(Z,YU)))),		
 		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
 		( get(Y,YL2,YU2,YExp2) ->
-			NYL is max(YL2,ceiling(min(Z/NXU,Z/NXL))),
-			NYU is min(YU2,floor(max(Z/NXL,Z/NXU))),
+			NYL is max(YL2,ceiling(min(div(Z,NXU),div(Z,NXL)))),
+			NYU is min(YU2,floor(max(div(Z,NXL),div(Z,NXU)))),
 			put(Y,NYL,NYU,YExp2)
 		;
 			0 is Z mod Y,
@@ -421,10 +491,167 @@ max_times(L1,U1,L2,U2,Max) :-
 min_times(L1,U1,L2,U2,Min) :-
 	Min is min(min(L1*L2,L1*U2),min(U1*L2,U1*U2)).	
 max_divide(L1,U1,L2,U2,Max) :-
-	Max is max(max(L1/L2,L1/U2),max(U1/L2,U1/U2)).	
+	Max is max(max(div(L1,L2),div(L1,U2)),max(div(U1,L2),div(U1,U2))).	
 min_divide(L1,U1,L2,U2,Min) :-
-	Min is min(min(L1/L2,L1/U2),min(U1/L2,U1/U2)).	
+	Min is min(min(div(L1,L2),div(L1,U2)),min(div(U1,L2),div(U1,U2))).	
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO
+%	trigger reified constraints when geq is added
+reified_geq(X,Y,B) :-
+	( var(B) ->
+		( nonvar(X) ->
+			( nonvar(Y) ->
+				( X >= Y ->
+					B = 1
+				;
+					B = 0
+				)
+			;
+				get(Y,L,U,Expr),
+				( X >= U ->
+					B = 1
+				; X < L ->
+					B = 0
+				;
+					put(Y,L,U,[reified_leq(X,B)|Expr]),
+					get(B,BL,BU,BExpr),
+					put(B,BL,BU,[reified_geq2(X,Y)|BExpr]),
+					B in 0..1
+				)
+			)
+		; nonvar(Y) ->
+			get(X,L,U,Expr),
+			( L >= Y ->
+				B = 1
+			; U < Y ->
+				B = 0
+			;
+				put(X,L,U,[reified_geq(Y,B)|Expr]),
+				get(B,BL,BU,BExpr),
+				put(B,BL,BU,[reified_geq2(X,Y)|BExpr]),
+				B in 0..1
+			)
+		;
+			get(X,XL,XU,XExpr),
+			get(Y,YL,YU,YExpr),
+			( XL >= YU ->
+				B = 1
+			; XU < YL ->
+				B = 0
+			; member(geq(Z,_State),XExpr),
+			  Z == Y ->
+			  	B = 1
+			;
+				put(X,XL,XU,[reified_geq(Y,B)|XExpr]),
+				put(Y,YL,YU,[reified_leq(X,B)|YExpr]),
+				get(B,BL,BU,BExpr),
+				put(B,BL,BU,[reified_geq2(X,Y)|BExpr]),
+				B in 0..1
+			)
+		)
+	; B == 1 ->
+		X #>= Y	
+	; B == 0 ->
+		X #< Y
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+reified_eq(X,Y,B) :-
+	( var(B) ->
+		( nonvar(X) ->
+			( nonvar(Y) ->
+				( X == Y ->
+					B = 1
+				;
+					B = 0
+				)
+			;
+				get(Y,L,U,Expr),
+				( L > X ->
+					B = 0
+				; U < X ->
+					B = 0
+				;
+					put(Y,L,U,[reified_eq(X,B)|Expr]),
+					get(B,BL,BU,BExpr),
+					put(B,BL,BU,[reified_eq2(X,Y)|BExpr]),
+					B in 0..1
+				)
+			)
+		; nonvar(Y) ->
+			reified_eq(Y,X,B)
+		; X == Y ->
+			B = 1
+		;
+			get(X,XL,XU,XExpr),
+			get(Y,YL,YU,YExpr),
+			( XL > YU ->
+				B = 0
+			; YL > XU ->
+				B = 0
+			; member(neq(Z,_),XExpr),
+			  Z == Y ->
+			  	B = 0
+			;
+				put(X,XL,XU,[reified_eq(Y,B)|XExpr]),
+				put(Y,YL,YU,[reified_eq(X,B)|YExpr]),
+				get(B,BL,BU,BExpr),
+				put(B,BL,BU,[reified_eq2(X,Y)|BExpr]),
+				B in 0..1
+			)
+		)
+	; B == 1 ->
+		X #= Y
+	; B == 0 ->
+		X #\= Y
+	).
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+reified_neq(X,Y,B) :-
+	mynot(B,B1),
+	reified_eq(X,Y,B1).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+mynot(B1,B2) :-
+	( nonvar(B1) ->
+		( B1 == 1 ->
+			B2 = 0
+		; B1 == 0 ->
+			B2 = 1
+		)
+	; nonvar(B2) ->
+		mynot(B2,B1)
+	;
+		get(B1,L1,U1,Expr1),
+		get(B2,L2,U2,Expr2),
+		put(B2,L2,U2,[mynot(B1)|Expr2]),
+		put(B1,L1,U1,[mynot(B2)|Expr1]),
+		B1 in 0..1,
+		B2 in 0..1
+	).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+myimpl(B1,B2) :-
+	( nonvar(B1) ->
+		( B1 == 1 ->
+			B2 = 1
+		; B1 == 0 ->
+			B2 in 0..1
+		)
+	; nonvar(B2) ->
+		( B2 == 0 ->
+			B1 = 0
+		; B2 == 1 ->
+			B1 in 0..1
+		)
+	;
+		get(B1,L1,U1,Expr1),
+		get(B2,L2,U2,Expr2),
+		put(B1,L1,U1,[myimpl(B2)|Expr1]),
+		put(B2,L2,U2,[myimpl2(B1)|Expr2]),
+		B1 in 0..1,
+		B2 in 0..1
+	).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 get(X,L,U,Exp) :-
 	( get_attr(X,bounds,Attr) ->
@@ -520,6 +747,32 @@ trigger_exp(mytimes(Y,Z),X) :-
 trigger_exp(mytimes2(A,B),X) :-
 	mytimes(A,B,X).
 
+trigger_exp(reified_leq(X,B),Y) :-
+	reified_geq(X,Y,B).
+trigger_exp(reified_geq(Y,B),X) :-
+	reified_geq(X,Y,B).
+trigger_exp(reified_geq2(X,Y),B) :-
+	reified_geq(X,Y,B).
+
+trigger_exp(reified_eq(Y,B),X) :-
+	reified_eq(X,Y,B).
+trigger_exp(reified_eq2(X,Y),B) :-
+	reified_eq(X,Y,B).
+
+trigger_exp(mynot(Y),X) :-
+	mynot(X,Y).
+
+trigger_exp(myimpl(Y),X) :-
+	myimpl(X,Y).
+trigger_exp(myimpl2(X),Y) :-
+	myimpl(X,Y).
+
+memberchk_eq(X,[Y|Ys],Z) :-
+   (   X == Y ->
+       Z = Y
+   ;   memberchk_eq(X,Ys,Z)
+   ).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 active_state(state(active)).
 is_active(state(active)).
@@ -529,3 +782,4 @@ set_passive(State) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 attr_portray_hook(bounds(L,U,_),_) :-
 	write(L..U).
+
