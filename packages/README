@@ -53,6 +53,9 @@ Provided packages
 
 (*) flagged packages are installed by default
 
+	# chr (*)
+	Constraint Handling Rules compiler and runtime environment.
+
 	# clib (*)
 	Consists of various sub-packages.  Currently defined:
 
