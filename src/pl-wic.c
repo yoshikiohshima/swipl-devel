@@ -261,7 +261,6 @@ lookupXrId(long id)
 
   SECURE(assert(array));
   value = array[id%SUBENTRIES];
-  SECURE(assert(value));
 
   return value;
 }

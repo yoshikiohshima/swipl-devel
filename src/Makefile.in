@@ -158,7 +158,7 @@ banner::
 		@echo "****************"
 
 
-$(PL):		$(PLOBJ)
+$(PL):		$(RUNTIME) $(PLOBJ)
 		$(LDEXE) $(LDFLAGS) -o $(PL) $(PLOBJ) -L../lib/$(ARCH) -lpl $(LNLIBS)
 
 $(STARTUPPATH):	$(PLINIT) $(PLSRC) $(PL)
