@@ -2,7 +2,7 @@
 
     Part of SWI-Prolog
 
-    Author:        Jan Wielemaker
+    Author:        Jan Wielemaker & Steve Prior
     E-mail:        jan@swi.psy.uva.nl
     WWW:           http://www.swi-prolog.org
     Copyright (C): 1985-2002, University of Amsterdam
