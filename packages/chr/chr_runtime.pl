@@ -86,6 +86,7 @@
 
 	    'chr via_1'/2,
 	    'chr via_2'/3,
+	    'chr via'/2,
 
 	    'chr lock'/1,
 	    'chr unlock'/1,
@@ -238,6 +239,13 @@ not_locked( V) :-
 % cycle safe, but it finds a list of all vars.
 % We need only one, and no list in particular.
 %
+'chr via'(L,V) :-
+	( nonground(L,V) ->
+		true
+	;
+		global_term_ref_1(V)
+	).
+
 nonground( Term, V) :-
 	term_variables( Term, Vs),
 	Vs = [V|_].
