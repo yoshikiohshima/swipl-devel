@@ -100,7 +100,7 @@ visitedWord(Word p ARG_LD)
 
 static int
 visited(Functor f ARG_LD)
-{ Word p = (Word)&f->definition;
+{ Word p = &f->definition;
 
   return visitedWord(p PASS_LD);
 }
@@ -1165,7 +1165,7 @@ right_recursion:
       return n;
     
     arity = arityFunctor(f->definition);
-    for(t = argTermP(*t, 0); --arity > 0; t++)
+    for(t = f->arguments; --arity > 0; t++)
       n = term_variables_loop(t, l, n PASS_LD);
 
     goto right_recursion;
@@ -1220,84 +1220,64 @@ PRED_IMPL("term_variables", 3, term_variables3, 0)
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 pl_e_free_variables(V0^V1^t, vars) is used  by   setof/3  and bagof/3 to
 determine  the  free  variables  in  the    goal   that  have  not  been
-existentially bound.  The implementation is rather tricky:
-
-A backtrack mark is pushed. Then  bind_existential_vars(t) will bind all
-variables in terms at the left-side  of   the  ^/2 operator to []. Next,
-free_variables() is used to  make  PL_term_refs   for  all  of  the free
-variables. The Undo() is used to free all []-bound variables and finally
-the list is constructed.  All  this  works   thanks  to  the  fact  that
-free_variables() doesn't use unification and its   bindings are thus not
-undone by the Undo().
+existentially   bound.   The   implementation   is     very   close   to
+term_variables/2, but while traversing the lefthand   of ^, the variable
+is marked but not added to the list.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static void
-dobind_vars(Word t ARG_LD)
-{
+static int
+free_variables_loop(Word t, term_t l, int n, int existential ARG_LD)
+{ 
 right_recursion:
   deRef(t);
 
   if ( canBind(*t) )
-  { visitedWord(t PASS_LD);
-    return;
+  { term_t v;
+
+    if ( !visitedWord(t PASS_LD) && !existential )
+    { v = PL_new_term_ref();
+      *valTermRef(v) = makeRef(t);
+
+      n++;
+    }
+
+    return n;
   }
   if ( isTerm(*t) )
   { int arity;
     Functor f = valueTerm(*t);
+    word fd = f->definition;
 
     if ( visited(f PASS_LD) )
-      return;
-
-    arity = arityFunctor(f->definition);
-    for(t = argTermP(*t, 0); --arity; t++)
-      dobind_vars(t PASS_LD);
+      return n;
+    
+    t = f->arguments;
+    if ( fd == FUNCTOR_hat2 )
+    { n = free_variables_loop(t, l, n, TRUE PASS_LD);
+      t++;
+    } else
+    { arity = arityFunctor(f->definition);
+      for(; --arity > 0; t++)
+	n = free_variables_loop(t, l, n, existential PASS_LD);
+    }
 
     goto right_recursion;
   }
-}
-
-
-static void
-bind_existential_vars(Word t, Word *plain ARG_LD)
-{ deRef(t);
-
-  while ( isTerm(*t) )
-  { Functor f = valueTerm(*t);
-    int arity;
-
-# if 0
-    if ( visited(f PASS_LD) )
-      return;				/* cyclic term in existential */
-					/* defs.  Error?  How? */
-#endif
-
-    if ( f->definition == FUNCTOR_hat2 )
-    { dobind_vars(&f->arguments[0] PASS_LD);
-      *plain = t = &f->arguments[1];
-    } else
-    { arity = arityFunctor(f->definition);
-      for(t = f->arguments; --arity > 0; t++)
-	bind_existential_vars(t, plain PASS_LD);
-    }
-
-    deRef(t);				/* right recursion */
-  }
+    
+  return n;
 }
 
 
 word
 pl_e_free_variables(term_t t, term_t vars)
 { GET_LD
-  Word *vm, t2;
-  term_t v0;
+  Word *vm = aTop;
+  Word t2 = valTermRef(t);
+  term_t v0 = PL_new_term_refs(0);
   int i, n;
 
   startCritical;
-  vm = aTop;
-  t2 = valTermRef(t);
-  bind_existential_vars(t2, &t2 PASS_LD);
-  v0 = PL_new_term_refs(0);
-  n  = term_variables_loop(t2, v0, 0 PASS_LD);
+  n = free_variables_loop(t2, v0, 0, FALSE PASS_LD);
   unvisit(vm PASS_LD);
   endCritical;
 
