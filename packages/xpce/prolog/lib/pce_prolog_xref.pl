@@ -665,11 +665,11 @@ process_chr(@(_Name, Rule), Src) :-
 process_chr(pragma(Rule, _Pragma), Src) :-
 	process_chr(Rule, Src).
 process_chr(<=>(Head, Body), Src) :-
-	chr_defined(Head, Src),
-	chr_body(Body, Src).
+	chr_head(Head, Src, H),
+	chr_body(Body, H, Src).
 process_chr(==>(Head, Body), Src) :-
-	chr_defined(Head, Src),
-	chr_body(Body, Src).
+	chr_head(Head, H, Src),
+	chr_body(Body, H, Src).
 process_chr((:- constraints(C)), Src) :-
 	process_chr(constraints(C), Src).
 process_chr(constraints(_), Src) :-
@@ -678,20 +678,25 @@ process_chr(constraints(_), Src) :-
 	;   assert(mode(chr, Src))
 	).
 
-chr_defined((A,B), Src) :- !,
-	chr_defined(A, Src),
-	chr_defined(B, Src).
-chr_defined(\(A,B), Src) :- !,
-	chr_defined(A, Src),
-	chr_defined(B, Src).
-chr_defined(#(C,_Id), Src) :- !,
+chr_head(\(A,B), Src, H) :-
+	chr_head(A, Src, H),
+	process_body(B, H, Src).
+chr_head((H0,B), Src, H) :-
+	chr_defined(H0, Src, H),
+	process_body(B, H, Src).
+chr_head(H0, Src, H) :-
+	chr_defined(H0, Src, H).
+
+chr_defined(#(C,_Id), Src, C) :- !,
 	assert_constraint(Src, C).
-chr_defined(A, Src) :-
+chr_defined(A, Src, A) :-
 	assert_constraint(Src, A).
 
-chr_body('|'(Guard, Goals), Src) :-
-	chr_body(Guard, Src),
-	chr_body(Goals, Src).
+chr_body('|'(Guard, Goals), H, Src) :- !,
+	chr_body(Guard, H, Src),
+	chr_body(Goals, H, Src).
+chr_body(G, From, Src) :-
+	process_body(G, From, Src).
 
 assert_constraint(Src, Head) :-
 	constraint(Head, Src, _), !.
