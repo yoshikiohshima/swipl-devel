@@ -129,6 +129,7 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	netscape.pl url.pl main.pl assoc.pl \
 	threadutil.pl qpforeign.pl dif.pl when.pl \
 	checklast.pl checkselect.pl
+CLP=	bounds.pl
 PLWIN=	wise.pl dde.pl progman.pl registry.pl
 
 all:	banner \
@@ -292,7 +293,7 @@ install-libs:	idirs iboot ilib iruntime iinclude iman idot
 			-t halt
 
 installdirs=	bin bin/$(ARCH) lib lib/$(ARCH) man boot library \
-		include runtime runtime/$(ARCH) dotfiles
+		library/clp include runtime runtime/$(ARCH) dotfiles
 
 iruntime::
 		$(INSTALL_DATA) $(RUNTIME) $(PLBASE)/runtime/$(ARCH)
@@ -314,10 +315,16 @@ idirs::
 iboot::		
 		cd ../boot; \
 		for f in *.pl; do $(INSTALL_DATA) $$f $(PLBASE)/boot; done
-ilib::		
+
+ilib:		iclp
 		cd ../library; \
 		for f in $(PLLIBS); do \
 			$(INSTALL_DATA) $$f $(PLBASE)/library; \
+		done
+
+iclp::		cd ../library/clp; \
+		for f in $(CLP); do \
+			$(INSTALL_DATA) $$f $(PLBASE)/library/clp; \
 		done
 
 idot::

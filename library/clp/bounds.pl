@@ -1,0 +1,531 @@
+/*  $Id$
+
+    Part of SWI-Prolog
+
+    Author:        Tom Schrijvers
+    E-mail:        tom.schrijvers@cs.kuleuven.ac.be
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 2004, K.U.Leuven
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+    As a special exception, if you link this library with other files,
+    compiled with a Free Software compiler, to produce an executable, this
+    library does not by itself cause the resulting executable to be covered
+    by the GNU General Public License. This exception does not however
+    invalidate any other reasons why the executable file might be covered by
+    the GNU General Public License.
+*/
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Simple integer solver that keeps track of upper and lower bounds
+%
+% Author: 	Tom Schrijvers
+% E-mail: 	tom.schrijvers@cs.kuleuven.ac.be
+% Copyright:	2004, K.U.Leuven
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Todo:
+%	- division by zero
+%	- reduce redundant propagation work
+%	- other labelling functions
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+:- module(bounds,
+	[
+		(#>)/2,
+		(#<)/2,
+		(#>=)/2,
+		(#=<)/2,
+		(#=:=)/2,
+		(#=\=)/2,
+		(in)/2,
+		label/1,
+		all_different/1
+	]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% operator declarations
+
+:- op(700,xfx,user:(#>)).
+:- op(700,xfx,user:(#<)).
+:- op(700,xfx,user:(#>=)).
+:- op(700,xfx,user:(#=<)).
+:- op(700,xfx,user:(#=:=)).
+:- op(700,xfx,user:(#=\=)).
+:- op(700,xfx,user:(in)).
+:- op(550,xfx,user:(..)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% exported predicates
+X #>= Y :-
+	parse_expression(X,RX),
+	parse_expression(Y,RY), 
+	geq(RX,RY,yes).
+X #=< Y :- 
+	parse_expression(X,RX),
+	parse_expression(Y,RY),
+	leq(RX,RY,yes).
+X #=:= Y :-
+	parse_expression(X,RX),
+	parse_expression(Y,RX). 
+X #=\= Y :-
+	parse_expression(X,RX),
+	parse_expression(Y,RY), 
+	neq(RX,RY,yes).
+X #> Y :-
+	Z #=:= Y + 1,
+	X #>= Z.
+X #< Y :-
+	Y #> X.
+X in L .. U :- 
+	( is_list(X) ->
+		domains(X,L,U)
+	;
+		domain(X,L,U)
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+parse_expression(Expr,Result) :-
+	( var(Expr) ->
+		Result = Expr
+	; number(Expr) ->
+		Result = Expr
+	; Expr = (L + R) ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		myplus(RL,RR,Result,yes)
+	; Expr = (L * R) ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		mytimes(RL,RR,Result)
+	; Expr = (L - R) ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		mytimes(-1,RR,RRR),
+		myplus(RL,RRR,Result,yes)
+	; Expr = (- E) ->
+		parse_expression(E,RE),
+		mytimes(-1,RE,Result)
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+label([]).
+label([V|Vs]) :-
+	( get(V,L,U,_) -> 
+		between(L,U,W),
+		%format('\tlabelling ~w with ~w\n',[V,W]),
+		V = W
+	;
+		true
+	),
+	label(Vs).
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+all_different([]).
+all_different([X|Xs]) :-
+	different(Xs,X),
+	all_different(Xs).
+
+different([],_).
+different([Y|Ys],X) :-
+	neq(X,Y,yes),
+	different(Ys,X).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+domain(X,L,U) :-
+	( var(X) ->
+		get(X,XL,XU,Exp),
+		NL is max(L,XL),
+		NU is min(U,XU),
+		put(X,NL,NU,Exp)
+	; % nonvar(X) ->
+		X >= L,
+		X =< U
+	).
+
+domains([],_,_).
+domains([V|Vs],L,U) :-
+	domain(V,L,U),
+	domains(Vs,L,U).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+leq(X,Y,New) :-
+	geq(Y,X,New).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+geq(X,Y,New) :-
+	( X == Y ->
+		true
+	; nonvar(X) ->
+		( nonvar(Y) ->
+			X >= Y
+		; 
+			get(Y,YL,YU,Exp) ->
+			NYU is min(X,YU),
+			put(Y,YL,NYU,Exp)
+		)
+	; nonvar(Y) ->
+		get(X,XL,XU,Exp) ->
+		NXL is max(Y,XL),
+		put(X,NXL,XU,Exp)
+	;
+		get(X,XL,XU,ExpX),
+		get(Y,YL,YU,ExpY),
+		XU >= YL,
+		( XL > YU ->
+			true
+		; XU == YL ->
+			X = Y
+		; member(leq(Z,State),ExpX),
+	          Y == Z -> 
+			set_passive(State),
+			X = Y	
+		; 
+			( New == yes ->
+				active_state(State),
+				put(Y,YL,YU,[leq(X,State)|ExpY]),
+				ExpX1 = [geq(Y,State)|ExpX]
+			;
+				ExpX1 = ExpX
+			),
+			NXL is max(XL,YL),
+			put(X,NXL,XU,ExpX1),
+			( get(Y,YL2,_YU2,ExpY2) -> % JW: singleton YU2
+				NYU is min(YU,XU),
+				put(Y,YL2,NYU,ExpY2)
+			;
+				true
+			)
+		)
+	).
+		
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+neq(X,Y,New) :-
+	X \== Y,
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			true
+		;
+			get(Y,L,U,Exp),
+			( L == X ->
+				NL is L + 1,
+				put(Y,NL,U,Exp)
+			; U == X ->
+				NU is U - 1,
+				put(Y,L,NU,Exp)
+			;
+				( New == yes ->
+					active_state(State),
+					put(Y,L,U,[neq(X,State)|Exp])
+				;
+					true
+				)	
+			)
+		)
+	; nonvar(Y) ->
+		neq(Y,X,New)
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		( XL > YU ->
+			true
+		; YL > XU ->
+			true
+		;
+			( New == yes ->
+				active_state(State),
+				put(X,XL,XU,[neq(Y,State)|XExp]),
+				put(Y,YL,YU,[neq(X,State)|YExp])
+			;
+				true
+			)
+		)
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+myplus(X,Y,Z,New) :-
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			Z is X + Y
+		; nonvar(Z) ->
+			Y is Z - X
+		;
+			get(Z,ZL,ZU,ZExp),
+			get(Y,YL,YU,YExp),
+			( New == yes ->
+				ZExp1 = [myplus2(Y,X)|ZExp],
+				YExp1 = [myplus(X,Z)|YExp],
+				put(Y,YL,YU,YExp1)
+			;
+				ZExp1 = ZExp
+			),
+			NZL is max(ZL,X+YL),
+			NZU is min(ZU,X+YU),
+			put(Z,NZL,NZU,ZExp1),
+			( get(Y,YL2,YU2,YExp2) ->
+				NYL is max(YL,NZL-X),
+				NYU is min(YU,NZU-X),	
+				put(Y,NYL,NYU,YExp2)
+			;
+				Z is X + Y
+			)
+		)
+	; nonvar(Y) ->
+		myplus(Y,X,Z,New)
+	; nonvar(Z) ->
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		( New == yes ->
+			XExp1 = [myplus(Y,Z)|XExp],
+			YExp1 = [myplus(X,Z)|YExp],
+			put(Y,YL,YU,YExp1)
+		;
+			XExp1 = XExp
+		),
+		NXL is max(XL,Z-YU),
+		NXU is min(XU,Z-YL),
+		put(X,NXL,NXU,XExp1),
+		( get(Y,YL2,YU2,YExp2) ->
+			NYL is max(YL2,Z-NXU),
+			NYU is min(YU2,Z-NXL),
+			put(Y,NYL,NYU,YExp2)
+		;
+			X is Z - Y
+		)
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		get(Z,ZL,ZU,ZExp),
+		( New == yes ->
+			XExp1 = [myplus(Y,Z)|XExp],
+			YExp1 = [myplus(X,Z)|YExp],
+			ZExp1 = [myplus2(X,Y)|ZExp],
+			put(Y,YL,YU,YExp1),
+			put(Z,ZL,ZU,ZExp1)
+		;
+			XExp1 = XExp
+		),
+		NXL is max(XL,ZL-YU),
+		NXU is min(XU,ZU-YL),
+		put(X,NXL,NXU,XExp1),
+		( get(Y,YL2,YU2,YExp2) ->
+			NYL is max(YL2,ZL-NXU),
+			NYU is min(YU2,ZU-NXL),
+			put(Y,NYL,NYU,YExp2)
+		;
+			NYL = Y,
+			NYU = Y
+		),
+		( get(Z,ZL2,ZU2,ZExp2) ->
+			NZL is max(ZL2,NXL+NYL),
+			NZU is min(ZU2,NXU+NYU),
+			put(Z,NZL,NZU,ZExp2)
+		;
+			true
+		)
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% X * Y = Z
+
+mytimes(X,Y,Z) :-
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			Z is X * Y
+		; nonvar(Z) ->
+			0 is Z mod X,
+			Y is Z // X		
+		;
+			get(Y,YL,YU,YExp),
+			get(Z,ZL,ZU,ZExp),
+			YExp1 = [mytimes(X,Z)|YExp],
+			put(Y,YL,YU,YExp1),
+			NZL is max(ZL,min(X * YL,X*YU)),
+			NZU is min(ZU,max(X * YU,X*YL)),
+			put(Z,NZL,NZU,[mytimes2(X,Y)|ZExp]),
+			( get(Y,YL2,YU2,YExp2) ->
+				NYL is max(YL2,ceiling(min(ZL/X,ZU/X))),
+				NYU is min(YU2,floor(max(ZU/X,ZL/X))),
+				put(Y,NYL,NYU,YExp2)
+			;
+				Z is X * Y
+			)		
+		)
+	; nonvar(Y) ->
+		mytimes(Y,X,Z)
+	; nonvar(Z) ->
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		YExp1 = [mytimes(X,Z)|YExp],
+		put(Y,YL,YU,YExp1),
+		NXL is max(XL,ceiling(min(Z/YU,Z/YL))),
+		NXU is min(XU,floor(max(Z/YL,Z/YU))),		
+		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
+		( get(Y,YL2,YU2,YExp2) ->
+			NYL is max(YL2,ceiling(min(Z/NXU,Z/NXL))),
+			NYU is min(YU2,floor(max(Z/NXL,Z/NXU))),
+			put(Y,NYL,NYU,YExp2)
+		;
+			0 is Z mod Y,
+			X is Z / Y
+		)
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		get(Z,ZL,ZU,ZExp),
+		put(Y,YL,YU,[mytimes(X,Z)|YExp]),
+		put(Z,ZL,ZU,[mytimes2(X,Y)|ZExp]),
+		min_divide(ZL,ZU,YL,YU,TXL),
+		NXL is max(XL,ceiling(TXL)),
+		max_divide(ZL,ZU,YL,YU,TXU),
+		NXU is min(XU,floor(TXU)),
+		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
+		( get(Y,YL2,YU2,YExp2) ->
+			min_divide(ZL,ZU,XL,XU,TYL),
+			NYL is max(YL2,ceiling(TYL)),
+			max_divide(ZL,ZU,XL,XU,TYU),
+			NYU is min(YU2,floor(TYU)),
+			put(Y,NYL,NYU,YExp2)	
+		;
+			NYL = Y,
+			NYU = Y
+		),
+		( get(Z,ZL2,ZU2,ZExp2) ->
+			min_times(NXL,NXU,NYL,NYU,TZL),	
+			NZL is max(ZL2,TZL),
+			max_times(NXL,NXU,NYL,NYU,TZU),	
+			NZU is min(ZU2,TZU),
+			put(Z,NZL,NZU,ZExp2)
+		;
+			true
+		)	
+	).
+
+max_times(L1,U1,L2,U2,Max) :-
+	Max is max(max(L1*L2,L1*U2),max(U1*L2,U1*U2)).	
+min_times(L1,U1,L2,U2,Min) :-
+	Min is min(min(L1*L2,L1*U2),min(U1*L2,U1*U2)).	
+max_divide(L1,U1,L2,U2,Max) :-
+	Max is max(max(L1/L2,L1/U2),max(U1/L2,U1/U2)).	
+min_divide(L1,U1,L2,U2,Min) :-
+	Min is min(min(L1/L2,L1/U2),min(U1/L2,U1/U2)).	
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get(X,L,U,Exp) :-
+	( get_attr(X,bounds,Attr) ->
+		Attr = bounds(L,U,Exp)
+	; var(X) ->
+		min_inf(L),
+		max_inf(U),
+		Exp = []
+	).
+
+put(X,L,U,Exp) :-
+	L =< U,
+	( L == U ->
+		X = L
+	;
+		( get_attr(X,bounds,Attr) ->
+			put_attr(X,bounds,bounds(L,U,Exp)),
+			Attr = bounds(OldL,OldU,_),
+			( OldL == L, OldU == U ->
+				true
+			;
+				%format('\t~w in ~w .. ~w\n',[X,L,U]),
+				trigger_exps(Exp,X)
+			)
+		; 
+			%format('\t~w in ~w .. ~w\n',[X,L,U]),
+			put_attr(X,bounds,bounds(L,U,Exp))
+		)
+	).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+min_inf(Inf) :-
+	feature(min_integer,MInf),
+	Inf is MInf + 1.
+
+max_inf(Inf) :-
+	feature(max_integer,Inf).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+attr_unify_hook(bounds(L,U,Exp),Other) :-
+	( get(Other,OL,OU,OExp) ->
+		NL is max(L,OL),
+		NU is min(U,OU),
+		append(Exp,OExp,NExp),
+		check_neqs(NExp,Other),
+		put(Other,NL,NU,NExp)	
+	; % nonvar(Other) ->
+		Other >= L,
+		Other =< U,
+		trigger_exps(Exp,Other)
+	).
+
+check_neqs([],_).
+check_neqs([E|Es],X) :-
+	( E = neq(Y,_),
+	  X == Y ->
+		fail
+	;
+		check_neqs(Es,X)
+	).
+		
+
+trigger_exps([],_).
+trigger_exps([E|Es],X) :-
+	trigger_exp(E,X),
+	trigger_exps(Es,X).
+
+trigger_exp(geq(Y,State),X) :-
+	( is_active(State) ->
+		geq(X,Y,no)
+	;
+		true
+	).
+trigger_exp(leq(Y,State),X) :-
+	( is_active(State) ->
+		leq(X,Y,no)
+	;
+		true
+	).
+trigger_exp(neq(Y,State),X) :-
+	( is_active(State) ->
+		neq(X,Y,no)
+	;
+		true
+	).
+trigger_exp(myplus(Y,Z),X) :-
+	myplus(X,Y,Z,no).
+trigger_exp(myplus2(A,B),X) :-
+	myplus(A,B,X,no).
+
+trigger_exp(mytimes(Y,Z),X) :-
+	mytimes(X,Y,Z).
+trigger_exp(mytimes2(A,B),X) :-
+	mytimes(A,B,X).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+active_state(state(active)).
+is_active(state(active)).
+set_passive(State) :-
+	setarg(1,State,passive).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+attr_portray_hook(bounds(L,U,_),_) :-
+	write(L..U).

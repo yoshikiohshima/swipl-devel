@@ -342,6 +342,13 @@ cmd(Cmd, HTML) :-
 
 
 special('Sexe', '#!').
+special('Scgt', '#>').
+special('Scge', '#>=').
+special('Sclt', '#<').
+special('Scle', '#=<').
+special('Scne', '#\=').
+special('Scine', '#=\=').
+special('Scieq', '#=:=').
 special('Scut', !).
 special('Scomma',  (,)).
 special('Sifthen',  (->)).

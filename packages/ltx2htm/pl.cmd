@@ -135,6 +135,13 @@
 % Special atoms
 
 \Sexe
+\Scgt
+\Scge
+\Sclt
+\Scle
+\Scne
+\Scine
+\Scieq
 \Scut
 \Scomma
 \Sifthen

@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: clp/bounds.pl: an Integer Bounds Constraint Solver by
+    Tom Schrijvers.
+
+
 VERSION 5.3.5 (Mar 13, 2003)
 ============================
 
