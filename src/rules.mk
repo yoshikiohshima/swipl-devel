@@ -145,6 +145,8 @@ MAKEINDEX=chdir "$(PLBASE)" & del library\INDEX.pl & bin\plcon.exe \
 			-g make_library_index(library) \
 			-t halt
 
+PLCON=$(PLBASE)\bin\plcon.exe
+
 ################################################################
 # Windows-versions garbage.  Most likely this won't work on Windows 98
 # anyhow as we use constructs from cmd.exe such as FOR

@@ -39,6 +39,24 @@ install:	idll
 install:	idll ilib
 !ENDIF
 
+################################################################
+# Testing
+################################################################
+
+check:		check-socket
+
+torture:	torture-socket
+
+check-socket::
+		"$(PLCON)" -q -f testsocket.pl -F none -g tcp_test,halt -t 'halt(1)'
+
+torture-socket::
+		$(PL) -q -f stresssocket.pl -F none -g test,halt -t 'halt(1)'
+
+################################################################
+# Installation
+################################################################
+
 idll::
 		copy socket.dll "$(BINDIR)"
 		copy cgi.dll "$(BINDIR)"
