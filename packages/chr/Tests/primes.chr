@@ -14,7 +14,7 @@
 :- constraints cleanup/1.
 
 candidate(1) <=> true.
-candidate(N) <=> primes:prime(N), N1 is N - 1, primes:candidate(N1).
+candidate(N) <=> prime(N), N1 is N - 1, candidate(N1).
 
 absorb @ prime(Y) \ prime(X) <=> 0 =:= X mod Y | true.
 
