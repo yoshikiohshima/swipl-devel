@@ -22,7 +22,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#define O_DEBUG 1
+/*#define O_DEBUG 1*/
 #include "pl-incl.h"
 #ifdef O_ATTVAR
 
@@ -124,40 +124,42 @@ assignAttVar(Word av, Word value ARG_LD)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Note: caller must require 2 words on global stack
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static void
+make_new_attvar(Word p ARG_LD)
+{ Word gp;
+
+  if ( onStackArea(local, p) )
+  { gp = allocGlobal(2);
+    gp[1] = ATOM_nil;
+    gp[0] = consPtr(&gp[1], TAG_ATTVAR|STG_GLOBAL);
+    *p = makeRef(&gp[0]);
+  } else
+  { gp = allocGlobal(1);
+    gp[0] = ATOM_nil;
+    *p = consPtr(&gp[0], TAG_ATTVAR|STG_GLOBAL);
+  }
+
+  Trail(p);
+}
+
+
+
 static int
 PL_make_new_attvar(term_t var)
 { GET_LD
-  Word p = valTermRef(var);
+  Word p;
 
+  requireStack(global, 2*sizeof(word));		/* worsed case */
+
+  p = valTermRef(var);
   deRef(p);
 
   if ( isVar(*p) )
-  { Word gp;
-    int is_local;
-
-    if ( onStackArea(local, p) )
-    { gp = allocGlobal(2);
-      is_local = TRUE;
-    } else
-    { gp = allocGlobal(1);
-      is_local = FALSE;
-    }
-
-#ifdef O_SHIFT_STACKS
-    p = valTermRef(A1);			/* may have shifted */
-    deRef(p);
-#endif
-
-    if ( is_local )
-    { gp[1] = ATOM_nil;
-      gp[0] = consPtr(&gp[1], TAG_ATTVAR|STG_GLOBAL);
-      *p = makeRef(&gp[0]);
-    } else
-    { gp[0] = ATOM_nil;
-      *p = consPtr(&gp[0], TAG_ATTVAR|STG_GLOBAL);
-    }
-    Trail(p);
-
+  { make_new_attvar(p PASS_LD);
     succeed;
   }
 
@@ -198,32 +200,29 @@ PL_put_attr(term_t var, term_t att)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Destructive assignment or adding in a list  of the form att(Name, Value,
-Rest).
+int find_attr(Word av, atom_t name, Word *vp)
+
+Find the location of the value for   the  attribute named `name'. Return
+TRUE if found or FALSE if not found, leaving vp pointing at the ATOM_nil
+of the end of the list.
+
+Caller must ensure 4 cells space on global stack.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-put_attr(term_t list, atom_t name, term_t value)
-{ GET_LD
-  Word l;
+find_attr(Word av, atom_t name, Word *vp ARG_LD)
+{ Word l;
 
-  requireStack(global, 4 * sizeof(word));	/* avoid stack-shifting */
-  l = valTermRef(list);
+  deRef(av);
+  assert(isAttVar(*av));
+  l = valPAttVar(*av);
 
   for(;;)
   { deRef(l);
     
     if ( isNil(*l) )
-    { Word at = allocGlobal(4);
-
-      at[0] = FUNCTOR_att3;
-      at[1] = name;
-      at[2] = linkVal(valTermRef(value));
-      at[3] = ATOM_nil;
-
-      TrailAssignment(l);
-      *l = consPtr(at, TAG_COMPOUND|STG_GLOBAL);
-      succeed;
+    { *vp = l;
+      fail;
     } else if ( isTerm(*l) )
     { Functor f = valueTerm(*l);
 
@@ -232,17 +231,53 @@ put_attr(term_t list, atom_t name, term_t value)
 
 	deRef2(&f->arguments[0], n);
 	if ( *n == name )
-	{ TrailAssignment(&f->arguments[1]);
-	  f->arguments[1] = linkVal(valTermRef(value));
+	{ *vp = &f->arguments[1];
+
 	  succeed;
 	} else
 	{ l = &f->arguments[2];
 	}
       } else
+      { *vp = NULL;			/* bad attribute list */
 	fail;
+      }
     } else
+    { *vp = NULL;			/* bad attribute list */
       fail;
+    }
   }
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+put_attr(Word attvar, atom_t name, Word value)
+
+Destructive assignment or adding in a list  of the form att(Name, Value,
+Rest). Caller must call requireStack(global, 4  * sizeof(word)) to avoid
+this predicate from shifting the stacks.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static int
+put_attr(Word av, atom_t name, Word value ARG_LD)
+{ Word vp;
+
+  if ( find_attr(av, name, &vp PASS_LD) )
+  { TrailAssignment(vp);
+    *vp = linkVal(value);
+  } else if ( vp )
+  { Word at = allocGlobal(4);
+
+    at[0] = FUNCTOR_att3;
+    at[1] = name;
+    at[2] = linkVal(value);
+    at[3] = ATOM_nil;
+
+    TrailAssignment(vp);
+    *vp = consPtr(at, TAG_COMPOUND|STG_GLOBAL);
+  } else
+    fail;
+
+  succeed;
 }
 
 
@@ -272,6 +307,7 @@ get_attr(term_t list, atom_t name, term_t value)
       fail;
   }
 }
+
 
 		 /*******************************
 		 *	     PREDICATES		*
@@ -355,30 +391,97 @@ PRED_IMPL("get_attr", 3, get_attr3, 0) /* +Var, +Name, -Value */
 static
 PRED_IMPL("put_attr", 3, put_attr3, 0)	/* +Var, +Name, +Value */
 { PRED_LD
-  term_t al = PL_new_term_ref();
+  Word av;
   atom_t name;
 
   if ( !PL_get_atom_ex(A2, &name) )
     fail;
-  if ( PL_is_variable(A1) )
-    PL_make_new_attvar(A1);
 
-  if ( !PL_get_attr(A1, al) )
-    return PL_error("put_attr", 3, NULL, ERR_TYPE, ATOM_var, A1);
-  
-  return put_attr(al, name, A3);
+  requireStack(global, 4*sizeof(word));
+
+  av = valTermRef(A1);
+  deRef(av);
+
+  if ( isVar(*av) )
+  { make_new_attvar(av PASS_LD);
+    return put_attr(av, name, valTermRef(A3) PASS_LD);
+  } else if ( isAttVar(*av) )
+  { return put_attr(av, name, valTermRef(A3) PASS_LD);
+  } else
+  { return PL_error("put_attr", 3, NULL, ERR_TYPE, ATOM_var, A1);
+  }
 }
 
 
-static
-PRED_IMPL("$get_wakeup", 1, get_wakeup, 0)
-{ PRED_LD
+		 /*******************************
+		 *	       FREEZE		*
+		 *******************************/
 
-  if ( !PL_is_variable(LD->attvar.head) )
-    return PL_unify(LD->attvar.head, A1);
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Freeze support predicate. This predicate succeeds   if  Goal needs to be
+frozen, leading to the simple implementation of freeze/2:
+
+freeze(X, Goal) :-
+	$freeze(X, Goal), !.
+freeze(_, Goal) :-
+	Goal.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static
+PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
+{ PRED_LD
+  Word v;
+
+  requireStack(global, 7*sizeof(word));
+
+  v = valTermRef(A1);
+  deRef(v);
+  if ( isVar(*v) || isAttVar(*v) )
+  { Module m = NULL;
+    term_t g = PL_new_term_ref();
+    Word gt = allocGlobal(3);			/* 3 cells global */
+    word goal = consPtr(gt, TAG_COMPOUND|STG_GLOBAL);
+
+    PL_strip_module(A2, &m, g);
+    gt[0] = FUNCTOR_colon2;
+    gt[1] = m->name;
+    gt[2] = *valTermRef(g);
+
+    if ( isVar(*v) )
+    { make_new_attvar(v PASS_LD);		/* <= 2 cells global */
+      put_attr(v, ATOM_freeze, &goal PASS_LD);	/* <= 4 cells global */
+    } else
+    { Word vp;
+
+      if ( find_attr(v, ATOM_freeze, &vp PASS_LD) )
+      { Word gc = allocGlobal(3);		/* 3 cells global */
+
+	gc[0] = FUNCTOR_comma2;
+	gc[1] = linkVal(vp);
+	gc[2] = goal;
+	TrailAssignment(vp);
+	*vp = consPtr(gc, TAG_COMPOUND|STG_GLOBAL);
+      } else if ( vp )				/* vp points to [] */
+      { Word at = allocGlobal(4);		/* 4 cells global  */
+
+	at[0] = FUNCTOR_att3;
+	at[1] = ATOM_freeze;
+	at[2] = goal;
+	at[3] = ATOM_nil;
+
+	TrailAssignment(vp);
+	*vp = consPtr(at, TAG_COMPOUND|STG_GLOBAL);
+      } else
+	assert(0);				/* bad attribute list */
+    }
+
+    succeed;
+  }
 
   fail;
 }
+
 
 		 /*******************************
 		 *	    REGISTRATION	*
@@ -391,7 +494,7 @@ BeginPredDefs(attvar)
   PRED_DEF("put_attr", 2, put_attr, 0)
   PRED_DEF("put_attr", 3, put_attr3, 0)
   PRED_DEF("get_attr", 3, get_attr3, 0)
-  PRED_DEF("$get_wakeup", 1, get_wakeup, 0)
+  PRED_DEF("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 EndPredDefs
 
 #endif /*O_ATTVAR*/

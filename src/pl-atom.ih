@@ -523,3 +523,4 @@
 #define ATOM_wakeup       MK_ATOM(522)
 #define ATOM_dwakeup      MK_ATOM(523)
 #define ATOM_att          MK_ATOM(524)
+#define ATOM_freeze       MK_ATOM(525)

@@ -30,8 +30,15 @@
 */
 
 :- module($attvar,
-	  [ '$wakeup'/1			% +Wakeup list
+	  [ '$wakeup'/1,		% +Wakeup list
+	    freeze/2			% +Var, :Goal
 	  ]).
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Attributed variable and corouting support based on attributed variables.
+This  module  is  complemented  with  C-defined  predicates  defined  in
+pl-attvar.c
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 %	'$wakeup'(+List)
 %	
@@ -45,5 +52,38 @@
 
 call_all_attr_uhooks([], _).
 call_all_attr_uhooks(att(Module, AttVal, Rest), Value) :-
-	Module:attr_unify_hook(AttVal, Value),
+	uhook(Module, AttVal, Value),
 	call_all_attr_uhooks(Rest, Value).
+
+
+%	uhook(+AttributeName, +AttributeValue, +Value)
+%	
+%	Run the unify hook for attributed named AttributeName after
+%	assigning an attvar with attribute AttributeValue the value
+%	Value.
+%	
+%	This predicate deals with reserved attribute names to avoid
+%	the meta-call overhead.
+
+uhook(freeze, Goal, Y) :- !,
+	(   attvar(Y)
+	->  (   get_attr(Y, freeze, G2)
+	    ->	put_attr(Y, freeze, (G2, Goal))
+	    ;	put_attr(Y, freeze, Goal)
+	    )
+	;   Goal
+	).
+uhook(Module, AttVal, Value) :-
+	Module:attr_unify_hook(AttVal, Value).
+
+
+%	freeze(+Var, :Goal)
+%	
+%	Suspend execution of Goal until Var is unbound.
+
+:- module_transparent freeze/2.
+
+freeze(Var, Goal) :-
+	'$freeze'(Var, Goal), !.	% Succeeds if delayed
+freeze(_, Goal) :-
+	Goal.

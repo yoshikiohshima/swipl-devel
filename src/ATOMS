@@ -535,6 +535,7 @@ A attvar		"attvar"
 A wakeup		"wakeup"
 A dwakeup		"$wakeup"
 A att			"att"
+A freeze		"freeze"
 
 F abs			1
 F access		1
