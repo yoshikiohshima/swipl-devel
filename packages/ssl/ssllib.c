@@ -355,6 +355,7 @@ BOOL
 ssl_set_cb_cert_verify( PL_SSL *config
                       , BOOL (*callback)( PL_SSL *
                                         , const char *
+					, long
                                         , const char *
                                         )
                       , void *data
@@ -410,7 +411,7 @@ ssl_cb_cert_verify(int preverify_ok, X509_STORE_CTX *ctx)
 
                 X509_print(mem, cert);
                 if ((n = BIO_get_mem_data(mem, &p)) > 0) {
-                    preverify_ok = ((config->pl_ssl_cb_cert_verify)(config, p, error) != 0);
+                    preverify_ok = ((config->pl_ssl_cb_cert_verify)(config, p, n, error) != 0);
                 } else {
                     ssl_err("failed to print certificate\n");
                 }

@@ -297,7 +297,9 @@ pl_pem_passwd_hook(PL_SSL *config, char *buf, int size)
 
 
 static BOOL
-pl_cert_verify_hook(PL_SSL *config, const char *certificate, const char *error)
+pl_cert_verify_hook(PL_SSL *config,
+		    const char *certificate, long len,
+		    const char *error)
 { fid_t fid = PL_open_foreign_frame();
   term_t av = PL_new_term_refs(3);
   predicate_t pred = (predicate_t) config->pl_ssl_cb_cert_verify_data;
@@ -311,7 +313,7 @@ pl_cert_verify_hook(PL_SSL *config, const char *certificate, const char *error)
 
   unify_conf(av+0, config);
   /*Sdprintf("\n---Certificate:'%s'---\n", certificate);*/
-  PL_unify_atom_chars(av+1, certificate);
+  PL_unify_atom_nchars(av+1, len, certificate);
   PL_unify_atom_chars(av+2, error);
 
   if ( PL_call_predicate(NULL, PL_Q_NORMAL, pred, av) )

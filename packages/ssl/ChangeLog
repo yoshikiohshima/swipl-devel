@@ -1,3 +1,9 @@
+Jun 28, 2004
+
+  * FIXED: pass length for certificate in callback.
+
+  * ADDED: (JW) https.pl demoing a simple HTTPS server
+
 Jun 24, 2004
  
   * MODIFIED: Role of SSL and sockets.  The primary socket of a server

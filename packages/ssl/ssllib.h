@@ -84,9 +84,10 @@ typedef struct pl_ssl {
     /*
      * Application defined handlers
      */
-    BOOL                (*pl_ssl_cb_cert_verify)( struct pl_ssl *
-                                                , const char *
-                                                , const char *
+    BOOL                (*pl_ssl_cb_cert_verify)( struct pl_ssl *config
+                                                , const char *cert
+						, long cert_len
+                                                , const char *error
                                                 ) ;
     void *              pl_ssl_cb_cert_verify_data;
     char *              (*pl_ssl_cb_pem_passwd) ( struct pl_ssl *
@@ -139,6 +140,7 @@ BOOL            ssl_set_cb_cert_verify
                                  ( PL_SSL *config
                                  , BOOL (*callback)( PL_SSL *
                                                    , const char *
+						   , long
                                                    , const char *
                                                    )
                                  , void *
