@@ -95,8 +95,7 @@ $(TEX):		$(DOCTOTEX)
 ################################################################
 
 clean:
-		rm -f *~ *% config.log
-		rm Tests/*.pl
+		rm -f *~ *% *.pl config.log
 
 distclean:	clean
 		rm -f $(TARGETS) config.h config.cache config.status Makefile
