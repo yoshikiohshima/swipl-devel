@@ -1,5 +1,12 @@
 ################################################################
+# Makefile template for SWI-Prolog CLIB package
 #
+# This template is used by configure to create Makefile.  See
+# the file INSTALL for further installation instructions.
+#
+# License: LGPL
+#
+# Author: Jan Wielemaker (jan@swi.psy.uva.nl)
 ################################################################
 
 .SUFFIXES: .tex .dvi .doc .pl
@@ -19,6 +26,8 @@ CIFLAGS=-I.
 CFLAGS=$(COFLAGS) $(CWFLAGS) $(CMFLAGS) $(CIFLAGS) @DEFS@
 LIBS=@LIBS@
 NETLIBS=@NETLIBS@
+CRYPTLIBS=@CRYPTLIBS@
+MIMELIBS=@MIMELIBS@
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
@@ -57,11 +66,11 @@ socket.@SO@:	$(SOCKOBJ)
 cgi.@SO@:	$(CGIOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(CGIOBJ)
 crypt.@SO@:	$(CRYPTOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(CRYPTOBJ) $(LIBS)
+		$(LD) $(LDFLAGS) -o $@ $(CRYPTOBJ) $(CRYPTLIBS)
 memfile.@SO@:	$(MEMOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(MEMOBJ) $(LIBS)
 mime.@SO@:	$(MIMEOBJ)
-		$(LD) $(LDFLAGS) -o $@ $(MIMEOBJ) $(LIBS)
+		$(LD) $(LDFLAGS) -o $@ $(MIMEOBJ) $(MIMELIBS)
 time.@SO@:	$(TIMEOBJ)
 		$(LD) $(LDFLAGS) -o $@ $(TIMEOBJ) $(LIBS)
 files.@SO@:	$(FILESOBJ)

@@ -1,3 +1,8 @@
+Jul 18, 2004
+
+  * CLEANUP: ensure mimimal library dependency.  After discussion on
+    mailinglist.
+
 Jul 5, 2004
 
   * CLEANUP: split socket library in two to be able to reuse the
