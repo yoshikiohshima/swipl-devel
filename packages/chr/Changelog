@@ -1,7 +1,11 @@
+Apr 7, 2004
+
+  * JW: Added chr:debug_event/2 hook.  Defined in chr_swi.pl to make the
+    CHR debugger honour a skip command from the Prolog tracer.
+
 Apr 6, 2004
 
   * JW: Added b (break) to the CHR debugger.
-
   * TS: added chr_expandable/2 clause for pragma/2
 
 Apr 5, 2004
