@@ -1834,6 +1834,12 @@ S__getiob()
 		 *******************************/
 
 #ifdef HAVE_POPEN
+#ifdef WIN32
+#include "popen.c"
+
+#define popen(cmd, how) pt_popen(cmd, how)
+#define pclose(fd)	pt_pclose(fd)
+#endif
 
 static int
 Sread_pipe(void *handle, char *buf, int size)
@@ -1871,6 +1877,11 @@ IOFUNCTIONS Spipefunctions =
 IOSTREAM *
 Sopen_pipe(const char *command, const char *type)
 { FILE *fd = popen(command, type);	/* HACK for now */
+
+#if 0
+  Sdprintf("Opening \"%s\", mode \"%s\" --> %p (%d)\n",
+	   command, type, fd, errno);
+#endif
 
   if ( fd )
   { int flags;

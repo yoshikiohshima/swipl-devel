@@ -1984,7 +1984,7 @@ these predicates to manage input and output streams.
 \begin{description}
     \predicate{open}{4}{+SrcDest, +Mode, -Stream, +Options}
 ISO compliant predicate to open a stream. \arg{SrcDes} is either an
-atom, specifying a Unix file, or a term `\exam{pipe(\arg{Command})}',
+atom, specifying a file, or a term `\exam{pipe(\arg{Command})}',
 like see/1 and tell/1. \arg{Mode} is one of \const{read}, \const{write},
 \const{append} or \const{update}. Mode \const{append} opens the file for
 writing, positioning the file-pointer at the end. Mode \const{update}
@@ -2254,9 +2254,15 @@ specifications.
 \exam{?- tell(pipe(lpr)).}  & \% Start writing to the printer.
 \end{tabular}\end{center}
 
-Another example of using the \functor{pipe}{1} construct is shown below.
-Note that the \functor{pipe}{1} construct is not part of Prolog's
-standard I/O repertoire.
+Another example of using the \functor{pipe}{1} construct is shown
+below.%
+	\footnote{As of version 5.3.15, the pipe construct is supported
+		  in the MS-Windows version, both for
+		  \program{plcon.exe} and \program{plwin.exe}. The
+		  implementation uses code from the LUA programming
+		  language (\url{http://www.lua.org}).}
+Note that the \functor{pipe}{1} construct is not part of
+Prolog's standard I/O repertoire.
 
 \begin{code}
 getwd(Wd) :-

@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: support for open(pipe(Command), ...) for the Windows version
+    after recent discussion on the mailinglist.  Works both in plwin.exe
+    and plcon.exe thanks to code used from the LUA programming language
+    and distributed under the compatible MIT license.
+
   * FIXED: import/export issues loading QLF files leading to
     ERROR: Failed to import ... into ... messages.
 
