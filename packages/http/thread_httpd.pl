@@ -93,6 +93,7 @@ http_server(Goal, Module, Port, Options0) :-
 	create_server(SSL, Module:Goal, Port, Queue, Options).
 http_server(Goal, Module, Port, Options0) :-
 	tcp_socket(Socket),
+	tcp_setopt(Socket, reuseaddr),
 	tcp_bind(Socket, Port),
 	tcp_listen(Socket, 5),
 	after_option(Options0, Module, Options1),

@@ -1,3 +1,7 @@
+Jul 21, 2004
+
+  * FIXED: Bug#165: Added reuseaddr (Sandro Hawke).
+
 Jul 18, 2004
 
   * ENHANCED: handle `normal' errors silent (David Reitter)
