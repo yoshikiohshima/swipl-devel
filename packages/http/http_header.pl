@@ -496,6 +496,7 @@ field_to_prolog(cookie, ValueChars, Cookies) :- !,
 	debug(cookie, 'Cookie: ~s', [ValueChars]),
 	phrase(cookies(Cookies), ValueChars).
 field_to_prolog(set_cookie, ValueChars, SetCookie) :- !,
+	debug(cookie, 'SetCookie: ~s', [ValueChars]),
 	phrase(set_cookie(SetCookie), ValueChars).
 field_to_prolog(_, ValueChars, Atom) :-
 	atom_codes(Atom, ValueChars).
