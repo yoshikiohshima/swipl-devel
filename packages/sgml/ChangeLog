@@ -1,3 +1,8 @@
+Aug 26, 2004
+
+  * FIXED: Bug#177: catalog files from $SGML_CATALOG_FILES were not
+    honoured.  Simon Ambler.  Also made catalog management thread-safe.
+
 Jul 22, 2004
 
   * MODIFIED: Updated XML-Schema (XSD) namespace in xsdp_types.pl
