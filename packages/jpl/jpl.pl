@@ -132,16 +132,19 @@ jpl_call(X, Mspec, Args, R) :-
 	;   jpl_classname_to_type(X, Tx)   % eg 'java.lang.String' or '[L'
 	->  jpl_type_to_class(Tx, Obj),
 	    Type = class([java,lang],['Class'])
-	;   write('[jpl_call/4: bad arg 1 (neither type, class object nor class name)]'), nl,
-	    fail			    % oughta raise exception...
+	;   throw(error(type_error(jpl_receiver, X),
+			context(jpl_call/4,
+				'must be type, class object or class name')))
 	)
-    ;	write('[jpl_call/4: bad arg 1 (not ground)]'), nl, % oughta raise exception...
-	fail
+    ;	var(X)
+    ->	throw(error(instantiation_error,
+		    context(jpl_call/4, _)))
+    ;	throw(error(type_error(jpl_receiver, X),
+		    context(jpl_call/4,
+			    'must be type, class object or class name')))
     ),
     ground(Args),			    % check in jpl_call_1/5 instead?
     jpl_call_1(Type, Obj, Mspec, Args, Rx),
-
-  % jpl_type_to_classname(Type, Classname), G =.. [jpl_call,Classname,Mspec,Args], writeq([G]), nl,
 
     R = Rx.
 
