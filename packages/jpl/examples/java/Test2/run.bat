@@ -6,6 +6,6 @@ if not exist Test2.class (
   javac Test2.java
 )
 
-java Test2.java
+java Test2
 
 pause

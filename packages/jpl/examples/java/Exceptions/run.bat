@@ -6,6 +6,6 @@ if not exist Exceptions.class (
   javac Exceptions.java
 )
 
-java Exceptions.java
+java Exceptions
 
 pause

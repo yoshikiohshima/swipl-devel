@@ -6,6 +6,6 @@ if not exist Time.class (
   javac Time.java
 )
 
-java Time.java
+java Time
 
 pause

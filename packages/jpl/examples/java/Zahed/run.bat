@@ -6,6 +6,6 @@ if not exist Zahed.class (
   javac Zahed.java
 )
 
-java Zahed.java
+java Zahed
 
 pause

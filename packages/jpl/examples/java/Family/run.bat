@@ -6,6 +6,6 @@ if not exist Family.class (
   javac Family.java
 )
 
-java Family.java
+java Family
 
 pause

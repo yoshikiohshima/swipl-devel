@@ -6,6 +6,6 @@ if not exist FamilyMT.class (
   javac FamilyMT.java
 )
 
-java FamilyMT.java
+java FamilyMT
 
 pause

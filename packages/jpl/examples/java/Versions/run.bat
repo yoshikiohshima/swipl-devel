@@ -6,6 +6,6 @@ if not exist Versions.class (
   javac Versions.java
 )
 
-java Versions.java
+java Versions
 
 pause
