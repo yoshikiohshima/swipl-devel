@@ -30,6 +30,7 @@
 */
 
 #include <SWI-Stream.h>
+#include <SWI-Prolog.h>
 #include <errno.h>
 
 #ifdef WIN32
@@ -86,14 +87,14 @@ static int
 destroy_pipe(pipe *p)
 { ISPIPE(p);
 
-  EnterCriticalSection(&pipe->mutex);
+  EnterCriticalSection(&p->mutex);
 
   PL_free(p->buf);
   CloseHandle(p->event);
   LeaveCriticalSection(&p->mutex);
-  DeleteCirticalSection(&p->mutes);
+  DeleteCriticalSection(&p->mutex);
   p->magic = 0;
-  PL_free(p):
+  PL_free(p);
 
   return 0;
 }
@@ -147,11 +148,11 @@ retry:
       avail = size;
 
     memcpy(buf, pipe->buf+pipe->out, avail);
-    p->out += avail;
-    if ( p->in == p->out )
-      p->in = p->out = 0;
+    pipe->out += avail;
+    if ( pipe->in == pipe->out )
+      pipe->in = pipe->out = 0;
 
-    UNLOCK();
+    LeaveCriticalSection(&pipe->mutex);
     return avail;
   }
 
@@ -192,11 +193,47 @@ retry:
 }
 
 
-static IOFUNCTIONS pipe_functions =
+static int
+reader_close_pipe(pipe *p)
+{ ISPIPE(p);
+  p->readers--;
+
+  if ( p->readers <= 0 && p->writers <= 0 )
+    return destroy_pipe(p);
+
+  return 0;
+}
+
+
+static int
+writer_close_pipe(pipe *p)
+{ ISPIPE(p);
+  p->writers--;
+
+  if ( p->readers <= 0 && p->writers <= 0 )
+    return destroy_pipe(p);
+  if ( p->writers <= 0 )
+  { SetEvent(p->event);			/* Signal EOF */
+  }
+
+  return 0;
+}
+
+
+static IOFUNCTIONS pipe_read_functions =
 { (Sread_function)    read_pipe,
   (Swrite_function)   write_pipe,
   (Sseek_function)    0,
-  (Sclose_function)   close_pipe,
+  (Sclose_function)   reader_close_pipe,
+  (Scontrol_function) 0
+};
+
+
+static IOFUNCTIONS pipe_write_functions =
+{ (Sread_function)    read_pipe,
+  (Swrite_function)   write_pipe,
+  (Sseek_function)    0,
+  (Sclose_function)   writer_close_pipe,
   (Scontrol_function) 0
 };
 
@@ -206,10 +243,10 @@ tcp_pipe(term_t in, term_t out)
 { pipe *p = create_pipe(4096, TRUE);
   IOSTREAM *sin, *sout;
 
-  sin  = Snew(pipe, SIO_FBUF|SIO_INPUT,  &pipe_functions);
-  pipe->readers++;
-  sout = Snew(pipe, SIO_FBUF|SIO_OUTPUT, &pipe_functions);
-  pipe->writers++;
+  sin  = Snew(p, SIO_FBUF|SIO_INPUT,  &pipe_read_functions);
+  p->readers++;
+  sout = Snew(p, SIO_FBUF|SIO_OUTPUT, &pipe_write_functions);
+  p->writers++;
 
   if ( !PL_unify_stream(in, sin) ||
        !PL_unify_stream(out, sout) )
