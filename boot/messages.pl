@@ -226,7 +226,7 @@ swi_extra(X) -->
 	}, !,
 	[].
 swi_extra(context(_, Msg)) -->
-	{ atomic(Msg),
+	{ nonvar(Msg),
 	  Msg \== ''
 	}, !,
 	[ ' (~w)'-[Msg] ].
