@@ -2,10 +2,14 @@
 			   ==============
 
 
+VERSION 6.2.20, distributed with SWI-Prolog 5.3.13
+==================================================
+
 * FIXED: avoid trying to build GUI reporting for errors from user input.
   Dmitry.
 
 * FIXED: Pass $(LDFLAGS) in generating Prolog interface.  Paulo Moura.
+
 
 VERSION 6.2.19, distributed with SWI-Prolog 5.3.12
 ==================================================

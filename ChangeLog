@@ -6,6 +6,8 @@
 					to the SWI-Prolog Bugzilla system at
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
+VERSION 5.3.13 (June 28, 2004)
+==============================
 
   * FIXED: at_end_of_stream/[0,1] to throw an exception if the stream
     is at the end due to an error.
