@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.17/XPCE 6.2.23 development snapshot
+SWI-Prolog 5.3.18/XPCE 6.2.24 development snapshot
 
 Status
 ======
@@ -56,34 +56,24 @@ Brief summary of changes since 5.3.16
 SWI-Prolog
 ----------
 
-  * Fixed garbage collector bug for applications using global
-    variables.  Note that the semweb library rdf_db uses these.
-
-  * Added nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
-    assignments on terms.
-
-  * Cycle safeness of the recorded database (also used by findall/3,
-    setof/3 and bagof/3).  Cycle-safe analysis of the variable structure
-    for setof/3 and bagof/3.
-
-  * Fixed string-equality testing (broken in the 5.3.x branch while
-    implementing cycle-safeness).
-
+  * Add goal expansion for Module:Goal goals.
 
 Packages
 --------
 
-  * RDF: Added Namespace expansion for typed literals, added string
-    matching with patterns using literal(like, '*foo*bar').  Added
-    library(rdf_ntriples) to read W3C ntriples format files.
+  * RDF: MODIFIED: The raw RDF parser as implemented by load_rdf/3 now
+    returns all resources as atoms rather than some as NameSpace:Local.
 
   * HTTP: Various patches and additions.
 
+  * XPCE: Fixed buffer overrun-by-one problem in menu handling, which
+    caused crashes in the Windows version (and possibly others, depending
+    on the compiler and optimization).
 
 Development environment
 -----------------------
 
-  * Fixed Source location handling in if->then
+  (none)
 
 INCOMPATIBILITIES
 =================
