@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: assertion failure in b_setval/2 and b_getval/2.  David Reitter.
+
   * MODIFIED: moved XPCE boot file pce_operator.pl to the general Prolog
     library under the name operators.pl.  Applications that used to fetch
     this file using unsupported :- use_module(boot(pce_operator)) should

@@ -103,7 +103,7 @@ PRED_IMPL("b_setval", 2, b_setval, 0)
   if ( isTerm(*t) )
   { Functor f = valueTerm(*t);
     int arity = arityFunctor(f->definition);
-    int key = atomValue(name)->hash_value % arity;
+    unsigned int key = (unsigned int)atomValue(name)->hash_value % arity;
     Word l = &f->arguments[key];
     Word vp;
 
@@ -147,7 +147,7 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
   if ( isTerm(*t) )
   { Functor f = valueTerm(*t);
     int arity = arityFunctor(f->definition);
-    int key = atomValue(name)->hash_value % arity;
+    unsigned int key = (unsigned int)atomValue(name)->hash_value % arity;
     Word l = &f->arguments[key];
     Word vp;
 
