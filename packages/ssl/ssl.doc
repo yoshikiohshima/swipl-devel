@@ -171,6 +171,16 @@ Clean up all resources related to the SSL + TCP/IP socket layers.
 \end{description}
 
 
+\section{Example code}
+
+Examples of a simple server and client as well as a simple HTTPS server
+can be found in the example directory which is located in
+\file{doc/packages/examples/ssl} relative to the SWI-Prolog installation
+directory. The \file{etc} directory contains example certificate files
+as well as a \file{README} on the creation of certificates using OpenSSL
+tools.
+
+
 \section{Installation}
 
 The OpenSSL libraries are \emph{not} part of the SWI-Prolog distribution
@@ -188,17 +198,6 @@ implementation is found.  On Windows systems, OpenSSL must be
 installed prior to building SWI-Prolog and \file{rules.mk} must
 be edited to reflect the position of the header and libraries if
 they are not in the standard search path.
-
-
-\section{Bugs}
-
-The current implementation uses blocking (socket) I/O, which implies
-it is not possible to deal with timeouts and (XPCE) event dispatching.
-It is adviced to use the SSL library from Prolog threads to prevent the
-toplevel from blocking, especially on MS-Windows.
-
-We plan to merge the non-blocking socket based implementation used by
-library \pllib{socket} with OpenSSL.
 
 
 \section{Acknowledgments}
