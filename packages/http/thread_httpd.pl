@@ -239,7 +239,13 @@ http_worker(Options) :-
 	      (	  catch(server_loop(Goal, In, Out, Peer, After), E, true)
 	      ->  (   var(E)
 		  ->  true
-		  ;   print_message(error, E)
+		  ;   (   message_level(E, Level)
+		      ->  true
+		      ;	  Level = error
+		      ),
+		      debug(server, 'Caught exception ~q (level ~q)',
+			    [E, Level]),
+		      print_message(Level, E)
 		  )
 	      ;	  print_message(error,
 				goal_failed(server_loop(Goal, In, Out,
@@ -255,6 +261,19 @@ done_worker :-
 	retract(queue_worker(_Queue, Self)),
 	print_message(informational,
 		      httpd_stopped_worker(Self)).
+
+
+%	thread_httpd:message_level(+Exception, -Level)
+%	
+%	Determine the message stream used for  exceptions that may occur
+%	during server_loop/5. Being multifile, clauses   can be added by
+%	the   application   to   refine   error   handling.   See   also
+%	message_hook/3 for further programming error handling.
+
+:- multifile
+	message_level/2.
+
+message_level(error(io_error(read, _), _), silent).
 
 
 %	server_loop(:Goal, +In, +Out, +Socket, +Peer, :After)

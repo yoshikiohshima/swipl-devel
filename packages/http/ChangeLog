@@ -1,3 +1,7 @@
+Jul 18, 2004
+
+  * ENHANCED: handle `normal' errors silent (David Reitter)
+
 Jun 28, 2004
 	
   * ENHANCED: print server errors and continue
