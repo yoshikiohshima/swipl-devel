@@ -13,6 +13,8 @@
   * ADDED: Handle ~@ in format/[2,3].  SICStus compatibility.  Reported
     by Tom Schrijvers.
 
+  * FIXED: sizeofClause() type error.  Michal Cihar.
+
   * FIXED: int/char problem in parser.  Michal Cihar.
 
   * FIXED: Bug#128: memory deallocation problem in library(memfile).
