@@ -1,5 +1,16 @@
 \chapter{Attributed variables}			\label{sec:attvar}
 
+\jargon{Attributed variables} provide a technique for extending the
+Prolog unification algorithm \cite{holzbaur:1992} by hooking the binding
+of attributed variables. Binding an attributed variable schedules a goal
+to be executed at the first possible opportunity. In the current
+implementation the hooks are executed immediately after a successful
+unification of the clause-head or successful completion of a foreign
+language (builtin) predicate. Each attribute is associated to a module
+and the hook is executed in this module.
+
+
+
 \begin{description}
     \predicate{attvar}{1}{{@}Term}
 Succeeds if \arg{Term} is an attributed variable. Note that var/1 also
