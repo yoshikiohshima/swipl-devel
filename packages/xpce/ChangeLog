@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ADDED: PceEmacs to determine mode from arbitrary patterns on the content.
+  See emacs_content_mode/3 in library('emacs/emacs.pl').
+
 * ADDED: CHR support in the cross-referencer and colours to the
   PceEmacs chr mode.
 

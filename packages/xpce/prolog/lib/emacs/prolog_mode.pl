@@ -737,8 +737,9 @@ insert_full_stop(M, Arg:[int]) :->
 
 alternate_syntax(prolog,    true,
 			    true).
-alternate_syntax(pce_class, pce_expansion:push_compile_operators,
-			    pce_expansion:pop_compile_operators).
+alternate_syntax(pce_class, pce_expansion:push_compile_operators(SM),
+			    pce_expansion:pop_compile_operators) :-
+	'$set_source_module'(SM, SM).
 
 :- dynamic
 	syntax_error/1.

@@ -137,6 +137,7 @@ pce_ifhostproperty(prolog(swi),
 :- pce_global(@emacs_default_mode, new(var(value := script))).
 :- pce_global(@emacs_mode_list, make_emacs_mode_list).
 :- pce_global(@emacs_interpreter_mode_list, make_emacs_interpreter_mode_list).
+:- pce_global(@emacs_content_mode_list, make_emacs_content_mode_list).
 :- pce_global(@emacs_no_backup_list, make_no_backup_list).
 
 make_emacs_mode_list(Sheet) :-
@@ -187,6 +188,22 @@ emacs_interpreter_mode('.*/pl',				prolog).
 emacs_interpreter_mode('.*/xpce',			prolog).
 emacs_interpreter_mode('.*/perl',			c).
 emacs_interpreter_mode('.*/awk',			c).
+
+%	emacs_content_mode(+Regex, +SearchLimit, +Mode)
+%	
+%	Select Mode if Regex matches in the first SearchLimit characters
+%	of the file.
+
+make_emacs_content_mode_list(Sheet) :-
+	new(Sheet, sheet),
+	(   emacs_content_mode(Regex, SearchLimit, Mode),
+	       send(Sheet, value, tuple(regex(Regex), SearchLimit), Mode),
+	    fail
+	;   true
+	).
+
+emacs_content_mode('library(chr)', 	5000,	chr).
+
 
 %	Do not make backup of a file matching this pattern
 
