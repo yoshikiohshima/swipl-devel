@@ -103,7 +103,7 @@ chr_compile(From, To) :-
 chr_compile(From, To, MsgLevel) :-
 	print_message(MsgLevel, chr(start(From))),
 	read_file_to_terms(From, Declarations,
-			   [ module(chr_pp) 	% get operators from here
+			   [ module(chr) 	% get operators from here
 			   ]),
 	print_message(silent, chr(translate(From))),
 	chr_translate(Declarations,NewDeclarations),

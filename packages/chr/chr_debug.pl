@@ -32,7 +32,7 @@
 :- module(chr_debug,
 	  [ chr_show_store/1		% +Module
 	  ]).
-:- use_module(library('chr/chr')).	% runtime system
+:- use_module(library('chr/chr_runtime')).
 :- use_module(library(lists)).
 
 

@@ -150,12 +150,12 @@ chr_translate(Declarations,NewDeclarations) :-
 insert_declarations(Clauses0, Clauses) :-
 	(   Clauses0 = [:- module(M,E)|FileBody]
 	->  Clauses = [ :- module(M,E),
-			:- use_module(library('chr/chr')),
+			:- use_module(library('chr/chr_runtime')),
 			:- style_check(-singleton),
 			:- style_check(-discontiguous)
 		      | FileBody
 		      ]
-	;   Clauses = [ :- use_module(library('chr/chr')),
+	;   Clauses = [ :- use_module(library('chr/chr_runtime')),
 			:- style_check(-singleton),
 			:- style_check(-discontiguous)
 		      | Clauses0

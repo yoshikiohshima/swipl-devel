@@ -5,7 +5,7 @@
     Copyright (C) 1996 University of Amsterdam. All rights reserved.
 */
 
-:- use_module(library('chr/chr_swi')).
+:- use_module(library(chr)).
 :- set_prolog_flag(optimise, true).
 %:- set_prolog_flag(trace_gc, true).
 
