@@ -3883,7 +3883,8 @@ match(int how, atom_t search, atom_t label)
 	if ( tolower(*l) != tolower(*f) )
 	  goto retry_like;
       }
-      if ( *l == '\0' && *f == '\0' )
+      if ( *l == '\0' && (*f == '\0' ||
+			 (*f == '*' && f[1] == '\0')) )
 	return TRUE;
   
 retry_like:

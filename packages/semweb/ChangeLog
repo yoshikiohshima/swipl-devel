@@ -1,5 +1,7 @@
 Sep 1, 2004
 
+  * FIXED: rdf_match_label(like, '*Rijn*', 'van Rijn')
+
   * ADDED: rdf_predicate_property/2 new properties rdfs_object_branch_factor
     and rdfs_subject_branch_factor.
 
