@@ -252,11 +252,12 @@ ssl_config_free( void *            ctx
 #if 0
     ssl_free((PL_SSL *) argp);		/* JW: wrong */
 #else
-    PL_SSL *config = NULL;		/* JW: but this is also wrong? */
+  { PL_SSL *config = NULL;		/* JW: but this is also wrong? */
     if ( (config = SSL_get_ex_data(ctx, parent_ctx_idx)) )
     { assert(config->magic == SSL_CONFIG_MAGIC);
       ssl_free(config);
     }
+  }
 #endif
 }
 
