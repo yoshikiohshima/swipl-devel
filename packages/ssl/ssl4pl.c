@@ -293,7 +293,7 @@ pl_cert_verify_hook(PL_SSL *config, const char *certificate, const char *error)
    */
 
   unify_conf(av+0, config);
-  Sdprintf("\n---Certificate:'%s'---\n", certificate);
+  /*Sdprintf("\n---Certificate:'%s'---\n", certificate);*/
   PL_unify_atom_chars(av+1, certificate);
   PL_unify_atom_chars(av+2, error);
 
