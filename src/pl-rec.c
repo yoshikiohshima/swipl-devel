@@ -153,6 +153,7 @@ typedef struct
 #define PL_TYPE_EXT_COMPOUND	(10)	/* External (inlined) functor */
 #define PL_TYPE_EXT_FLOAT	(11)	/* float in standard-byte order */
 #define PL_TYPE_ATTVAR		(12)	/* Attributed variable */
+#define PL_REC_ALLOCVAR		(13)	/* Allocate a variable on global */
 
 #define addUnalignedBuf(b, ptr, type) \
 	do \
@@ -325,6 +326,10 @@ addFunctor(CompileInfo info, functor_t f)
 }
 
 
+#define mkAttVarP(p)  ((Word)((word)(p) | 0x1L))
+#define isAttVarP(p)  ((word)(p) & 0x1)
+#define valAttVarP(p) ((Word)((word)(p) & ~0x1L))
+
 static void
 compile_term_to_heap(Word p, CompileInfo info ARG_LD)
 { word w;
@@ -337,7 +342,7 @@ right_recursion:
     { long n = info->nvars++;
 
       *p = (n<<7)|TAG_ATOM|STG_GLOBAL;
-      addUnalignedBuf(&info->vars, &p, Word);
+      addBuffer(&info->vars, p, Word);
       addOpCode(info, PL_TYPE_VARIABLE);
       addSizeInt(info, n);
 
@@ -345,10 +350,22 @@ right_recursion:
     }
 #if O_ATTVAR
     case TAG_ATTVAR:
-    { 
-      info->size++;
+    { long n = info->nvars++;
+      Word ap = valPAttVar(w);
+
+      if ( isEmptyBuffer(&info->code) )
+      { addOpCode(info, PL_REC_ALLOCVAR); 	/* only an attributed var */
+	info->size++;
+      }
+
+      addBuffer(&info->vars, *p, word);		/* save value */
+      *p = (n<<7)|TAG_ATOM|STG_GLOBAL;
+      addBuffer(&info->vars, mkAttVarP(p), Word);
       addOpCode(info, PL_TYPE_ATTVAR);
-      p = valPAttVar(w);
+      addSizeInt(info, n);
+      info->size++;
+
+      p = ap;
       goto right_recursion;
     }
 #endif
@@ -422,7 +439,7 @@ compileTermToHeap__LD(term_t t, int flags ARG_LD)
 { compile_info info;
   Record record;
   Word *p;
-  int n, size;
+  int size;
   int rsize = SIZERECORD(flags);
 
   SECURE(checkData(valTermRef(t)));
@@ -434,10 +451,15 @@ compileTermToHeap__LD(term_t t, int flags ARG_LD)
   info.external = (flags & R_EXTERNAL);
 
   compile_term_to_heap(valTermRef(t), &info PASS_LD);
-  n = info.nvars;
-  p = (Word *)info.vars.base;
-  while(--n >= 0)
-    setVar(**p++);
+  p = topBuffer(&info.vars, Word);
+  while(p > baseBuffer(&info.vars, Word))
+  { p--;
+    if (isAttVarP(*p) )
+    { *valAttVarP(*p) = (word)p[-1];
+      p--;
+    } else
+      setVar(**p);
+  }
   discardBuffer(&info.vars);
   
   size = rsize + sizeOfBuffer(&info.code);
@@ -727,9 +749,18 @@ right_recursion:
       
       return;
     }
+    case PL_REC_ALLOCVAR:
+    { setVar(*b->gstore);
+      *p = makeRefG(b->gstore);
+      p = b->gstore++;
+      goto right_recursion;
+    }
 #if O_ATTVAR
     case PL_TYPE_ATTVAR:
-    { *p = consPtr(b->gstore, TAG_ATTVAR|STG_GLOBAL);
+    { long n = fetchSizeInt(b);
+
+      *p = consPtr(b->gstore, TAG_ATTVAR|STG_GLOBAL);
+      b->vars[n] = p;
       p = b->gstore++;
       goto right_recursion;
     }
@@ -887,9 +918,12 @@ right_recursion:
     { skipSizeInt(b);
       return;
     }
+    case PL_REC_ALLOCVAR:
+      goto right_recursion;
 #ifdef O_ATTVAR
     case PL_TYPE_ATTVAR:
-    { goto right_recursion;
+    { skipSizeInt(b);
+      goto right_recursion;
     }
 #endif
     case PL_TYPE_ATOM:
