@@ -40,16 +40,40 @@ API
 The API is completely the same as for   blocking IO. It is however built
 on top of sockets used in non-blocking   mode which enables the layer to
 listen to Prolog events such  as   timeouts,  GUI  processing and thread
-interaction. The functions modelled after the POSIX socket API, prefixed
-with nbio_*:
+interaction. The functions are modelled  after   the  POSIX  socket API,
+prefixed with nbio_*:
 
-	
+	nbio_socket()
+	nbio_connect()
+	nbio_bind()
+	nbio_listen()
+	nbio_accept()
+	nbio_closesocket()
 
+and IO is realised using
 
+	nbio_read()
+	nbio_write()
 
+Overall control of the library:
 
+	nbio_init()
+	nbio_cleanup()
+	nbio_debug()
 
+Error handling
 
+	nbio_error()		Raises a Prolog exception
+
+Settings
+
+	nbio_setopt()
+	nbio_get_flags()
+
+Address Converstion
+
+	nbio_get_sockaddr()
+	nbio_get_ip4()
 
 
 Windows issues
