@@ -23,7 +23,7 @@
 */
 
 /*#define O_SECURE 1*/
-/*#define O_DEBUG 1*/
+#define O_DEBUG 1
 #include "pl-incl.h"
 
 #define	     BFR (LD->choicepoints)	/* choicepoint registration */
@@ -4487,7 +4487,11 @@ interception. Second, there should be some room for optimisation here.
 #endif /*O_DEBUGGER*/
 #ifdef O_ATTVAR
 	if ( *valTermRef(LD->attvar.head) ) /* can be faster */
-	{ ARGP = argFrameP(lTop, 0);	    /* needed? */
+	{ static code exit;
+
+	  exit = encode(I_EXIT);
+	  PC = &exit;
+	  ARGP = argFrameP(lTop, 0);	    /* needed? */
 	  goto wakeup;
 	}
 #endif
