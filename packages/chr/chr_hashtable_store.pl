@@ -14,7 +14,7 @@
 :- use_module(hprolog).
 :- use_module(library(lists)).
 
-initial_capacity(65536).
+initial_capacity(1).
 
 new_ht(HT) :-
 	initial_capacity(Capacity),
@@ -51,7 +51,15 @@ insert_ht(HT,Term,Value) :-
 	).
 
 int_insert_ht(HT,Hash,Key,Value) :-
-	HT = ht(Capacity,Load,Table),
+	HT = ht(Capacity0,Load,Table0),
+	( Load ==  Capacity0 ->
+		expand_ht(HT),
+		arg(3,HT,Table),
+		Capacity is Capacity0 * 2
+	;
+		Table = Table0,
+		Capacity = Capacity0
+	),
 	NLoad is Load + 1,
 	setarg(2,HT,NLoad),
 	Index is (Hash mod Capacity) + 1,
@@ -135,6 +143,48 @@ value_ht(I,N,Table,Value) :-
 		value_ht(J,N,Table,Value)
 	).
 		 	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+expand_ht(HT) :-
+	HT = ht(Capacity,_,Table),
+	NewCapacity is Capacity * 2,
+	functor(NewTable,t,NewCapacity),
+	setarg(1,HT,NewCapacity),
+	setarg(3,HT,NewTable),
+	expand_copy(Table,1,Capacity,NewTable,NewCapacity).
+
+expand_copy(Table,I,N,NewTable,NewCapacity) :-
+	( I > N ->
+		true
+	;
+		arg(I,Table,Bucket),
+		( var(Bucket) ->
+			true
+		; Bucket = Key - Value ->
+			expand_insert(NewTable,NewCapacity,Key,Value)
+		;
+			expand_inserts(Bucket,NewTable,NewCapacity)
+		),
+		J is I + 1,
+		expand_copy(Table,J,N,NewTable,NewCapacity)
+	).
+
+expand_inserts([],_,_).
+expand_inserts([K-V|R],Table,Capacity) :-
+	expand_insert(Table,Capacity,K,V),
+	expand_inserts(R,Table,Capacity).
+
+expand_insert(Table,Capacity,K,V) :-
+	term_hash(K,Hash),	
+	Index is (Hash mod Capacity) + 1,
+	arg(Index,Table,Bucket),
+	( var(Bucket) ->
+		Bucket = K - V
+	; Bucket = _-_ ->
+		setarg(Index,Table,[K-V,Bucket])
+	;
+		setarg(Index,Table,[K-V|Bucket])
+	).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 term_hash(Term,Hash) :-
 	hash_term(Term,Hash).

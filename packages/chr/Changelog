@@ -1,3 +1,7 @@
+Jul 28, 2004
+
+  * TS: Updated hashtable stores. They now start small and expand.
+
 Jul 19, 2004
 
   * JW: Removed chr_pp: module prefixes
