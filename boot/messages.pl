@@ -197,6 +197,10 @@ swi_message(timeout_error(Op, Stream)) -->
 	[ 'Timeout in ~w from ~p'-[Op, Stream] ].
 swi_message(not_implemented(Type, What)) -->
 	[ '~w `~p\' is not implemented in this version'-[Type, What] ].
+swi_message(format_argument_type(Fmt, Arg)) -->
+	[ 'Illegal argument to format sequence ~~~w: ~p'-[Fmt, Arg] ].
+swi_message(format(Msg)) -->
+	[ 'Format error: ~w'-[Msg] ].
 
 swi_context(X) -->
 	{ var(X)
