@@ -1,3 +1,7 @@
+May 5, 2004
+
+  * FIXED: memory leak in open_memory_file/3.  Fabien Todescato.
+
 Oct 2, 2003
 
   * PORT: Configure socket library for IRIX 6.5 (Rob Myers).
