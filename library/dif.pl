@@ -75,7 +75,7 @@ dif_c_c_l(Unifier,OrNode) :-
 extend_ornode(OrNode,N,List,Vars) :-
 	( get_attr(OrNode,dif,Attr) ->
 		Attr = node(M,Vars),
-		O is N + M
+		O is N + M - 1
 	;
 		O = N,
 		Vars = []
@@ -116,17 +116,31 @@ attr_unify_hook(vardif(V1,V2),Other) :-
 	( var(Other) ->
 		reverse_lookups(V1,Other,OrNodes1,NV1),
 		or_one_fails(OrNodes1),
-		reverse_lookups(V2,Other,OrNodes2,NV2),
-		or_one_fails(OrNodes2),
 		get_attr(Other,dif,OAttr),
 		OAttr = vardif(OV1,OV2),
-		append(NV1,OV1,CV1),
-		append(NV2,OV2,CV2),
-		put_attr(Other,dif,vardif(CV1,CV2))	
+		reverse_lookups(OV1,Other,OrNodes2,NOV1),
+		or_one_fails(OrNodes2),
+		remove_obsolete(V2,Other,NV2),
+		remove_obsolete(OV2,Other,NOV2),
+		append(NV1,NOV1,CV1),
+		append(NV2,NOV2,CV2),
+		( CV1 == [], CV2 == [] ->
+			del_attr(Other,dif)
+		;
+			put_attr(Other,dif,vardif(CV1,CV2))	
+		)
 	;
 		verify_compounds(V1,Other),
 		verify_compounds(V2,Other)	
 	).
+
+remove_obsolete([], _, []).
+remove_obsolete([N-Y|T], X, L) :-
+        (   Y==X ->
+            remove_obsolete(T, X, L)
+        ;   L=[N-Y|RT],
+            remove_obsolete(T, X, RT)
+        ).
 
 reverse_lookups([],_,[],[]).
 reverse_lookups([N-X|NXs],Value,Nodes,Rest) :-
@@ -186,7 +200,7 @@ del_or_dif([X=Y|Xs]) :-
 	del_or_dif(Xs).
 
 cleanup_dead_nodes(X) :-
- 	( var(X) ->
+ 	( attvar(X) ->
  		get_attr(X,dif,Attr),
 		Attr = vardif(V1,V2),
 		filter_dead_ors(V1,NV1),
