@@ -80,16 +80,30 @@ fi
 export LD_LIBRARY_PATH CLASSPATH
 
 ################################################################
+# compile Class
+#
+# Compile the indicated class if necessary
+################################################################
+
+compile()
+{ if [ ! -f $1.class ]; then
+    echo "Compiling $1"
+    javac $1.java
+  elif [ $1.java -nt $1.class ]; then
+    echo "Recompiling $1"
+    javac $1.java
+  fi
+}
+
+
+################################################################
 # run Class
 # 
 # Compiles Class if the .class file does not exsist and runs it
 ################################################################
 
 run()
-{ if [ ! -f $1.class ]; then
-    echo "Compiling $1"
-    javac $1.java
-  fi
+{ compile $1
 
   echo ""
   echo "JPL demo: $1"
@@ -98,3 +112,22 @@ run()
   java $1
 }
 
+################################################################
+# run_preloaded Class
+# 
+# As run Class, but preloads libjpl.so to be able to use foreign
+# extensions to Prolog.  See the SemWeb example
+################################################################
+
+run_preloaded()
+{ compile $1
+
+  JPLSO="$PLBASE/lib/$PLARCH/libjpl.$PLSOEXT"
+
+  echo ""
+  echo "JPL demo: $1"
+  echo "Using preloaded $JPLSO"
+  echo ""
+
+  env LD_PRELOAD=$JPLSO java $1
+} 
