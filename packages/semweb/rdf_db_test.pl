@@ -6,7 +6,8 @@
 */
 
 :- asserta(file_search_path(foreign, '.')).
-:- use_module('rdf_db').
+:- use_module(rdf_db).
+:- use_module(rdfs).
 :- use_module(library(xsdp_types)).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,9 +157,12 @@ typed(save) :-
 		 *******************************/
 
 lang_data :-
-	rdf_assert(x, a, literal(lang(nl, 'Jan'))),
-	rdf_assert(x, a, literal(lang(en, 'John'))),
-	rdf_assert(x, a, literal('Johannes')).
+	lang_data(x, a).
+
+lang_data(S, A) :-
+	rdf_assert(S, A, literal(lang(nl, 'Jan'))),
+	rdf_assert(S, A, literal(lang(en, 'John'))),
+	rdf_assert(S, A, literal('Johannes')).
 
 same_set(S1, S2) :-
 	sort(S1, Sorted1),
@@ -247,6 +251,20 @@ update(object-5) :-			% drop lang
 
 
 		 /*******************************
+		 *	       LABELS		*
+		 *******************************/
+
+label(1) :-
+	rdf_global_id(rdfs:label, Label),
+	lang_data(x, Label),
+	findall(L, rdfs_label(x, L), Ls), Ls = ['Jan', 'John', 'Johannes'].
+label(2) :-
+	rdf_global_id(rdfs:label, Label),
+	lang_data(x, Label),
+	findall(L, rdfs_label(x, en, L), Ls), Ls = ['John'].
+
+
+		 /*******************************
 		 *	      SCRIPTS		*
 		 *******************************/
 
@@ -323,6 +341,7 @@ testset(literal).
 testset(typed).
 testset(lang).
 testset(update).
+testset(label).
 
 %	testdir(Dir)
 %	

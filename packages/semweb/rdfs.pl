@@ -36,7 +36,9 @@
 	    rdfs_individual_of/2,	% ?Resource, ?Class
 
 	    rdfs_label/2,		% ?Resource, ?Label
+	    rdfs_label/3,		% ?Resource, ?Language, ?Label
 	    rdfs_ns_label/2,		% +Resource, -Label
+	    rdfs_ns_label/3,		% +Resource, ?Label, -Label
 
 	    rdfs_member/2,		% ?Object, +Set
 	    rdfs_list_to_prolog_list/2,	% +Set, -List
@@ -163,10 +165,17 @@ rdfs_individual_of(_Resource, _Class) :-
 %	but labels registered with rdf:label are returned first.
 
 rdfs_label(Resource, Label) :-
+	rdfs_label(Resource, _, Label).
+
+%	rdfs_label(?Resource, ?Lang, ?Label)
+%	
+%	Convert between class and label, in a specific language.
+
+rdfs_label(Resource, Lang, Label) :-
 	nonvar(Resource), !,
-	take_label(Resource, Label).
-rdfs_label(Resource, Label) :-
-	rdf_has(Resource, rdfs:label, literal(Label)).
+	take_label(Resource, Lang, Label).
+rdfs_label(Resource, Lang, Label) :-
+	rdf_has(Resource, rdfs:label, literal(lang(Lang, Label))).
 
 %	rdfs_ns_label(+Resource, -Label)
 %	
@@ -176,7 +185,10 @@ rdfs_label(Resource, Label) :-
 %	if the resource has multiple rdfs:label properties
 
 rdfs_ns_label(Resource, Label) :-
-	rdfs_label(Resource, Label0),
+	rdfs_ns_label(Resource, _, Label).
+
+rdfs_ns_label(Resource, Lang, Label) :-
+	rdfs_label(Resource, Lang, Label0),
 	(   rdf_global_id(NS:_, Resource),
 	    Label0 \== ''
 	->  concat_atom([NS, Label0], :, Label)
@@ -193,21 +205,21 @@ rdfs_ns_label(Resource, Label) :-
 	).
 
 
-%	take_label(+Resource, -Label)
+%	take_label(+Resource, ?Lang, -Label)
 %
-%	Get the label to use for a resource.
+%	Get the label to use for a resource in the give Language
 
-take_label(Resource, Label) :-
-	(   label_of(Resource, Label)
+take_label(Resource, Lang, Label) :-
+	(   label_of(Resource, Lang, Label)
 	*-> true
 	;   rdf_split_url(_, Label, Resource)
 	).
 
-label_of(Resource, Label) :-
-	rdf(Resource, rdfs:label, literal(Label)).
-label_of(Resource, Label) :-
+label_of(Resource, Lang, Label) :-
+	rdf(Resource, rdfs:label, literal(lang(Lang, Label))).
+label_of(Resource, Lang, Label) :-
 	rdf_equal(rdfs:label, LabelP),
-	rdf_has(Resource, LabelP, literal(Label), P),
+	rdf_has(Resource, LabelP, literal(lang(Lang, Label)), P),
 	P \== LabelP.
 
 %	rdfs_class_property(+Class, ?Property)

@@ -544,6 +544,11 @@ All matching is performed case-insensitive.  Defines methods are:
     \predicate{rdf_reset_db}{0}{}
 Erase all triples from the database and reset all counts and statistics
 information.
+
+    \predicate{rdf_version}{1}{-Version}
+Unify \arg{Version} with the library version number.  This number is,
+like to the SWI-Prolog version flag, defined as $10,000 \times
+Major + 100 \times Minor + Patch$.
 \end{description}
 
 
@@ -567,10 +572,6 @@ the required information to realise logical updates in C.
 
     \item [\const{subPropertyOf} of \const{subPropertyOf}] is not
 supported.
-
-    \item [Literals] The current system doesn't support typed literals
-or the literal \const{xml:lang} tag.  It is likely that we will support
-arbitrary Prolog terms for literal values in the future.
 
     \item [Equivalence]
 Similar to \const{subPropertyOf}, it is likely to be profitable to
@@ -660,16 +661,24 @@ literal objects are hashed case-insensitive to speed up the commonly
 used case-insensitive search.
 
 \begin{description}
-    \predicate{rdfs_label}{2}{?Resource, ?Label}
+    \predicate{rdfs_label}{3}{?Resource, ?Language, ?Label}
 Extract the label from \arg{Resource} or generate all resources with
 the given \arg{Label}. The label is either associated using
 a sub-property of \const{rdfs:label} or it is extracted from the URL
-using rdf_split_url/3.
+using rdf_split_url/3.  \arg{Language} is unified to the value of
+the \const{xml:lang} attribute of the label or a variable if the
+label has no language specified.
 
-    \predicate{rdfs_ns_label}{2}{?Resource, ?Label}
+    \predicate{rdfs_label}{2}{?Resource, ?Label}
+Defined as \term{rdfs_label}{Resource, _, Label}.
+
+    \predicate{rdfs_ns_label}{3}{?Resource, ?Language, ?Label}
 Similar to rdfs_label/2, but prefixes the result using the declared
 namespace alias (see \secref{rdfns}) to facilitate user-friendly labels
 in applications using multiple namespaces that may lead to confusion.
+
+    \predicate{rdfs_ns_label}{2}{?Resource, ?Label}
+Defined as \term{rdfs_ns_label}{Resource, _, Label}.
 
     \predicate{rdfs_find}{5}{+String, +Description, +Properties, +Method, -Subject}
 \index{search}%
