@@ -341,7 +341,7 @@ static const PL_extension foreigns[] = {
 
   FRG("$length",		2, pl_length,			0),
   FRG("memberchk",		2, pl_memberchk,		0),
-  FRG("format",			2, pl_format,			0),
+  FRG("format",			2, pl_format,		     META),
   FRG("$except_bag",		1, pl_except_bag, 		0),
 #ifdef O_DEBUG
   FRG("$check_definition",	1, pl_check_definition,      META),
@@ -410,7 +410,7 @@ static const PL_extension foreigns[] = {
   FRG("writeq",			2, pl_writeq2,			0),
   FRG("print",			2, pl_print2,			0),
   FRG("write_canonical",	2, pl_write_canonical2,		0),
-  FRG("format",			3, pl_format3,			0),
+  FRG("format",			3, pl_format3,		     META),
 
   FRG("tty_get_capability",	3, pl_tty_get_capability,	0),
   FRG("tty_goto",		2, pl_tty_goto,			0),

@@ -7089,20 +7089,26 @@ ffoorrmmaatt((_+_F_o_r_m_a_t_, _+_A_r_g_u_m_e_n_t_s))
       s  Output text  from a list  of character codes  or a string  (see
          string/1 and section 4.23) from the next argument.
 
-      t  All remaining space between 2 tabs tops  is distributed equally
-         over ~t  statements  between the  tabs  tops.   This  space  is
+      @  Interpret the next argument as  a goal and execute it.   Output
+         written to the current_output stream is inserted at this place.
+         Goal is  called in the  module calling format/3.   This  option
+         is not  present  in the  original  definition by  Quintus,  but
+         supported by some other Prolog systems.
+
+      t  All remaining space between 2 tab stops  is distributed equally
+         over ~t  statements  between the  tab  stops.   This  space  is
          padded with  spaces by  default.   If an  argument is  supplied
          this is taken  to be the character  code of the character  used
          for padding.  This  can be used to do left or  right alignment,
          centering, distributing, etc.   See also  ~| and ~+ to set  tab
-         stops.  A tabs top is assumed at the start of each line.
+         stops.  A tab stop is assumed at the start of each line.
 
-      |  Set a  tabs top on  the current position.    If an argument  is
-         supplied set  a  tabs top  on the  position  of that  argument.
+      |  Set a  tab stop on  the current position.    If an argument  is
+         supplied set  a  tab stop  on the  position  of that  argument.
          This  will  cause  all  ~t's  to  be  distributed  between  the
-         previous and this tabs top.
+         previous and this tab stop.
 
-      +  Set a tabs top relative  to the current position.   Further the
+      +  Set a tab stop relative  to the current position.   Further the
          same as ~|.
 
       w  Give the next argument to write/1.
@@ -16269,7 +16275,7 @@ foo/3, 1032                                  642, 703
 forall/2, 122, 473                     retractall/1, 212, 213, 217
 format/1, 197, 482                     reverse/2, 616, 964
 format/2, 483--485, 982                RFC-1738, 1006
-format/3, 197, 484                     rl_add_history/1, 1031
+format/3, 197, 483, 484                rl_add_history/1, 1031
 format/[1                              rl_read_init_file/1, 1030
    2], 58, 326, 474, 1043              rlimit _l_i_b_r_a_r_y, 25
 format/[2                              round/1, 419, 420

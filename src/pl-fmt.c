@@ -465,6 +465,30 @@ do_format(IOSTREAM *fd, const char *fmt, unsigned len, int argc, term_t argv)
 		  fmt++;
 		  break;
 	       }
+	      case '@':
+	        { char buf[BUFSIZE];
+		  char *str = buf;
+		  int bufsize = BUFSIZE;
+		  term_t ex = 0;
+		  int rval;
+
+		  if ( argc < 1 )
+		  { FMT_ERROR("not enough arguments");
+		  }
+		  tellString(&str, &bufsize);
+		  rval = callProlog(NULL, argv, PL_Q_CATCH_EXCEPTION, &ex);
+		  toldString();
+		  OUTSTRING(str, bufsize);
+		  if ( str != buf )
+		    free(str);
+
+		  if ( !rval && ex )
+		    return PL_raise_exception(ex);
+
+		  SHIFT;
+		  fmt++;
+		  break;
+	        }
 	      case '~':			/* ~ */
 		{ OUTCHR('~');
 		  fmt++;
