@@ -445,10 +445,22 @@ rdf_save_db(File, DB) :-
 	call_cleanup(rdf_save_db_(Out, DB), close(Out)).
 
 
-rdf_load_db(File) :-
+rdf_load_db_no_admin(File) :-
 	open(File, read, Out, [type(binary)]),
 	call_cleanup(rdf_load_db_(Out), close(Out)).
 
+
+rdf_load_db(File) :-
+	rdf_load_db_no_admin(File),
+	rdf_sources_(Sources),
+	(   member(Src, Sources),
+	    rdf_md5(Src, MD5),
+	    rdf_statistics_(triples(Src, Triples)),
+	    retractall(rdf_source(Src, _, _, _)),
+	    assert(rdf_source(Src, 0, Triples, MD5)),
+	    fail
+	;   true
+	).
 
 
 		 /*******************************
@@ -519,7 +531,7 @@ rdf_load(Spec, Options0) :-
 		->  (   time_file(Cache, CacheTime),
 		        time_file(File, FileTime),
 			CacheTime >= FileTime,
-			catch(rdf_load_db(Cache), _, fail)
+			catch(rdf_load_db_no_admin(Cache), _, fail)
 		    ->  Load = cache(ParseTime)
 		    ;   process_rdf(File, assert_triples, Options),
 			Load = parsed(ParseTime),
@@ -573,7 +585,8 @@ rdf_source(File) :-
 %	time they were loaded.
 
 rdf_make :-
-	forall(rdf_source(File, _Time, _Triples, _),
+	forall((rdf_source(File, Time, _Triples, _),
+		Time \== 0),
 	       rdf_load(File)).
 
 

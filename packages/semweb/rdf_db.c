@@ -843,6 +843,37 @@ unregister_source(triple *t)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+rdf_sources_(-ListOfSources)
+
+Return a list holding the names  of   all  currently defined sources. We
+return a list to avoid the need for complicated long locks.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static foreign_t
+rdf_sources(term_t list)
+{ int i;
+  term_t tail = PL_copy_term_ref(list);
+  term_t head = PL_new_term_ref();
+
+  LOCK();
+  for(i=0; i<source_table_size; i++)
+  { source *src;
+
+    for(src=source_table[i]; src; src = src->next)
+    { if ( !PL_unify_list(tail, head, tail) ||
+	   !PL_unify_atom(head, src->name) )
+      { UNLOCK();
+	return FALSE;
+      }
+    }
+  }
+  UNLOCK();
+
+  return PL_unify_nil(tail);
+}
+
+
 		 /*******************************
 		 *	      TRIPLES		*
 		 *******************************/
@@ -3874,6 +3905,7 @@ install_rdf_db()
   PL_register_foreign("rdf_reset_db_",  0, rdf_reset_db,    0);
   PL_register_foreign("rdf_set_predicate", 2, rdf_set_predicate, 0);
   PL_register_foreign("rdf_predicate_property", 2, rdf_predicate_property, NDET);
+  PL_register_foreign("rdf_sources_",   1, rdf_sources,     0);
 #ifdef O_DEBUG
   PL_register_foreign("rdf_debug",      1, rdf_debug,       0);
 #endif
