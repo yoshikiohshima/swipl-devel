@@ -253,6 +253,8 @@ colourise_term((:- Directive), TB, Pos) :- !,
 	colour_item(directive, TB, F-To),
 	arg(5, Pos, [ArgPos]),
 	colourise_body(Directive, TB, ArgPos).
+colourise_term((?- Directive), TB, Pos) :- !,
+	colourise_term((:- Directive), TB, Pos).
 colourise_term(end_of_file, _, _) :- !.
 colourise_term(Fact, TB, Pos) :- !,
 	colour_item(clause, TB,	Pos),
@@ -909,10 +911,12 @@ style(Class, Name, Style) :-
 	term_to_atom(Copy, Name).
 
 
-%	term_colours(+Term, -FunctorColour, -ArgColours)
+%	term_colours(+Term, -FunctorColour - ArgColours)
 %
 %	Define colourisation for specific terms.
 
+term_colours((?- Directive), Colours) :-
+	term_colours((:- Directive), Colours).
 term_colours((prolog:message(_) --> _),
 	     expanded - [ expanded - [ expanded,
 				       expanded - [ identifier
