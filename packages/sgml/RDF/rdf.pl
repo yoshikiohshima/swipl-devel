@@ -34,21 +34,29 @@
 %
 %	# expand_foreach(Bool)
 %	Apply each(Container, Pred, Object) on the members of Container
+%		
+%	# namespaces([NS=URL, ...])
+%	Return list of namespaces declared using xmlns:NS=URL in
+%	the document.  This can be used to update the namespace
+%	list with rdf_register_ns/2.
 
 load_rdf(File, Triples) :-
 	load_rdf(File, Triples, []).
 
 load_rdf(File, Triples, Options0) :-
 	meta_options(Options0, Options),
+	init_ns_collect(Options, NSList),
 	load_structure(File,
 		       [ RDFElement
 		       ],
 		       [ dialect(xmlns),
-			 space(sgml)
+			 space(sgml),
+			 call(xmlns, rdf:on_xmlns)
 		       ]),
 	rdf_start_file(Options, Cleanup),
 	call_cleanup(xml_to_rdf(RDFElement, Triples0, Options),
 		     rdf_end_file(Cleanup)),
+	exit_ns_collect(NSList),
 	post_process(Options, Triples0, Triples).
 	
 %	xml_to_rdf(+XML, -Triples, +Options)
@@ -125,6 +133,11 @@ member_attribute(A) :-
 %		Call Convertor(+Type, +Content, -RDFObject) to create
 %		a triple rdf(S, P, RDFObject) instead of rdf(S, P,
 %		literal(type(Type, Content)).
+%		
+%		# namespaces([NS=URL, ...])
+%		Return list of namespaces declared using xmlns:NS=URL in
+%		the document.  This can be used to update the namespace
+%		list with rdf_register_ns/2.
 
 process_rdf(File, OnObject, Options0) :-
 	is_list(Options0), !,
@@ -135,6 +148,7 @@ process_rdf(File, OnObject, Options0) :-
 	nb_setval(rdf_object_handler, Module:Pred),
 	nb_setval(rdf_options, Options),
 	nb_setval(rdf_state, -),
+	init_ns_collect(Options, NSList),
 	(   File = stream(In)
 	->  Source = BaseURI
 	;   File = '$stream'(_)
@@ -151,9 +165,12 @@ process_rdf(File, OnObject, Options0) :-
 	call_cleanup(sgml_parse(Parser,
 				[ source(In),
 				  call(begin, rdf:on_begin),
-				  call(end, rdf:on_end)
+				  call(end,   rdf:on_end),
+				  call(xmlns, rdf:on_xmlns)
 				]),
-		     rdf:cleanup_process(Close, Cleanup)).
+		     rdf:cleanup_process(Close, Cleanup)),
+	exit_ns_collect(NSList).
+
 process_rdf(File, BaseURI, OnObject) :-
 %	print_message(warning,
 %		      format('process_rdf(): new argument order', [])),
@@ -168,6 +185,7 @@ cleanup_process(In, Cleanup) :-
 	nb_delete(rdf_options),
 	nb_delete(rdf_object_handler),
 	nb_delete(rdf_state),
+	nb_delete(rdf_nslist),
 	rdf_end_file(Cleanup).
 
 on_end(NS:'RDF', _) :-
@@ -193,6 +211,31 @@ on_begin(Tag, Attr, Parser) :-
 	rdf_triples(Objects, Triples),
 	call(OnTriples, Triples, File:Start).
 
+%	on_xmlns(+NS, +URL, +Parser)
+%	
+%	Build up the list of   encountered xmlns:NS=URL declarations. We
+%	use  destructive  assignment  here   as    an   alternative   to
+%	assert/retract, ensuring thread-safety and better performance.
+
+on_xmlns(NS, URL, _Parser) :-
+	(   nb_getval(rdf_nslist, List),
+	    List = list(L0)
+	->  nb_linkarg(1, List, [NS=URL|L0])
+	;   true
+	).
+
+init_ns_collect(Options, NSList) :-
+	(   option(namespaces(NSList), Options, -),
+	    NSList \== (-)
+	->  nb_setval(rdf_nslist, list([]))
+	;   NSList = (-)
+	).
+
+exit_ns_collect(NSList) :-
+	(   NSList == (-)
+	->  true
+	;   nb_getval(rdf_nslist, list(NSList))
+	).
 
 modify_state([], Options, Options).
 modify_state([H|T], Options0, Options) :-

@@ -212,6 +212,11 @@ library.  Second it can be used to convert typed literals to
 a meaningful Prolog representation.  E.g.\ convert '42' to the
 Prolog integer 42 if the type is \const{xsd:int} or a related
 type.
+
+	\termitem{namespaces}{-List}
+Unify \arg{List} with a list of \arg{NS}=\arg{URL} for each
+encountered \const{xmlns}:\arg{NS}=\arg{URL} declaration found
+in the source.
    \end{description}
 
 The \arg{Triples} list is a list of \term{rdf}{Subject, Predicate,

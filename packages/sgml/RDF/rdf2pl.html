@@ -248,6 +248,12 @@ ignore type declarations for backward compatibility of this library.
 Second it can be used to convert typed literals to a meaningful Prolog 
 representation. E.g. convert '42' to the Prolog integer 42 if the type 
 is <CODE>xsd:int</CODE> or a related type.
+
+<P>
+<DT><STRONG>namespaces</STRONG>(<VAR>-List</VAR>)<DD>
+Unify <VAR>List</VAR> with a list of <VAR>NS</VAR>=<VAR>URL</VAR> for 
+each encountered <CODE>xmlns</CODE>:<VAR>NS</VAR>=<VAR>URL</VAR> 
+declaration found in the source.
 </DL>
 
 <P>The <VAR>Triples</VAR> list is a list of <CODE>rdf(Subject, 
