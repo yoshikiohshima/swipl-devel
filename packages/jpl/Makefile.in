@@ -82,7 +82,7 @@ EXPLS=		jpl_colour_choose_demo.pl \
 		jpl_versions_demo.pl
 EXJAVA=		$(EXDIR)/java
 EXJAVAS=	Exceptions Exceptions2 Family FamilyMT Test Test2 Time \
-		Versions Zahed
+		Versions Zahed SemWeb
 
 
 install:	$(TARGETS) $(LIBPL)
@@ -134,6 +134,7 @@ exjava-install::
 			$(INSTALL_DATA) examples/java/$$d/$$plfile $(EXJAVA)/$$d ;\
 		    fi; \
 		done
+		$(INSTALL_DATA) examples/java/SemWeb/test.rdf $(EXJAVA)/SemWeb
 
 pdf-install::
 		mkdir -p $(PKGDOC)

@@ -1,3 +1,8 @@
+May 26, 2004
+
+  * ADDED: examples/java/SemWeb: Using the SWI-Prolog semantic web library
+    (rdf_db.pl) from Java.
+
 May 25, 2004
 
   * ENHANCED: Also use the default engine.  This means no engines are created
