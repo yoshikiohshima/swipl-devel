@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.19/XPCE 6.2.24 development snapshot
+SWI-Prolog 5.3.20/XPCE 6.2.26 development snapshot
 
 Status
 ======
@@ -50,26 +50,26 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
     object-references.
 
 
-Brief summary of changes since 5.3.16
+Brief summary of changes since 5.3.19
 =====================================
 
 SWI-Prolog
 ----------
 
-  * ENHANCED: realised native Win32 guarding of thread message queues,
-    sponsored by SSS (www.sss.co.nz).
-
-  * FIXED: Recorded database handling of attributed variables (could loose
-    attributes on some terms).
-
-  * ADDED: Support for attributed variables and cyclic terms for =@= and
-    \=@=.
-
+  * Minor stuff.  Crash in GC after prolog_frame_attribute(Frame, goal, Goal)
+    Added read_pending_input/3 to allow for efficient unbuffered
+    copying of data between (network) streams.
+    
 Packages
 --------
 
-  * SemWeb: Provide some additional statistics information use in the
-    experimental work on query optimisation.
+  * XPCE: minor enhancements and fix of recent change causing crashes
+    in popup menu handling.
+
+  * SGML/XML parser: fix in catalog handling.  Also made catalog
+    handling thread-safe.
+
+  * Semweb: allow saving converted typed literals.
 
 Development environment
 -----------------------
