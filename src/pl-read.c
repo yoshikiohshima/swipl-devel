@@ -23,7 +23,7 @@
 */
 
 #include <math.h>
-/*#define O_DEBUG 1*/
+#define O_DEBUG 1
 #include "pl-incl.h"
 #include "pl-ctype.h"
 
@@ -1961,6 +1961,7 @@ simple_term(bool must_be_op, term_t term, bool *name,
 	{ *name = TRUE;
 	  PL_put_atom(term, token->value.atom);
 	  PL_unregister_atom(token->value.atom);
+	  goto atomic_out;
 	} else
 	{ term_t av[16];
 	  int avn = 16;

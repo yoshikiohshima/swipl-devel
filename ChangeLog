@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: read_term/3 option subterm_position on @receiver?(mode).
+
   * FIXED: assertion failure in b_setval/2 and b_getval/2.  David Reitter.
 
   * MODIFIED: moved XPCE boot file pce_operator.pl to the general Prolog
