@@ -21,7 +21,7 @@ EXPLS=		jpl_colour_choose_demo.pl \
 		jpl_table_demo.pl \
 		jpl_text_entry_demo.pl \
 		jpl_versions_demo.pl
-EXJAVA=		$(EXDIR)\prolog\java
+EXJAVA=		$(EXDIR)\java
 EXJAVAS=	Exceptions Exceptions2 Family FamilyMT Test Test2 Time \
 		Versions Zahed
 
@@ -59,7 +59,9 @@ ilib::
 		$(MAKEINDEX)
 
 html-install::	expl-install exjava-install
-		xcopy /S /I /Y /EXCLUDE:CVS docs "$(PKGDOC)\jpl"
+		@echo CVS > nocopy
+		xcopy /Q /S /I /Y /EXCLUDE:nocopy docs "$(PKGDOC)\jpl"
+		del nocopy
 
 xpce-install::
 
@@ -75,12 +77,12 @@ exjava-install::
 		if not exist "$(EXJAVA)/$(NULL)" $(MKDIR) "$(EXJAVA)"
 		copy examples\java\README "$(EXJAVA)"\README.TXT
 		copy examples\java\env.bat "$(EXJAVA)"
-		for %f in ($(EXJAVAS)) do if not exist "$(EXDIR)\%f\$(NULL)" mkdir "$(EXDIR)\%f"
-		for %f in ($(EXJAVAS)) do copy examples\java\%f\run.bat "$(EXDIR)\%f
-		for %f in ($(EXJAVAS)) do copy examples\java\%f\compile.bat "$(EXDIR)\%f
-		for %f in ($(EXJAVAS)) do copy examples\java\%f\README "$(EXDIR)\%f\README.txt
-		for %f in ($(EXJAVAS)) do copy examples\java\%f\%f.java "$(EXDIR)\%f
-		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXDIR)\%f
+		for %f in ($(EXJAVAS)) do if not exist "$(EXJAVA)\%f\$(NULL)" mkdir "$(EXJAVA)\%f"
+		for %f in ($(EXJAVAS)) do copy examples\java\%f\run.bat "$(EXJAVA)\%f
+		for %f in ($(EXJAVAS)) do copy examples\java\%f\compile.bat "$(EXJAVA)\%f
+		for %f in ($(EXJAVAS)) do copy examples\java\%f\README "$(EXJAVA)\%f\README.txt
+		for %f in ($(EXJAVAS)) do copy examples\java\%f\%f.java "$(EXJAVA)\%f
+		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXJAVA)\%f
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
