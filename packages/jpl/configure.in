@@ -81,16 +81,16 @@ dnl ================================================================
 dnl Java stuff
 dnl ================================================================
 
+AC_CANONICAL_HOST			dnl needed to get $host_os
+
 m4_include([ac/ac_prog_java_cc.m4])
 m4_include([ac/ac_jni_include_dirs.m4])
-
-AC_CANONICAL_HOST			dnl needed to get $host_os
 
 java_abs_paths=no
 AC_CHECKING(Java configuration)
 if test -r /etc/java/java2.conf; then
   AC_MSG_RESULT(Using /etc/java/java2.conf)
-  eval `grep '\(JAVA|JRE|JDK|SDK\).*=' /etc/java/java2.conf`
+  eval `grep '\(JAVA\|JRE\|JDK\|SDK\).*=' /etc/java/java2.conf | sed 's/ *= */=/'`
   if test ! -z "$JAVA_BINDIR"; then
     PATH="$PATH:$JAVA_BINDIR"
     java_abs_paths=yes
@@ -101,9 +101,11 @@ AC_PROG_JAVA_CC(javac, gcj)
 
 JAVAC="$JAVA_CC"
 AC_JNI_INCLUDE_DIR
-echo "Java include dirs = $JNI_INCLUDE_DIRS"
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS; do
-  CIFLAGS="$CIFLAGS -I$JNI_INCLUDE_DIR"
+for d in $JNI_INCLUDE_DIRS; do
+  CIFLAGS="$CIFLAGS -I$d"
+done
+for d in $JNI_CLIENT_DIRS; do
+  LDSOFLAGS="$LDSOFLAGS -L$d"
 done
 
 if test "$java_abs_paths" = yes; then

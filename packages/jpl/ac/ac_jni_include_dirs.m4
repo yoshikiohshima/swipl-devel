@@ -44,6 +44,20 @@ do
                 JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include/$JINCSUBDIR"
         fi
 done
+
+case "$host_cpu" in
+	i?86)	_JNI_LIBDIRS="i386"
+		;;
+	*)	_JNI_LIBDIRS=""
+esac
+
+for d in $_JNI_LIBDIRS; do
+	echo "Trying $_JTOPDIR/jre/lib/$d/client"
+	if test -d $_JTOPDIR/jre/lib/$d/client; then
+		JNI_CLIENT_DIRS="$JNI_CLIENT_DIRS $_JTOPDIR/jre/lib/$d/client"
+	fi
+done
+
 ])
 
 # _ACJNI_FOLLOW_SYMLINKS <path>

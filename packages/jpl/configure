@@ -2973,22 +2973,6 @@ else
 fi
 
 
-# AC_PROG_JAVA_CC([COMPILER ...])
-# --------------------------
-# COMPILER ... is a space separated list of java compilers to search for.
-# This just gives the user an opportunity to specify an alternative
-# search list for the java compiler.
-# AC_PROG_JAVA_CC
-
-
-
-# _ACJNI_FOLLOW_SYMLINKS <path>
-# Follows symbolic links on <path>,
-# finally setting variable _ACJNI_FOLLOWED
-# --------------------
-# _ACJNI
-
-
 # Make sure we can run config.sub.
 $ac_config_sub sun4 >/dev/null 2>&1 ||
   { { echo "$as_me:$LINENO: error: cannot run $ac_config_sub" >&5
@@ -3043,6 +3027,21 @@ host_vendor=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $ac_cv_host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
 
 
+# AC_PROG_JAVA_CC([COMPILER ...])
+# --------------------------
+# COMPILER ... is a space separated list of java compilers to search for.
+# This just gives the user an opportunity to specify an alternative
+# search list for the java compiler.
+# AC_PROG_JAVA_CC
+
+
+
+# _ACJNI_FOLLOW_SYMLINKS <path>
+# Follows symbolic links on <path>,
+# finally setting variable _ACJNI_FOLLOWED
+# --------------------
+# _ACJNI
+
 
 java_abs_paths=no
 { echo "$as_me:$LINENO: checking Java configuration..." >&5
@@ -3050,7 +3049,7 @@ echo "$as_me: checking Java configuration..." >&6;}
 if test -r /etc/java/java2.conf; then
   echo "$as_me:$LINENO: result: Using /etc/java/java2.conf" >&5
 echo "${ECHO_T}Using /etc/java/java2.conf" >&6
-  eval `grep '\(JAVA|JRE|JDK|SDK\).*=' /etc/java/java2.conf`
+  eval `grep '\(JAVA\|JRE\|JDK\|SDK\).*=' /etc/java/java2.conf | sed 's/ *= */=/'`
   if test ! -z "$JAVA_BINDIR"; then
     PATH="$PATH:$JAVA_BINDIR"
     java_abs_paths=yes
@@ -3263,9 +3262,25 @@ do
         fi
 done
 
-echo "Java include dirs = $JNI_INCLUDE_DIRS"
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS; do
-  CIFLAGS="$CIFLAGS -I$JNI_INCLUDE_DIR"
+case "$host_cpu" in
+	i?86)	_JNI_LIBDIRS="i386"
+		;;
+	*)	_JNI_LIBDIRS=""
+esac
+
+for d in $_JNI_LIBDIRS; do
+	echo "Trying $_JTOPDIR/jre/lib/$d/client"
+	if test -d $_JTOPDIR/jre/lib/$d/client; then
+		JNI_CLIENT_DIRS="$JNI_CLIENT_DIRS $_JTOPDIR/jre/lib/$d/client"
+	fi
+done
+
+
+for d in $JNI_INCLUDE_DIRS; do
+  CIFLAGS="$CIFLAGS -I$d"
+done
+for d in $JNI_CLIENT_DIRS; do
+  LDSOFLAGS="$LDSOFLAGS -L$d"
 done
 
 if test "$java_abs_paths" = yes; then

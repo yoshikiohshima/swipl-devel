@@ -1414,6 +1414,7 @@ jni_byte_buf_length_to_codes_plc(	// carefully s/chars/codes/ :-(
 	int			i;
 	term_t		tl = PL_copy_term_ref( tcs);
 	term_t		ta = PL_new_term_ref();
+	void        *ptr;
 
 	if	(	!( 	PL_get_functor(tbb,&fn)
 			&&	fn==JNI_functor_jbuf_2
@@ -1425,13 +1426,14 @@ jni_byte_buf_length_to_codes_plc(	// carefully s/chars/codes/ :-(
 			&&	(	a1=PL_new_term_ref(),
 					PL_get_arg(1,tbb,a1)
 				)
-			&&	PL_get_pointer(a1,(void**)&bb)
+			&&	PL_get_pointer(a1,&ptr)
 			)
 		||	!PL_get_integer(tlen,&len)
 		)
 		{
 		return FALSE;
 		}
+	bb = ptr;
 
 	for ( i=0 ; i<len ; i++ )
 		{
@@ -1474,11 +1476,15 @@ jni_param_put_plc(
 	int			ix;		// temp for conversion
 	double		dx;		//  "
 	long		lx;		//  "
+    void        *ptr;
 
-	if ( !PL_get_integer(tn,&n) || !PL_get_integer(txc,&xc) || !PL_get_pointer(tjvp,(void**)&jvp) )
+	if ( !PL_get_integer(tn,&n) ||
+		 !PL_get_integer(txc,&xc) ||
+		 !PL_get_pointer(tjvp,&ptr) )
 		{
 		return FALSE;
 		}
+    jvp = ptr;
 
 	switch ( xc )
 		{
