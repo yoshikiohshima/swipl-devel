@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ADDED: PceEmacs: Highlight of matching bracket in language mode. 
+  Suggested by Maurizio Colucci.
+
 * ENHANCED: make view->colour and editor->colour all set the foreground
   colour of the text.
 
