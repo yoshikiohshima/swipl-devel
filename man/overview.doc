@@ -1499,12 +1499,20 @@ commented out.
 
 SWI-Prolog offers ISO compatible extensions to the Edinburgh syntax.
 
-\subsubsection{Character Escape Syntax} \label{sec:charescapes}
+\subsubsection{Processor Character Set}		\label{sec:processorcharset}
+
+\index{iso latin 1}\index{character set}%
+The processor character set specifies the class of each character used
+for parsing Prolog source text.  The character classes are compatible to
+the ISO-latin-1 character set.
+
+
+\subsubsection{Character Escape Syntax} 	\label{sec:charescapes}
 
 Within quoted atoms (using single quotes: \exam{'<atom>'} special
-characters are represented using escape-sequences.  An escape sequence
-is lead in by the backslash (\chr{\}) character. The list of
-escape sequences is compatible with the ISO standard, but contains one
+characters are represented using escape-sequences. An escape sequence is
+lead in by the backslash (\chr{\}) character. The list of escape
+sequences is compatible with the ISO standard, but contains one
 extension and the interpretation of numerically specified characters is
 slightly more flexible to improve compatibility.
 
@@ -1588,7 +1596,7 @@ and in the following predicates: \predref{=}{2}, \predref{==}{2},
 \predref{\==}{2}, \predref{\=}{2}, \predref{=@=}{2}, \predref{\=@=}{2},
 \predref{@<}{2}, \predref{@=<}{2}, \predref{@>}{2}, \predref{@>=}{2},
 compare/3, \predref{=..}{2}, copy_term/2, duplicate_term/2, write/1,
-term_variables/2, numbervars/[3,4].
+dif/2, when/2, term_variables/2, numbervars/[3,4].
 
 
 \section{System limits}				\label{sec:limits}
@@ -1650,7 +1658,12 @@ Option & Default & Area name & Description \\
                        stack is determined entirely by the depth in
                        which terms are nested in the clauses that
                        constitute the program. Overflow is most likely
-                       when using long strings in a clause. \\
+                       when using long strings in a clause.
+
+		       In addition, this stack is used by some builtin
+		       predicates to handle cyclic terms.  Its default
+		       size limit is proportional to the global stack 
+		       limit such that it will never overflow. \\
 \hline
 \end{tabular}
 \end{center}

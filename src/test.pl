@@ -1516,6 +1516,7 @@ test :-
 	retractall(blocked(_,_)),
 	forall(testset(Set), runtest(Set)),
 	scripts,
+	statistics,
 	report_blocked,
 	report_failed.
 

@@ -10,6 +10,10 @@
 VERSION 5.3.4 (Mar 11, 2003)
 ============================
 
+  * FIXED: Bug#139 Trail-stack overflow after many assignments
+    (using setarg/3) to the same location in deterministic code.
+    Holger Kanwischer.
+
   * ADDED: handle cycles in term_variables/2 and numbervars/3 as well as
     in the goal for bagof/setof.
 

@@ -794,6 +794,81 @@ mark_environments(LocalFrame fr, Code PC)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+If multiple TrailAssignment() calls happen on  the same address within a
+choicepoint we only need to keep the  first. Therefore we scan the trail
+for this choicepoint from the mark to the  top and mark (using the FIRST
+mark) the (global stack) addresses trailed. If we find one marked we can
+delete the trail entry. To  avoid  a   second  scan  we store the marked
+addresses on the argument stack.
+
+Note that this additional scan of a section   of the trail stack is only
+required if there are  at  least   two  trailed  assignments  within the
+trail-ranged described by the choicepoint.
+
+As far as I can  see  the  only   first-marks  in  use  at this time are
+references to the trail-stack and we use   the first marks on the global
+stack.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#if O_DESTRUCTIVE_ASSIGNMENT
+static void
+push_marked(Word p ARG_LD)
+{ requireStack(argument, sizeof(Word));
+  *aTop++ = p;
+}
+
+static void
+popall_marked(Word *base ARG_LD)
+{ Word *p = aTop;
+
+  while(p>base)
+  { p--;
+    unmark_first(*p);
+  }
+
+  aTop = base;
+}
+
+static void
+mergeTrailedAssignments(GCTrailEntry top, GCTrailEntry mark,
+			int assignments ARG_LD)
+{ GCTrailEntry te;
+  Word *m = aTop;
+
+  DEBUG(2, Sdprintf("Scanning %d trailed assignments\n", assignments));
+
+#if O_SECURE
+  for(te=mark; te <= top; te++)
+  { if ( ttag(te[1].address) == TAG_TRAILVAL )
+    { Word p = val_ptr(te->address);
+      assert(!is_first(p));
+    }
+  }
+#endif
+
+  for(te=mark; te <= top; te++)
+  { if ( ttag(te[1].address) == TAG_TRAILVAL )
+    { Word p = val_ptr(te->address);
+
+      assignments--;
+      if ( is_first(p) )
+      {	DEBUG(3, Sdprintf("Delete duplicate trailed assignment at %p\n", p));
+	te->address = 0;
+	te[1].address = 0;
+	trailcells_deleted += 2;
+      } else
+      { mark_first(p);
+	push_marked(p PASS_LD);
+      }
+    }
+  }
+
+  popall_marked(m PASS_LD);
+  assert(assignments == 0);
+}
+#endif
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Mark the choicepoints. This function walks   along the environments that
 can be reached from  the  choice-points.   In  addition,  it deletes all
 trail-references  that  will   be   overruled    by   the   choice-point
@@ -806,9 +881,12 @@ normal trail-pointer, while the  second   is  flagged  with TAG_TRAILVAL
 is encountered, this value is restored  at   the  location  of the first
 trail-cell.
 
-If the has become  garbage,  we  can   destroy  both  cells.  Note  that
-mark_trail() already has marked the replaced value,  so that will not be
-garbage collected during this pass. 
+If the trail cell has become garbage,   we  can destroy both cells. Note
+that mark_trail() already has marked the   replaced  value, so that will
+not be garbage collected during this pass. We cannot reverse marking the
+stacks and the trail-stack as one trailed   value might make another one
+non-garbage. It isn't too bad however as the   next GC will take care of
+the term.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static GCTrailEntry
@@ -818,7 +896,9 @@ mark_choicepoints(Choice ch, GCTrailEntry te)
   for( ; ch; ch = ch->parent )
   { LocalFrame fr = ch->frame;
     GCTrailEntry tm = (GCTrailEntry)ch->mark.trailtop;
+    GCTrailEntry te0 = te;
     Word top;
+    int assignments = 0;
 
     if ( ch->type == CHP_CLAUSE )
       top = argFrameP(fr, fr->predicate->functor->arity);
@@ -830,7 +910,19 @@ mark_choicepoints(Choice ch, GCTrailEntry te)
     for( ; te >= tm; te-- )		/* early reset of vars */
     { 
 #if O_DESTRUCTIVE_ASSIGNMENT
-      if ( ttag(te->address) != TAG_TRAILVAL )
+      if ( ttag(te->address) == TAG_TRAILVAL )
+      { Word tard = val_ptr(te[-1].address);
+
+	if ( is_marked(tard) )
+	{ assignments++;
+	} else
+	{ setVar(*tard);
+	  te->address = 0;
+	  te--;
+	  te->address = 0;
+	  trailcells_deleted += 2;
+	}
+      } else
 #endif
       { Word tard = val_ptr(te->address);
 
@@ -840,18 +932,17 @@ mark_choicepoints(Choice ch, GCTrailEntry te)
 	  trailcells_deleted++;
 	} else if ( !is_marked(tard) )	/* garbage */
 	{ setVar(*tard);
-#if O_DESTRUCTIVE_ASSIGNMENT
-	  if ( ttag(te[1].address) == TAG_TRAILVAL)
-	  { te[1].address = 0;
-	    trailcells_deleted++;
-	  }
-#endif
 	  DEBUG(3, Sdprintf("Early reset of %p\n", te->address));
 	  te->address = 0;
 	  trailcells_deleted++;
 	}
       }
     }
+
+#if O_DESTRUCTIVE_ASSIGNMENT
+    if ( assignments >= 2 )
+      mergeTrailedAssignments(te0, tm, assignments PASS_LD);
+#endif
 
     needsRelocation(&ch->mark.trailtop);
     alien_into_relocation_chain(&ch->mark.trailtop, STG_TRAIL, STG_LOCAL PASS_LD);
@@ -1084,6 +1175,12 @@ compact_trail(void)
 	     relocation_cells, relocated_cells);
 } 
 
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+{tag,untag}_trail() are used to turn  the   native  pointers used on the
+trail-stack into tagged ones as  used  on   the  other  stacks,  to make
+pointer reversal in the relocation chains uniform.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
 tag_trail()

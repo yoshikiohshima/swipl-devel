@@ -569,9 +569,11 @@ char _PL_char_types[] = {
 
 void
 initCharTypes()
-{ int i;
+{ 
 
 /*
+  int i;
+
   for(i=128; i<256; i++)
   { if ( islower(i) )
       _PL_char_types[i] = LC;
