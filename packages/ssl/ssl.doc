@@ -39,7 +39,22 @@ data exchange between Prolog processes over the network.
 \tableofcontents
 \pagebreak
 
+
 \section{Introduction}
+
+Raw TCP/IP networking is dangerous for two reasons.  It is hard to tell
+whether to body you think you are talking to is indead the right one and
+anyone with access to a subnet through which your data flows can `tap'
+the wire and listen for sensitive information such as passwords,
+creditcard numbers, etc.   Secure Socket Layer (SSL) deals with both
+problems.  It uses certificates to establish the identity of the peer
+and encryption to make it impossible to tap into the wire.  SSL allows
+agent to talk in private and create secure web services.
+
+The SWI-Prolog \pllib{ssl} library provides an API very similar to
+\pllib{socket} for raw TCP/IP connections that provides SSL server
+and client sockets.
+
 
 \section{About SSL}
 
