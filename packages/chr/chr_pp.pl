@@ -411,7 +411,7 @@ get_ids([C|Cs],[N|IDs],[NC|NCs],N,NN) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Some input verifcation:
+%% Some input verification:
 %%  - all constraints in heads are declared constraints
 
 check_rules(Rules,Decls) :-
