@@ -1,6 +1,9 @@
 			   XPCE ChangeLog
 			   ==============
 
+* FIXED: Bug#142: Buffer overflow on menus with > 1000 items.  Limit
+  has been removed.  Holger Kanwischer.
+
 * MODIFIED: class compiler operator issues to exploit the new
   library(operators).
 
