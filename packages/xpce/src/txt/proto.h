@@ -31,6 +31,7 @@ StringObj	getSelectedEditor(Editor e);
 status		formatEditor(Editor e, CharArray fmt, int argc, Any *argv);
 status		clearEditor(Editor e);
 status		backgroundEditor(Editor e, Any bg);
+status		colourEditor(Editor e, Any c);
 status		makeClassEditor(Class class);
 
 /* /staff/jan/src/pl/packages/xpce/src/txt/fragment.c */

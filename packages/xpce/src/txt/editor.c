@@ -4377,6 +4377,12 @@ backgroundEditor(Editor e, Any bg)
 }
 
 
+status
+colourEditor(Editor e, Any c)
+{ return colourGraphical((Graphical)e->image, c);
+}
+
+
 		/********************************
 		*      CHANGE NOTIFICATIONS	*
 		********************************/
@@ -4665,6 +4671,8 @@ static senddecl send_editor[] =
      NAME_appearance, "Set tab-stops (vector of pixels)"),
   SM(NAME_background, 1, "colour|pixmap", backgroundEditor,
      NAME_appearance, "Background colour or image for the text"),
+  SM(NAME_colour, 1, "colour|pixmap", colourEditor,
+     NAME_appearance, "Foreground colour or image for the text"),
   SM(NAME_wrap, 1, "{none,character,word}", wrapEditor,
      NAME_appearance, "Wrap mode for long lines"),
   SM(NAME_Size, 1, "pixels=size", SizeEditor,

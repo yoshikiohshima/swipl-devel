@@ -1,6 +1,10 @@
 			   XPCE ChangeLog
 			   ==============
 
+* ENHANCED: make view->colour and editor->colour all set the foreground
+  colour of the text.
+
+
 VERSION 6.2.14, distributed with SWI-Prolog 5.3.3
 =================================================
 
