@@ -1447,10 +1447,12 @@ run_scripts([H|T]) :-
 	run_scripts(T).
 
 script_failed(File, fail) :-
-	format('~NScript ~w failed~n', [File]).
+	format('~NScript ~w failed~n', [File]),
+	assert(failed(script(File))).
 script_failed(File, Except) :-
 	message_to_string(Except, Error),
-	format('~NScript ~w failed: ~w~n', [File, Error]).
+	format('~NScript ~w failed: ~w~n', [File, Error]),
+	assert(failed(script(File))).
 
 
 		 /*******************************
@@ -1497,6 +1499,11 @@ testset(thread) :-
 	current_prolog_flag(threads, true).
 testset(resource).
 
+%	testdir(Dir)
+%	
+%	Enumerate directories holding tests.
+
+testdir('Tests/attvar').
 testdir('Tests/thread') :-
 	current_prolog_flag(threads, true).
 
