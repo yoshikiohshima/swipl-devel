@@ -538,6 +538,7 @@ A att			"att"
 A freeze		"freeze"
 A gvar			"gvar"
 A msb			"msb"
+A comment_start		"/*"
 
 F abs			1
 F access		1
