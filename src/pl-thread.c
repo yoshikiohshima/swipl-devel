@@ -3451,7 +3451,11 @@ pl_with_mutex(term_t mutex, term_t goal)
   pl_mutex_unlock(mutex);
 
   if ( !rval && ex )
+  { Word e = valTermRef(ex);
+
+    SECURE(checkData(e));
     PL_raise_exception(ex);
+  }
 
   return rval;
 }
