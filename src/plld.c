@@ -894,7 +894,7 @@ fillDefaultOptions()
 #ifdef WIN32
   sprintf(tmp, "%s/lib", plbase);
 #else
-  sprintf(tmp, "%s/runtime/%s", plbase, plarch);
+  sprintf(tmp, "%s/lib/%s", plbase, plarch);
 #endif
   prependArgList(&libdirs, tmp);
   sprintf(tmp, "%s/include", plbase);
