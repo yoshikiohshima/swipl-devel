@@ -744,7 +744,7 @@ rt-bins:
 dv-home:
 		if [ ! -d $(DVHOME) ]; then mkdir $(DVHOME); fi
 
-dv-lib:
+dv-lib:		../prolog/lib/CLASSINDEX.pl
 		@if [ ! -d $(DVHOME)/prolog ]; then mkdir $(DVHOME)/prolog; fi
 		@for d in $(DVLIBDIRS); do \
 		    if [ ! -d $(DVHOME)/prolog/$$d ]; then \
@@ -775,6 +775,11 @@ dv-lib:
 		$(INSTALL_DATA) ../prolog/lib/man/classification.dat \
 				$(DVHOME)/prolog/lib/man
 		$(INSTALL_DATA) ../prolog/lib/Makefile $(DVHOME)/prolog/lib
+
+
+../prolog/lib/CLASSINDEX.pl::
+		$(PL) -f ../prolog/lib/pce_class_index.pl -g true \
+		-t "pce_make_library_index('../prolog/lib')"
 
 dv-boot:	
 		@for d in $(DVBOOTDIRS); do \
