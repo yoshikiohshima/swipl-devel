@@ -57,6 +57,7 @@
  * Index of our config data in the SSL data
  */
 static int ssl_idx;
+static int ctx_idx;
 
 static char *
 ssl_strdup(const char *s)
@@ -536,7 +537,6 @@ ssl_exit(PL_SSL *config)
       if (config->pl_ssl_ctx)
       { SSL_CTX_free(config->pl_ssl_ctx);
       }
-      free(config);
     }
 
     ssl_deb("Controlled exit\n");
@@ -555,20 +555,6 @@ ssl_init(PL_SSL_ROLE role)
     PL_SSL      * config     = NULL;
     SSL_METHOD  * ssl_method = NULL;
     SSL_CTX     * ssl_ctx    = NULL;
-    int           idx;
-
-    SSL_load_error_strings();
-    (void) SSL_library_init();
-
-    if ((idx = SSL_CTX_get_ex_new_index( 0
-                                       , config
-                                       , ssl_config_new
-                                       , ssl_config_dup
-                                       , ssl_config_free
-                                       )) < 0) {
-        ssl_err("Cannot register application data\n");
-        return NULL;
-    }
 
 #if 0
     switch (role) {
@@ -587,12 +573,13 @@ ssl_init(PL_SSL_ROLE role)
 #else
     ssl_method = SSLv23_method();
 #endif
+
     ssl_ctx = SSL_CTX_new(ssl_method);
 
     if (!ssl_ctx) {
         ERR_print_errors_fp(stderr);
     } else {
-        if ((config = SSL_CTX_get_ex_data(ssl_ctx, idx)) == NULL) {
+        if ((config = SSL_CTX_get_ex_data(ssl_ctx, ctx_idx)) == NULL) {
             ssl_err("Cannot read back application data\n");
             SSL_CTX_free(ssl_ctx);
             return NULL;
@@ -746,16 +733,31 @@ ssl_instance_new(PL_SSL *config, int sock)
     return new;
 }
 
-void
+int
 ssl_lib_init(void)
 /*
  * One-time library initialization code
  */
 {
+    SSL_load_error_strings();
+    (void) SSL_library_init();
+
+    if ((ctx_idx = SSL_CTX_get_ex_new_index( 0
+                                       , NULL
+                                       , ssl_config_new
+                                       , ssl_config_dup
+                                       , ssl_config_free
+                                       )) < 0) {
+        ssl_err("Cannot register application data\n");
+        return -1;
+    }
+
     /*
      * Index used to store our config data in the SSL data structure
      */
     ssl_idx = SSL_get_ex_new_index(0, "config", NULL, NULL, NULL);
+
+    return 0;
 }
 
 PL_SSL_INSTANCE *

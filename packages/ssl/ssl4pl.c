@@ -621,7 +621,7 @@ install_ssl4pl()
   /*
    * Initialize ssllib
    */
-  ssl_lib_init();
+  (void) ssl_lib_init();
 }
 
 
