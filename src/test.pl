@@ -80,6 +80,17 @@ syntax(number-2) :-
 
 
 		 /*******************************
+		 *	       UNIFY		*
+		 *******************************/
+
+%	Some cyclic unification tests (normal unification should be fixed
+%	already).
+
+unify(cycle-1) :-			% Kuniaki Mukai
+	X = f(Y), Y=f(X), X=Y.
+
+
+		 /*******************************
 		 *      INTEGER ARITHMETIC	*
 		 *******************************/
 
@@ -1439,6 +1450,7 @@ script_failed(File, Except) :-
 		 *******************************/
 
 testset(syntax).
+testset(unify).
 testset(arithmetic).
 testset(arithmetic_functions).
 testset(floattest).
