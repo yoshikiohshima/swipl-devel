@@ -1,8 +1,6 @@
-echo JPL demo: Family
+#!/bin/sh
 
-JPL=`(cd ../../.. && pwd)`
+. ../env.sh
 
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$JPL"
-
-java -classpath "$JPL/jpl.jar:." Family
+run Family
 
