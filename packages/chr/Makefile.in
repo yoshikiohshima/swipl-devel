@@ -13,7 +13,8 @@ PL=@PL@
 XPCEBASE=$(PLBASE)/xpce
 PKGDOC=$(PLBASE)/doc/packages
 PCEHOME=../../xpce
-LIBDIR=$(PLBASE)/library/chr
+LIBDIR=$(PLBASE)/library
+CHRDIR=$(LIBDIR)/chr
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
@@ -28,18 +29,19 @@ INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
 INSTALL_DATA=@INSTALL_DATA@
 
-LIBPL=		chr.pl chr_op.pl chr_translate.pl \
-		chr_swi.pl \
+LIBPL=		chr_runtime.pl chr_op.pl chr_translate.pl chr_debug.pl \
 		hprolog.pl pairlist.pl
+CHRPL=		chr_swi.pl
 
 all:		
 		@echo "Nothing to do for this package"
 
-install:	$(LIBDIR) $(LIBPL)
-		$(INSTALL) -m 644 $(LIBPL) $(LIBDIR)
+install:	$(CHRDIR) $(LIBPL)
+		$(INSTALL) -m 644 $(LIBPL) $(CHRDIR)
+		$(INSTALL) -m 644 $(CHRPL) $(LIBDIR)/chr.pl
 		$(PL) -f none -g make -t halt
 
-$(LIBDIR):
+$(CHRDIR):
 		mkdir -p $@
 
 rpm-install:	install

@@ -69,7 +69,7 @@
 %%	* Renamed merge/3 --> sbag_merge/3 (name conflict)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- module(chr,
+:- module(chr_runtime,
 	  [ 'chr sbag_del_element'/3,
 	    'chr sbag_member'/2,
 	    'chr merge_attributes'/3,
@@ -113,21 +113,6 @@
 
 ?- initialization			% SWI
    nb_setval(chr_global,_).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-show_store(Mod) :-
-	global_term_ref_1(Store),
-	( get_attr(Store,Mod,Attr) ->
-		( Attr =.. [v,_|Susps] ->
-			findall(_,(member(L,Susps),member(S,L),S =.. [_,_,_,_,_,_,F|A],C=..[F|A],write(C),nl),_)
-		
-		;
-			findall(_,(member(S,Attr),S =.. [_,_,_,_,_,_,F|A],C=..[F|A],write(C),nl),_)
-		)
-	;
-		true
-	).
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr merge_attributes'( As, Bs, Cs) :-

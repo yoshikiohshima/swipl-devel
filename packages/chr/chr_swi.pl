@@ -29,12 +29,14 @@
     the GNU General Public License.
 */
 
-:- module(chr_pp,
-	  [ chr_compile/2		% +CHRFile, -PlFile
+:- module(chr,
+	  [ chr_compile/2,		% +CHRFile, -PlFile
+	    chr_show_store/1		% +Module
 	  ]).
 :- use_module(library(listing)).	% portray_clause/2
-:- use_module(chr_translate).
-:- include(chr_op).
+:- use_module(library('chr/chr_translate')).
+:- use_module(library('chr/chr_debug')).
+:- include(library('chr/chr_op')).
 
 		 /*******************************
 		 *	     LOAD HOOK		*
