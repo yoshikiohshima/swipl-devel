@@ -1310,15 +1310,22 @@ popen(pwd-1) :-
 	atom_codes(Pwd, String),
 	same_file(Pwd, '.').
 popen(cat-1) :-
-	open(pipe('cat > .pltest'), write, Fd),
-	format(Fd, 'Hello World', []),
-	close(Fd),
-	open('.pltest', read, Fd2),
-	collect_data(Fd2, String),
-	close(Fd2),
-	delete_file('.pltest'),
-	atom_codes(A, String),
-	A == 'Hello World'.
+	(   current_prolog_flag(windows, true)
+	->  true		% there is *no* cmd.exe command like cat!?
+	;   File = 'pltest.txt',
+	    Text = 'Hello World',
+	    Cmd = cat,
+	    concat_atom([Cmd, ' > ', File], Command),
+	    open(pipe(Command), write, Fd),
+	    format(Fd, '~w', [Text]),
+	    close(Fd),
+	    open(File, read, Fd2),
+	    collect_data(Fd2, String),
+	    close(Fd2),
+	    delete_file(File),
+	    atom_codes(A, String),
+	    A == Text
+	).
 popen(cat-2) :-
 	absolute_file_name(swi('library/MANUAL'), Manual),
 	open(Manual, read, Fd),
@@ -1367,7 +1374,8 @@ collect_data(C, Fd, [C|T]) :-
 		 *******************************/
 
 timeout(pipe-1) :-
-	(   current_prolog_flag(pipe, true)
+	(   current_prolog_flag(pipe, true),
+	    \+ current_prolog_flag(windows, true) % cannot wait on pipes
 	->  open(pipe('echo xx && sleep 2 && echo xx.'), read, In),
 	    set_stream(In, timeout(1)),
 	    wait_for_input([In], [In], infinite),
