@@ -558,7 +558,7 @@ freeAllBigHeaps(void)
 #else /*O_MYALLOC*/
 
 void *
-allocHeap(size_t n)
+allocHeap__LD(size_t n ARG_LD)
 { if ( n )
   { void *mem = malloc(n);
 
@@ -568,7 +568,7 @@ allocHeap(size_t n)
     GD->statistics.heap += n;
     if ( !hTop )
     { hBase = mem;
-      hTop = (char *)mem + size;
+      hTop = (char *)mem + n;
       heap_base = (ulong)mem & ~0x007fffffL; /* 8MB */
     } else
     { SetHBase(mem);
@@ -583,7 +583,7 @@ allocHeap(size_t n)
 
 
 void
-freeHeap(void *mem, size_t n)
+freeHeap__LD(void *mem, size_t n ARG_LD)
 {
 #if ALLOC_DEBUG
   memset((char *) mem, ALLOC_FREE_MAGIC, n);
@@ -597,6 +597,11 @@ freeHeap(void *mem, size_t n)
 void
 cleanupMemAlloc(void)
 { 					/* TBD: Cleanup! */
+}
+
+void
+mergeAllocPool(AllocPool to, AllocPool from)
+{
 }
 
 #endif /*O_MYALLOC*/
