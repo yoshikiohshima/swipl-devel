@@ -288,6 +288,8 @@ suggest predicates from a keyword.
 \predicatesummary{mutex_unlock}{1}{Release ownership of mutex}
 \predicatesummary{mutex_unlock_all}{0}{Release ownership of all mutexes}
 \predicatesummary{name}{2}{Convert between atom and list of character codes}
+\predicatesummary{nb_current}{2}{Enumerate non-backtrackable global variables}
+\predicatesummary{nb_delete}{1}{Delete a non-backtrackable global variable}
 \predicatesummary{nb_getval}{2}{Fetch non-backtrackable global variable}
 \predicatesummary{nb_setval}{2}{Assign non-backtrackable global variable}
 \predicatesummary{nl}{0}{Generate a newline}

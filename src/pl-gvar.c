@@ -155,7 +155,8 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
       return unify_ptrs(valTermRef(A2), vp PASS_LD);
   }
 
-  fail;
+  return PL_error("b_getval", 2, NULL, ERR_EXISTENCE,
+		  ATOM_variable, A1);
 }
 
 
@@ -266,6 +267,73 @@ PRED_IMPL("nb_getval", 2, nb_getval, 0)
     }
   }
 
+  return PL_error("nb_getval", 2, NULL, ERR_EXISTENCE,
+		  ATOM_variable, A1);
+}
+
+
+static
+PRED_IMPL("nb_delete", 1, nb_delete, 0)
+{ PRED_LD
+  atom_t name;
+
+  if ( !PL_get_atom_ex(A1, &name) )
+    fail;
+
+  if ( LD->gvar.nb_vars )
+  { Symbol s = lookupHTable(LD->gvar.nb_vars, (void*)name);
+    
+    if ( s )
+    { free_nb_setval_symbol(s);
+      deleteSymbolHTable(LD->gvar.nb_vars, s);
+    }
+  }
+
+  succeed;
+}
+
+
+static
+PRED_IMPL("nb_current", 2, nb_current, PL_FA_NONDETERMINISTIC)
+{ PRED_LD
+  TableEnum e;
+  Symbol s;
+  fid_t fid;
+
+  switch( CTX_CNTRL )
+  { case FRG_FIRST_CALL:
+      if ( LD->gvar.nb_vars )
+      { e = newTableEnum(LD->gvar.nb_vars);
+	break;
+      }
+    case FRG_REDO:
+      e =  CTX_PTR;
+      break;
+    case FRG_CUTTED:
+      e =  CTX_PTR;
+      freeTableEnum(e);
+      succeed;
+    default:
+      assert(0);
+      fail;
+  }
+
+  fid = PL_open_foreign_frame();
+  while( (s=advanceTableEnum(e)) )
+  { atom_t name = (atom_t)s->name;
+    word   val = (word)s->value;
+
+    if ( PL_unify_atom(A1, name) &&
+	 unify_ptrs(valTermRef(A2), &val PASS_LD) )
+    { PL_close_foreign_frame(fid);
+      ForeignRedoPtr(e);
+    } else
+    { PL_rewind_foreign_frame(fid);
+    }
+  }
+  PL_close_foreign_frame(fid);
+
+  freeTableEnum(e);
   fail;
 }
 
@@ -279,6 +347,8 @@ BeginPredDefs(gvar)
   PRED_DEF("b_getval", 2, b_getval, 0)
   PRED_DEF("nb_setval", 2, nb_setval, 0)
   PRED_DEF("nb_getval", 2, nb_getval, 0)
+  PRED_DEF("nb_current", 2, nb_current, PL_FA_NONDETERMINISTIC)
+  PRED_DEF("nb_delete", 1, nb_delete, 0)
 EndPredDefs
 
 #endif /*O_ATTVAR*/

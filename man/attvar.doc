@@ -194,7 +194,8 @@ Get the value associated with the backtrackable global variable
 \arg{Name} and unify it with \arg{Value}.  Note that this unification
 may further instantiate the value of the global variable.  If this
 is undesirable the normal precautions (double negation or copy_term/2)
-must be taken.
+must be taken.  The b_getval/2 predicate generates errors if \arg{Name}
+is not an atom or the requested variable does not exist.
 \end{description}
 
 \begin{description}
@@ -203,5 +204,13 @@ Associates \arg{Value} with the atom \arg{Name}.
 
     \predicate{nb_getval}{2}{+Name, -Value}
 Unify \arg{Value} with the non-backtrackable value associated to
-\arg{Name}.
+\arg{Name}.  The nb_getval/2 predicate generates errors if \arg{Name}
+is not an atom or the requested variable does not exist.
+
+    \predicate{nb_current}{2}{?Name, ?Value}
+Enumerate all defined non-backtrackable global variables with their
+value.  The order of enumeration is undefined.
+
+    \predicate{nb_delete}{1}{+Name}
+Delete the named non-backtrackable global variable.
 \end{description}
