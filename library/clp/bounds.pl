@@ -212,6 +212,10 @@ parse_expression(Expr,Result) :-
 		parse_expression(L,RL),
 		parse_expression(R,RR),
 		mymin(RL,RR,Result,yes)
+	; Expr = L mod R ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		mymod(RL,RR,Result)
 	; Expr = abs(E) ->
 		parse_expression(E,RE),
 		myabs(RE,Result)
@@ -852,6 +856,103 @@ myabs(X,Y) :-
 			true
 		)
 	).
+
+mymod(X,Y,Z) :- % Z is X mod Y
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			Z is X mod Y
+		; nonvar(Z) ->
+			get(Y,YL,YU,YExp),
+			( Z > 0 ->
+				( X == Z ->
+					no_overlap(-X,X,YL,YU,NYL,NYU),
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				; % Z < X
+					no_overlap(-Z,Z,YL,YU,YL1,YU1),
+					in_between(-X,X,YL1,YU1,NYL,NYU),
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				)
+			; Z < 0 ->
+				( X == Z ->
+					no_overlap(X,-X,YL,YU,NYL,NYU),
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				; % Z < X
+					no_overlap(Z,-Z,YL,YU,YL1,YU1),
+					in_between(X,-X,YL1,YU1,NYL,NYU),
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				)
+			; % Z == 0
+				( X == 0 ->
+					no_overlap(0,0,YL,YU,NYL,NYU),% Y \== 0
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				; % X \== 0
+					PX is abs(X),
+					in_between(-PX,PX,YL,YU,NYL,NYU),% |Y| < |X|
+					put(Y,NYL,NYU,[mymod2(X,Z)|YExp])
+				)
+			)
+		; % var(Y), var(Z)
+			get(Y,YL,YU,YExp),
+			get(Z,ZL,ZU,ZExp),
+			put(Y,YL,YU,[mymod2(X,Z)|YExp]),
+			put(Z,ZL,ZU,[mymod3(X,Y)|ZExp])
+		)
+	; nonvar(Y) ->
+		Y \== 0,
+		( nonvar(Z) ->
+			get(X,XL,XU,XExp),
+			( Z > 0 ->
+				NXL is max(XL,1),
+				put(X,NXL,XU,[mymod1(Y,Z)|XExp])
+			; Z < 0 ->
+				NXU is min(XU,-1),
+				put(X,XL,NXU,[mymod1(Y,Z)|XExp])
+			;
+				put(X,XL,XU,[mymod1(Y,Z)|XExp])	
+			)
+		;
+			get(X,XL,XU,XExp),
+			get(Z,ZL,ZU,ZExp),
+			put(X,XL,XU,[mymod1(Y,Z)|XExp]),
+			put(Z,ZL,ZU,[mymod3(X,Y)|ZExp])
+		)
+	; nonvar(Z) ->
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		put(X,XL,XU,[mymod1(Y,Z)|XExp]),
+		put(Y,YL,YU,[mymod2(X,Z)|YExp])
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		get(Z,ZL,ZU,ZExp),
+		put(X,XL,XU,[mymod1(Y,Z)|XExp]),
+		put(Y,YL,YU,[mymod2(X,Z)|YExp]),
+		put(Z,ZL,ZU,[mymod3(X,Y)|ZExp])
+	).
+			
+no_overlap(XL,XU,YL,YU,NYL,NYU) :-
+	( XL =< YL ->
+		NYL is XU + 1,
+		NYU = YU
+	; YU =< XU ->
+		NYU is XL - 1,
+		NYL is YL
+	;
+		NYL = YL,
+		NYU = YU
+	).
+in_between(XL,XU,YL,YU,NYL,NYU) :-
+	( XL >= YL ->
+		NYL is XL + 1
+	;
+		NYL = YL
+	),
+	( XU =< YU ->
+		NYU is XU -1
+	;
+		NYU = YU
+	).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO
 %	trigger reified constraints when geq is added
@@ -1247,6 +1348,13 @@ trigger_exp(myabs(Y),X) :-
 	myabs(X,Y).
 trigger_exp(myabs2(X),Y) :-
 	myabs(X,Y).
+
+trigger_exp(mymod1(Y,Z),X) :-
+	mymod(X,Y,Z).
+trigger_exp(mymod2(X,Z),Y) :-
+	mymod(X,Y,Z).
+trigger_exp(mymod3(X,Y),Z) :-
+	mymod(X,Y,Z).
 
 memberchk_eq(X,[Y|Ys],Z) :-
    (   X == Y ->
