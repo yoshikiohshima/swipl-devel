@@ -44,8 +44,9 @@ exchange between Prolog processes over the network.
 <LI><A HREF="#sec:1"><B>1 Introduction</B></A>
 <LI><A HREF="#sec:2"><B>2 About SSL</B></A>
 <LI><A HREF="#sec:3"><B>3 Overview of the Prolog API</B></A>
-<LI><A HREF="#sec:4"><B>4 Bugs</B></A>
-<LI><A HREF="#sec:5"><B>5 Acknowledgments</B></A>
+<LI><A HREF="#sec:4"><B>4 Installation</B></A>
+<LI><A HREF="#sec:5"><B>5 Bugs</B></A>
+<LI><A HREF="#sec:6"><B>6 Acknowledgments</B></A>
 </UL>
 
 <H2><A NAME="sec:1">1 Introduction</A></H2>
@@ -83,10 +84,8 @@ predicate calls:
 <P>
 <CENTER>
 <TABLE BORDER=2 FRAME=box RULES=groups>
-<TR VALIGN=top></TR>
 <TR VALIGN=top><TD>SSL server</TD><TD>SSL client </TD></TR>
 <TBODY>
-<TR VALIGN=top></TR>
 <TR VALIGN=top><TD><A NAME="idx:sslinit3:1"></A><A HREF="#ssl_init/3">ssl_init/3</A> </TD><TD><A NAME="idx:sslinit3:2"></A><A HREF="#ssl_init/3">ssl_init/3</A> </TD></TR>
 <TR VALIGN=top><TD><A NAME="idx:sslaccept3:3"></A><A HREF="#ssl_accept/3">ssl_accept/3</A> </TD></TR>
 <TR VALIGN=top><TD><A NAME="idx:sslopen4:4"></A><A HREF="#ssl_open/4">ssl_open/4</A> </TD><TD><A NAME="idx:sslopen3:5"></A><A HREF="#ssl_open/3">ssl_open/3</A> </TD></TR>
@@ -206,7 +205,25 @@ create the Prolog I/O streams.
 Clean up all resources related to the SSL + TCP/IP socket layers.
 </DL>
 
-<H2><A NAME="sec:4">4 Bugs</A></H2>
+<H2><A NAME="sec:4">4 Installation</A></H2>
+
+<P>The OpenSSL libraries are <EM>not</EM> part of the SWI-Prolog 
+distribution and on systems using packagers with dependency checking, 
+dependency on OpenSSL is deliberatly avoided. This implies that OpenSSL 
+must be installed seperatly before using SSL with a binary distribution 
+of SWI-Prolog. Most modern Linux distributions have an SSL package. An 
+installer for MS-Windows is available from
+<A HREF="http://www.slproweb.com/products/Win32OpenSSL.html">http://www.slproweb.com/products/Win32OpenSSL.html</A> 
+The SWI-Prolog SSL interface is currently built using OpenSSL 0.97b.
+
+<P>When installing from the source, the package configuration 
+automatically builds the ssl library if a suitable OpenSSL 
+implementation is found. On Windows systems, OpenSSL must be installed 
+prior to building SWI-Prolog and <CODE>rules.mk</CODE> must be edited to 
+reflect the position of the header and libraries if they are not in the 
+standard search path.
+
+<H2><A NAME="sec:5">5 Bugs</A></H2>
 
 <P>The current implementation uses blocking (socket) I/O, which implies 
 it is not possible to deal with timeouts and (XPCE) event dispatching. 
@@ -216,7 +233,7 @@ toplevel from blocking, especially on MS-Windows.
 <P>We plan to merge the non-blocking socket based implementation used by 
 library <CODE>library(socket)</CODE> with OpenSSL.
 
-<H2><A NAME="sec:5">5 Acknowledgments</A></H2>
+<H2><A NAME="sec:6">6 Acknowledgments</A></H2>
 
 <P>The development of the SWI-Prolog SSL interface has been sponsored by
 <A HREF="http://www.sss.co.nz">Scientific Software and Systems Limited</A>.
