@@ -154,9 +154,13 @@ add_optimise_decl(CHR, CHR).
 %	
 %	There  are  two  reasons  for  this   predicate.  First  of  all
 %	chr_translate/2 leaves the CHR constraint store initialised, and
-%	we  need  to  backtrack  to  restore    it.  Second  the  entire
-%	translation may fail, in  which  we'd   better  issue  a warning
-%	rather than simply ignoring the CHR declarations.
+%	we  need  to  backtrack  to  restore  it  with  the  unfortunate
+%	consequence that we have to copy the  result once more. Can this
+%	be fixed in chr_translate/2? Should we use nb_setval/2?
+%
+%	Second the entire translation may  fail,   in  which we'd better
+%	issue  a  warning  rather   than    simply   ignoring   the  CHR
+%	declarations.
 
 call_chr_translate(File, In, Out) :-
 	chr_translate(In, Out),
