@@ -1,3 +1,28 @@
+/*  $Id$
+
+    Part of JPL -- SWI-Prolog/Java interface
+
+    Author:        Paul Singleton, Fred Dushin and Jan Wielemaker
+    E-mail:        paul@jbgb.com
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 1985-2004, Paul Singleton
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+
 :- module(jpl, [
 	jpl_pl_lib_version/1,
 	jpl_c_lib_version/1,
@@ -44,6 +69,8 @@
 	jpl_map_element/2,
 	jpl_set_element/2]).
 
+:- use_module(library(lists)).
+
 %------------------------------------------------------------------------------
 
 %   term_to_chars(+Term, ?Chars)
@@ -59,7 +86,7 @@ term_to_chars(Term, Chars) :-
   %	byte_stream_to_chars(Handle, Chars0),
   %	free_byte_stream(Handle),
   %	Chars = Chars0.
-	(	is_atom( Term)
+	(	atom(Term)
 	->	Term = A				% avoid superfluous quotes
 	;	system:term_to_atom( Term, A)		% port
 	),
@@ -137,7 +164,7 @@ jpl_call_1( Tx, X, Mspec, Argz, Rx) :-		% a static method call?
 	;	jpl_is_methodID( Mspec)		% i.e. a method ID
 	->	MID = Mspec
 	),
-	(	proper_list( Argz)
+	(	is_list( Argz)
 	->	Args = Argz,
 		length( Args, A)
 	;	Args = [Argz],				% ugh: defaulty (?) single arg
@@ -198,7 +225,7 @@ jpl_call_1( Tx, X, Mspec, Argz, Rx) :-	% regular instance object,
 	;	jpl_is_methodID( Mspec)			% i.e. a method ID
 	->	MID = Mspec
 	),
-	(	proper_list( Argz)
+	(	is_list( Argz)
 	->	Args = Argz,
 		length( Args, A)
 	;	Args = [Argz],
@@ -731,7 +758,7 @@ jpl_new_1( class(Ps,Cs), Argz, Vx) :-
 	!,										% green (see below)
 	jpl_type_to_class( class(Ps,Cs), Cx),	% ensure class is findable
 	Tx = class(Ps,Cs),
-	(	proper_list( Argz)					% canonise sloppy Argz to Args
+	(	is_list( Argz)					% canonise sloppy Argz to Args
 	->	Args = Argz,
 		length( Args, A)
 	;	Args = [Argz],
@@ -773,7 +800,7 @@ jpl_new_1( array(T), Argz, Vx) :-
 	(	integer(Argz),			% integer I -> array[0..I-1] of default values
 		Argz >= 0
 	->	Len is Argz
-	;	proper_list( Argz)		% [V1,..VN] -> array[0..N-1] of respective values
+	;	is_list( Argz)		% [V1,..VN] -> array[0..N-1] of respective values
 	->	length( Argz, Len)
 	),
 	jpl_new_array( T, Len, Vx),	% NB may throw out-of-memory exception
@@ -945,7 +972,7 @@ jpl_set_1( Tx, X, Fspec, V) :-	% instance field?
 	).
 
 jpl_set_1( array(T), X, Fspec, V) :-
-	(	proper_list( V)
+	(	is_list( V)
 	->	Vs = V
 	;	Vs = [V]					% sloppy single-argument form
 	),
@@ -3983,65 +4010,25 @@ jpl_set_element( S, E) :-
 	jpl_call( S, iterator, [], I),
 	jpl_iterator_element( I, E).
 
-%------------------------------------------------------------------------------
-
-% flatten( +List, -FlatList) :-
-%	from the SWI-Prolog library
-%	(it used to be built-in)
-
-flatten(List, FlatList) :-
-	flatten(List, [], FlatList0), !,
-	FlatList = FlatList0.
-
-
-flatten( Var, Tl, [Var|Tl]) :-
-	var( Var),
-	!.
-
-flatten( [], Tl, Tl) :-
-	!.
-
-flatten( [Hd|Tl], Tail, List) :-
-	flatten( Hd, FlatHeadTail, List), 
-	flatten( Tl, Tail, FlatHeadTail).
-
-flatten( Atom, Tl, [Atom|Tl]).
-
-%------------------------------------------------------------------------------
-
-% member( -Item, +List) :-
-%	formerly a SWI-Prolog built-in
-
-member( X, [X|_]).
-
-member( X, [_|T]) :-
-	member( X, T).
 
 %------------------------------------------------------------------------------
 
 % is_pair( ?T) :-
 %	I define a half-decent "pair" as having a ground key (any val)
 
-is_pair( T) :-
-	is_non_var( T),
-	T =.. [-,A1,_A2],
-	is_ground( A1).
+is_pair(0) :- !, fail.
+is_pair(Key-_Val) :-
+	ground(Key).
 
 %------------------------------------------------------------------------------
 
-is_pairs( T) :-
-	is_list( T),
-	map_list( T, is_pair).
+is_pairs(0) :- !, fail.
+is_pairs([]).
+is_pairs([H|T]) :-
+	is_pair(H),
+	is_pairs(T).
 
 %------------------------------------------------------------------------------
-
-% append( +List1, +List2, -List) :-
-%	formerly a SWI-Prolog built-in
-
-append([], L, L).
-append([H|T], L, [H|R]) :-
-	append(T, L, R).
-
 
 /* pred
 	append(list(list(T)), list(T)),
@@ -4096,178 +4083,6 @@ append([H|T], L, [H|R]) :-
 */
 
 
-%   append(+ListOfLists, ?List)
-%   is true when ListOfLists is a list [L1,...,Ln] of lists, List is
-%   a list, and appending L1, ..., Ln together yields List.  The
-%   ListOfLists **must** be a proper list.  (Strictly speaking we
-%   should produce an error message if it is not, but this version
-%   fails.)  Additionally, either List should be a proper list, or
-%   each of L1, ..., Ln should be a proper list.  The behaviour on
-%   non-lists is undefined.  ListOfLists must be proper because for
-%   any given solution, infinitely many more can be obtained by
-%   inserting nils ([]) into ListOfList.
-
-append(-, _) :- !, fail.	% reject partial lists.
-append([], []).
-append([L|Ls], List0) :-
-	append(L, List1, List0),
-	append(Ls, List1).
-
-
-
-%   append(?Prefix, ?Tail1, ?List1, ?Tail2, ?List2)
-%   is true when append(Prefix, Tail1, List1) and append(Prefix, Tail2, List2)
-%   are both true.  You could call append/3 twice, but that is order-
-%   dependent.  This will terminate if Prefix is a proper list or if
-%   either List1 or List2 is a proper list.
-
-append([], List1, List1, List2, List2).
-append([H|T], Tail1, [H|List1], Tail2, [H|List2]) :-
-	append(T, Tail1, List1, Tail2, List2).
-%------------------------------------------------------------------------------
-
-%   nth0(?N, ?List, ?Elem)
-%   is true when Elem is the Nth member of List, counting the first as
-%   element 0.  That is, throw away the first N elements and unify Elem
-%   with the next.  E.g. nth0(0, [H|T], H).
-%   Either N should be an integer, or List should be proper.
-
-% nth0/3 is a SWI-Prolog built-in
-
-%nth0(Index, List, Element) :-
-%	(   integer(Index) ->		% are we finding Element?
-%	    Index >= 0,
-%	    nth0i(Index, List, Element)
-%	;   var(Index) ->		% or are we finding Index?
-%	    nth0v(List, Element, 0, Index)
-%	;   should_be(integer, Index, 1, nth0(Index,List,Element))
-%	).
-
-%%  nth0(?Index, ?List, ?Elem)
-%%  is true when Elem is the Index'th element of List.  Counting starts
-%%  at 0.  [This is a faster version of the original SWI-Prolog predicate.]
-
-nth0(Index, List, Elem) :-
-        integer(Index), !,
-        Index >= 0,
-        nth0_det(Index, List, Elem).    %% take nth deterministically
-nth0(Index, List, Elem) :-
-        var(Index), !,
-        nth_gen(List, Elem, 0, Index).  %% match
-
-
-%   nth0(?N, ?List, ?Elem, ?Rest)
-%   unifies Elem with the Nth element of List, counting from 0, and Rest
-%   with the other elements.  It can be used to select the Nth element
-%   of List (yielding Elem and Rest), or to insert Elem *before* the Nth
-%   (counting from 0) element of Rest, when it yields List, e.g.
-%   nth0(2, List, c, [a,b,d,e]) unifies List with [a,b,c,d,e].
-%   This can be seen as inserting Elem *after* the Nth element of Rest
-%   if you count from 1 rather than 0.
-%   Either N should be an integer, or List or Rest should be proper.
-
-nth0(Index, List, Elem, Rest) :-
-	(   integer(Index) ->		% are we finding Elem?
-	    Index >= 0,
-	    nth0i(Index, List, Elem, Rest)
-	;   var(Index) ->		% or are we finding Index?
-	    one_longer(List, Rest),
-	    nth0v(List, Elem, 0, Index, Rest)
-	;   should_be(integer, Index, 1, nth0(Index,List,Elem,Rest))
-	).
-%------------------------------------------------------------------------------
-
-% formerly a SWI-Prolog built-in
-
-nth0_det(0, [Elem|_], Elem) :- !.
-nth0_det(1, [_,Elem|_], Elem) :- !.
-nth0_det(2, [_,_,Elem|_], Elem) :- !.
-nth0_det(3, [_,_,_,Elem|_], Elem) :- !.
-nth0_det(4, [_,_,_,_,Elem|_], Elem) :- !.
-nth0_det(5, [_,_,_,_,_,Elem|_], Elem) :- !.
-nth0_det(N, [_,_,_,_,_,_   |Tail], Elem) :-
-        M is N - 6,
-        nth0_det(M, Tail, Elem).
-
-%------------------------------------------------------------------------------
-
-%   nth1(?N, ?List, ?Element)
-%   is true when Elem is the Nth member of List, counting the first as
-%   element 0.  That is, throw away the first N-1 elements and unify Elem
-%   with the next element (the Nth).  E.g. nth1(1, [H|T], H).
-%   This is just like nth0 except that it counts from 1 instead of 0.
-%   Either N should be an integer, or List should be proper.
-
-% nth1/3 was briefly a SWI-Prolog built-in
-
-%nth1(Index, List, Element) :-
-%	(   integer(Index) ->		% are we finding Element?
-%	    Index >= 1,
-%	    N is Index-1,
-%	    nth0i(N, List, Element)
-%	;   var(Index) ->		% or are we finding Index?
-%	    nth0v(List, Element, 1, Index)
-%	;   should_be(integer, Index, 1, nth1(Index,List,Element))
-%	).
-
-nth1(Index1, List, Elem) :-
-        integer(Index1), !,
-        Index0 is Index1 - 1,
-        nth0_det(Index0, List, Elem).   %% take nth deterministically
-nth1(Index, List, Elem) :-
-        var(Index), !,
-        nth_gen(List, Elem, 1, Index).  %% match
-
-
-%   nth1(?N, ?List, ?Elem, ?Rest)
-%   unifies Elem with the Nth element of List, counting from 1, and Rest
-%   with the other elements.  It can be used to select the Nth element
-%   of List (yielding Elem and Rest), or to insert Elem *before* the Nth
-%   (counting from 1) element of Rest, when it yields List, e.g.
-%   nth1(2, List, b, [a,c,d,e]) unifies List with [a,b,c,d,e].
-%   Either N should be an integer, or List or Rest should be proper.
-
-nth1(Index, List, Elem, Rest) :-
-	(   integer(Index) ->		% are we finding Elem?
-	    Index >= 1,
-	    N is Index-1,
-	    nth0i(N, List, Elem, Rest)
-	;   var(Index) ->		% or are we finding Index?
-	    one_longer(List, Rest),
-	    nth0v(List, Elem, 1, Index, Rest)
-	;   should_be(integer, Index, 1, nth1(Index,List,Elem,Rest))
-	).
-
-%------------------------------------------------------------------------------
-
-% formerly a SWI-Prolog built-in
-
-nth_gen([Elem|_], Elem, Base, Base).
-nth_gen([_|Tail], Elem, N, Base) :-
-        succ(N, M),
-        nth_gen(Tail, Elem, M, Base).
-
-
-%------------------------------------------------------------------------------
-
-%meta	map_list(?,1)
-%meta	map_list(?,?,2)
-%meta	map_list(?,?,?,3)
-
-map_list([], _).
-map_list([X|Xs], Pred) :-
-	call(Pred, X),
-	map_list(Xs, Pred).
-
-map_list([], [], _).
-map_list([Old|Olds], [New|News], Pred) :-
-	call(Pred, Old, New),
-	map_list(Olds, News, Pred).
-
-map_list([], [], [], _).
-map_list([X|Xs], [Y|Ys], [Z|Zs], Pred) :-
-	call(Pred, X, Y, Z),
-	map_list(Xs, Ys, Zs, Pred).
 %------------------------------------------------------------------------------
 
 % qp_atom_chars( A, Cs) :-
@@ -4332,41 +4147,72 @@ multimap_to_atom_1( [K-V|KVs], T, Cs1, Cs0) :-
 	),
 	multimap_to_atom_1( KVs, T, Cs3, Cs0).
 
-%------------------------------------------------------------------------------
 
-proper_list( L) :-
-	is_list( L).
+		 /*******************************
+		 *	   LOAD THE JVM		*
+		 *******************************/
 
-%------------------------------------------------------------------------------
+:- dynamic
+	user:file_search_path/2.
+:- multifile
+	user:file_search_path/2.
 
-%type	is_atom( term)
-%mode	is_atom( nfi)
 
-% is_atom( T) :-
-%	T is neither a variable nor a number nor a structure,
-%	but an atom;
-%	this is a renaming of the QP built_in
+user:file_search_path(java, JavaHOME) :-
+	(   getenv('JAVA_HOME', JavaHOME)
+	;   current_prolog_flag(unix, true),
+	    (	JavaHOME = '/usr/lib/java'
+	    ;	JavaHOME = '/usr/local/lib/java'
+	    )
+	),
+	exists_directory(JavaHOME), !.
+user:file_search_path(jre, java(jre)).
+user:file_search_path(jre_client, jre(Client)) :-
+	java_cpu(CPU),
+	concat_atom([lib,CPU,client], /, Client).
 
-is_atom( T) :-
-	atom( T).
+java_cpu(CPU) :-
+	current_prolog_flag(arch, Arch),
+	concat_atom([PrologCPU|_], -, Arch),
+	java_cpu(PrologCPU, CPU).
 
-%------------------------------------------------------------------------------
+java_cpu(i386,	i386).
+java_cpu(i486,	i386).
+java_cpu(i586,	i386).
+java_cpu(i686,	i386).
+java_cpu(i786,	i386).
+java_cpu(sparc,	sparc).
+java_cpu(mips,	mips).
 
-% is_ground( ?T) :-
-%	a better name for it ...
+setup_ld_library_path :-
+	absolute_file_name(jre_client(.),
+			   [ file_type(directory),
+			     access(read)
+			   ],
+			   ClientDir),
+	file_directory_name(ClientDir, NativeDir),
+	JavaDirs = [ClientDir, NativeDir],
+	(   getenv('LD_LIBRARY_PATH', Path0)
+	->  append([Path0], JavaDirs, Parts)
+	;   Parts = JavaDirs
+	),
+	concat_atom(Parts, ':', Path),
+	setenv('LD_LIBRARY_PATH', Path).
 
-is_ground( T) :-
-	ground( T).
+:- dynamic
+	jvm_ready/0.
+:- volatile
+	jvm_ready/0.
 
-%------------------------------------------------------------------------------
+setup_jvm :-
+	jvm_ready, !.
+setup_jvm :-
+	setup_ld_library_path,
+	load_foreign_library(foreign(jpl)),
+	assert(jvm_ready).
 
-% is_non_var( ?Term) :-
-%	Term is not presently uninstantiated
+:- initialization
+	setup_jvm.
 
-is_non_var( T) :-
-	nonvar( T).		%  QP built-in
 
-%------------------------------------------------------------------------------
-
-:- initialization load_foreign_library(foreign(jpl)).
 
