@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: attributed variable handling in findall/3 and friends.
+    David Reitter.
+
   * FIXED: nb_linkval/2 (and therefore nb_setval/2) if value is an
     attributed variable.  David Reitter.
 

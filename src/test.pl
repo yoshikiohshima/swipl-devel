@@ -1114,6 +1114,12 @@ avar(hash_term-1) :-
 	freeze(X, write(a)),
 	hash_term(X, H),
 	var(H).
+avar(findall-1) :-
+	retractall(avar_findall(_)),
+	findall(A, freeze(A, assert(avar_findall(A))), L),
+	L=[aap],
+	retract(avar_findall(X)),
+	X == aap.
 
 
 		 /*******************************

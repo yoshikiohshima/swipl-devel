@@ -448,8 +448,9 @@ makeNum__LD(long i ARG_LD)
 static inline void
 bindConsVal(Word to, Word p ARG_LD)
 { deRef(p);
-  if ( isVar(*p) )
-  { if ( to < p )
+
+  if ( canBind(*p) )
+  { if ( to < p && !isAttVar(*p) )
     { setVar(*to);
       *p = makeRefG(to);
     } else

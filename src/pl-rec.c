@@ -585,11 +585,13 @@ PL_record_external(term_t t, unsigned int *len)
 		 *******************************/
 
 typedef struct
-{ const char *data;
-  const char *base;			/* start of data */
-  Word *vars;
-  uint  nvars;				/* for se_record() */
-  Word gstore;
+{ const char   *data;
+  const char   *base;			/* start of data */
+  Word	       *vars;
+  Word 		gstore;
+					/* for se_record() */
+  uint  	nvars;			/* Variables seen */
+  TmpBuffer 	avars;			/* Values stored for attvars */
 } copy_info, *CopyInfo;
 
 
@@ -1009,6 +1011,24 @@ unref_cont:
 	succeed;
       }
       fail;
+    case TAG_ATTVAR:
+      if ( stag == PL_REC_ALLOCVAR )	/* skip variable allocation */
+	stag = fetchOpCode(info);
+      if ( stag == PL_TYPE_ATTVAR )
+      { Word ap = valPAttVar(w);
+	uint i = fetchSizeInt(info);
+
+	if ( i != info->nvars )
+	  fail;
+
+	addBuffer(info->avars, *p, word);
+	*p = (info->nvars<<7)|TAG_ATOM|STG_GLOBAL;
+	info->vars[info->nvars++] = mkAttVarP(p);
+
+	p = ap;				/* do the attribute value */
+	goto right_recursion;
+      }
+      fail;
     case TAG_ATOM:
       if ( storage(w) == STG_GLOBAL )
       { if ( stag == PL_TYPE_VARIABLE )
@@ -1145,14 +1165,17 @@ unref_cont:
 
 int
 structuralEqualArg1OfRecord(term_t t, Record r ARG_LD)
-{ copy_info info;
-  int n, rval;
+{ tmp_buffer avars;
+  copy_info info;
+  int n, rval, navars;
   Word *p;
   long stag;
 
   info.base = info.data = dataRecord(r);
   info.nvars = 0;
   INITCOPYVARS(info, r->nvars);
+  initBuffer(&avars);
+  info.avars = &avars;
 
 					/* skip PL_TYPE_COMPOUND <functor> */
   stag = fetchOpCode(&info);
@@ -1166,8 +1189,14 @@ structuralEqualArg1OfRecord(term_t t, Record r ARG_LD)
 
   rval = se_record(valTermRef(t), &info PASS_LD);
 
-  for(p = info.vars, n=info.nvars; --n >= 0; p++)
-    setVar(**p);
+  for(p = info.vars, n=info.nvars, navars=0; --n >= 0; p++)
+  { if ( isAttVarP(*p) )
+    { *valAttVarP(*p) = fetchBuffer(&avars, navars++, word);
+    } else
+      setVar(**p);
+  }
+
+  discardBuffer(&avars);
   FREECOPYVARS(info, r->nvars);
 
   return rval;
