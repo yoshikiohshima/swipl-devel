@@ -99,7 +99,7 @@ print_prolog_backtrace(Stream, [H|T]) :-
 	print_frame(Stream, H),
 	print_prolog_backtrace(Stream, T).
 
-print_frame(Stream, frame(Level, foreign(Name/Arity), _)) :-
+print_frame(Stream, frame(Level, foreign(Name/Arity), _)) :- !,
 	format(Stream, '   [~D] ~w/~d <foreign>~n',
 	       [Level, Name, Arity]).
 print_frame(Stream, frame(Level, Clause, PC)) :-
