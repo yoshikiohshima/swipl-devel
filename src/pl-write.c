@@ -347,13 +347,13 @@ writePrimitive(term_t t, write_options *options)
   char buf[16];
   IOSTREAM *out = options->out;
 
-  if ( PL_is_variable(t) )
-    return PutToken(varName(t, buf), out);
-
 #if O_ATTVAR
   if ( PL_is_attvar(t) )
     return writeAttVar(t, options);
 #endif
+
+  if ( PL_is_variable(t) )
+    return PutToken(varName(t, buf), out);
 
   if ( PL_get_atom(t, &a) )
     return writeAtom(a, options);
