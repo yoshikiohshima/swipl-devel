@@ -33,7 +33,7 @@ OBJ=		src\c\jpl.obj
 all:		checkenv $(PKGDLL).dll jar
 
 jar::
-		chdir src\java\jpl & $(MAKE)
+		chdir src\java & $(MAKE)
 
 checkenv::
 		@if not exist "$(JAVA_HOME)\lib\jvm.lib" \
