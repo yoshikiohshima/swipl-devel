@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: sub_atom/5 with variables sharing in the call.  Emerson.
+
 VERSION 5.3.6 (Mar 17, 2004)
 ============================
 

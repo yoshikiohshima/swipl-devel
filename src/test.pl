@@ -548,10 +548,13 @@ atom_handling(number-4) :-
 
 atom_handling(sub_atom-1) :-
 	\+ sub_atom(a, _, _, 3, _).
-atom_handling(sub_atom-1) :-
+atom_handling(sub_atom-2) :-
 	\+ sub_atom(a, _, 3, _, _).
-atom_handling(sub_atom-1) :-
+atom_handling(sub_atom-3) :-
 	\+ sub_atom(a, 3, _, _, _).
+atom_handling(sub_atom-4) :-		% sharing variables
+	findall(t(B,L,S), sub_atom(ab, B, L, L, S), List),
+	List == [t(0, 1, a), t(2, 0, '')].
 
 atom_handling(current-1) :-
 	findall(X, current_atom(X), Atoms),

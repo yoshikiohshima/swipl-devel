@@ -2136,6 +2136,8 @@ sub_text(term_t atom,
   unsigned int ls;			/* length of `sub' */
   sub_state *state;			/* non-deterministic state */
   atom_t expected = (out == PL_unify_string_nchars ? ATOM_string : ATOM_atom);
+  int match;
+  mark mrk;
 
   switch( ForeignControl(h) )
   { case FRG_FIRST_CALL:
@@ -2261,6 +2263,8 @@ sub_text(term_t atom,
       fail;
   }
 
+  Mark(mrk);
+again:
   switch(state->type)
   { case SUB_SEARCH:
     { PL_get_chars(sub,  &s,  CVT_ATOMIC);
@@ -2269,12 +2273,12 @@ sub_text(term_t atom,
 
       for( ; state->n1+ls <= la; state->n1++ )
       { if ( memcmp(aa+state->n1, s, ls) == 0 )
-	{ PL_unify_integer(before, state->n1);
-	  PL_unify_integer(len,    ls);
-	  PL_unify_integer(after,  la-ls-state->n1);
+	{ match = (PL_unify_integer(before, state->n1) &&
+		   PL_unify_integer(len,    ls) &&
+		   PL_unify_integer(after,  la-ls-state->n1));
 	  
 	  state->n1++;
-	  ForeignRedoPtr(state);
+	  goto next;
 	}
       }
       goto exit_fail;
@@ -2284,22 +2288,24 @@ sub_text(term_t atom,
       b  = state->n3;
       l  = state->n1++;
 
-      PL_unify_integer(len, l);
-      PL_unify_integer(after, la-b-l);
+      match = (PL_unify_integer(len, l) &&
+	       PL_unify_integer(after, la-b-l));
     out:
-      (*out)(sub, l, aa+b);
+      match = (match && (*out)(sub, l, aa+b));
       if ( b+l < (int)la )
-	ForeignRedoPtr(state);
-      else
+	goto next;
+      else if ( match )
 	goto exit_succeed;
+      else
+	goto exit_fail;
     }
     case SUB_SPLIT_LEN:
     { b  = state->n1++;
       l  = state->n2;
       la = state->n3;
 
-      PL_unify_integer(before, b);
-      PL_unify_integer(after, la-b-l);
+      match = (PL_unify_integer(before, b) &&
+	       PL_unify_integer(after, la-b-l));
       goto out;
     }
     case SUB_SPLIT_HEAD:
@@ -2308,13 +2314,15 @@ sub_text(term_t atom,
       a  = state->n3;
       l  = la - a - b;
 
-      PL_unify_integer(before, b);
-      PL_unify_integer(len, l);
-      (*out)(sub, l, aa+b);
+      match = (PL_unify_integer(before, b) &&
+	       PL_unify_integer(len, l) &&
+	       (*out)(sub, l, aa+b));
       if ( l > 0 )
-	ForeignRedoPtr(state);
-      else
+	goto next;
+      else if ( match )
 	goto exit_succeed;
+      else
+	goto exit_fail;
     }
     case SUB_ENUM:
     { b  = state->n1;
@@ -2322,23 +2330,35 @@ sub_text(term_t atom,
       la = state->n3;
       a  = la-b-l;
 
-      PL_unify_integer(before, b);
-      PL_unify_integer(len, l);
-      PL_unify_integer(after, a);
-      (*out)(sub, l, aa+b);
+      match = (PL_unify_integer(before, b) &&
+	       PL_unify_integer(len, l) &&
+	       PL_unify_integer(after, a) &&
+	       (*out)(sub, l, aa+b));
       if ( a == 0 )
       { if ( b == (int)la )
-	  goto exit_succeed;
+	{ if ( match )
+	    goto exit_succeed;
+	  else
+	    goto exit_fail;
+	}
 	state->n2 = 0;
 	state->n1++;
       }
-      ForeignRedoPtr(state);
+      goto next;
     }
   }
 
 exit_fail:
   freeHeap(state, sizeof(*state));
   fail;
+
+next:
+  if ( match )
+  { ForeignRedoPtr(state);
+  } else
+  { Undo(mrk);
+    goto again;
+  }
 }
 
 
