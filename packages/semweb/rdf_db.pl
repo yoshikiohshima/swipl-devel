@@ -665,12 +665,22 @@ rdf_reset_db :-
 %		# anon(Bool)
 %		If false (default true) do not save blank nodes that do
 %		not appear (indirectly) as object of a named resource.
+%
+%		# convert_typed_literal(:Convertor)
+%		Call Convertor(-Type, -Content, +RDFObject), providing
+%		the opposite for the convert_typed_literal option of
+%		the RDF parser.
+
+:- module_transparent
+	rdf_save/2,
+	meta_options/2.
 
 rdf_save(File) :-
 	rdf_save(File, []).
 
-rdf_save(File, Options) :-
-	is_list(Options), !,
+rdf_save(File, Options0) :-
+	is_list(Options0), !,
+	meta_options(Options0, Options),
 	open(File, write, Out),
 	flag(rdf_db_saved_subjects, OSavedSubjects, 0),
 	flag(rdf_db_saved_triples, OSavedTriples, 0),
@@ -723,6 +733,24 @@ db(Options, DB) :-
 	->  DB = DB0
 	;   true			% leave unbound
 	).
+
+
+%	meta_options(+OptionsIn, -OptionsOut)
+%	
+%	Do module qualification for options that are module sensitive.
+
+meta_options([], []).
+meta_options([Name=Value|T0], List) :-
+	atom(Name), !,
+	Opt =.. [Name, Value],
+	meta_options([Opt|T0], List).
+meta_options([H0|T0], [H|T]) :-
+	(   H0 = convert_typed_literal(Handler)
+	->  '$strip_module'(Handler, M, P),
+	    H = convert_typed_literal(M:P)
+	;   H = H0
+	),
+	meta_options(T0, T).
 
 
 %	rdf_save_header(+Fd, +Options)
@@ -850,13 +878,21 @@ rdf_save_non_anon_subject(Out, Subject, Options) :-
 	flag(rdf_db_saved_subjects, X, X+1).
 
 
+rdf_save_subject(Out, Subject, Options) :-
+	is_list(Options), !,
+	(   rdf_save_subject(Out, Subject, -, 0, Options)
+	->  format(Out, '~n', [])
+	;   throw(error(rdf_save_failed(Subject), 'Internal error'))
+	).
 rdf_save_subject(Out, Subject, DB) :-
-	rdf_save_subject(Out, Subject, -, 0, DB),
-	format(Out, '~n', []), !.
-rdf_save_subject(_, Subject, _DB) :-
-	throw(error(rdf_save_failed(Subject), 'Internal error')).
+	(   var(DB)
+	->  rdf_save_subject(Out, Subject, [])
+	;   rdf_save_subject(Out, Subject, [db(DB)])
+	).
+		  
 
-rdf_save_subject(Out, Subject, DefNS, Indent, DB) :-
+rdf_save_subject(Out, Subject, DefNS, Indent, Options) :-
+	db(Options, DB),
 	findall(Pred=Object, rdf_db(Subject, Pred, Object, DB), Atts0),
 	sort(Atts0, Atts),		% remove duplicates
 	length(Atts, L),
@@ -867,7 +903,7 @@ rdf_save_subject(Out, Subject, DefNS, Indent, DB) :-
 			  rdf(save_removed_duplicates(Del, Subject)))
 	;   true
 	),
-	rdf_save_subject(Out, Subject, DefNS, Atts, Indent, DB),
+	rdf_save_subject(Out, Subject, DefNS, Atts, Indent, Options),
 	flag(rdf_db_saved_triples, X, X+L).
 
 rdf_db(Subject, Pred, Object, DB) :-
@@ -876,18 +912,18 @@ rdf_db(Subject, Pred, Object, DB) :-
 rdf_db(Subject, Pred, Object, DB) :-
 	rdf(Subject, Pred, Object, DB:_).
 
-rdf_save_subject(Out, Subject, DefNS, Atts, Indent, DB) :-
+rdf_save_subject(Out, Subject, DefNS, Atts, Indent, Options) :-
 	rdf_equal(rdf:type, RdfType),
 	select(RdfType=Type, Atts, Atts1),
 	rdf_id(Type, DefNS, TypeId),
 	xml_is_name(TypeId), !,
 	format(Out, '~*|<~w', [Indent, TypeId]),
 	save_about(Out, Subject),
-	save_attributes(Atts1, DefNS, Out, TypeId, Indent, DB).
-rdf_save_subject(Out, Subject, _DefNS, Atts, Indent, DB) :-
+	save_attributes(Atts1, DefNS, Out, TypeId, Indent, Options).
+rdf_save_subject(Out, Subject, _DefNS, Atts, Indent, Options) :-
 	format(Out, '~*|<rdf:Description', [Indent]),
 	save_about(Out, Subject),
-	save_attributes(Atts, rdf, Out, rdf:'Description', Indent, DB).
+	save_attributes(Atts, rdf, Out, rdf:'Description', Indent, Options).
 
 xml_is_name(_NS:Atom) :- !,
 	xml_name(Atom).
@@ -906,14 +942,14 @@ save_about(Out, Subject) :-
 %	tag.  Others as the content of the description element.  The
 %	begin tag has already been filled.
 
-save_attributes(Atts, DefNS, Out, Element, Indent, DB) :-
+save_attributes(Atts, DefNS, Out, Element, Indent, Options) :-
 	split_attributes(Atts, InTag, InBody),
 	SubIndent is Indent + 2,
-	save_attributes2(InTag, DefNS, tag, Out, SubIndent, DB),
+	save_attributes2(InTag, DefNS, tag, Out, SubIndent, Options),
 	(   InBody == []
 	->  format(Out, '/>~n', [])
 	;   format(Out, '>~n', []),
-	    save_attributes2(InBody, _, body, Out, SubIndent, DB),
+	    save_attributes2(InBody, _, body, Out, SubIndent, Options),
 	    format(Out, '~N~*|</~w>~n', [Indent, Element])
 	).
 
@@ -974,17 +1010,22 @@ in_tag_attribute(_=literal(Text)) :-
 %	Save a list of attributes.
 
 save_attributes2([], _, _, _, _, _).
-save_attributes2([H|T], DefNS, Where, Out, Indent, DB) :-
-	save_attribute(Where, H, DefNS, Out, Indent, DB),
-	save_attributes2(T, DefNS, Where, Out, Indent, DB).
+save_attributes2([H|T], DefNS, Where, Out, Indent, Options) :-
+	save_attribute(Where, H, DefNS, Out, Indent, Options),
+	save_attributes2(T, DefNS, Where, Out, Indent, Options).
 
 save_attribute(tag, Name=literal(Value), DefNS, Out, Indent, _DB) :-
 	AttIndent is Indent + 2,
 	rdf_att_id(Name, DefNS, NameText),
 	xml_quote_attribute(Value, QVal),
 	format(Out, '~N~*|~w="~w"', [AttIndent, NameText, QVal]).
-save_attribute(body, Name=literal(Literal), DefNS, Out, Indent, _DB) :- !,
+save_attribute(body, Name=literal(Literal0), DefNS, Out, Indent, Options) :- !,
 	rdf_id(Name, DefNS, NameText),
+	(   memberchk(convert_typed_literal(Converter), Options),
+	    call(Converter, Type, Content, Literal0)
+	->  Literal = type(Type, Content)
+	;   Literal = Literal0
+	),
 	(   Literal = lang(Lang, Value)
 	->  rdf_id(Lang, DefNS, LangText),
 	    format(Out, '~N~*|<~w xml:lang="~w">',
@@ -998,17 +1039,17 @@ save_attribute(body, Name=literal(Literal), DefNS, Out, Indent, _DB) :- !,
 	),
 	save_attribute_value(Value, Out),
 	format(Out, '</~w>', [NameText]).
-save_attribute(body, Name=Value, DefNS, Out, Indent, DB) :-
+save_attribute(body, Name=Value, DefNS, Out, Indent, Options) :-
 	anonymous_subject(Value), !,
 	rdf_id(Name, DefNS, NameText),
 	SubIndent is Indent + 2,
 	(   rdf(Value, rdf:type, rdf:'List')
 	->  format(Out, '~N~*|<~w rdf:parseType="Collection">~n',
 		   [Indent, NameText]),
-	    rdf_save_list(Out, Value, DefNS, SubIndent, DB)
+	    rdf_save_list(Out, Value, DefNS, SubIndent, Options)
 	;   format(Out, '~N~*|<~w>~n',
 		   [Indent, NameText]),
-	    rdf_save_subject(Out, Value, DefNS, SubIndent, DB)
+	    rdf_save_subject(Out, Value, DefNS, SubIndent, Options)
 	),
 	format(Out, '~N~*|</~w>~n', [Indent, NameText]).
 save_attribute(body, Name=Value, DefNS, Out, Indent, _DB) :-
@@ -1028,11 +1069,11 @@ save_attribute_value(Value, _Out) :-
 
 rdf_save_list(_, List, _, _, _) :-
 	rdf_equal(List, rdf:nil), !.
-rdf_save_list(Out, List, DefNS, Indent, DB) :-
+rdf_save_list(Out, List, DefNS, Indent, Options) :-
 	rdf_has(List, rdf:first, First),
 	(   anonymous_subject(First)
 	->  nl(Out),
-	    rdf_save_subject(Out, First, DefNS, Indent, DB)
+	    rdf_save_subject(Out, First, DefNS, Indent, Options)
 	;   rdf_value(First, QVal),
 	    format(Out, '~N~*|<rdf:Description about="~w"/>',
 		   [Indent, QVal])
@@ -1040,7 +1081,7 @@ rdf_save_list(Out, List, DefNS, Indent, DB) :-
 	flag(rdf_db_saved_triples, X, X+3),
 	(   rdf_has(List, rdf:rest, List2),
 	    \+ rdf_equal(List2, rdf:nil)
-	->  rdf_save_list(Out, List2, DefNS, Indent, DB)
+	->  rdf_save_list(Out, List2, DefNS, Indent, Options)
 	;   true
 	).
 

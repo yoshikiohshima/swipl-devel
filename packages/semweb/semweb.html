@@ -482,6 +482,15 @@ selections is possible using predicates from <A HREF="#sec:partsave">section
 if <CODE>anon(false)</CODE> is provided anonymous resources are only 
 saved if the resource appears in the object field of another triple that 
 is saved.
+
+<P>
+<DT><STRONG>convert_typed_literal</STRONG>(<VAR>:Converter</VAR>)<DD>
+If present, raw literal values are first passed to <VAR>Converter</VAR> 
+to apply the reverse of the <CODE>convert_typed_literal</CODE> option of 
+the RDF parser. The <VAR>Converter</VAR> is called with the same 
+arguments as in the RDF parser, but now with the last argument 
+instantiated and the first two unbound. A proper convertor that can be 
+used for both loading and saving must be a logical predicate.
 </DL>
 
 <P>

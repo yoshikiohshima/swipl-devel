@@ -371,6 +371,14 @@ is possible using predicates from \secref{partsave}.
 if \term{anon}{false} is provided anonymous resources are only saved
 if the resource appears in the object field of another triple that is
 saved.
+
+	\termitem{convert_typed_literal}{:Converter}
+If present, raw literal values are first passed to \arg{Converter} to
+apply the reverse of the \const{convert_typed_literal} option of the
+RDF parser.  The \arg{Converter} is called with the same arguments
+as in the RDF parser, but now with the last argument instantiated
+and the first two unbound.   A proper convertor that can be used for
+both loading and saving must be a logical predicate.
     \end{description}
 
     \predicate{rdf_source}{1}{?File}
