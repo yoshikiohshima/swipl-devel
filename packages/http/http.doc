@@ -605,6 +605,12 @@ As a single persistent server process maintains communication to all
 clients startup time is not an important issue and the server can
 easily maintain state-information for all clients.
 
+In addition to the functionality provided by the other (XPCE and
+inetd) servers, the threaded server can also be used to realise an
+HTTPS server exploiting the \pllib{ssl} library.  See option
+\term{ssl}{+SSLOptions} below.
+
+
 \begin{description}
     \predicate{http_server}{3}{:Goal, +Options}
 Create the server. \arg{Options} must provide the \term{port}{?Port}
@@ -653,6 +659,15 @@ commandline option.
     \termitem{after}{:Goal}
 After replying a request, execute \arg{Goal} providing the request as
 argument.
+
+    \termitem{ssl}{+SSLOptions}
+Use SSL (Secure Socket Layer) rather than plan TCP/IP. A server created
+this way is accessed using the \const{https://} protocol. SSL allows for
+encrypted communication to avoid others from tapping the wire as well as
+improved authentication of client and server. The \arg{SSLOptions}
+option list is passed to ssl_init/3. The port option of the main option
+list is forwarded to the SSL layer. See the \pllib{ssl} library for
+details.
 \end{description}
 
     \predicate{http_current_server}{2}{?:Goal, ?Port}

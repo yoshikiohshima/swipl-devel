@@ -34,12 +34,22 @@
 	    http_server/2,		% :Goal, +Options
 	    http_workers/2		% +Port, ?WorkerCount
 	  ]).
+:- use_module(library(debug)).
 :- use_module(http_wrapper).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 This library provides a multi-threaded Prolog-based HTTP server based on
 the same wrapper as xpce_httpd and   inetd_httpd. This server can handle
 multiple clients in Prolog threads and doesn't need XPCE.
+
+In addition to the other two frontends   (XPCE and inetd), this frontend
+provides code to deal with the SSL library for creating an HTTPS server.
+It is activated using the option  ssl(+SSLOptions), where SSLOptions are
+options required by ssl_init/3. See package ssl for details.
+
+BUGS: currently the library depends on library(socket) and library(ssl),
+both of which are accessed through  autoloading. Although this works, it
+is not elegant. 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 :- meta_predicate
@@ -52,8 +62,8 @@ multiple clients in Prolog threads and doesn't need XPCE.
 
 %	http_server(:Goal, ?Port, [+Options])
 %	
-%	Create a server at  Port  that   calls  Goal  for  eached parsed
-%	request. Options provide a list of options. Defined options are
+%	Create a server at Port that calls Goal for each parsed request.
+%	Options provide a list of options. Defined options are
 %	
 %	  workers(N)	[2]		Define the number of worker threads
 %	  timeout(S)	[infinite]	Drop connections after inactivity
@@ -145,12 +155,14 @@ accept_server(SSL, Goal, Options) :-
 	option(queue(Queue), Options, http_client),
 	repeat,
 	  ssl_accept(SSL, Client, Peer),
+	  debug(connection, 'New HTTPS connection from ~p', [Peer]),
 	  thread_send_message(Queue, ssl_client(SSL, Client, Goal, Peer)),
 	fail.
 accept_server(Socket, Goal, Options) :-
 	option(queue(Queue), Options, http_client),
 	repeat,
 	  tcp_accept(Socket, Client, Peer),
+	  debug(connection, 'New HTTP connection from ~p', [Peer]),
 	  thread_send_message(Queue, tcp_client(Client, Goal, Peer)),
 	fail.
 
@@ -222,6 +234,8 @@ http_worker(Options) :-
 		  ssl_open(SSL, Client, In, Out)
 	      ),
 	      set_stream(In, timeout(Timeout)),
+	      debug(server, 'Running server goal ~p on ~p -> ~p',
+		    [Goal, In, Out]),
 	      (	  server_loop(Goal, In, Out, Peer, After)
 	      ->  true
 	      ;	  format(user_error, 'FAILED~n', [])
