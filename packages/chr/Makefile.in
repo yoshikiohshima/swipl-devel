@@ -15,6 +15,7 @@ PKGDOC=$(PLBASE)/doc/packages
 PCEHOME=../../xpce
 LIBDIR=$(PLBASE)/library
 CHRDIR=$(LIBDIR)/chr
+EXDIR=$(PKGDOC)/examples/chr
 
 DOCTOTEX=$(PCEHOME)/bin/doc2tex
 PLTOTEX=$(PCEHOME)/bin/pl2tex
@@ -32,6 +33,8 @@ INSTALL_DATA=@INSTALL_DATA@
 LIBPL=		chr_runtime.pl chr_op.pl chr_translate.pl chr_debug.pl \
 		hprolog.pl pairlist.pl
 CHRPL=		chr_swi.pl
+EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
+		bool.chr family.chr fibonacci.chr leq.chr listdom.chr
 
 all:		
 		@echo "Nothing to do for this package"
@@ -47,11 +50,13 @@ $(CHRDIR):
 
 rpm-install:	install
 
-pdf-install::
-		$(INSTALL_DATA) $(DOC).pdf $(PKGDOC)
+pdf-install:	install-examples
 
-html-install::
-		$(INSTALL_DATA) $(DOC).html $(PKGDOC)
+html-install:	install-examples
+
+install-examples::
+		mkdir -p $(EXDIR)
+		(cd Examples && $(INSTALL_DATA) $(EXAMPLES) $(EXDIR))
 
 uninstall:
 		(cd $(PLBASE)/library && rm -f $(LIBPL))

@@ -10,7 +10,11 @@
 PLHOME=..\..
 !include $(PLHOME)\src\rules.mk
 LIBDIR=$(PLBASE)\library
+EXDIR=$(PKGDOC)\examples\chr
 CHR=$(LIBDIR)\chr
+
+EXAMPLES=	chrfreeze.chr fib.chr gcd.chr primes.chr \
+		bool.chr family.chr fibonacci.chr leq.chr listdom.chr
 
 all::		
 
@@ -28,8 +32,14 @@ install::
 		$(MAKEINDEX)
 !ENDIF
 
+html-install:	install-examples
+pdf-install:	install-examples
+
+install-examples::
+		if not exist "$(EXDIR)/$(NULL)" $(MKDIR) "$(EXDIR)"
+		cd examples & @for %f in ($(EXAMPLES)) do @copy %f "$(EXDIR)"
+
 xpce-install::
-html-install::
 
 uninstall::
 		del "$(CHR)\chr_runtime.pl"
