@@ -87,6 +87,11 @@ will reclaim all associated resources automatically after the thread
 finishes. Please note that thread identifiers are freed for reuse after
 a detached thread finishes or a normal thread has been joined.
 See also thread_join/2 and thread_detach/1.
+
+If a detached thread dies due to failure or exception of the initial
+goal the thread prints a message using print_message/2.  If such
+termination is considered normal the code must be wrapped using
+ignore/1 and/or catch/3 to ensure successful completion.
 \end{description}
 
 The \arg{Goal} argument is \emph{copied} to the new Prolog engine.

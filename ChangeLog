@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED/MODIFIED: print message if a detached thread dies abnormally.
+    After report by Fabien Todescato.
+
   * FIXED: portability issue in Makefile (Solaris).  Bill McEnaney.
 
   * FIXED: possibility to crash the debugger on exceptions in callback

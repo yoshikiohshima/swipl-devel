@@ -861,6 +861,21 @@ start_thread(void *closure)
   PL_recorded(info->goal, goal);
   rval  = callProlog(info->module, goal, PL_Q_CATCH_EXCEPTION, &ex);
 
+  if ( !rval && info->detached )
+  { if ( ex )
+    { printMessage(ATOM_warning,
+		   PL_FUNCTOR_CHARS, "abnormal_thread_completion", 2,
+		     PL_TERM, goal,
+		     PL_FUNCTOR, FUNCTOR_exception1,
+		       PL_TERM, ex);
+    } else
+    { printMessage(ATOM_warning,
+		   PL_FUNCTOR_CHARS, "abnormal_thread_completion", 2,
+		     PL_TERM, goal,
+		     PL_ATOM, ATOM_fail);
+    } 
+  }
+
   LOCK();
   if ( rval )
   { info->status = PL_THREAD_SUCCEEDED;

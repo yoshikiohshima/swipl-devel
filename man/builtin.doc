@@ -2163,7 +2163,9 @@ position in the line are set to 0.
 If the stream cannot be repostioned, a \const{reposition} error is
 raised. The predicate seek/4 is compatible to Quintus Prolog, though the
 error conditions and signalling is ISO compliant. See also
-stream_property/2 and set_stream_position/2.
+stream_property/2 and set_stream_position/2.  Please note that the use
+of seek/4 on non-binary files (see open/4) is of limited use as the
+reffered positions are byte offsets.
 
     \predicate{set_stream}{2}{+Stream, +Attribute}
 Modify an attribute of an existing stream. \arg{Attribute} specifies

@@ -667,6 +667,17 @@ clean_goal(Goal, Goal).
 
 
 		 /*******************************
+		 *	      THREADS		*
+		 *******************************/
+
+prolog_message(abnormal_thread_completion(Goal, exception(Ex))) --> !,
+	[ 'Thread running "~p" died on exception: '-[Goal] ],
+	translate_message(Ex).
+prolog_message(abnormal_thread_completion(Goal, fail)) -->
+	[ 'Thread running "~p" died due to failure'-[Goal] ].
+
+
+		 /*******************************
 		 *	PRINTING MESSAGES	*
 		 *******************************/
 
