@@ -271,7 +271,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="install-sh"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PL PLLIBS PLBASE PLARCH PLINCL COFLAGS CWFLAGS CMFLAGS CIFLAGS ETAGS LD SO LDSOFLAGS TARGETS PLTARGETS JAVA_HOME PLLD MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os JAVA_CC JAVA_CC_FLAGS ac_ct_JAVA_CC GCJ_OPTS JAVA_CC_OPTS _ACJNI_JAVAC LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PL PLLIBS PLBASE PLARCH PLINCL COFLAGS CWFLAGS CMFLAGS CIFLAGS ETAGS LD SO LDSOFLAGS JAVA_HOME PLLD MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP build build_cpu build_vendor build_os host host_cpu host_vendor host_os JAVA_CC JAVA_CC_FLAGS ac_ct_JAVA_CC GCJ_OPTS JAVA_CC_OPTS _ACJNI_JAVAC LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1252,8 +1252,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
 # Check whether --enable-mt or --disable-mt was given.
 if test "${enable_mt+set}" = set; then
   enableval="$enable_mt"
@@ -1390,8 +1388,6 @@ CMFLAGS=-fpic
 CIFLAGS=-I.
 
 SO="$PLSOEXT"
-
-TARGETS="jpl.$SO"
 
 for ac_prog in gmake make
 do
@@ -3281,7 +3277,7 @@ for d in $JNI_INCLUDE_DIRS; do
 done
 
 for d in $JNI_CLIENT_DIRS; do
-  LDSOFLAGS="$LDSOFLAGS -L$d -Wl,-rpath,$d"
+  LDSOFLAGS="$LDSOFLAGS -L$d"
 done
 
 if test "$java_abs_paths" = yes; then
@@ -3912,8 +3908,6 @@ s,@ETAGS@,$ETAGS,;t t
 s,@LD@,$LD,;t t
 s,@SO@,$SO,;t t
 s,@LDSOFLAGS@,$LDSOFLAGS,;t t
-s,@TARGETS@,$TARGETS,;t t
-s,@PLTARGETS@,$PLTARGETS,;t t
 s,@JAVA_HOME@,$JAVA_HOME,;t t
 s,@PLLD@,$PLLD,;t t
 s,@MAKE@,$MAKE,;t t
