@@ -139,7 +139,7 @@ modalApplication(Application app, FrameObj fr)
 }
 
 
-static status
+static FrameObj
 getModalApplication(Application app)
 { if ( instanceOfObject(app->modal, ClassChain) )
     answer(getHeadChain(app->modal));

@@ -288,8 +288,9 @@ li_pred(Pred, Pred, N, N).
 %	Handle the elements of a collection and return the identifier
 %	for the whole collection in Id.
 
-collection([], rdf:nil) -->
-	[].
+collection([], Nil) -->
+	{ global_ref(rdf:nil, Nil)
+	}.
 collection([H|T], Id) -->
 	triples(H, HId),
 	{ make_id('__List', Id)
