@@ -67,6 +67,7 @@ static functor_t FUNCTOR_error2;
 static functor_t FUNCTOR_type_error2;
 static functor_t FUNCTOR_domain_error2;
 static functor_t FUNCTOR_resource_error1;
+static functor_t FUNCTOR_permission_error3;
 static functor_t FUNCTOR_ip4;
 
 
@@ -108,6 +109,22 @@ resource_error(const char *resource)
 		PL_FUNCTOR, FUNCTOR_error2,
 		  PL_FUNCTOR, FUNCTOR_resource_error1,
 		    PL_CHARS, resource,
+		  PL_VARIABLE);
+
+  return PL_raise_exception(ex);
+}
+
+
+static int
+permission_error(const char *action, const char *type, term_t obj)
+{ term_t ex = PL_new_term_ref();
+
+  PL_unify_term(ex,
+		PL_FUNCTOR, FUNCTOR_error2,
+		  PL_FUNCTOR, FUNCTOR_permission_error3,
+		    PL_CHARS, action,
+		    PL_CHARS, type,
+		    PL_TERM, obj,
 		  PL_VARIABLE);
 
   return PL_raise_exception(ex);
@@ -336,6 +353,15 @@ tcp_init()
    */
 }
 #endif /*WIN32*/
+
+#ifdef _REENTRANT
+  if ( !ssl_thread_setup() )
+  { term_t o = PL_new_term_ref();
+
+    PL_put_atom_chars(o, "ssl");
+    return permission_error("setup_threads", "library", o);
+  }
+#endif
 
   UNLOCK();
   return TRUE;
@@ -612,6 +638,7 @@ install_ssl4pl()
   FUNCTOR_domain_error2   = PL_new_functor(PL_new_atom("domain_error"), 2);
   FUNCTOR_type_error2     = PL_new_functor(PL_new_atom("type_error"), 2);
   FUNCTOR_resource_error1 = PL_new_functor(PL_new_atom("resource_error"), 1);
+  FUNCTOR_permission_error3=PL_new_functor(PL_new_atom("permission_error"), 3);
   FUNCTOR_ip4		  = PL_new_functor(PL_new_atom("ip"), 4);
 
   PL_register_foreign("ssl_init",    3, pl_ssl_init,    PL_FA_TRANSPARENT);

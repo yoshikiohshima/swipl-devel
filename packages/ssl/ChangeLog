@@ -1,3 +1,5 @@
 Jun 24, 2004
  
+  * ADDED: ssl_thread_setup() to allow for multi-threaded apps.
+
   * Started

@@ -1036,6 +1036,68 @@ ssl_write(PL_SSL_INSTANCE *instance, const char *buf, int size)
 }
 
 
+		 /*******************************
+		 *	      THREADING		*
+		 *******************************/
+
+#ifdef _REENTRANT
+static pthread_mutex_t *lock_cs;
+static long *lock_count;
+
+#ifdef WIN32
+
+#else /*WIN32*/
+#include <pthread.h>
+
+static void
+pthreads_locking_callback(int mode, int type, char *file, int line)
+{ if (mode & CRYPTO_LOCK)
+  { pthread_mutex_lock(&(lock_cs[type]));
+    lock_count[type]++;
+  } else
+  { pthread_mutex_unlock(&(lock_cs[type]));
+  }
+}
+
+
+static unsigned long
+pthreads_thread_id(void)
+{ unsigned long ret;
+
+  ret=(unsigned long)pthread_self();
+  return(ret);
+}
+
+
+int
+ssl_thread_setup(void)
+{ int i;
+
+  lock_cs = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(pthread_mutex_t));
+  lock_count = OPENSSL_malloc(CRYPTO_num_locks() * sizeof(long));
+  for (i=0; i<CRYPTO_num_locks(); i++)
+  { lock_count[i]=0;
+    pthread_mutex_init(&(lock_cs[i]), NULL);
+  }
+			       
+  CRYPTO_set_id_callback((unsigned long (*)())pthreads_thread_id);
+  CRYPTO_set_locking_callback((void (*)())pthreads_locking_callback);
+
+  return TRUE;
+}
+
+#endif /*WIN32*/
+
+#else /*_REENTRANT*/
+
+int
+ssl_thread_init(void)
+{ return FALSE;
+}
+
+#endif /*_REENTRANT*/
+
+
 /***********************************************************************
  * Warning, error and debug reporting
  ***********************************************************************/

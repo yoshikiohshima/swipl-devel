@@ -119,6 +119,7 @@ int             ssl_read         ( PL_SSL_INSTANCE *instance
 int             ssl_write        ( PL_SSL_INSTANCE *instance
                                  , const char *buf, int size
                                  ) ;
+int		ssl_thread_setup (void);
 
 char *          ssl_set_host     (PL_SSL *config, const char *host);
 int             ssl_set_port     (PL_SSL *config, int port);
