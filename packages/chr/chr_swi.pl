@@ -98,12 +98,20 @@ ensure_chr_compiled(CHRFile, PlFile, Options) :-
 
 %	chr_compile(+CHRFile, -PlFile)
 %	
-%	Compile a CHR specification into a Prolog file
+%	Compile a CHR specification into a Prolog file.  The double
+%	\+ \+ is done to reclaim all changes to the global constraint
+%	pool.  This should be done by chr_translate/2 (JW).
 
 chr_compile(From, To) :-
 	chr_compile(From, To, informational).
 
 chr_compile(From, To, MsgLevel) :-
+	\+ \+ chr_compile2(From, To, MsgLevel), !.
+chr_compile(From, _, _) :-
+	print_message(error, chr(compilation_failed(From))),
+	fail.
+
+chr_compile2(From, To, MsgLevel) :-
 	print_message(MsgLevel, chr(start(From))),
 	read_chr_file_to_terms(From,Declarations),
 	% read_file_to_terms(From, Declarations,
@@ -157,6 +165,9 @@ prolog:message(chr(end(_From, To))) -->
 	{ file_base_name(To, Base)
 	},
 	[ 'Written translation to ~w'-[Base] ].
+prolog:message(chr(compilation_failed(From))) -->
+	[ 'CHR: Failed to compile ~w'-[From] ].
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 read_chr_file_to_terms(Spec, Terms) :-

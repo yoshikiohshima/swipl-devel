@@ -1,3 +1,8 @@
+Mar 29, 2004
+
+  * JW: Use \+ \+ in chr_compile/3 to undo changes to the constraint
+    pool.  Regression test suite using "make check" works again.
+
 Mar 25, 2004
 
   * Added skip and ancestor debug commands
