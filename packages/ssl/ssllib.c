@@ -1074,13 +1074,11 @@ code is based on mttest.c distributed with the OpenSSL library.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #ifdef _REENTRANT
+
+#include <pthread.h>
+
 static pthread_mutex_t *lock_cs;
 static long *lock_count;
-
-#ifdef WIN32
-
-#else /*WIN32*/
-#include <pthread.h>
 
 static void
 pthreads_locking_callback(int mode, int type, char *file, int line)
@@ -1118,8 +1116,6 @@ ssl_thread_setup(void)
 
   return TRUE;
 }
-
-#endif /*WIN32*/
 
 #else /*_REENTRANT*/
 
