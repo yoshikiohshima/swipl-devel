@@ -87,16 +87,22 @@ PRED_IMPL("atomic", 1, atomic, 0)
 
 #if O_CYCLIC
 
-static int
-visited(Functor f ARG_LD)
-{ Word p = (Word)&f->definition;
-
-  if ( is_marked(p) )
+static inline int
+visitedWord(Word p ARG_LD)
+{ if ( is_marked(p) )
     succeed;
   set_marked(p);
   requireStack(argument, sizeof(Word));
   *aTop++ = p;
   fail;
+}
+
+
+static int
+visited(Functor f ARG_LD)
+{ Word p = (Word)&f->definition;
+
+  return visitedWord(p PASS_LD);
 }
 
 
@@ -1109,16 +1115,11 @@ right_recursion:
   deRef(t);
 
   if ( canBind(*t) )
-  { int i;
-    term_t v;
+  { term_t v;
 
-    for(i=0; i<n; i++)
-    { Word p2 = valTermRef(l+i);	/* see whether we got this one! */
+    if ( visitedWord(t PASS_LD) )
+      return n;
 
-      deRef(p2);
-      if ( p2 == t )
-	return n;
-    }
     v = PL_new_term_ref();
     *valTermRef(v) = makeRef(t);
 
@@ -1151,8 +1152,10 @@ PRED_IMPL("term_variables", 2, term_variables, 0)
   Word *m     = aTop;
   int i, n;
 
+  startCritical;
   n = term_variables(valTermRef(A1), v0, 0 PASS_LD);
   unvisit(m PASS_LD);
+  endCritical;
 
   for(i=0; i<n; i++)
   { if ( !PL_unify_list(vars, head, vars) ||
@@ -1180,18 +1183,26 @@ undone by the Undo().
 
 static void
 dobind_vars(Word t, atom_t constant ARG_LD)
-{ deRef(t);
+{
+right_recursion:
+  deRef(t);
 
-  if ( isVar(*t) )
-  { *t = constant;
-    Trail(t);
+  if ( canBind(*t) )
+  { visitedWord(t PASS_LD);
     return;
   }
   if ( isTerm(*t) )
-  { int arity = arityFunctor(functorTerm(*t));
+  { int arity;
+    Functor f = valueTerm(*t);
 
-    for(t = argTermP(*t, 0); arity > 0; arity--, t++)
+    if ( visited(f PASS_LD) )
+      return;
+
+    arity = arityFunctor(f->definition);
+    for(t = argTermP(*t, 0); --arity; t++)
       dobind_vars(t, constant PASS_LD);
+
+    goto right_recursion;
   }
 }
 
@@ -1222,27 +1233,27 @@ bind_existential_vars(Word t ARG_LD)
 word
 pl_e_free_variables(term_t t, term_t vars)
 { GET_LD
-  mark m;
+  Word *vm, t2;
+  term_t v0;
+  int i, n;
 
-  Mark(m);
-  { Word t2   = bind_existential_vars(valTermRef(t) PASS_LD);
-    term_t v0 = PL_new_term_refs(0);
-    Word *vm   = aTop;
-    int i, n  = term_variables(t2, v0, 0 PASS_LD);
+  startCritical;
+  vm = aTop;
+  t2 = bind_existential_vars(valTermRef(t) PASS_LD);
+  v0 = PL_new_term_refs(0);
+  n  = term_variables(t2, v0, 0 PASS_LD);
+  unvisit(vm PASS_LD);
+  endCritical;
 
-    unvisit(vm PASS_LD);
-    Undo(m);
-
-    if ( PL_unify_functor(vars, PL_new_functor(ATOM_v, n)) )
-    { for(i=0; i<n; i++)
-      { TRY(PL_unify_arg(i+1, vars, v0+i));
-      }
-
-      succeed;
+  if ( PL_unify_functor(vars, PL_new_functor(ATOM_v, n)) )
+  { for(i=0; i<n; i++)
+    { TRY(PL_unify_arg(i+1, vars, v0+i));
     }
 
-    fail;
-  }  
+    succeed;
+  }
+
+  fail;
 }
 
 

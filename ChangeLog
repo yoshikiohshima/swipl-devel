@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ENHANCED: performance for term_variables/2 in terms with many variables.
+
+  * FIXED: handling attributed variables in bagof/setof.  Tom Schrijvers.
+
   * FIXED: Handle goal_expansion/2 for the arguments of call_cleanup/2.
 
   * ADDED: clp/bounds.pl: an Integer Bounds Constraint Solver by
