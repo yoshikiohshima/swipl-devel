@@ -206,6 +206,7 @@ Section "Package CLIB"
   File pl\library\memfile.pl
   File pl\library\mime.pl
   File pl\library\socket.pl
+  File pl\library\prolog_server.pl
   File pl\library\time.pl
   SetOutPath $INSTDIR\doc\packages
   File pl\doc\packages\clib.html
