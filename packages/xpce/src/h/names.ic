@@ -252,6 +252,7 @@
   BUILTIN_NAME("binding")
   BUILTIN_NAME("bindings")
   BUILTIN_NAME("bitmap")
+  BUILTIN_NAME("bits")
   BUILTIN_NAME("bits_per_character")
   BUILTIN_NAME("black")
   BUILTIN_NAME("black_image")

@@ -669,6 +669,17 @@ NewClass(colour_map)
   WsRef		ws_ref;			/* Window system reference */
 End;
 
+typedef struct
+{ enum
+  { XBM_DATA,
+    XPM_DATA
+  } type;
+  union
+  { unsigned char *xbm;
+    char **xpm;
+  } bits;
+} builtin_image_data;
+
 #define ABSTRACT_IMAGE \
   ABSTRACT_VISUAL \
   Name		name;			/* Name of the image */ \
@@ -683,7 +694,8 @@ End;
   BitmapObj	bitmap;			/* Bitmap for read-write's */ \
   Point		hot_spot;		/* Indication of hot-spot */ \
   Image		mask;			/* Masking image */ \
-  WsRef		ws_ref;			/* Window system reference */
+  WsRef		ws_ref;			/* Window system reference */ \
+  builtin_image_data *bits;		/* Data for built-in images */
 
 NewClass(image)
   ABSTRACT_IMAGE
