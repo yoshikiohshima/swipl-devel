@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: import warning on $derived_source/3.  Mike Elston.
+
   * FIXED: numbervars option of the write predicates.  Steve Moyle.
 
   * Provided limited stack trace for errors during GC.

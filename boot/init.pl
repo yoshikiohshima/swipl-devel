@@ -766,12 +766,18 @@ $substitute_atom(From, To, In, Out) :-
 		 *******************************/
 
 :- dynamic
-	$derived_source/3.		% Loaded, DerivedFrom, Time
+	$derived_source_db/3.		% Loaded, DerivedFrom, Time
 
 '$register_derived_source'(Loaded, DerivedFrom) :-
-	retractall('$derived_source'(Loaded, _, _)),
+	retractall('$derived_source_db'(Loaded, _, _)),
 	time_file(DerivedFrom, Time),
-	assert('$derived_source'(Loaded, DerivedFrom, Time)).
+	assert('$derived_source_db'(Loaded, DerivedFrom, Time)).
+
+%	Auto-importing dynamic predicates is not very elegant and
+%	leads to problems with qsave_program/[1,2]
+
+$derived_source(Loaded, DerivedFrom, Time) :-
+	$derived_source_db(Loaded, DerivedFrom, Time).
 
 
 		/********************************
