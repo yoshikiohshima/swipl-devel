@@ -1,5 +1,8 @@
 Jun 15, 2004
 
+  * FIXED: Undefined predicate strip_module/2 in thread_httpd.pl when
+    there is no access to XPCE.  Dmitry.
+
   * ADDED: request_header(Name=Value) option to the option list of
     http_get/3 and http_post/4 for adding user request fields.
 

@@ -71,12 +71,12 @@ http_server(_Goal, _Options) :-
 
 
 http_server(Goal, Port, Options0) :-
-	strip_module(Goal, M, G),
+	'$strip_module'(Goal, M, G),
 	tcp_socket(Socket),
 	tcp_bind(Socket, Port),
 	tcp_listen(Socket, 5),
 	(   select(after(After), Options0, Options1)
-	->  strip_module(After, MA, A),
+	->  '$strip_module'(After, MA, A),
 	    Options2 = [after(MA:A)|Options1]
 	;   Options2 = Options0
 	),
