@@ -1179,7 +1179,7 @@ match_object(triple *t, triple *p)
 	if ( p->object.term.len != t->object.term.len )
 	  return FALSE;
 	return memcmp(t->object.term.record, p->object.term.record,
-		      p->object.term.len);
+		      p->object.term.len) == 0;
       default:
 	assert(0);
     }
@@ -1983,7 +1983,7 @@ get_literal(term_t lit, triple *t, int flags)
   } else if ( !PL_is_ground(lit) )
   { if ( !(flags & LIT_PARTIAL) )
       return type_error(lit, "rdf_object");
-  } else				/* TBD: check groundness */
+  } else
   { t->object.term.record = PL_record_external(lit, &t->object.term.len);
     t->objtype = OBJ_TERM;
   }

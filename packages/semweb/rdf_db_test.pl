@@ -8,22 +8,126 @@
 :- asserta(file_search_path(foreign, '.')).
 :- use_module('rdf_db').
 
-:- set_prolog_flag(optimise, true).
-%:- set_prolog_flag(trace_gc, true).
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RDF-DB test file.  A test is a clause of the form:
 
-:- format('RDF_DB test suite.  To run all tests run ?- test.~n~n', []).
+	<TestSet>(<Name>-<Number>) :- Body.
+
+If the body fails, an appropriate  error   message  is  printed. So, all
+goals are supposed to  succeed.  The   predicate  testset/1  defines the
+available test sets. The public goals are:
+
+	?- runtest(+TestSet).
+	?- test.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+:- format('RDF-DB test suite.  To run all tests run ?- test.~n~n', []).
 
 % Required to get this always running regardless of user LANG setting.
 % Without this the tests won't run on machines with -for example- LANG=ja
 % according to NIDE Naoyuki, nide@ics.nara-wu.ac.jp.  Thanks!
 
 :- getenv('LANG', _) -> setenv('LANG', 'C'); true.
-	
+
+
+		 /*******************************
+		 *	     TEST DATA		*
+		 *******************************/
+
+data(string, '').
+data(string, 'This is a nice string').
+
+data(int, 0).
+data(int, -67).
+data(int, 327848).
+
+data(float, 0.0).
+data(float, 48.25).
+
+data(term, [let, us, test, a, list]).
+data(term, [let, us, test, another, list]).
+
+
+		 /*******************************
+		 *	      RESOURCE		*
+		 *******************************/
+
+resource(1) :-
+	rdf_assert(x, a, aap),
+	rdf_assert(x, a, noot),
+	findall(X, rdf(x, a, X), L),
+	L == [aap, noot].
+
+
+		 /*******************************
+		 *	    SIMPLE LITERAL	*
+		 *******************************/
+
+literal(1) :-
+	findall(V, data(_, V), Vs),
+	forall(member(Value, Vs),
+	       rdf_assert(x, a, literal(Value))),
+	findall(V, (rdf(x, a, X), X = literal(V)), V2),
+	V2 == Vs.
+
+
+		 /*******************************
+		 *	   TYPED LITERALS	*
+		 *******************************/
+
+typed(1) :-
+	findall(type(T,V), data(T, V), TVs),
+	forall(member(Value, TVs),
+	       rdf_assert(x, a, literal(Value))),
+	findall(V, data(_, V), Vs),
+	findall(V, (rdf(x, a, X), X = literal(V)), V2),
+	V2 == Vs.
+typed(2) :-
+	findall(type(T,V), data(T, V), TVs),
+	forall(member(Value, TVs),
+	       rdf_assert(x, a, literal(Value))),
+	findall(V, data(_, V), Vs),
+	findall(V, rdf(x, a, literal(V)), V2),
+	V2 == Vs.
+typed(3) :-
+	findall(type(T,V), data(T, V), TVs),
+	forall(member(Value, TVs),
+	       rdf_assert(x, a, literal(Value))),
+	X = type(T,V),
+	findall(X, rdf(x, a, literal(X)), TV2),
+	TV2 == TVs.
+
+
+		 /*******************************
+		 *	 XML:LANG HANDLING	*
+		 *******************************/
+
+lang_data :-
+	rdf_assert(x, a, literal(lang(nl, 'Jan'))),
+	rdf_assert(x, a, literal(lang(en, 'John'))),
+	rdf_assert(x, a, literal('Johannes')).
+
+lang(1) :-
+	lang_data,
+	findall(X, rdf(x, a, literal(X)), Xs),
+	Xs == [ 'Jan', 'John', 'Johannes' ].
+lang(2) :-
+	lang_data,
+	findall(X, rdf(x, a, literal(lang(nl, X))), Xs),
+	Xs == [ 'Jan' ].
+lang(3) :-
+	lang_data,
+	X = lang(_,_),
+	findall(X, rdf(x, a, literal(X)), Xs),
+	Xs =@= [ lang(nl, 'Jan'),  lang(en, 'John'), lang(_, 'Johannes') ].
+		
+
+
+
 
 		 /*******************************
 		 *	      SCRIPTS		*
 		 *******************************/
-
 
 :- dynamic
 	script_dir/1.
@@ -47,7 +151,6 @@ follow_links(File, File).
 :- set_script_dir.
 
 run_test_script(Script) :-
-	rdf_reset_db,			% all scripts start clean
 	file_base_name(Script, Base),
 	file_name_extension(Pred, _, Base),
 	load_files(Script, [silent(true)]),
@@ -94,6 +197,15 @@ script_failed(File, Except) :-
 		 *        TEST MAIN-LOOP	*
 		 *******************************/
 
+testset(resource).
+testset(literal).
+testset(typed).
+testset(lang).
+
+%	testdir(Dir)
+%	
+%	Enumerate directories holding tests.
+
 testdir('Tests').
 
 :- dynamic
@@ -103,7 +215,9 @@ testdir('Tests').
 test :-
 	retractall(failed(_)),
 	retractall(blocked(_,_)),
+	forall(testset(Set), runtest(Set)),
 	scripts,
+	statistics,
 	report_blocked,
 	report_failed.
 
@@ -131,6 +245,27 @@ report_failed :-
         ;   format('~nAll tests passed~n', [])
 	).
 
+runtest(Name) :-
+	format('Running test set "~w" ', [Name]),
+	flush,
+	functor(Head, Name, 1),
+	nth_clause(Head, _N, R),
+	clause(Head, _, R),
+	rdf_reset_db,			% reset before each script
+	(   catch(Head, Except, true)
+	->  (   var(Except)
+	    ->  put(.), flush
+	    ;   Except = blocked(Reason)
+	    ->  assert(blocked(Head, Reason)),
+		put(!), flush
+	    ;   test_failed(R, Except)
+	    )
+	;   test_failed(R, fail)
+	),
+	fail.
+runtest(_) :-
+	format(' done.~n').
+	
 test_failed(R, Except) :-
 	clause(Head, _, R),
 	functor(Head, Name, 1),
