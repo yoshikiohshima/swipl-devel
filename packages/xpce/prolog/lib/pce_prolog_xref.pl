@@ -232,11 +232,7 @@ xref_defined_class(Source, Class, file(File)) :-
 	defined_class(Class, _, _, Src, file(File)).
 
 collect(Src) :-
-	open_source(Src, Fd),
-	(   peek_char(Fd, #)		% skip #! script line
-	->  skip(Fd, 10)
-	;   true
-	),
+	open_source(Src, Fd),		% also skips #! line if present
 	'$style_check'(Old, Old),
 	style_check(+dollar),
 	repeat,
@@ -570,7 +566,7 @@ process_use_module(File, Src) :-
 
 xref_public_list(File, Path, Public, Src) :-
 	xref_source_file(File, Path, Src),
-	open(Path, read, Fd),
+	open_source(Path, Fd),
 	call_cleanup(read(Fd, ModuleDecl), close(Fd)),
 	ModuleDecl = (:- module(_, Public)).
 
