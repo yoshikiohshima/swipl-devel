@@ -246,7 +246,8 @@ http_worker(Options) :-
 		      ),
 		      debug(server, 'Caught exception ~q (level ~q)',
 			    [E, Level]),
-		      print_message(Level, E)
+		      print_message(Level, E),
+		      close_connection(In, Out)
 		  )
 	      ;	  print_message(error,
 				goal_failed(server_loop(Goal, In, Out,
@@ -275,6 +276,7 @@ done_worker :-
 	message_level/2.
 
 message_level(error(io_error(read, _), _), silent).
+message_level(error(timeout_error(read, _), _),  informational).
 
 
 %	server_loop(:Goal, +In, +Out, +Socket, +Peer, :After)

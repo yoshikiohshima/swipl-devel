@@ -1,5 +1,7 @@
 Jul 21, 2004
 
+  * FIEXD: Bug#168: Close connection on timeout (Sandro Hawke).
+
   * FIXED: Bug#165: Added reuseaddr (Sandro Hawke).
 
 Jul 18, 2004
