@@ -292,12 +292,23 @@ Remove all triples loaded from \arg{Spec}. In the current implementation
 \arg{Spec} must refer to a file.
 
     \predicate{rdf_save}{1}{+File}
-Save all known triples to the given \arg{File}.
+Save all known triples to the given \arg{File}.  Same as
+\term{rdf_save}{File, \[\]}.
 
-    \predicate{rdf_save}{2}{+File, +FileRef}
+    \predicate{rdf_save}{2}{+File, +Options}
+Save with options.  Provided options are:
+
+    \begin{description}
+        \termitem{db}{+FileRef}
 Save all triples whose file-part of their \arg{SourceRef} matches
 \arg{FileRef} to the given \arg{File}.   Saving arbitrary selections
 is possible using predicates from \secref{partsave}.
+
+        \termitem{anon}{+Bool}
+if \term{anon}{false} is provided anonymous resources are only saved
+if the resource appears in the object field of another triple that is
+saved.
+    \end{description}
 
     \predicate{rdf_source}{1}{?File}
 Test or enumerate the files loaded using rdf_load/1.

@@ -601,18 +601,26 @@ rdf_reset_db :-
 		 *	     SAVE RDF		*
 		 *******************************/
 
-%	rdf_save(File)
+%	rdf_save(File, [+Options])
 %
-%	Save RDF data to file
+%	Save RDF data to file.  Options is a list of one or more of the
+%	following options:
+%	
+%		# db(+DB)
+%		Save only triples associated to the given DB
+%		
+%		# anon(Bool)
+%		If false (default true) do not save blank nodes that do
+%		not appear (indirectly) as object of a named resource.
 
 rdf_save(File) :-
-	rdf_save(File, _).
+	rdf_save(File, []).
 
-rdf_save(File, DB) :-
+rdf_save(File, Options) :-
 	open(File, write, Out),
 	flag(rdf_db_saved_subjects, OSavedSubjects, 0),
 	flag(rdf_db_saved_triples, OSavedTriples, 0),
-	call_cleanup(rdf_do_save(Out, DB),
+	call_cleanup(rdf_do_save(Out, Options),
 		     Reason,
 		     cleanup_save(Reason,
 				  File,
@@ -634,28 +642,39 @@ cleanup_save(Reason,
 	;   format(user_error, 'Reason = ~w~n', [Reason])
 	).
 
-rdf_do_save(Out, DB) :-
-	rdf_save_header(Out, DB),
+rdf_do_save(Out, Options) :-
+	rdf_save_header(Out, Options),
+	db(Options, DB),
 	forall(rdf_subject(Subject, DB),
-	       rdf_save_non_anon_subject(Out, Subject, DB)),
+	       rdf_save_non_anon_subject(Out, Subject, Options)),
 	rdf_save_footer(Out), !.	% dubious cut; without the
 					% cleanup handlers isn't called!?
 
-rdf_subject(Subject, DB) :-
+rdf_subject(Subject, Options) :-
+	db(Options, DB),
 	var(DB), !,
 	rdf_subject(Subject).
-rdf_subject(Subject, DB) :-
+rdf_subject(Subject, Options) :-
+	db(Options, DB),
 	rdf_subject(Subject),
 	(   rdf(Subject, _, _, DB:_)
 	->  true
 	).
 
-%	rdf_save_header(+Fd, +DB)
+db(Options, DB) :-
+	(   memberchk(db(DB0), Options)
+	->  DB = DB0
+	;   true			% leave unbound
+	).
+
+
+%	rdf_save_header(+Fd, +Options)
 %
 %	Save XML documentheader, doctype and open the RDF environment.
 %	This predicate also sets up the namespace notation.
 
-rdf_save_header(Out, DB) :-
+rdf_save_header(Out, Options) :-
+	db(Options, DB),
 	format(Out, '<?xml version=\'1.0\' encoding=\'ISO-8859-1\'?>~n', []),
 	format(Out, '<!DOCTYPE rdf:RDF [', []),
 	used_namespaces(NSList, DB),
@@ -752,9 +771,19 @@ xml_code(0'-).
 rdf_save_footer(Out) :-
 	format(Out, '</rdf:RDF>~n', []).
 
-rdf_save_non_anon_subject(_Out, Subject, _DB) :-
-	anonymous_subject(Subject), !.
-rdf_save_non_anon_subject(Out, Subject, DB) :-
+%	rdf_save_non_anon_subject(+Out, +Subject, +Options)
+%	
+%	Save an object.  Anonymous objects not saved if anon(false)
+%	is present in the Options list.
+
+rdf_save_non_anon_subject(_Out, Subject, Options) :-
+	anonymous_subject(Subject),
+	(   memberchk(anon(false), Options)
+	;   db(Options, DB),
+	    rdf_db(_, _, Subject, DB)
+	), !.
+rdf_save_non_anon_subject(Out, Subject, Options) :-
+	db(Options, DB),
 	rdf_save_subject(Out, Subject, DB),
 	flag(rdf_db_saved_subjects, X, X+1).
 
@@ -791,11 +820,11 @@ rdf_save_subject(Out, Subject, DefNS, Atts, Indent, DB) :-
 	rdf_id(Type, DefNS, TypeId),
 	xml_is_name(TypeId), !,
 	format(Out, '~*|<~w', [Indent, TypeId]),
-	save_about(Out, Subject, Indent),
+	save_about(Out, Subject),
 	save_attributes(Atts1, DefNS, Out, TypeId, Indent, DB).
 rdf_save_subject(Out, Subject, _DefNS, Atts, Indent, DB) :-
 	format(Out, '~*|<rdf:Description', [Indent]),
-	save_about(Out, Subject, Indent),
+	save_about(Out, Subject),
 	save_attributes(Atts, rdf, Out, rdf:'Description', Indent, DB).
 
 xml_is_name(_NS:Atom) :- !,
@@ -803,10 +832,9 @@ xml_is_name(_NS:Atom) :- !,
 xml_is_name(Atom) :-
 	xml_name(Atom).
 
-save_about(_Out, Subject, Indent) :-
-	Indent > 0,
+save_about(_Out, Subject) :-
 	anonymous_subject(Subject), !.
-save_about(Out, Subject, _) :-
+save_about(Out, Subject) :-
 	rdf_value(Subject, QSubject),
 	format(Out, ' rdf:about="~w"', [QSubject]).
 

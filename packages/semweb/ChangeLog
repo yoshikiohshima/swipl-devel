@@ -1,3 +1,10 @@
+Apr 1, 2004
+
+  * FIXED: Save toplevel anonymous resources unless anon(false) is provided
+    in the option list of rdf_save/2.  Simon Price and Dan Brickley.
+
+  * ADDED: Option list to rdf_save/2
+
 Nov 29, 2003
 
   * FIXED: rdfs_individual_of(+, -) (only generated Resource).

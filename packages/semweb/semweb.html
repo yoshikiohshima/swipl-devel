@@ -374,14 +374,28 @@ implementation
 
 <P>
 <DT><A NAME="rdf_save/1"><STRONG>rdf_save</STRONG>(<VAR>+File</VAR>)</A><DD>
-Save all known triples to the given <VAR>File</VAR>.
+Save all known triples to the given <VAR>File</VAR>. Same as
+<CODE>rdf_save(File, [])</CODE>.
 
 <P>
-<DT><A NAME="rdf_save/2"><STRONG>rdf_save</STRONG>(<VAR>+File, +FileRef</VAR>)</A><DD>
+<DT><A NAME="rdf_save/2"><STRONG>rdf_save</STRONG>(<VAR>+File, +Options</VAR>)</A><DD>
+Save with options. Provided options are:
+
+<DL>
+
+<P>
+<DT><STRONG>db</STRONG>(<VAR>+FileRef</VAR>)<DD>
 Save all triples whose file-part of their <VAR>SourceRef</VAR> matches
 <VAR>FileRef</VAR> to the given <VAR>File</VAR>. Saving arbitrary 
 selections is possible using predicates from <A HREF="#sec:partsave">section 
 3.3.1</A>.
+
+<P>
+<DT><STRONG>anon</STRONG>(<VAR>+Bool</VAR>)<DD>
+if <CODE>anon(false)</CODE> is provided anonymous resources are only 
+saved if the resource appears in the object field of another triple that 
+is saved.
+</DL>
 
 <P>
 <DT><A NAME="rdf_source/1"><STRONG>rdf_source</STRONG>(<VAR>?File</VAR>)</A><DD>
