@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: module handling in flag/3
+
   * ADDED: derived_from(File) option to load_files/2.
 
   * MODIFIED: renamed free_variables/2 into the more widely use name
