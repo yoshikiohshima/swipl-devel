@@ -1584,7 +1584,11 @@ right_recursion:
     return -1;
   count++;
 
-  if ( isTerm(*t) )
+  if ( isAttVar(*t) )
+  { Word t = valPAttVar(*t);
+    
+    goto right_recursion;
+  } else if ( isTerm(*t) )
   { int arity = arityTerm(*t);
     int me;
 
