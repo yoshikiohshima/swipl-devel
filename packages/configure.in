@@ -31,16 +31,11 @@ if [ -z "$PKG" ]; then
   PKG="clib cpp odbc table sgml sgml/RDF semweb http chr xpce"
 fi
 
-if findexe javac; then
-  echo "Found javac.  Including JPL in target packages"
-  PKG="$PKG jpl"
-fi
-
 configoptions=""
 
 while [ "$1" != "" ]; do
   case "$1" in
-	--without-jpl)	PKG="`echo $PKG | sed 's/\<jpl\>//'`"
+	--without-jpl)	withjpl=no
 			shift
 			;;
   *)			configoptions="$configoptions $1"
@@ -48,6 +43,19 @@ while [ "$1" != "" ]; do
 			;;
   esac
 done
+
+if [ -z "$withjpl" ]; then
+  if findexe javac; then
+     echo "Found javac.  Including JPL in target packages"
+     withjpl=yes
+  else
+     withjpl=no
+  fi
+fi
+
+if [ "$withjpl" = yes ]; then
+  PKG="$PKG jpl"
+fi
 
 sed "s@^PKG=.*@PKG=$PKG@" Makefile > Makefile.pkg
 if cmp -s Makefile Makefile.pkg; then
