@@ -69,8 +69,8 @@
 :- op(760, yfx,user:(#<=>)).
 :- op(750, xfy,user:(#=>)).
 :- op(750, yfx,user:(#<=)).
-:- op(700, xfx,user:(#>)).
-:- op(700, xfx,user:(#<)).
+:- op(700,xfx,user:(#>)).
+:- op(700,xfx,user:(#<)).
 :- op(700,xfx,user:(#>=)).
 :- op(700,xfx,user:(#=<)).
 :- op(700,xfx,user:(#=)).
@@ -170,6 +170,10 @@ parse_expression(Expr,Result) :-
 	; Expr = (- E) ->
 		parse_expression(E,RE),
 		mytimes(-1,RE,Result)
+	; Expr = max(L,R) ->
+		parse_expression(L,RL),
+		parse_expression(R,RR),
+		mymax(L,R,Result,yes)
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -496,6 +500,122 @@ min_divide(L1,U1,L2,U2,Min) :-
 	Min is min(min(div(L1,L2),div(L1,U2)),min(div(U1,L2),div(U1,U2))).	
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+mymax(X,Y,Z,New) :-
+	( nonvar(X) ->
+		( nonvar(Y) ->
+			Z is max(X,Y)
+		; nonvar(Z) ->
+			( Z == X ->		
+				geq(X,Y,yes)
+			; Z > X ->
+				Y = Z
+			%; Z < X
+			%	fail
+			)
+		;
+			get(Y,YL,YU,YExp),
+			get(Z,ZL,ZU,ZExp),
+			( YL >= X ->
+				Z = Y
+			; X >= YU ->
+				Z = X
+			; X < ZL ->
+				Y = Z
+			; YU < ZL ->
+				X = Z
+			;
+				( New == yes -> 
+					put(Y,YL,YU,[mymax(X,Z)|YExp]) 
+				; 
+					true
+				),
+				NZL is max(ZL,X),
+				NZU is min(ZU,YU),
+				( New == yes ->
+					put(Z,NZL,NZU,[mymax2(X,Y)|ZExp])
+				;
+					put(Z,NZL,NZU,ZExp)
+				),
+				( get(Y,YL2,YU2,YExp2) ->
+					NYU is min(YU2,NZU),
+					put(Y,YL2,NYU,YExp2)
+				;
+					true
+				)
+			)
+		)
+	; nonvar(Y) ->
+		mymax(Y,X,Z,New)
+	; nonvar(Z) ->
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		( XU < Z ->
+			Y = Z
+		; % XU >= Z ->
+		  YU < Z ->
+		  	X = Z
+		; % YU >= Z
+		  XL > YU ->
+			Z = X
+		; YL > XU ->
+			Z = Y
+		;
+			( New == yes ->
+				put(Y,YL,YU,[mymax(X,Z)|YExp]),
+				put(X,XL,Z,[mymax(Y,Z)|XExp])
+			;
+				put(X,XL,Z,XExp)
+			),
+			( get(Y,YL2,YU2,YExp2) ->
+				NYU is min(YU2,Z),
+				put(Y,YL2,NYU,YExp2)
+			;
+				true
+			)
+		)
+	; X == Y ->
+		Z = X
+	; Z == X ->
+		geq(X,Y,yes)
+	; Z == Y ->
+		geq(Y,X,yes)
+	;
+		get(X,XL,XU,XExp),
+		get(Y,YL,YU,YExp),
+		get(Z,ZL,ZU,ZExp),
+		NZL is max(ZL,max(XL,YL)),
+		NZU is min(ZU,max(XU,YU)),
+		( New == yes ->
+			put(X,XL,XU,[mymax(Y,Z)|XExp]),
+			put(Y,YL,YU,[mymax(X,Z)|YExp]),
+			put(Z,NZL,NZU,[mymax2(X,Y)|ZExp])
+		;
+			put(Z,NZL,NZU,ZExp)
+		),
+		( get(X,XL2,XU2,XExp2) ->
+			( XU2 < NZL ->
+				Y = Z
+			; YU  < NZL ->
+				X = Z
+			; YU < XL2 ->
+				X = Z
+			; XU2 < YL ->
+				Y = Z
+			;
+				NXU is min(XU2,NZU),
+				put(X,XL2,NXU,XExp2),
+				( get(Y,YL2,YU2,YExp2) ->
+					NYU is min(YU2,NZU),
+					put(Y,YL2,NYU,YExp2)
+				;
+					mymax(Y,X,Z,no)
+				)
+			)
+		; 
+			mymax(X,Y,Z,no)
+		)
+	).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TODO
 %	trigger reified constraints when geq is added
 reified_geq(X,Y,B) :-
@@ -746,6 +866,11 @@ trigger_exp(mytimes(Y,Z),X) :-
 	mytimes(X,Y,Z).
 trigger_exp(mytimes2(A,B),X) :-
 	mytimes(A,B,X).
+
+trigger_exp(mymax(Y,Z),X) :-
+	mymax(X,Y,Z,no).
+trigger_exp(mymax2(X,Y),Z) :-
+	mymax(X,Y,Z,no).
 
 trigger_exp(reified_leq(X,B),Y) :-
 	reified_geq(X,Y,B).
