@@ -43,13 +43,13 @@ data exchange between Prolog processes over the network.
 \section{Introduction}
 
 Raw TCP/IP networking is dangerous for two reasons.  It is hard to tell
-whether to body you think you are talking to is indead the right one and
+whether the body you think you are talking to is indeed the right one and
 anyone with access to a subnet through which your data flows can `tap'
 the wire and listen for sensitive information such as passwords,
 creditcard numbers, etc.   Secure Socket Layer (SSL) deals with both
 problems.  It uses certificates to establish the identity of the peer
-and encryption to make it impossible to tap into the wire.  SSL allows
-agent to talk in private and create secure web services.
+and encryption to make it useless to tap into the wire.  SSL allows
+agents to talk in private and create secure web services.
 
 The SWI-Prolog \pllib{ssl} library provides an API very similar to
 \pllib{socket} for raw TCP/IP connections that provides SSL server
@@ -107,7 +107,7 @@ some by both server as client (marked CS).
     \termitem{host}{+HostName} [C]
         The host to connect to by the client or identified by the server.
         Both IP addresses and hostnames can be supplied here. This option
-        is required for the client and optional for the server.
+        is required for the client and optionally for the server.
     \termitem{port}{+Integer} [CS]
         The port to connect or listen to. This option is required since
         no default port can sensibly be defined for an abstract layer.
@@ -134,9 +134,9 @@ some by both server as client (marked CS).
         next option).
     \termitem{cert_verify_hook}{:PredicateName}
         In case a certificate cannot be verified or has some properties
-        which make it invalid (invalid validity date for example) the
+        which makes it invalid (invalid validity date for example) the
         supplied function will be called to ask its opinion about the
-        certificate. The predicate is calles as follows:
+        certificate. The predicate is called as follows:
 	\term{function}{+SSL, +Certificate, +Error}.  Access will be
 	granted iff the predicate succeeds.
     \termitem{cert}{+Boolean}
