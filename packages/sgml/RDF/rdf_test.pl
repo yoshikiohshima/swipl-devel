@@ -152,9 +152,24 @@ read_triples(Fd, Terms) :-
 	read_triples(T0, Fd, Terms).
 
 read_triples(end_of_file, _, []) :- !.
-read_triples(T0, Fd, [T0|R]) :-
+read_triples(rdf(S0,P0,O0), Fd, [rdf(S,P,O)|R]) :-
+	global_ref(S0, S),
+	global_ref(P0, P),
+	global_obj(O0, O),
 	read(Fd, T1),
 	read_triples(T1, Fd, R).
+
+global_ref(rdf:Local, Global) :-
+	rdf_name_space(NS), !,
+	atom_concat(NS, Local, Global).
+global_ref(NS:Local, Global) :- !,
+	atom_concat(NS, Local, Global).
+global_ref(URI, URI).
+
+global_obj(literal(X), literal(X)) :- !.
+global_obj(Local, Global) :-
+	global_ref(Local, Global).
+
 
 write_triples([]) :- !.
 write_triples([H|T]) :- !,
