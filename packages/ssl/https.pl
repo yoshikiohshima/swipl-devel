@@ -29,10 +29,10 @@ server :-
 server(Port, Options) :-
 	http_server(reply,
 		    [ port(Port),
-%		      timeout(20),		% does not (yet) work
+		      timeout(20),
 		      ssl([ host('localhost'),
-%			    cert(true),
-%			    peer_cert(true),
+			    cert(true),
+			    peer_cert(true),
 			    cacert_file('etc/demoCA/cacert.pem'),
 			    certificate_file('etc/server/server-cert.pem'),
 			    key_file('etc/server/server-key.pem'),

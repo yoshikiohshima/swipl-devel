@@ -38,6 +38,10 @@
 %:- debug(connection).
 %:- debug(_).
 
+:- dynamic
+	option/1,			% Options to test
+	copy_error/1.
+
 test :-
 	make_server(SSL),
 	thread_create(server_loop(SSL), Id, []),
@@ -83,8 +87,12 @@ server_loop(SSL) :-
 	ssl_accept(SSL, Socket, Peer),
 	debug(connection, 'Connection from ~p', [Peer]),
 	ssl_open(SSL, Socket, In, Out),
-	set_stream(In, timeout(20)),
-	copy_client(In, Out),
+	(   option(timeout(T))
+	->  set_stream(In, timeout(T))
+	;   true
+	),
+	catch(copy_client(In, Out), E,
+	      assert(copy_error(E))),
 	close(In),
 	close(Out),
 	(   retract(stop_server)
@@ -138,6 +146,11 @@ client_loop(SSL) :-
 	Message = 'Hello world',
 	write_server(Message, In, Out),
 	write_server(Message, In, Out),
+	(   option(timeout(T))
+	->  Wait is T*2,
+	    sleep(Wait)
+	;   true
+	),
 	write_server(Message, In, Out),
 	write_server(bye, In, Out),
 	close(In),
