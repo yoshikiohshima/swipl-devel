@@ -511,6 +511,7 @@ suggest predicates from a keyword.
 \predicatesummary{visible}{1}{Ports that are visible in the tracer}
 \oppredsummary{volatile}{1}{fx}{1150}{Predicates that are not saved}
 \predicatesummary{wait_for_input}{3}{Wait for input with optional timeout}
+\predicatesummary{when}{2}{Execute goal when condition becomes true}
 \predicatesummary{wildcard_match}{2}{Csh(1) style wildcard match}
 \predicatesummary{win_exec}{2}{Win32: spawn Windows task}
 \predicatesummary{win_has_menu}{0}{Win32: true if console menu is available}

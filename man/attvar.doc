@@ -171,13 +171,24 @@ Unify \arg{Goal} with the goal or conjunction of goals delayed on
 \arg{Var}.  If no goals are frozen on \arg{Var}, \arg{Goal} is unified
 to \const{true}.
 
+    \predicate{when}{2}{@{Condition}, :Goal}
+Execute \arg{Goal} when \arg{Condition} becomes true.  \arg{Condition}
+is one of \term{?=}{X, Y}, \term{nonvar}{X}, \term{ground}{X},
+\term{,}{Cond1, Cond2} or \term{;}{Cond1, Cond2}.  See also freeze/2
+and dif/2.
+
+The when/2 predicate is realised using attributed variable associated
+with the module \const{when}.  It is defined in the autoload library
+\pllib{when}.
+
     \predicate{dif}{2}{@{A}, @{B}}
 The dif/2 predicate provides a constraint stating that \arg{A} and
-\arg{B} are different terms.  If \arg{A} and \arg{B} can never unify
-dif/2 succeeds deterministically.  If \arg{A} and \arg{B} are identical
-it fails immediately and finally, if \arg{A} and \arg{B} can unify
-goals are delayed that prevent \arg{A} and \arg{B} to become equal.
-See also \predref{?=}{2}.
+\arg{B} are different terms. If \arg{A} and \arg{B} can never unify
+dif/2 succeeds deterministically. If \arg{A} and \arg{B} are identical
+it fails immediately and finally, if \arg{A} and \arg{B} can unify goals
+are delayed that prevent \arg{A} and \arg{B} to become equal. The dif/2
+predicate behaves as if defined by \exam{dif(X, Y) :- when(?=(X, Y), X
+\== Y)}. See also \predref{?=}{2}.
 
 The dif/2 predicate is realised using attributed variable associated
 with the module \const{dif}.  It is defined in the autoload library
