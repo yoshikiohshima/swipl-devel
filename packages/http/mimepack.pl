@@ -68,7 +68,7 @@ pack(X, _Out) :-
 	var(X), !,
 	throw(error(instantiation_error, _)).
 pack(Name=Value, Out) :- !,
-	format(Out, 'Content-Disposition: form-data; name="~w"\n', [Name]),
+	format(Out, 'Content-Disposition: form-data; name="~w"\r\n', [Name]),
 	pack(Value, Out).
 pack(html(HTML), Out) :-
 	format(Out, 'Content-Type: text/html\r\n\r\n', []),
@@ -97,6 +97,11 @@ pack(mime(_Atts, '', Parts), Out) :-
 	make_boundary(Parts, Boundary),
 	format('Content-type: multipart/mixed\r\n\r\n'),
 	mime_pack(Parts, Out, Boundary).
+pack(Atom, Out) :-
+	atomic(Atom), !,
+	write(Out, Atom).
+pack(Value, _) :-
+	throw(error(type_error(mime_part, Value), _)).
 
 write_mime_attributes([], Out) :- !,
 	format(Out, '\r\n', []).
