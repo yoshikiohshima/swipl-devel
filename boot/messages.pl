@@ -153,7 +153,8 @@ syntax_error(cannot_start_term) -->
 	[ 'Illegal start of term' ].
 syntax_error(punct(Punct, End)) -->
 	[ 'Unexpected `~w\' before `~w\''-[Punct, End] ].
-
+syntax_error(Message) -->
+	[ '~w'-[Message] ].
 
 dwim_predicates(Module:Name/_Arity, Dwims) :- !,
 	findall(Dwim, dwim_predicate(Module:Name, Dwim), Dwims).
