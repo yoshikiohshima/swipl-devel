@@ -616,6 +616,11 @@ install_ssl4pl()
   PL_register_foreign("ssl_accept",  3, pl_ssl_accept,  0);
   PL_register_foreign("ssl_open",    4, pl_ssl_open,    0);
   PL_register_foreign("ssl_exit",    1, pl_ssl_exit,    0);
+
+  /*
+   * Initialize ssllib
+   */
+  ssl_lib_init();
 }
 
 

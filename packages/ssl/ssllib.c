@@ -737,6 +737,18 @@ ssl_instance_new(PL_SSL *config, int sock)
     return new;
 }
 
+void
+ssl_lib_init(void)
+/*
+ * One-time library initialization code
+ */
+{
+    /*
+     * Index used to store our config data in the SSL data structure
+     */
+    ssl_idx = SSL_get_ex_new_index(0, "config", NULL, NULL, NULL);
+}
+
 PL_SSL_INSTANCE *
 ssl_ssl(PL_SSL *config, int sock_inst)
 /*
@@ -769,7 +781,6 @@ ssl_ssl(PL_SSL *config, int sock_inst)
     /*
      * Store reference to our config data in SSL
      */
-    ssl_idx = SSL_get_ex_new_index(0, "config", NULL, NULL, NULL);
     SSL_set_ex_data(instance->ssl, ssl_idx, config);
 
     if (SSL_set_fd(instance->ssl, sock_inst) == 0) {
