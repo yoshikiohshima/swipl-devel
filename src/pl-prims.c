@@ -716,6 +716,30 @@ PRED_IMPL("\\=@=", 2, structural_neq, 0)
 }
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+?=(X, Y) is true if we can decide for   now and forever that X and Y are
+either equal or non-equal. I.e. X and Y are equal or they cannot unify.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static
+PRED_IMPL("?=", 2, can_compare, 0)
+{ PRED_LD
+  mark m;
+  bool rval;
+
+  Mark(m);
+  rval = PL_unify(A1, A2);
+  if ( rval )
+  { if ( m.trailtop != tTop )
+      rval = FALSE;			/* can be equal after substitution */
+  } else
+    rval = TRUE;			/* cannot unify */
+  Undo(m);
+
+  return rval;
+}
+
+
 		/********************************
 		*         TERM HACKING          *
 		*********************************/
@@ -3008,6 +3032,7 @@ BeginPredDefs(prims)
   PRED_DEF("@>=", 2, std_geq, 0)
   PRED_DEF("=@=", 2, structural_eq, 0)
   PRED_DEF("\\=@=", 2, structural_neq, 0)
+  PRED_DEF("?=", 2, can_compare, 0)
   PRED_DEF("functor", 3, functor, 0)
   PRED_DEF("term_variables", 2, term_variables, 0)
 #ifdef O_HASHTERM

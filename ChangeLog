@@ -7,6 +7,12 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: ?=/2
+
+  * FIXED: A \= B to run attributed variable wakeup handlers before
+    doing the negation.
+
+
 VERSION 5.3.3 (Mar 5, 2003)
 ===========================
 

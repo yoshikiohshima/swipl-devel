@@ -748,22 +748,35 @@ of variables.  Examples:
 \tt x(A,B)      & \tt =@= & \tt x(C,D)  & true \\
 \end{tabular}
 \end{quote}
-\infixop{\=@=}{+Term1}{+Term2}
+
+    \infixop{\=@=}{+Term1}{+Term2}
 Equivalent to \exam{`\Snot Term1 =@= Term2'}.
-\infixop{@<}{+Term1}{+Term2}
+
+    \infixop{@<}{+Term1}{+Term2}
 Succeeds if \arg{Term1} is before \arg{Term2} in the standard order of terms.
-\infixop{@=<}{+Term1}{+Term2}
-Succeeds if both terms are equal (\predref{==}{2}) or \arg{Term1} is before \arg{Term2} in
-the standard order of terms.
-\infixop{@>}{+Term1}{+Term2}
+
+    \infixop{@=<}{+Term1}{+Term2}
+Succeeds if both terms are equal (\predref{==}{2}) or \arg{Term1} is
+before \arg{Term2} in the standard order of terms.
+
+    \infixop{@>}{+Term1}{+Term2}
 Succeeds if \arg{Term1} is after \arg{Term2} in the standard order of terms.
-\infixop{@>=}{+Term1}{+Term2}
-Succeeds if both terms are equal (\predref{==}{2}) or \arg{Term1} is after \arg{Term2} in
-the standard order of terms.
+
+    \infixop{@>=}{+Term1}{+Term2}
+Succeeds if both terms are equal (\predref{==}{2}) or \arg{Term1} is
+after \arg{Term2} in the standard order of terms.
+
     \predicate{compare}{3}{?Order, +Term1, +Term2}
 Determine or test the \arg{Order} between two terms in the standard
 order of terms. \arg{Order} is one of \const{<}, \const{>} or \const{=},
 with the obvious meaning.
+
+    \predicate{?=}{2}{{@}Term1, {@}Term2}
+Decide whether the equality of \arg{Term1} and \arg{Term2} can be
+compared safely, i.e.\ whether the result of \exam{Term1 == Term2}
+can change due to further instantiation of either term.  It is
+defined as by \exam{?=(A,B) :- (A==B ; A \= B), !.}.  See also
+dif/2.
 \end{description}
 
 \section{Control Predicates}		\label{sec:control}

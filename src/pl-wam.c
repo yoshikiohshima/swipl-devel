@@ -1175,6 +1175,36 @@ unify_ptrs(Word t1, Word t2 ARG_LD)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+foreignWakeup() calls delayed goals while executing a foreign procedure.
+Note that the  choicepoints  of  the   awoken  code  are  destroyed  and
+therefore this code can only be used in places introducing an (implicit)
+cut such as \=/2 (implemented as A \= B :- ( A = B -> fail ; true )).
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static bool
+foreignWakeup(ARG1_LD)
+{ if ( *valTermRef(LD->attvar.head) )
+  { fid_t fid = PL_open_foreign_frame();
+    int rval;
+    term_t a0 = PL_new_term_ref();
+
+    PL_put_term(a0, LD->attvar.head);
+    setVar(*valTermRef(LD->attvar.head));
+    setVar(*valTermRef(LD->attvar.tail));
+
+    rval = PL_call_predicate(NULL, PL_Q_NORMAL, PROCEDURE_dwakeup1,
+			     a0);
+
+    PL_close_foreign_frame(fid);
+
+    return rval;
+  }
+
+  succeed;
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 can_unify(t1, t2) succeeds if  two  terms   *can*  be  unified,  without
 actually doing so. This  is  basically   a  stripped  version of unify()
 above. See this function for comments.
@@ -1187,7 +1217,8 @@ can_unify(Word t1, Word t2)
   bool rval;
 
   Mark(m);
-  rval = unify(t1, t2 PASS_LD);
+  if ( (rval = unify(t1, t2 PASS_LD)) )
+    rval = foreignWakeup(PASS_LD1);
   Undo(m);
 
   return rval;  

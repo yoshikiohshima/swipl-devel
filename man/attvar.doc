@@ -177,6 +177,7 @@ The dif/2 predicate provides a constraint stating that \arg{A} and
 dif/2 succeeds deterministically.  If \arg{A} and \arg{B} are identical
 it fails immediately and finally, if \arg{A} and \arg{B} can unify
 goals are delayed that prevent \arg{A} and \arg{B} to become equal.
+See also \predref{?=}{2}.
 
 The dif/2 predicate is realised using attributed variable associated
 with the module \const{dif}.  It is defined in the autoload library
