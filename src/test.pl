@@ -976,7 +976,7 @@ floatconv(float-1) :-
 	A is 5.5/5.5, integer(A).
 floatconv(float-2) :-
 	current_prolog_flag(max_integer, MI),
-	ToHigh is MI + 1,
+	ToHigh is MI + 10000,		% +1 may fail on 64-bit systems
 	float(ToHigh).
 floatconv(float-3) :-
 	(   current_prolog_flag(max_integer, 2147483647)
