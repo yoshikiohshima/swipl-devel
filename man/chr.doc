@@ -29,13 +29,14 @@ implementation. For a more thorough review of CHR we refer the reader to
 \cite{Freuhwirth:98}. More background on CHR can be found at
 \cite{chrSite}.
 
-In \secref{SyntaxAndSemantics} we present the syntax of CHR in Prolog
-and explain informally its operational semantics. Next,
-\secref{practical} deals with practical issues of writing and compiling
-hProlog programs containing CHR. \Secref{predicates} provides a few
-useful predicates to inspect the constraint store and \secref{examples}
-illustrates CHR with two example programs. Finally, \secref{guidelines}
-concludes with a few practical guidelines for using CHR.
+In \secref{SyntaxAndSemantics} we present the syntax of CHR in Prolog and
+explain informally its operational semantics. Next, \secref{practical} deals
+with practical issues of writing and compiling hProlog programs containing
+CHR. \Secref{predicates} provides a few useful predicates to inspect the
+constraint store and \secref{examples} illustrates CHR with two example
+programs. In \secref{sicstus-chr} some compatibility issues with SICStus
+CHR are listed. Finally, \secref{guidelines} concludes with a few practical
+guidelines for using CHR.
 
 
 \section{Syntax and Semantics} 		\label{sec:SyntaxAndSemantics}
@@ -168,6 +169,27 @@ passive constraint in that rule.
 
 Additional pragmas may be released in the future.
 
+\paragraph{Options}
+%- - - - - - - - -
+It is possible to specify options that apply to all the CHR rules in the module.
+Options are specified with the \texttt{option/2} declaration:
+
+\begin{code}
+                option(Option,Value).
+\end{code}
+
+Available options are:
+\begin{description}
+        \termitem{check\_guard\_bindings}{}
+This option controls whether guards should be checked for illegal variable bindings
+or not.
+Possible values for this option are \texttt{on}, to enable the checks, and \texttt{off}, 
+to disable the checks.
+        \termitem{optimize}{}
+This is an experimental option controlling the degree of optimization. Possible values are
+\texttt{full}, to enable all available optimizations, and \texttt{off}, to disable all optimizations.
+\end{description}
+
 \section{CHR in SWI-Prolog Programs}		\label{sec:practical}
 %===========================
 
@@ -257,6 +279,28 @@ intersection([_|T],L2,L3) :-
 \end{code}
 		
 \end{itemize}
+
+\section{Compatibility with SICStus CHR} 		\label{sec:sicstus-chr}
+%==================
+
+There are small differences between CHR in SWI-Prolog and SICStus.
+Besides differences in available options and pragmas, the following
+differences should be noted:
+
+\begin{itemlist}
+        \item [The \predref{handler}{1} declaration]
+In SICStus every CHR module requires a \predref{handler}{1}
+declaration declaring a unique handler name. This declaration is valid
+syntax in SWI-Prolog, but will have no effect. A warning will be given
+during compilation.
+
+        \item [The \predref{rules}{1} declaration]
+In SICStus every CHR it is possible to only enable a subset of the
+available rules through the \predref{rules}{1} declaration. The
+declaration is valid syntax in SWI-Prolog, but will have no effect. A
+warning will be given during compilation.
+\end{itemlist}
+
 
 \section{Guidelines} 			\label{sec:guidelines}
 %==================
