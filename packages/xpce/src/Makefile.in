@@ -146,7 +146,7 @@ SICSTARGET=xpce-sicstus
 VMAJOR=@VMAJOR@
 VMINOR=@VMINOR@
 VPATCH=@VPATCH@
-PCEVERSIONDATE=April 2004
+PCEVERSIONDATE=June 2004
 
 SOMAJOR=$(VMAJOR)
 SOMINOR=$(VMINOR).$(VPATCH)
@@ -685,11 +685,11 @@ rt-install:	$(INSTALL) rt-home rt-misc rt-bitmaps rt-bins rt-link
 
 dv-install:	rt-install dv-home dv-lib dv-boot dv-help \
 	        dv-link dv-pl-files dv-manual dv-man \
-		dv-misc cxx-install dv-qlf dv-bins dv-online
+		dv-misc cxx-install dv-qlf dv-bins dv-online dv-classindex
 
 rpm-install:	rt-home rt-misc rt-bitmaps rt-bins rpm-link \
 		dv-lib dv-boot dv-help dv-link dv-pl-files dv-manual dv-man \
-		dv-misc cxx-install dv-bins dv-online
+		dv-misc cxx-install dv-bins dv-online dv-classindex
 
 manindex:	$(MANINDEX)
 
@@ -744,7 +744,7 @@ rt-bins:
 dv-home:
 		if [ ! -d $(DVHOME) ]; then mkdir $(DVHOME); fi
 
-dv-lib:		../prolog/lib/CLASSINDEX.pl
+dv-lib:
 		@if [ ! -d $(DVHOME)/prolog ]; then mkdir $(DVHOME)/prolog; fi
 		@for d in $(DVLIBDIRS); do \
 		    if [ ! -d $(DVHOME)/prolog/$$d ]; then \
@@ -776,10 +776,9 @@ dv-lib:		../prolog/lib/CLASSINDEX.pl
 				$(DVHOME)/prolog/lib/man
 		$(INSTALL_DATA) ../prolog/lib/Makefile $(DVHOME)/prolog/lib
 
-
-../prolog/lib/CLASSINDEX.pl::
-		$(PL) -f ../prolog/lib/pce_class_index.pl -g true \
-		-t "pce_make_library_index('../prolog/lib')"
+dv-classindex::
+		$(PLEXE) -f none -F xpce -g true \
+			-t "pce_make_library_index('$(DVHOME)/prolog/lib')"
 
 dv-boot:	
 		@for d in $(DVBOOTDIRS); do \

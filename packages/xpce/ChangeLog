@@ -2,6 +2,9 @@
 			   ==============
 
 
+VERSION 6.2.19, distributed with SWI-Prolog 5.3.12
+==================================================
+
 * ADDED: Create CLASSINDEX.pl in XPCE library insex file.
 
 * FIXED: PceEmacs: restore of syntax after processing a file.  Dmitry.

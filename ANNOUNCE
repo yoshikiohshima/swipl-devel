@@ -26,7 +26,7 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
 
     Supported: =/2, ==/2, @>/2 (and friends), copy_term/2, =../2,
                duplicate_term/2, ground/2, dif/2, when/2, term_variables/2,
-	       numbervars/3.
+	       numbervars/3, hash_term/3.
 
     Unsupported: recorda/2 (and friends), write/1
 		 (and friends, partial support), asserta/1 (and friends).
@@ -55,19 +55,17 @@ Brief summary of changes since 5.3.10
 SWI-Prolog
 ----------
 
-  * Integrated JPL into the main source
-
   * Minor patches
 
 Packages
 --------
 
-  * Semweb: Fixed literal matching (broken in 5.3.10).
+  * HTTP: various fixes
 
 Development environment
 -----------------------
 
-  (none)
+  * Various minor patches
 
 
 INCOMPATIBILITIES
