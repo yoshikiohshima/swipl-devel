@@ -6,6 +6,11 @@
 					to the SWI-Prolog Bugzilla system at
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
+
+  * ADDED: term_variables/3: difference list version of term_variables/2.
+    Suggested by Tom Schrijvers for the next version of CHR.
+
+
 VERSION 5.3.13 (June 28, 2004)
 ==============================
 

@@ -1141,7 +1141,7 @@ pl_numbervars(term_t t, term_t f,
 
 
 static int
-term_variables(Word t, term_t l, int n ARG_LD)
+term_variables_loop(Word t, term_t l, int n ARG_LD)
 { 
 right_recursion:
   deRef(t);
@@ -1166,7 +1166,7 @@ right_recursion:
     
     arity = arityFunctor(f->definition);
     for(t = argTermP(*t, 0); --arity > 0; t++)
-      n = term_variables(t, l, n PASS_LD);
+      n = term_variables_loop(t, l, n PASS_LD);
 
     goto right_recursion;
   }
@@ -1175,17 +1175,15 @@ right_recursion:
 }
 
 
-static
-PRED_IMPL("term_variables", 2, term_variables, 0)
-{ PRED_LD
-  term_t head = PL_new_term_ref();
-  term_t vars = PL_copy_term_ref(A2);
+static int
+term_variables(term_t t, term_t vars, term_t tail ARG_LD)
+{ term_t head = PL_new_term_ref();
   term_t v0   = PL_new_term_refs(0);
   Word *m     = aTop;
   int i, n;
 
   startCritical;
-  n = term_variables(valTermRef(A1), v0, 0 PASS_LD);
+  n = term_variables_loop(valTermRef(t), v0, 0 PASS_LD);
   unvisit(m PASS_LD);
   endCritical;
 
@@ -1195,7 +1193,27 @@ PRED_IMPL("term_variables", 2, term_variables, 0)
       fail;
   }
       
-  return PL_unify_nil(vars);
+  if ( tail )
+    return PL_unify(vars, tail);
+  else
+    return PL_unify_nil(vars);
+}
+
+
+
+static
+PRED_IMPL("term_variables", 2, term_variables2, 0)
+{ PRED_LD
+
+  return term_variables(A1, A2, 0 PASS_LD);
+}
+
+
+static
+PRED_IMPL("term_variables", 3, term_variables3, 0)
+{ PRED_LD
+
+  return term_variables(A1, A2, A3 PASS_LD);
 }
 
 
@@ -1273,7 +1291,7 @@ pl_e_free_variables(term_t t, term_t vars)
   vm = aTop;
   t2 = bind_existential_vars(valTermRef(t) PASS_LD);
   v0 = PL_new_term_refs(0);
-  n  = term_variables(t2, v0, 0 PASS_LD);
+  n  = term_variables_loop(t2, v0, 0 PASS_LD);
   unvisit(vm PASS_LD);
   endCritical;
 
@@ -3199,7 +3217,8 @@ BeginPredDefs(prims)
   PRED_DEF("\\=@=", 2, structural_neq, 0)
   PRED_DEF("?=", 2, can_compare, 0)
   PRED_DEF("functor", 3, functor, 0)
-  PRED_DEF("term_variables", 2, term_variables, 0)
+  PRED_DEF("term_variables", 2, term_variables2, 0)
+  PRED_DEF("term_variables", 3, term_variables3, 0)
   PRED_DEF("unifyable", 3, unifyable, 0)
 #ifdef O_HASHTERM
   PRED_DEF("hash_term", 2, hash_term, 0)

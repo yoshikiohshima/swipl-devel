@@ -221,6 +221,7 @@ suggest predicates from a keyword.
 \predicatesummary{format}{3}{Formatted output on a stream}
 \predicatesummary{format_predicate}{2}{Program format/[1,2]}
 \predicatesummary{term_variables}{2}{Find unbound variables in a term}
+\predicatesummary{term_variables}{3}{Find unbound variables in a term}
 \predicatesummary{freeze}{2}{Delay execution until variable is bound}
 \predicatesummary{frozen}{2}{Query delayed goals on var}
 \predicatesummary{functor}{3}{Get name and arity of a term or construct a term }

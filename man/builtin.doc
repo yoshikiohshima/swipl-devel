@@ -2922,7 +2922,7 @@ of \arg{Term}.%
 		  name term_variables/2 is more widely used.  The old
 		  predicate is still available from the library
 		  \pllib{backcomp}.}
-For example:
+See also term_variables/3.  For example:
 
 \begin{code}
 ?- term_variables(a(X, b(Y, X), Z), L).
@@ -2932,6 +2932,10 @@ X = G367
 Y = G366
 Z = G371
 \end{code}
+
+    \predicate{term_variables}{3}{+Term, -List, ?Tail}
+Difference list version of term_variables/2.  I.e.\ \arg{Tail} is the
+tail of the variable-list \arg{List}.
 
     \predicate{copy_term}{2}{+In, -Out}
 Create a version if \arg{In} with renamed (fresh) variables and unify it
