@@ -54,7 +54,7 @@ uninstall:
 		$(PL) -f none -g make -t halt
 
 check::
-		$(PL) -f rdf_test.pl -g test,halt -t 'halt(1)'
+		$(PL) -f chr_test.pl -g test,halt -t 'halt(1)'
 
 
 ################################################################
