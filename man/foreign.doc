@@ -1413,6 +1413,11 @@ be initialised to proper functions or \const{NULL} to get the default
 behaviour of builtin atoms. Below are the defined member functions:
 
 \begin{description}
+    \cfunction{void}{acquire}{atom_t a}
+Called if a new blob of this type is created through PL_put_blob()
+or PL_unify_blob().  This callback may be used together with the
+release hook to deal with reference counted external objects.
+
     \cfunction{int}{release}{atom_t a}
 The blob (atom) \arg{a} is about to be released.  This function
 can retrieve the data of the blob using PL_blob_data().  If it

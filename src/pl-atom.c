@@ -390,6 +390,9 @@ lookupBlob(const char *s, unsigned int length, PL_blob_t *type, int *new)
   UNLOCK();
   
   *new = TRUE;
+  if ( type->acquire )
+    (*type->acquire)(a->atom);
+
   return a->atom;
 }
 

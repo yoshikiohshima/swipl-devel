@@ -450,10 +450,11 @@ typedef struct PL_blob_t
 #ifdef SIO_MAGIC
   int			(*write)(IOSTREAM *s, atom_t a, int flags);
 #else
-  int			(*write)(void *s, atom_t a);
+  int			(*write)(void *s, atom_t a, int flags);
 #endif
+  void			(*acquire)(atom_t a);
 					/* private */
-  void *		reserved[13];	/* for future extension */
+  void *		reserved[12];	/* for future extension */
   int			registered;	/* Already registered? */
   int			rank;		/* Rank for ordering atoms */
   struct PL_blob_t *    next;		/* next in registered type-chain */
