@@ -75,3 +75,16 @@ GNU:
 		 *******************************/
 
 	* Print attvars as X{...} (Tom Schrijvers)
+
+	  set_prolog_flag(write_attributes, Mode) where mode is one of
+
+	  	* ignore		(write as plain variables)
+		* dots			(write as {...})
+		* write			(hand to write)
+		* portray		(hand each attribute to
+					 Module:portray_attr)
+
+	  Also write_term(X, [attributes(Mode)])
+
+	  Module:portray_attr()
+		

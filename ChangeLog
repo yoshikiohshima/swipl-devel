@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.3 (Mar 5, 2003)
+===========================
+
   * FIXED: Bug#127 (partially), system slowing down after Control-C
     followed by abort if the Control-C happens inside retract/1.
     Holger Kanwischer.
