@@ -331,7 +331,7 @@ prolog_load_context(file, F) :-
 	source_location(F, _).
 prolog_load_context(stream, S) :-
 	source_location(F, _),
-	(   $load_input(F, S0)
+	(   system:$load_input(F, S0)
 	->  S = S0
 	).
 prolog_load_context(directory, D) :-

@@ -763,6 +763,8 @@ $open_source(File, In, Goal) :-
 
 :- dynamic
 	$load_input/2.
+:- volatile
+	$load_input/2.
 
 $open_source_call(File, In, Goal, Status) :-
 	flag($compilation_level, Level, Level+1),
