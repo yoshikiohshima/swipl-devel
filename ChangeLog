@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Merged saved-state patches from main branch
+
   * NEW: renamed nb_setval/2 to nb_linkval/2, giving nb_setval/2 a better
     defined semantics.  Added duplicate_term/2 to really duplicate a term.
 
