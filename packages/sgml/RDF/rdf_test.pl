@@ -90,8 +90,12 @@ passed(File) :-
 :- dynamic failed/1.
 
 test :-
+	test(load_rdf),
+	test(process_rdf).
+
+test(How) :-
 	retractall(failed(_)),
-	test_dir(suite),
+	test_dir(suite, How),
 	findall(F, failed(F), Failed),
 	(   Failed == []
 	->  true
@@ -102,17 +106,20 @@ test :-
 
 
 test_dir(Dir) :-
-	format('Running tests from "~w": ', [Dir]),
+	test_dir(Dir, load_rdf).
+
+test_dir(Dir, How) :-
+	format('Tests from "~w" [~w]: ', [Dir, How]),
 	atom_concat(Dir, '/*.rdf', Pattern),
 	expand_file_name(Pattern, TestFiles),
-	checklist(test, TestFiles),
+	checklist(test(How), TestFiles),
 	format(' done~n').
 
-test(File) :-
+test(How, File) :-
 	format('.'), flush_output,
 	rdf_reset_ids,
 	ok_file(File, OkFile),
-	(   load_rdf(File, Triples)
+	(   call(How, File, Triples)
 	->  (   catch(open(OkFile, read, Fd), _, fail)
 	    ->  (   read_triples(Fd, OkTriples),
 		    close(Fd),
@@ -166,6 +173,18 @@ cat(File) :-
 	open(File, read, Fd),
 	copy_stream_data(Fd, user_output),
 	close(Fd).
+
+:- dynamic triple/1.
+
+process_rdf(File, Triples) :-
+	retractall(triple(_)),
+	process_rdf(File, assert_triples, []),
+	findall(T, retract(triple(T)), Triples).
+
+assert_triples([], _).
+assert_triples([H|T], Loc) :-
+	assert(triple(H)),
+	assert_triples(T, Loc).
 
 
 		 /*******************************

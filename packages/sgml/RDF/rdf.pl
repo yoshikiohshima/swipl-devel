@@ -145,7 +145,7 @@ process_rdf(File, OnObject, Options) :-
 	new_sgml_parser(Parser, []),
 	set_sgml_parser(Parser, file(Source)),
 	set_sgml_parser(Parser, dialect(xmlns)),
-	set_sgml_parser(Parser, space(remove)),
+	set_sgml_parser(Parser, space(sgml)),
 	set_anon_prefix(BaseURI, Refs),
 	call_cleanup(sgml_parse(Parser,
 				[ source(In),
