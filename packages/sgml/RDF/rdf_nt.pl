@@ -183,6 +183,10 @@ lang_string(String) -->
 	->  language(Lang),
 	    { String = literal(lang(Lang, Atom))
 	    }
+	;   "^^"
+	->  uniref(Type),
+	    { String = literal(type(Type, Atom))
+	    }	
 	;   { String = literal(Atom)
 	    }
 	).
