@@ -397,7 +397,7 @@ check_head_constraints([Constr|Rest],Decls,PragmaRule,N) :-
 		check_head_constraints(Rest,Decls,PragmaRule,N)
 	;
 		format('CHR compiler ERROR: Undeclared constraint ~w in head of ~@.\n',
-		       [F/A,chr_pp:format_rule(PragmaRule,N)]),
+		       [F/A,format_rule(PragmaRule,N)]),
 		format('    `--> Constraint should be on of ~w.\n',[Decls]),
 		fail
 	).

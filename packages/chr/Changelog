@@ -1,5 +1,6 @@
 Apr 5, 2004
 
+  * JW: fixed reference to format_rule/2.
   * JW: Use select/3 rather than delete/3 in diff/2 in Tests/zebra.pl
   * TS: CHR translation now leaves CHR store empty
 
