@@ -1263,9 +1263,10 @@ be set.  See also the \cmdlineoption{+/-tty} command-line option.
 
     \prologflagitem{unix}{bool}{r}
 \index{unix}%
-If {\tt true}, the operating system is some version of Unix.  Defined
-if the C-compiler used to compile this version of SWI-Prolog either
-defines \verb$__unix__$ or \const{unix}.
+If \const{true}, the operating system is some version of Unix.
+Defined if the C-compiler used to compile this version of SWI-Prolog
+either defines \verb$__unix__$ or \const{unix}.  On other systems this
+flag is not available.
 
     \prologflagitem{unknown}{fail,warning,error}{rw}
 Determines the behaviour if an undefined procedure is encountered.  If
@@ -1299,8 +1300,9 @@ easier for implementing version-conditional statements.
 
     \prologflagitem{windows}{bool}{r}
 \index{windows}%
-If {\tt true}, the operating system is an implementation of Microsoft
-Windows (3.1, 95/98/ME, NT/2000/XP, etc.).
+If \const{true}, the operating system is an implementation of
+Microsoft Windows (3.1, 95/98/ME, NT/2000/XP, etc.).  This flag
+is only available on MS-Windows based versions.
 
     \prologflagitem{write_attributes}{atom}{rw}
 Defines how write/1 an friends write attributed variables.  The option
