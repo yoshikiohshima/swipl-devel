@@ -672,12 +672,15 @@ map_dlflags([F|T], M) :-
 	dlopen_flag(F, I),
 	M is M0 \/ I.
 
-open_shared_object(File, Flags, Handle) :-
+open_shared_object(File, Flags, Handle) :- % compatibility
+	is_list(Flags), \+ is_list(Handle), !,
+	open_shared_object(File, Handle, Flags).
+open_shared_object(File, Handle, Flags) :-
 	map_dlflags(Flags, Mask),
 	$open_shared_object(File, Handle, Mask).
 
 open_shared_object(File, Handle) :-
-	open_shared_object(File, [global], Handle). % use pl-load.c defaults
+	open_shared_object(File, [], Handle). % use pl-load.c defaults
 
 
 		/********************************

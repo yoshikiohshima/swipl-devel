@@ -100,17 +100,16 @@ predicates from \secref{shlib} in your application.
 
 \begin{description}
     \predicate{open_shared_object}{2}{+File, -Handle}
-\arg{File} is the name of a \fileext{so} file (see your C programmers
-documentation on how to create a \fileext{so} file). This file is
-attached to the current process and \arg{Handle} is unified with a
-handle to the shared object. Equivalent to
-\exam{open_shared_object(File, [global], Handle)}. See also
+\arg{File} is the name of a shared object file (called dynamic load
+library in MS-Windows). This file is attached to the current process and
+\arg{Handle} is unified with a handle to the library. Equivalent to
+\exam{open_shared_object(File, [], Handle)}. See also
 load_foreign_library/[1,2].
 
 On errors, an exception \term{shared_object}{Action, Message} is
 raised. \arg{Message} is the return value from \funcref{dlerror}{}.
 
-    \predicate{open_shared_object}{3}{+File, +Options, -Handle}
+    \predicate{open_shared_object}{3}{+File, -Handle, +Options}
 As open_shared_object/2, but allows for additional flags to be passed.
 \arg{Options} is a list of atoms. \const{now} implies the symbols are
 resolved immediately rather than lazy (default). \const{global} implies

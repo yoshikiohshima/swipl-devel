@@ -898,7 +898,7 @@ pl_writeq2(term_t stream, term_t term)
 word
 pl_print2(term_t stream, term_t term)
 { return do_write2(stream, term,
-		   PL_WRT_QUOTED|PL_WRT_PORTRAY|PL_WRT_NUMBERVARS);
+		   PL_WRT_PORTRAY|PL_WRT_NUMBERVARS);
 }
 
 word

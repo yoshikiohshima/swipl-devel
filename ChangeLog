@@ -7,6 +7,25 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.16 (July 21, 2004)
+==============================
+
+  * MODIFIED: print/1 behaves as write/1 instead of writeq/1.  This
+    new behaviour is compatible to other Prolog systems and the
+    documentation.  Lourens van der Meij.  Use write_term/[2,3]
+    to get unambiguous ISO compliant printing in a specific mode.
+
+    Affected code must be updated.  
+
+  * MODIFIED: By default, symbols from shared objects are not made
+    global any longer.  The argument order of open_shared_object/3
+    has changes, though the predicate automatically reverses the
+    arguments when confronted with the old order.
+
+    This is unlikely to affect user code.  If it does, the user can
+    use open_shared_object(File, Handle, [global]) for compatibility.
+
+
 VERSION 5.3.15 (July 16, 2004)
 ==============================
 
