@@ -3531,8 +3531,8 @@ init_decoding(dtd_parser *p)
 }
 
 
-static void
-set_encoding(dtd_parser *p, const ichar *enc)
+int
+xml_set_encoding(dtd_parser *p, const char *enc)
 { dtd *dtd = p->dtd;
 
   if ( istrcaseeq(enc, "iso-8859-1") )
@@ -3540,9 +3540,17 @@ set_encoding(dtd_parser *p, const ichar *enc)
   } else if ( istrcaseeq(enc, "utf-8") )
   { dtd->encoding = ENC_UTF8;
   } else
-    gripe(ERC_EXISTENCE, "character encoding", enc);
+    return FALSE;
 
   init_decoding(p);
+  return TRUE;
+}
+
+
+static void
+set_encoding(dtd_parser *p, const ichar *enc)
+{ if ( !xml_set_encoding(p, enc) )
+    gripe(ERC_EXISTENCE, "character encoding", enc);
 }
 
 
