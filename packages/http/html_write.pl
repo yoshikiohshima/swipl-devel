@@ -92,7 +92,7 @@ page(Head, Body) -->
 	  '</html>\n'
 	].
 
-pagebody(Head) -->
+pagehead(Head) -->
 	{ functor(Head, head, _)
 	}, !,
 	html(Head).
