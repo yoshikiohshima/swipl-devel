@@ -97,16 +97,29 @@ passed(File) :-
 	length(Triples, N),
 	format('Saved ~d triples to ~w~n', [N, OkFile]).
 
+:- dynamic failed/1.
+
 test :-
-	test_dir(suite).
+	retractall(failed(_)),
+	test_dir(suite),
+	findall(F, failed(F), Failed),
+	(   Failed == []
+	->  true
+	;   length(Failed, N),
+	    format('ERROR: ~w tests failed~n', [N]),
+	    fail
+	).
+
 
 test_dir(Dir) :-
+	format('Running tests from "~w": ', [Dir]),
 	atom_concat(Dir, '/*.rdf', Pattern),
 	expand_file_name(Pattern, TestFiles),
-	checklist(test, TestFiles).
+	checklist(test, TestFiles),
+	format(' done~n').
 
 test(File) :-
-	format('Testing ~w ... ', [File]), flush_output,
+	format('.'), flush_output,
 	rdf_reset_ids,
 	ok_file(File, OkFile),
 	(   rdf_parse(File, Triples)
@@ -114,12 +127,15 @@ test(File) :-
 	    ->  (   read_triples(Fd, OkTriples),
 		    close(Fd),
 		    compare_triples(Triples, OkTriples, _Subst)
-		->  format('ok~n')
-		;   format('WRONG ANSWER~n', [])
+		->  true
+		;   assert(failed(File)),
+		    format('~N~w: WRONG ANSWER~n', [File])
 		)
-	    ;	format('(no .ok file)~n', [])
+	    ;	assert(failed(File)),
+	        format('~N~w: (no .ok file)~n', [File])
 	    )
-	;   format('PARSE FAILED~n', [])
+	;   assert(failed(File)),
+	    format('~N~w: PARSE FAILED~n', [File])
 	).
 
 ok_file(File, OkFile) :-
