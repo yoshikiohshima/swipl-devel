@@ -447,8 +447,10 @@ mytimes(X,Y,Z) :-
 		get(Y,YL,YU,YExp),
 		YExp1 = [mytimes(X,Z)|YExp],
 		put(Y,YL,YU,YExp1),
-		NXL is max(XL,ceiling(min(div(Z,YU),div(Z,YL)))),
-		NXU is min(XU,floor(max(div(Z,YL),div(Z,YU)))),		
+		min_divide(Z,Z,YL,YU,TNXL),
+		max_divide(Z,Z,YL,YU,TNXU),
+		NXL is max(XL,ceiling(TNXL)),
+		NXU is min(XU,floor(TNXU)),		
 		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
 		( get(Y,YL2,YU2,YExp2) ->
 			NYL is max(YL2,ceiling(min(div(Z,NXU),div(Z,NXL)))),
@@ -495,9 +497,17 @@ max_times(L1,U1,L2,U2,Max) :-
 min_times(L1,U1,L2,U2,Min) :-
 	Min is min(min(L1*L2,L1*U2),min(U1*L2,U1*U2)).	
 max_divide(L1,U1,L2,U2,Max) :-
-	Max is max(max(div(L1,L2),div(L1,U2)),max(div(U1,L2),div(U1,U2))).	
+	( L2 =< 0 , U2 >= 0 ->
+		max_inf(Max)
+	;
+		Max is max(max(div(L1,L2),div(L1,U2)),max(div(U1,L2),div(U1,U2)))
+	).	
 min_divide(L1,U1,L2,U2,Min) :-
-	Min is min(min(div(L1,L2),div(L1,U2)),min(div(U1,L2),div(U1,U2))).	
+	( L2 =< 0 , U2 >= 0 ->
+		min_inf(Min)
+	;	
+		Min is min(min(div(L1,L2),div(L1,U2)),min(div(U1,L2),div(U1,U2)))
+	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 mymax(X,Y,Z,New) :-
