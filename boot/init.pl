@@ -38,7 +38,7 @@ inserted  in  the  intermediate  code  file.   Used  to print diagnostic
 messages and start the Prolog defined compiler for  the  remaining  boot
 modules.
 
-If you want  to  debug  this  module,  put  a  '$:-'  trace.   directive
+If you want  to  debug  this  module,  put  a  '$:-'(trace).   directive
 somewhere.   The  tracer will work properly under boot compilation as it
 will use the C defined write predicate  to  print  goals  and  does  not
 attempt to call the Prolog defined trace interceptor.
