@@ -435,8 +435,13 @@ PL_EXPORT(int)		PL_get_attr(term_t v, term_t a);
 #define PL_BLOB_VERSION 1		/* Current version */
 #define PL_BLOB_MAGIC	(PL_BLOB_MAGIC_B|PL_BLOB_VERSION)
 
+#define PL_BLOB_UNIQUE	0x01		/* Blob content is unique */
+#define PL_BLOB_TEXT	0x02		/* blob contains text */
+#define PL_BLOB_NOCOPY	0x04		/* do not copy the data */
+
 typedef struct PL_blob_t
 { unsigned long		magic;		/* PL_BLOB_MAGIC */
+  unsigned long		flags;		/* PL_BLOB_* */
   char *		name;		/* name of the type */
   int			(*release)(atom_t a);
   int			(*compare)(atom_t a, atom_t b);

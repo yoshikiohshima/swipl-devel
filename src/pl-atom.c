@@ -170,6 +170,7 @@ static void	rehashAtoms();
 
 static PL_blob_t text_atom =
 { PL_BLOB_MAGIC,
+  PL_BLOB_UNIQUE|PL_BLOB_TEXT,		/* unique representation of text */
   "text",
   NULL,					/* GC hook */
   NULL,					/* compare */
@@ -219,7 +220,7 @@ PL_unregister_blob_type(PL_blob_t *type)
   PL_UNLOCK(L_MISC);
 
   LOCK();
-  for( ; i < entriesBuffer(&atom_array, Atom); i++ )
+  for(i=0; i < entriesBuffer(&atom_array, Atom); i++ )
   { Atom atom;
 
     if ( (atom = baseBuffer(&atom_array, Atom)[i]) )
@@ -856,7 +857,8 @@ pl_current_atom2(term_t a, term_t type, control_t h)
     { if ( type_name && type_name != atom->type->atom_name )
 	continue;
 
-      PL_unify_atom(type, atom->type->atom_name);
+      if ( type )
+	PL_unify_atom(type, atom->type->atom_name);
       PL_unify_atom(a, atom->atom);
       ForeignRedoInt(i+1);
     }
