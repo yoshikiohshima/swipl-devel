@@ -26,10 +26,11 @@ Features anticipated in 5.4.x relative to 5.2.x and their status
 
     Supported: =/2, ==/2, @>/2 (and friends), copy_term/2, =../2,
                duplicate_term/2, ground/2, dif/2, when/2, term_variables/2,
-	       numbervars/3, hash_term/3.
+	       numbervars/3, hash_term/3, findall/3, bagof/3, setof/3,
+	       recorded database.
 
-    Unsupported: recorda/2 (and friends), write/1
-		 (and friends, partial support), asserta/1 (and friends).
+    Unsupported: write/1 (and friends, partial support),
+		 asserta/1 (and friends).
 
   * CHR constraint language support
     Complete.  Debugger must be integrated with graphical debugger.
@@ -55,6 +56,9 @@ Brief summary of changes since 5.3.16
 SWI-Prolog
 ----------
 
+  * Fixed garbage collector bug for applications using global
+    variables.  Note that the semweb library rdf_db uses these.
+
   * Added nb_setarg/3 and nb_linkarg/3, providing non-backtrackable
     assignments on terms.
 
@@ -79,7 +83,7 @@ Packages
 Development environment
 -----------------------
 
-  (none)
+  * Fixed Source location handling in if->then
 
 INCOMPATIBILITIES
 =================
