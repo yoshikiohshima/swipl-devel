@@ -7,6 +7,10 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Buffer overflow asserting to predicates with a very long
+    name (caused by naming the mutex for mutex statistics).  Reported
+    by Lourens van der Meij.
+
   * MODIFIED/FIXED: ensure_loaded/1 and use_module/[1,2] now use 
     load_files/2 with the option if(not_loaded) rather than if(changed).
     This avoids time handling problems with quick-load files, especially

@@ -81,18 +81,43 @@ procedureName(Procedure proc)
 }
 
 
+static const char *
+atom_summary(atom_t name, int maxlen)
+{ int len;
+  const char *nm = PL_atom_nchars(name, &len);
+
+  if ( maxlen < 10 )
+    maxlen = 10;
+
+  if ( len > maxlen )
+  { char tmp[256];
+
+    if ( maxlen > 255 )
+      maxlen = 255;
+
+    memcpy(tmp, nm, maxlen-6);
+    strcpy(&tmp[maxlen-6], "...");
+    memcpy(&tmp[maxlen-3], &nm[len-3], 3);
+    tmp[maxlen] = EOS;
+
+    return (const char *)buffer_string(tmp, BUF_RING);
+  } else
+    return nm;				/* non-printable characters? */
+}
+
+
 char *
 predicateName(Definition def)
 { char tmp[256];
 
   if ( def->module == MODULE_user || isUserSystemPredicate(def) )
     Ssprintf(tmp, "%s/%d",
-	     stringAtom(def->functor->name), 
+	     atom_summary(def->functor->name, 50), 
 	     def->functor->arity);
   else
     Ssprintf(tmp, "%s:%s/%d",
-	     stringAtom(def->module->name), 
-	     stringAtom(def->functor->name), 
+	     atom_summary(def->module->name, 50), 
+	     atom_summary(def->functor->name, 50), 
 	     def->functor->arity);
 
   return buffer_string(tmp, BUF_RING);
