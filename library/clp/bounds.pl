@@ -49,6 +49,21 @@
 
 :- module(bounds,
 	[
+		op(760,yfx,(#<=>)),
+		op(750,xfy,(#=>)),
+		op(750,yfx,(#<=)),
+		op(740,yfx,(#\/)),
+		op(730,yfx,(#\)),
+		op(720,yfx,(#/\)),
+		op(710, fy,(#\)),
+		op(700,xfx,(#>)),
+		op(700,xfx,(#<)),
+		op(700,xfx,(#>=)),
+		op(700,xfx,(#=<)),
+		op(700,xfx,(#=)),
+		op(700,xfx,(#\=)),
+		op(700,xfx,(in)),
+		op(550,xfx,(..)),
 		(#>)/2,
 		(#<)/2,
 		(#>=)/2,
@@ -66,25 +81,6 @@
 		label/1,
 		all_different/1
 	]).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% operator declarations
-
-:- op(760,yfx,user:(#<=>)).
-:- op(750,xfy,user:(#=>)).
-:- op(750,yfx,user:(#<=)).
-:- op(740,yfx,user:(#\/)).
-:- op(730,yfx,user:(#\)).
-:- op(720,yfx,user:(#/\)).
-:- op(710, fy,user:(#\)).
-:- op(700,xfx,user:(#>)).
-:- op(700,xfx,user:(#<)).
-:- op(700,xfx,user:(#>=)).
-:- op(700,xfx,user:(#=<)).
-:- op(700,xfx,user:(#=)).
-:- op(700,xfx,user:(#\=)).
-:- op(700,xfx,user:(in)).
-:- op(550,xfx,user:(..)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % exported predicates
@@ -457,11 +453,11 @@ div(X,Y,Z) :-
 
 mytimes(X,Y,Z,New) :-
 	( nonvar(X) ->
-		( X == 0 ->
-			Z = 0
-		; nonvar(Y) ->
+		(nonvar(Y) ->
 			Z is X * Y
-		; nonvar(Z) ->
+		; X == 0 ->
+			Z = 0
+		;  nonvar(Z) ->
 			0 is Z mod X,
 			Y is Z / X
 		;
@@ -478,8 +474,9 @@ mytimes(X,Y,Z,New) :-
 			),
 			( get(Y,YL2,YU2,YExp2) ->
 				min_divide(ZL,ZU,X,X,NYLT),
+				max_divide(ZL,ZU,X,X,NYUT),
 				NYL is max(YL2,ceiling(NYLT)),
-				NYU is min(YU2,floor(max(div(ZU,X),div(ZL,X)))),
+				NYU is min(YU2,floor(NYUT)),
 				put(Y,NYL,NYU,YExp2)
 			;
 				Z is X * Y
