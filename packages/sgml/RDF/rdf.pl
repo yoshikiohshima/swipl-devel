@@ -20,6 +20,7 @@
 :- meta_predicate(process_rdf(+, :, +)).
 
 :- use_module(library(sgml)).		% Basic XML loading
+:- use_module(library(option)).		% option/3
 :- use_module(rdf_parser).		% Basic parser
 :- use_module(rdf_triple).		% Generate triples
 
@@ -39,17 +40,15 @@ load_rdf(File, Triples) :-
 
 load_rdf(File, Triples, Options0) :-
 	meta_options(Options0, Options),
-	option(base_uri(BaseURI), Options, []),
 	load_structure(File,
 		       [ RDFElement
 		       ],
 		       [ dialect(xmlns),
 			 space(sgml)
 		       ]),
-	set_anon_prefix(BaseURI, Refs),
-	rdf_start_file(Options),
+	rdf_start_file(Options, Cleanup),
 	call_cleanup(xml_to_rdf(RDFElement, Triples0, Options),
-		     cleanup_load(Refs)),
+		     rdf_end_file(Cleanup)),
 	post_process(Options, Triples0, Triples).
 	
 %	xml_to_rdf(+XML, -Triples, +Options)
@@ -67,15 +66,6 @@ set_anon_prefix([], []) :- !.
 set_anon_prefix(BaseURI, [Ref]) :-
 	concat_atom(['__', BaseURI, '#'], AnonBase),
 	asserta(anon_prefix(AnonBase), Ref).
-
-cleanup_load(Refs) :-
-	rdf_end_file,
-	erase_refs(Refs).
-
-erase_refs([]).
-erase_refs([H|T]) :-
-	erase(H),
-	erase_refs(T).
 
 
 		 /*******************************
@@ -140,7 +130,7 @@ process_rdf(File, OnObject, Options0) :-
 	is_list(Options0), !,
 	meta_options(Options0, Options),
 	option(base_uri(BaseURI), Options, []),
-	rdf_start_file(Options),
+	rdf_start_file(Options, Cleanup),
 	'$strip_module'(OnObject, Module, Pred),
 	nb_setval(rdf_object_handler, Module:Pred),
 	nb_setval(rdf_options, Options),
@@ -158,20 +148,19 @@ process_rdf(File, OnObject, Options0) :-
 	set_sgml_parser(Parser, file(Source)),
 	set_sgml_parser(Parser, dialect(xmlns)),
 	set_sgml_parser(Parser, space(sgml)),
-	set_anon_prefix(BaseURI, Refs),
 	call_cleanup(sgml_parse(Parser,
 				[ source(In),
 				  call(begin, rdf:on_begin),
 				  call(end, rdf:on_end)
 				]),
-		     rdf:cleanup_process(Close, Refs)).
+		     rdf:cleanup_process(Close, Cleanup)).
 process_rdf(File, BaseURI, OnObject) :-
 %	print_message(warning,
 %		      format('process_rdf(): new argument order', [])),
 	process_rdf(File, OnObject, [base_uri(BaseURI)]).
 
 
-cleanup_process(In, Refs) :-
+cleanup_process(In, Cleanup) :-
 	(   var(In)
 	->  true
 	;   close(In)
@@ -179,8 +168,7 @@ cleanup_process(In, Refs) :-
 	nb_delete(rdf_options),
 	nb_delete(rdf_object_handler),
 	nb_delete(rdf_state),
-	erase_refs(Refs),
-	rdf_end_file.
+	rdf_end_file(Cleanup).
 
 on_end(NS:'RDF', _) :-
 	rdf_name_space(NS),
@@ -242,25 +230,6 @@ meta_options([H0|T0], [H|T]) :-
 	;   H = H0
 	),
 	meta_options(T0, T).
-
-
-		 /*******************************
-		 *	      UTIL		*
-		 *******************************/
-
-%	option(Option(?Value), OptionList, Default)
-
-option(Opt, Options) :-
-	memberchk(Opt, Options), !.
-option(Opt, Options) :-
-	functor(Opt, OptName, 1),
-	arg(1, Opt, OptVal),
-	memberchk(OptName=OptVal, Options), !.
-
-option(Opt, Options, _) :-
-	option(Opt, Options), !.
-option(Opt, _, Default) :-
-	arg(1, Opt, Default).
 
 
 		 /*******************************

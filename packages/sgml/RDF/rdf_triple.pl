@@ -14,8 +14,8 @@
 	  [ rdf_triples/2,		% +Parsed, -Tripples
 	    rdf_triples/3,		% +Parsed, -Tripples, +Tail
 	    rdf_reset_ids/0,		% Reset gensym id's
-	    rdf_start_file/1,		% +Options
-	    rdf_end_file/0,
+	    rdf_start_file/2,		% +Options, -Cleanup
+	    rdf_end_file/1,		% +Cleanup
 	    anon_prefix/1		% Prefix for anonynmous resources
 	  ]).
 :- use_module(library(gensym)).
@@ -329,7 +329,6 @@ collection([H|T], Id) -->
 
 reset_shared_descriptions :-
 	retractall(shared_description(_,_,_)),
-	retractall(share_blank_nodes(_)),
 	retractall(shared_nodes(_)).
 
 shared_description(Term, Subject) :-
@@ -351,21 +350,38 @@ assert_shared_description(Term, Subject) :-
 		 *	      START/END		*
 		 *******************************/
 
-rdf_start_file(Options) :-
+rdf_start_file(Options, Cleanup) :-
 	rdf_reset_node_ids,		% play safe
 	reset_shared_descriptions,
-	(   memberchk(blank_nodes(share), Options)
-	->  assert(share_blank_nodes(true))
-	;   true
-	).
+	set_bnode_sharing(Options, C1),
+	set_anon_prefix(Options, C2),
+	add_cleanup(C1, C2, Cleanup).
 
-rdf_end_file :-
+rdf_end_file(Cleanup) :-
 	rdf_reset_node_ids,
 	(   shared_nodes(N)
 	->  print_message(informational, rdf(shared_blank_nodes(N)))
 	;   true
 	),
-	reset_shared_descriptions.
+	reset_shared_descriptions,
+	Cleanup.
+
+set_bnode_sharing(Options, erase(Ref)) :-
+	option(blank_nodes(Share), Options, noshare),
+	Share == noshare, !,
+	assert(share_blank_nodes(true), Ref).
+set_bnode_sharing(_, true).
+
+set_anon_prefix(Options, erase(Ref)) :-
+	option(base_uri(BaseURI), Options, []),
+	BaseURI \== [], !,
+	concat_atom(['__', BaseURI, '#'], AnonBase),
+	asserta(anon_prefix(AnonBase), Ref).
+set_anon_prefix(_, true).
+
+add_cleanup(true, X, X) :- !.
+add_cleanup(X, true, X) :- !.
+add_cleanup(X, Y, (X, Y)).
 
 
 		 /*******************************

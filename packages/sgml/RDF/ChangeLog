@@ -1,3 +1,7 @@
+Jun 17, 2004
+
+  * CLEANUP: start/end of loading a file, use option/3 from library
+
 Apr 21, 2004
 
   * ADDED: Support for xml:lang and rdf:dataType attributes.
