@@ -370,7 +370,7 @@ S__fillbuf(IOSTREAM *s)
 	break;
       }
 
-      if ( !FD_ISSET(fd, &wait) )
+      if ( rc == 0 )
       { s->flags |= (SIO_TIMEOUT|SIO_FERR);
 	goto error;
       }
