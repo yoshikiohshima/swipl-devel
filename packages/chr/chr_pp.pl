@@ -691,7 +691,7 @@ generate_attr_unify_hook_one(Mod,Clause) :-
 			chr:run_suspensions(NewSusps)
 		;
 			( compound(Other) ->
-				free_variables(Other,OtherVars), % SWI
+				term_variables(Other,OtherVars), % SWI
 				attach_increment(OtherVars, SortedSusps)
 			;
 				true

@@ -1001,12 +1001,12 @@ pl_numbervars(term_t t, term_t f,
 
 
 static int
-free_variables(Word t, term_t l, int n ARG_LD)
+term_variables(Word t, term_t l, int n ARG_LD)
 { 
 right_recursion:
   deRef(t);
 
-  if ( isVar(*t) )
+  if ( canBind(*t) )
   { int i;
     term_t v;
 
@@ -1026,7 +1026,7 @@ right_recursion:
   { int arity = arityFunctor(functorTerm(*t));
 
     for(t = argTermP(*t, 0); --arity > 0; t++)
-      n = free_variables(t, l, n PASS_LD);
+      n = term_variables(t, l, n PASS_LD);
     goto right_recursion;
   }
     
@@ -1034,13 +1034,13 @@ right_recursion:
 }
 
 
-word
-pl_free_variables(term_t t, term_t variables)
-{ GET_LD
+static
+PRED_IMPL("term_variables", 2, term_variables, 0)
+{ PRED_LD
   term_t head = PL_new_term_ref();
-  term_t vars = PL_copy_term_ref(variables);
+  term_t vars = PL_copy_term_ref(A2);
   term_t v0   = PL_new_term_refs(0);
-  int i, n    = free_variables(valTermRef(t), v0, 0 PASS_LD);
+  int i, n    = term_variables(valTermRef(A1), v0, 0 PASS_LD);
 
   for(i=0; i<n; i++)
   { if ( !PL_unify_list(vars, head, vars) ||
@@ -1115,7 +1115,7 @@ pl_e_free_variables(term_t t, term_t vars)
   Mark(m);
   { Word t2   = bind_existential_vars(valTermRef(t) PASS_LD);
     term_t v0 = PL_new_term_refs(0);
-    int i, n  = free_variables(t2, v0, 0 PASS_LD);
+    int i, n  = term_variables(t2, v0, 0 PASS_LD);
     Undo(m);
 
     if ( PL_unify_functor(vars, PL_new_functor(ATOM_v, n)) )
@@ -2914,6 +2914,7 @@ BeginPredDefs(prims)
   PRED_DEF("=@=", 2, structural_eq, 0)
   PRED_DEF("\\=@=", 2, structural_neq, 0)
   PRED_DEF("functor", 3, functor, 0)
+  PRED_DEF("term_variables", 2, term_variables, 0)
 #ifdef O_HASHTERM
   PRED_DEF("hash_term", 2, hash_term, 0)
 #endif

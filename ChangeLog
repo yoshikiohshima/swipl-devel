@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: renamed free_variables/2 into the more widely use name
+    term_variables/2.  Added free_variables/2 to the library backcomp,
+    so applications with autoloading enabled (default) do not have
+    to be modified.
+
   * ADDED: protect write/1 from looping on cyclic terms.  Short-term
     solution writes ** if it detects a cycle.
 

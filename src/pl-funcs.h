@@ -519,7 +519,6 @@ word		pl_univ(term_t t, term_t l);
 int		numberVars(term_t t, functor_t functor, int n ARG_LD);
 word		pl_numbervars(term_t t, term_t atom,
 			      term_t start, term_t end);
-word		pl_free_variables(term_t t, term_t l);
 word		pl_e_free_variables(term_t t, term_t l);
 word		stringToList(char *s);
 word		pl_atom_length(term_t w, term_t n);

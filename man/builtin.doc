@@ -2657,7 +2657,7 @@ always reported using exception-handling (see catch/3). Options:
 \begin{description}
     \termitem{variables}{Vars}
 Unify \arg{Vars} with a list of variables in the term. The variables
-appear in the order they have been read. See also free_variables/2.
+appear in the order they have been read. See also term_variables/2.
 (ISO).
 
     \termitem{variable_names}{Vars}
@@ -2838,33 +2838,27 @@ See also the \const{numbervars} option to write_term/3 and numbervars/4.
 As numbervars/3, but instead of using the fixed \const{\$VAR} the 
 function symbol is determined by extra \arg{FunctionSymbol} argument.
 
-    \predicate{free_variables}{2}{+Term, -List}
+    \predicate{term_variables}{2}{+Term, -List}
 Unify \arg{List} with a list of variables, each sharing with a unique variable
 of \arg{Term}. For example:
 \begin{code}
-?- free_variables(a(X, b(Y, X), Z), L).
+?- term_variables(a(X, b(Y, X), Z), L).
 
 L = [G367, G366, G371]
 X = G367
 Y = G366
 Z = G371
 \end{code}
+
     \predicate{copy_term}{2}{+In, -Out}
-Make a copy of term \arg{In} and unify the result with \arg{Out}.
-Ground parts of \arg{In} are shared by \arg{Out}.  Provided \arg{In} and
+Make a copy of term \arg{In} and unify the result with \arg{Out}. Ground
+parts of \arg{In} are shared by \arg{Out}. Provided \arg{In} and
 \arg{Out} have no sharing variables before this call they will have no
-sharing variables afterwards.  copy_term/2 is semantically equivalent
-to:
-
-\begin{code}
-copy_term(In, Out) :-
-        recorda(copy_key, In, Ref),
-        recorded(copy_key, Out, Ref),
-        erase(Ref).
-\end{code}
-
-Note that as copy_term/2 does not create copies for ground terms
-setarg/3 affects both the copy and original.
+sharing variables afterwards. Attributed variables (see \secref{attvar})
+have their attributed copied. The SWI-Prolog implementation of
+copy_term/2 can copy cyclic terms. Note that because copy_term/2 does
+not create copies for ground terms setarg/3 affects both the copy and
+original.
 \end{description}
 
 \section{Analysing and Constructing Atoms}	\label{sec:manipatom}

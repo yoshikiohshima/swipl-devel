@@ -1,6 +1,5 @@
 :- module(hprolog,
 	  [ prolog_flag/3,		% +Flag, -Old, +New
-	    term_variables/2,		% +Term, -Vars
 	    append_lists/2,		% +ListOfLists, -List
 	    nth/3,			% ?Index, ?List, ?Element
 	    substitute/4,		% +OldVal, +OldList, +NewVal, -NewList
@@ -23,17 +22,6 @@ prolog_flag(Flag, Old, New) :-
 	->  true
 	;   set_prolog_flag(Flag, New)
 	).
-
-		 /*******************************
-		 *	    TERM HACKING	*
-		 *******************************/
-
-%	term_variables(+Term, -Vars)
-%	
-%	Unify Vars with a list containing all variables in Term
-
-term_variables(Term, Vars) :-
-	free_variables(Term, Vars).
 
 
 		 /*******************************

@@ -41,7 +41,7 @@
 
 expand_query(Query, Expanded, Bindings, ExpandedBindings) :-
 	expand_vars(Bindings, Query, Expanded),
-	free_variables(Expanded, Free),
+	term_variables(Expanded, Free),
 	delete_bound_vars(Bindings, Free, ExpandedBindings),
 	(   verbose,
 	    Query \=@= Expanded

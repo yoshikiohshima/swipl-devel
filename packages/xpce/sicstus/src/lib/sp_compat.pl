@@ -49,7 +49,6 @@ This code can only be distributed as part of XPCE.
 	    unix/1,			% unix(argv(Argv))
 	    term_to_atom/2,		% ?Term, ?Atom
 	    atom_to_term/3,		% +Atom, -Term, -Bindings
-	    free_variables/2,		% SICStus term_variables/2
 	    concat/3,			% ?A, ?B, ?AB
 	    concat_atom/2,		% +List, -Atom
 	    concat_atom/3,		% +List, +Separator, -Atom
@@ -506,14 +505,6 @@ unix(argv(Argv)) :- !,
 	prolog_flag(argv, Argv).
 unix(Term) :-
 	throw(error(domain_error(system_command, Term), _)).
-
-
-		 /*******************************
-		 *	      VARIABLES		*
-		 *******************************/
-
-free_variables(Term, Vars) :-
-	term_variables(Term, Vars).
 
 
 		 /*******************************
