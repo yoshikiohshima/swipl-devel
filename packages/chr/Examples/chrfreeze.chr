@@ -1,0 +1,5 @@
+:- module(chrfreeze,[chrfreeze/2]).
+
+:- constraints chrfreeze/2.
+
+chrfreeze(V,G) <=> nonvar(V) | call(G).

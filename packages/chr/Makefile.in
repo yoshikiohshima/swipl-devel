@@ -1,0 +1,92 @@
+################################################################
+# SWI-Prolog CHR package
+# Author:    Jan Wielemaker. jan@swi.psy.uva.nl
+# Copyright: LGPL (see COPYING or www.gnu.org
+################################################################
+
+.SUFFIXES: .tex .dvi .doc .pl
+
+SHELL=@SHELL@
+PLBASE=@PLBASE@
+PLARCH=@PLARCH@
+PL=@PL@
+XPCEBASE=$(PLBASE)/xpce
+PKGDOC=$(PLBASE)/doc/packages
+PCEHOME=../../xpce
+LIBDIR=$(PLBASE)/library/chr
+
+DOCTOTEX=$(PCEHOME)/bin/doc2tex
+PLTOTEX=$(PCEHOME)/bin/pl2tex
+LATEX=latex
+DOC=chr
+TEX=$(DOC).tex
+DVI=$(DOC).dvi
+PDF=$(DOC).pdf
+HTML=$(DOC).html
+
+INSTALL=@INSTALL@
+INSTALL_PROGRAM=@INSTALL_PROGRAM@
+INSTALL_DATA=@INSTALL_DATA@
+
+LIBPL=		assoc.pl chr.pl chr_pp.pl hprolog.pl pairlist.pl \
+		plugin.pl
+
+all:		
+		@echo "Nothing to do for this package"
+
+install:	$(LIBDIR) $(LIBPL)
+		$(INSTALL) -m 644 $(LIBPL) $(LIBDIR)
+		$(PL) -f none -g make -t halt
+
+$(LIBDIR):
+		mkdir -p $@
+
+rpm-install:	install
+
+pdf-install::
+		$(INSTALL_DATA) $(DOC).pdf $(PKGDOC)
+
+html-install::
+		$(INSTALL_DATA) $(DOC).html $(PKGDOC)
+
+uninstall:
+		(cd $(PLBASE)/library && rm -f $(LIBPL))
+		$(PL) -f none -g make -t halt
+
+check::
+		$(PL) -f rdf_test.pl -g test,halt -t 'halt(1)'
+
+
+################################################################
+# Documentation
+################################################################
+
+doc:		$(PDF) $(HTML)
+pdf:		$(PDF)
+html:		$(HTML)
+
+$(HTML):	$(TEX)
+		latex2html $(DOC)
+		mv html/index.html $@
+
+$(PDF):		$(TEX)
+		runtex --pdf $(DOC)
+
+$(TEX):		$(DOCTOTEX)
+
+.doc.tex:
+		$(DOCTOTEX) $*.doc > $*.tex
+.pl.tex:
+		$(PLTOTEX) $*.pl > $*.tex
+
+################################################################
+# Clean
+################################################################
+
+clean:
+		rm -f *~ *% config.log
+
+distclean:	clean
+		rm -f $(TARGETS) config.h config.cache config.status Makefile
+		rm -f $(TEX)
+		runtex --clean $(DOC)
