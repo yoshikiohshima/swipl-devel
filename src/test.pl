@@ -1124,12 +1124,22 @@ avar(findall-1) :-
 	L=[aap],
 	retract(avar_findall(X)),
 	X == aap.
+avar(bagof-1) :-
+	CVars = [X1,X2],
+	put_attr(X1, test, x),
+	put_attr(X2, test, x),
+        bagof(CVar, member(CVar,CVars), All),
+	All = [C1, C2],
+	get_attr(C1, test, x),
+	get_attr(C2, test, x).
 avar(streq-1) :-
 	freeze(X, write(x)), freeze(Y, write(x)), X =@= Y.
 avar(streq-2) :-
 	freeze(X, write(x)), freeze(Y, write(y)), X \=@= Y.
 avar(streq-3) :-
 	freeze(X, write(X)), freeze(Y, write(Y)), X =@= Y.
+avar(streq-4) :-
+	freeze(X, write(X)), freeze(Y, write(_Z)), X \=@= Y.
 
 
 

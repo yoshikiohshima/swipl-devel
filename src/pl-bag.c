@@ -96,8 +96,8 @@ PRED_IMPL("$record_bag", 1, record_bag, 0)
     a->record = compileTermToHeap(A1, 0);
 
   DEBUG(1, { Sdprintf("Recorded %p: ", a->record);
-	     pl_write(A1);
-	     pl_nl();
+	     PL_write_term(Serror, A1, 1200, PL_WRT_ATTVAR_WRITE);
+	     Sdprintf("\n");
 	   });
 
   a->next    = alist;
@@ -134,6 +134,9 @@ PRED_IMPL("$collect_bag", 2, collect_bag, 0)
   PL_put_nil(list);
 					/* get variable term on global stack */
   copyRecordToGlobal(binding, a->record PASS_LD);
+  DEBUG(9, Sdprintf("First binding (%p): ", a->record);
+	   PL_write_term(Serror, binding, 1200, PL_WRT_ATTVAR_WRITE);
+	   Sdprintf("\n"));
   _PL_get_arg(1, binding, var_term);
   PL_unify(bindings, var_term);
   _PL_get_arg(2, binding, tmp);

@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Recorded database handling of attributed variables (could loose
+    attributes on some terms).
+
   * ADDED: Support for attributed variables and cyclic terms for =@= and
     \=@=.
 

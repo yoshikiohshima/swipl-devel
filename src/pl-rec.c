@@ -365,6 +365,7 @@ right_recursion:
       addOpCode(info, PL_TYPE_ATTVAR);
       addSizeInt(info, n);
       info->size++;
+      DEBUG(9, Sdprintf("Added attvar %d\n", n));
 
       p = ap;
       goto right_recursion;
@@ -376,8 +377,11 @@ right_recursion:
 
 	addOpCode(info, PL_TYPE_VARIABLE);
 	addSizeInt(info, n);
+	DEBUG(9, Sdprintf("Added var-link %d\n", n));
       } else
-	addAtom(info, w);
+      { addAtom(info, w);
+	DEBUG(9, Sdprintf("Added '%s'\n", stringAtom(w)));
+      }
 
       return;
     }
@@ -442,6 +446,10 @@ right_recursion:
       
       info->size += arity+1;
       addFunctor(info, functor);
+      DEBUG(9, if ( GD->io_initialised )
+	         Sdprintf("Added %s/%d\n",
+			  stringAtom(valueFunctor(functor)->name),
+			  arityFunctor(functor)));
       p = f->arguments;
       for(; --arity > 0; p++)
 	compile_term_to_heap(p, info PASS_LD);
@@ -803,9 +811,9 @@ right_recursion:
       { if ( p > b->vars[n] )		/* ensure the reference is in the */
 	  *p = makeRef(b->vars[n]);	/* right direction! */
 	else
-	{ setVar(*p);			/* wrong way.  make sure b->vars[n] */
+	{ *p = *b->vars[n];		/* wrong way.  make sure b->vars[n] */
 	  *b->vars[n] = makeRef(p);	/* stays at the real variable */
-	  b->vars[n] = p;
+	  b->vars[n] = p;		/* NOTE: also links attvars! */
 	}
       } else
       {	setVar(*p);
@@ -1113,7 +1121,10 @@ unref_cont:
 	    succeed;
 	}
 	fail;
-      } else if ( stag == PL_TYPE_ATOM )
+      }
+
+      DEBUG(9, Sdprintf("Matching '%s'\n", stringAtom(w)));
+      if ( stag == PL_TYPE_ATOM )
       { atom_t val = fetchWord(info);
 
 	if ( val == w )
@@ -1182,6 +1193,9 @@ unref_cont:
 
       fail;
     case TAG_COMPOUND:
+      DEBUG(9, Sdprintf("Matching %s/%d\n",
+			stringAtom(valueFunctor(functorTerm(w))->name),
+			arityTerm(w)));
       if ( stag == PL_TYPE_COMPOUND )
       { Functor f = valueTerm(w);
 	word fdef = fetchWord(info);
@@ -1245,6 +1259,10 @@ structuralEqualArg1OfRecord(term_t t, Record r ARG_LD)
   Word *p;
   long stag;
 
+  DEBUG(3, Sdprintf("structuralEqualArg1OfRecord() of ");
+	   PL_write_term(Serror, t, 1200, PL_WRT_ATTVAR_WRITE);
+	   Sdprintf("\n"));
+  
   info.base = info.data = dataRecord(r);
   info.nvars = 0;
   INITCOPYVARS(info, r->nvars);
@@ -1272,6 +1290,8 @@ structuralEqualArg1OfRecord(term_t t, Record r ARG_LD)
 
   discardBuffer(&avars);
   FREECOPYVARS(info, r->nvars);
+
+  DEBUG(3, Sdprintf("structuralEqualArg1OfRecord() --> %d\n", rval));
 
   return rval;
 }
@@ -1467,6 +1487,10 @@ record(term_t key, term_t term, term_t ref, int az)
   RecordRef r;
   Record copy;
   word k;
+
+  DEBUG(3, Sdprintf("record() of ");
+	   PL_write_term(Serror, term, 1200, PL_WRT_ATTVAR_WRITE);
+	   Sdprintf("\n"));
 
   if ( !getKeyEx(key, &k PASS_LD) )
     fail;

@@ -744,14 +744,16 @@ I.e.\ the first creates a \jargon{cyclic-term}, which is printed as
 an infinitely nested \functor{f}{1} term (see the \const{max_depth}
 option of write_term/2). The second executes logically sound unification
 and thus fails.
-\infixop{\=}{+Term1}{+Term2}
+
+    \infixop{\=}{+Term1}{+Term2}
 Equivalent to \exam{\Snot Term1 = Term2}.
-\infixop{=@=}{+Term1}{+Term2}
+
+    \infixop{=@=}{+Term1}{+Term2}
 Succeeds if \arg{Term1} is `structurally equal' to \arg{Term2}.
 Structural equivalence is weaker than equivalence (\predref{==}{2}), but
-stronger than unification (\predref{=}{2}).  Two terms are structurally equal if
-their tree representation is identical and they have the same `pattern'
-of variables.  Examples:
+stronger than unification (\predref{=}{2}). Two terms are structurally
+equal if their tree representation is identical and they have the same
+`pattern' of variables. Examples:
 
 \begin{quote}
 \begin{tabular}{rclc}
@@ -762,6 +764,10 @@ of variables.  Examples:
 \tt x(A,B)      & \tt =@= & \tt x(C,D)  & true \\
 \end{tabular}
 \end{quote}
+
+The predicates \predref{=@=}{2} and \predref{\=@=}{2} are cycle-safe.
+Attributed variables are considered structurally equal iff their
+attributes are structurally equal.
 
     \infixop{\=@=}{+Term1}{+Term2}
 Equivalent to \exam{`\Snot Term1 =@= Term2'}.
