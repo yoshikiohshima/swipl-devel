@@ -327,52 +327,6 @@ PRED_IMPL("attvar", 1, attvar, 0)
 }
 
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-make_new_attvar(+Var)
-
-Creates a new attributed variable  with   attribute  []. If the variable
-lives on the local stack, a new variable  is created on the global stack
-and the old  one  is  made  a   reference.  Otherwise  the  variable  is
-immediately bound to  an  attributed  variable.   This  is  required  as
-attributed variables can outlive  the  local   frame  in  which they are
-created.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-static
-PRED_IMPL("make_new_attvar", 1, make_new_attvar, 0)
-{ if ( PL_make_new_attvar(A1) )
-    succeed;
-
-  return PL_error("make_new_attvar", 1, NULL, ERR_TYPE, ATOM_var, A1);
-}
-
-
-static
-PRED_IMPL("get_attr", 2, get_attr, 0)
-{ PRED_LD
-  term_t t = A1;
-  Word p = valTermRef(t);
-
-  deRef(p);
-  if ( isAttVar(*p) )
-  { Word av = valPAttVar(*p);
-
-    return unify_ptrs(valTermRef(A2), av PASS_LD);
-  }
-
-  fail;
-}
-
-
-static
-PRED_IMPL("put_attr", 2, put_attr, 0)
-{ if ( PL_put_attr(A1, A2) )
-    succeed;
-  
-  return PL_error("put_attr", 2, NULL, ERR_TYPE, ATOM_attvar, A1);
-}
-
-
 static
 PRED_IMPL("get_attr", 3, get_attr3, 0) /* +Var, +Name, -Value */
 { PRED_LD
@@ -489,9 +443,6 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 
 BeginPredDefs(attvar)
   PRED_DEF("attvar", 1, attvar, 0)
-  PRED_DEF("make_new_attvar", 1, make_new_attvar, 0)
-  PRED_DEF("get_attr", 2, get_attr, 0)
-  PRED_DEF("put_attr", 2, put_attr, 0)
   PRED_DEF("put_attr", 3, put_attr3, 0)
   PRED_DEF("get_attr", 3, get_attr3, 0)
   PRED_DEF("$freeze", 2, freeze, PL_FA_TRANSPARENT)
