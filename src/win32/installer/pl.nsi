@@ -143,8 +143,9 @@ SectionEnd
 
 Section "Constraint Handling Rules"
   SectionIn 1 3
-  SetOutPath $INSTDIR
+  SetOutPath $INSTDIR\library
   File pl\library\chr.pl
+  SetOutPath $INSTDIR\library\chr
   File pl\library\chr\chr_runtime.pl
   File pl\library\chr\chr_debug.pl
   File pl\library\chr\chr_op.pl
