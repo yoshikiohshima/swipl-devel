@@ -373,8 +373,8 @@ iindex::
 
 classindex::
 		chdir "$(IBASE)\prolog\lib" & \
-		  "$(PLBASE)\bin\plcon.exe" \
-			-f none -F none \
+		  "$(PLBASE)\bin\plwin.exe" \
+			-f none \
 			-g pce_make_library_index('.') \
 			-t halt
 irc::
