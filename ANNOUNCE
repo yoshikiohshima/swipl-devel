@@ -55,12 +55,15 @@ Brief summary of changes since 5.3.10
 SWI-Prolog
 ----------
 
-  * Minor patches
+  * Fixed handling a plain attributed variable in global variables
 
 Packages
 --------
 
-  * HTTP: various fixes
+  * ADDED: Package SSL: provide an interface to secure socket layer.
+    Beta version.  Sponsored by Scientific Software and Systems Limited.
+
+  * HTTP: various fixes.  Added support for SSL
 
 Development environment
 -----------------------
