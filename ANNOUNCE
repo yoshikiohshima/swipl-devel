@@ -1,10 +1,10 @@
-SWI-Prolog 5.3.3/XPCE 6.2.14 development snapshot
+SWI-Prolog 5.3.4/XPCE 6.2.14 development snapshot
 
 Status
 ======
   
   * Various users have reported their old programs to run fine on
-    this experimental version.
+    this development version.
 
   * Be careful on production systems.  Should be fine for running normal
     Prolog code for development.  Especially =/2, ==/2, @>/2, copy_term/2,
@@ -45,30 +45,32 @@ Anticipated features relative to stable 5.2.x release and their status
 		 (and friends, partial support), asserta/1 (and friends).
 
   * CHR constraint language support
-    Lacking some options and the described debugger.
+    Lacking some options and a debugger.
 
   * Domain specific constraint libraries
     Not yet available.  If you have code available or want to develop,
-    please contact me (jan@swi-prolog.org).
+    please contact me (jan@swi-prolog.org).  The aim is to support at
+    least the popular solvers compatible to at least one other major
+    implementation.
 
 
-Brief summary of changes since 5.3.2
+Brief summary of changes since 5.3.3
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Integrated bugfixes from the stable release
-  * Added dif/2 implementation by Tom Schrijvers
-  * Included enhanced CHR compiler by Tom Schrijvers
-  * Added support for various modes to print attributes
-    of variables.  See write_term/2, option `attributes'.
+  * Improved handling of destructive assignment to avoid
+    trailstack overflows (error found in setarg, but attributed
+    variables use a lot of destructive assignment).
+  * Added when/2 (Tom Schrijvers) and ?=
+  * Support for cyclic terms in term_variables/2 and numbervars/3.
+  * Various patches and cleanup
 
 Packages
 --------
 
-  * XPCE: avoid relying on a connection to an X-server while building
-    and installing this package.
+  (none)
 
 Development environment
 -----------------------

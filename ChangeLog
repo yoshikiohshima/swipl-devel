@@ -7,7 +7,7 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
-VERSION 5.3.4 (Mar 11, 2003)
+VERSION 5.3.4 (Mar 12, 2003)
 ============================
 
   * ADDED: style_check(+charset) option.
