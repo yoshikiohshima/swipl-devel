@@ -1,3 +1,14 @@
+Jul 17, 2004
+
+  * TS: Added chr_hashtable_store library.
+  * TS: Added find library.
+  * TS: Added builtins library.
+  * TS: Added clean_code library.
+  * TS: Added binomial_heap library.
+  * TS: Added a_star library.
+  * TS: Added new intermediate bootstrapping step
+  * TS: Synchronized CHR compiler with most recent development version
+
 Apr 9, 2004
 
   * JW: Added chr_messages.pl.  Make all debug messages use the print_message/2

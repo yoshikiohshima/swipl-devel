@@ -58,6 +58,7 @@ user:file_search_path(chr, library(chr)).
 :- use_module(chr(chr_debug)).
 :- use_module(chr(chr_messages)).
 :- use_module(library(gensym)).
+:- use_module(chr(chr_hashtable_store)).
 
 :- dynamic
 	chr_term/2.			% File, Term

@@ -8,7 +8,9 @@
 	    list_difference_eq/3,	% +List, -Subtract, -Rest
 	    take/3,			% +N, +List, -FirstElements
 	    max_go_list/2,		% +List, -Max
-	    or_list/2			% +ListOfInts, -BitwiseOr
+	    or_list/2,			% +ListOfInts, -BitwiseOr
+	    sublist/2,
+	    min_list/2
 	  ]).
 :- use_module(library(lists)).
 
@@ -138,4 +140,25 @@ or_list([], Or, Or).
 or_list([H|T], Or0, Or) :-
 	Or1 is H \/ Or0,
 	or_list(T, Or1, Or).
+
+
+sublist(L, L).
+sublist(Sub, [H|T]) :-
+	'$sublist1'(T, H, Sub).
+
+'$sublist1'(Sub, _, Sub).
+'$sublist1'([H|T], _, Sub) :-
+	'$sublist1'(T, H, Sub).
+'$sublist1'([H|T], X, [X|Sub]) :-
+	'$sublist1'(T, H, Sub).
+
+min_list([H|T], Min) :-
+	'$min_list1'(T, H, Min).
+
+'$min_list1'([], Min, Min).
+'$min_list1'([H|T], X, Min) :-
+        (   H>=X ->
+            '$min_list1'(T, X, Min)
+        ;   '$min_list1'(T, H, Min)
+        ).
 

@@ -43,28 +43,11 @@
 %	output.
 
 chr_show_store(Mod) :-
-	'chr global_term_ref_1'(Store),
-	(   get_attr(Store,Mod,Attr)
-	->  (   Attr =.. [v,_|Susps]
-	    ->  ( member(L,Susps),
-		  member(S,L),
-		  S =.. [_,_,_,_,_,_,F|A],
-		  C =.. [F|A],
-		  write(C),
-		  nl,
-                  fail
-                ;
-                  true
-                )
-	    ; ( member(S,Attr),
-	        S =.. [_,_,_,_,_,_,F|A],
-		C =.. [F|A],
-		write(C),
-		nl,
-                fail
-              ;
-                true
-	      )
-	    )
-	;   true
+	(
+		Mod:'$enumerate_suspensions'(Susp),
+		arg(6,Susp,C),
+		writeln(C),
+		fail
+	;
+		true
 	).

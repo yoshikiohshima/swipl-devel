@@ -94,12 +94,16 @@
 	    'chr lock'/1,
 	    'chr unlock'/1,
 	    'chr not_locked'/1,
+            'chr none_locked'/1,
 
 	    'chr update_mutable'/2,
 	    'chr get_mutable'/2,
 
 	    'chr novel_production'/2,
 	    'chr extend_history'/2,
+	    'chr empty_history'/1,
+
+	    'chr gen_id'/1,
 
 	    'chr debug_event'/1,
 	    'chr debug command'/2,	% Char, Command
@@ -244,10 +248,10 @@ unlock(T) :-
 unlockv([]).
 unlockv([T|R]) :- del_attr( T, locked), unlockv(R).
 
-none_locked( []).
-none_locked( [V|Vs]) :-
+'chr none_locked'( []).
+'chr none_locked'( [V|Vs]) :-
 	not_locked( V),
-	none_locked( Vs).
+	'chr none_locked'( Vs).
 
 not_locked( V) :- 
 	( var( V) ->
@@ -360,11 +364,11 @@ constraint_generation( Susp, State, Generation) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr allocate_constraint'( Closure, Self, F, Args) :-
-	empty_history( History),
+	'chr empty_history'( History),
 	create_mutable( passive(Args), Mref),
 	create_mutable( 0, Gref),
 	create_mutable( History, Href),
-	gen_id( Id),
+	'chr gen_id'( Id),
 	Self =.. [suspension,Id,Mref,Closure,Gref,Href,F|Args].
 
 %
@@ -386,7 +390,7 @@ constraint_generation( Susp, State, Generation) :-
 	),
 	( compound(State) ->			% passive/1
 	    term_variables( State, Vs),
-	    none_locked( Vs),
+	    'chr none_locked'( Vs),
 	    global_term_ref_1( Global),
 	    Vars = [Global|Vs]
 	; State==removed ->			% the price for eager removal ...
@@ -400,24 +404,24 @@ constraint_generation( Susp, State, Generation) :-
 
 'chr insert_constraint_internal'( [Global|Vars], Self, Closure, F, Args) :-
 	term_variables( Args, Vars),
-	none_locked( Vars),
+	'chr none_locked'( Vars),
 	global_term_ref_1( Global),
-	empty_history( History),
+	'chr empty_history'( History),
 	create_mutable( active, Mref),
 	create_mutable( 0, Gref),
 	create_mutable( History, Href),
-	gen_id( Id),
+	'chr gen_id'( Id),
 	Self =.. [suspension,Id,Mref,Closure,Gref,Href,F|Args].
 
 insert_constraint_internal( [Global|Vars], Self, Term, Closure, F, Args) :-
 	term_variables( Term, Vars),
-	none_locked( Vars),
+	'chr none_locked'( Vars),
 	global_term_ref_1( Global),
-	empty_history( History),
+	'chr empty_history'( History),
 	create_mutable( active, Mref),
 	create_mutable( 0, Gref),
 	create_mutable( History, Href),
-	gen_id( Id),
+	'chr gen_id'( Id),
 	Self =.. [suspension,Id,Mref,Closure,Gref,Href,F|Args].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -426,10 +430,10 @@ change_state( Susp, State) :-
 	update_mutable( State, Mref).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-empty_history( E) :- empty_assoc( E).
+'chr empty_history'( E) :- empty_assoc( E).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-gen_id( Id) :-
+'chr gen_id'( Id) :-
 	incval( id, Id).
 
 incval(id,Id) :-

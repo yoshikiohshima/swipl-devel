@@ -137,8 +137,7 @@ depth(Depth) -->
 	[ '~t(~D)~10| '-[Depth] ].
 
 head(Susp) -->
-	{ Susp =.. [_,ID,_,_,_,_,F|Args],
-	  Goal =.. [F|Args]
+	{ Susp =.. [_,ID,_,_,_,_,Goal|Args]
 	},
 	[ '~w # <~w>'-[Goal, ID] ].
 
