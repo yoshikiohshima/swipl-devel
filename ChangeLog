@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: Avoid "Loading module ... abolished: ..." messages when
+    reloading discontiguous predicates.
+
   * FIXED: A == B if A and B are equal string objects.
     (typo when providing support for cyclic terms)  Jacques Abel.
 

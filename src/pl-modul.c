@@ -605,7 +605,8 @@ declareModule(atom_t name, SourceFile sf, int line)
 	      Definition def = proc->definition;
 	      if ( /*def->module == module &&*/
 		   !true(def, DYNAMIC|MULTIFILE|FOREIGN) )
-	      { if ( def->module == module && isDefinedProcedure(proc) )
+	      { if ( def->module == module &&
+		     hasClausesDefinition(def) )
 		{ if ( !rdef )
 		  { rdef = PL_new_term_ref();
 		    rtail = PL_copy_term_ref(rdef);
