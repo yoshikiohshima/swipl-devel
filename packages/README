@@ -41,8 +41,9 @@ Now run
 	make
 	make install
 
-And   optional   one   of   the   HTML     or   PDF   documentation   in
-$(PLBASE)/doc/packages using:
+Each package comes with its own documentation. This documentation may be
+installed in the directory $(PLBASE)/doc/packages in  either HTML or PDF
+format using one of the commands:
 
 	make html-install
 	make pdf-install
