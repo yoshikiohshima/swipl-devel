@@ -43,7 +43,7 @@
 tcp_test :-
 	make_server(Port, Socket),
 	thread_create(run_server(Socket), Server, []),
-	client(Port),
+	client(localhost:Port),
 	thread_join(Server, true).
 
 

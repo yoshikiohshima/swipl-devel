@@ -1159,7 +1159,7 @@ tcp_unify_ip4(term_t Ip, unsigned long hip)
 
 
 int
-tcp_bind(int socket, struct sockaddr *my_addr, socklen_t addrlen)
+tcp_bind(int socket, struct sockaddr *my_addr, size_t addrlen)
 { if ( bind(socket, my_addr, addrlen) )
   { tcp_error(errno, TCP_ERRNO);
     return -1;
@@ -1174,7 +1174,7 @@ tcp_bind(int socket, struct sockaddr *my_addr, socklen_t addrlen)
 int
 tcp_connect(int socket,
 	    const struct sockaddr *serv_addr,
-	    socklen_t addrlen)
+	    size_t addrlen)
 { plsocket *s;
        
   s = lookupSocket(socket);
@@ -1184,14 +1184,14 @@ tcp_connect(int socket,
   { s->error = WSAGetLastError();
 
     if ( s->error == WSAEWOULDBLOCK )
-    { s->rdata.connect.addr = serv_addr;
-      s->rdata.connect.addrlen = addrlen;
+    { s->rdata.connect.addrlen = addrlen;
+      memcpy(&s->rdata.connect.addr, serv_addr, addrlen);
       placeRequest(s, REQ_CONNECT);
       waitRequest(s);
     }
 
     if ( s->error )
-    { tcp_error(s->error, NULL);
+    { tcp_error(s->error, TCP_ERRNO);
       return -1;
     }
   }
@@ -1217,14 +1217,14 @@ tcp_connect(int socket,
 
 
 int
-tcp_accept(int master, struct sockaddr *addr, socklen_t *addrlen)
+tcp_accept(int master, struct sockaddr *addr, size_t *addrlen)
 { int slave;
   plsocket *m;
 	
   m = lookupSocket(master);
 
 #ifdef WIN32
-  slave = accept(master, (struct sockaddr*)&addr, &addrlen);
+  slave = accept(master, addr, addrlen);
 
   if ( slave == SOCKET_ERROR )
   { m->error = WSAGetLastError();
@@ -1235,12 +1235,12 @@ tcp_accept(int master, struct sockaddr *addr, socklen_t *addrlen)
       if ( !waitRequest(m) )
 	return FALSE;
       if ( m->error )
-	return tcp_error(m->error, NULL);
-      addr    = m->rdata.accept.addr;
-      addrlen = m->rdata.accept.addrlen;
-      slave   = m->rdata.accept.slave;
+	return tcp_error(m->error, TCP_ERRNO);
+      slave    = m->rdata.accept.slave;
+      *addrlen = m->rdata.accept.addrlen;
+      memcpy(addr, &m->rdata.accept.addr, m->rdata.accept.addrlen);
     } else
-    { tcp_error(m->error, NULL);
+    { tcp_error(m->error, TCP_ERRNO);
       return -1;
     }
   }

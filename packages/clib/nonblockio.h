@@ -111,14 +111,14 @@ extern int	tcp_socket(void);
 extern int	tcp_closesocket(int socket);
 extern int	tcp_connect(int socket,
 			    const struct sockaddr *serv_addr,
-			    socklen_t addrlen);
+			    size_t addrlen);
 extern int	tcp_bind(int socket,
 			 struct sockaddr *my_addr,
-			 socklen_t addrlen);
+			 size_t addrlen);
 extern int	tcp_listen(int socket, int backlog);
 extern int	tcp_accept(int master,
 			   struct sockaddr *addr,
-			   socklen_t *addrlen);
+			   size_t *addrlen);
 
 extern int	tcp_read(int socket, char *buf, int bufSize);
 extern int 	tcp_write(int socket, char *buf, int bufSize);
@@ -128,7 +128,7 @@ extern int 	tcp_close_output(int socket);
 extern int	tcp_unify_ip4(term_t ip4, unsigned long hip);
 extern int	tcp_get_ip(term_t ip4, struct in_addr *ip);
 
-extern int	tcp_error(int errno, tcp_error_map map);
+extern int	tcp_error(int code, tcp_error_map map);
 extern int	tcp_setopt(int socket, tcp_option opt, ...);
 extern int	tcp_get_flags(int socket);
 
