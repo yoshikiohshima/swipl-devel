@@ -22,6 +22,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#define O_DEBUG 1
 #include "pl-incl.h"
 #ifdef O_ATTVAR
 
@@ -34,6 +35,24 @@ This module defines basic attributed variable   support  as described in
 evaluation" by Bart  Demoen,  Report   CW350,  October  2002, Katholieke
 Universiteit Leuven.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#ifdef O_DEBUG
+static char *
+vName(Word adr)
+{ GET_LD
+  static char name[32];
+
+  deRef(adr);
+
+  if (adr > (Word) lBase)
+    Ssprintf(name, "_L%ld", (Word)adr - (Word)lBase);
+  else
+    Ssprintf(name, "_G%ld", (Word)adr - (Word)gBase);
+
+  return name;
+} 
+#endif
+
 
 		 /*******************************
 		 *	     ASSIGNMENT		*
@@ -59,6 +78,8 @@ assignAttVar(Word av, Word value ARG_LD)
   assert(isAttVar(*av));
   assert(!isRef(*value));
 
+  DEBUG(1, Sdprintf("assignAttVar(%s)\n", vName(av)));
+
   if ( isAttVar(*value) )
   { if ( value > av )
     { Word tmp = av;
@@ -79,12 +100,14 @@ assignAttVar(Word av, Word value ARG_LD)
     deRef2(tail, t);
     TrailAssignment(t);
     *t = consPtr(wake, TAG_COMPOUND|STG_GLOBAL);
+    DEBUG(1, Sdprintf("appended to wakeup\n"));
   } else				/* empty list */
   { Word head = valTermRef(LD->attvar.head);
     
     assert(isVar(*head));
     *head = consPtr(wake, TAG_COMPOUND|STG_GLOBAL);
     Trail(head);
+    DEBUG(1, Sdprintf("new wakeup\n"));
   }
 
   TrailAssignment(tail);
@@ -92,7 +115,7 @@ assignAttVar(Word av, Word value ARG_LD)
 
   TrailAssignment(av);
   if ( isAttVar(*value) )
-  { DEBUG(5, Sdprintf("Unifying two attvars\n"));
+  { DEBUG(1, Sdprintf("Unifying two attvars\n"));
     *av = makeRef(value);
   } else
     *av = *value;

@@ -4117,6 +4117,7 @@ program pointer and jump to the common part.
 Attributed variable handling
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
       wakeup:
+	DEBUG(1, Sdprintf("Activating wakeup\n"));
 	next = lTop;
         DEF = getProcDefinedDefinition(lTop, PC,
 				       PROCEDURE_dwakeup1
@@ -4126,7 +4127,7 @@ Attributed variable handling
         ARGP = argFrameP(next, 0);
 	ARGP[0] = *valTermRef(LD->attvar.head);
 	setVar(*valTermRef(LD->attvar.head));
-	setVar(*valTermRef(LD->attvar.head));
+	setVar(*valTermRef(LD->attvar.tail));
 
 	goto normal_call;
 #endif
