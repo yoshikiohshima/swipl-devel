@@ -37,6 +37,8 @@
 :- op(1180, xfx, ==>).
 :- op(1180, xfx, <=>).
 :- op(1150, fx, constraints).
+:- op(1150, fx, handler).
+:- op(1150, fx, rules).
 :- op(1100, xfx, \).
 :- op(1200, xfx, @).			% values from hProlog
 :- op(1190, xfx, pragma).		% values from hProlog

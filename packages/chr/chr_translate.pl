@@ -49,7 +49,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% To Do
 %%
-%%	* input verification: pragmas
+%%	* SICStus compatibility
+%%		- rules/1 declaration
+%%		- options
+%%		- pragmas
+%%		- tell guard
+%%
+%%
+%%	* do not suspend on variables that don't matter
+%%	* make difference between cheap guards		for reordering
+%%	                      and non-binding guards	for lock removal
 %%
 %%	* unqiue -> once/[] transformation for propagation
 %%
@@ -87,10 +96,13 @@
 %%	* type and instantiation declarations + optimisations
 %%		+ better indexes
 %%
-%%	* disable global store
+%%	* disable global store option
 %%
 %% Done
 %%
+%%	* clean up generated code
+%%	* input verification: pragmas
+%%	* SICStus compatibility: handler/1, constraints/1
 %% 	* optimise variable passing for propagation rule
 %%	* reordering of head constraints for passive head search
 %%	* unique inference for simpagation rules
@@ -121,6 +133,7 @@
 %% Translation
 
 chr_translate(Declarations,NewDeclarations) :-
+	init_chr_pp_flags,
 	partition_clauses(Declarations,Decls,Rules,OtherClauses,Mod),
 	default(Mod,user),
 	( Decls == [] ->
@@ -132,7 +145,7 @@ chr_translate(Declarations,NewDeclarations) :-
 		generate_detach_a_constraint_all(Decls,Mod,DettachAConstraintClauses),
 		generate_attach_increment(Decls,Mod,AttachIncrementClauses),
 		generate_attr_unify_hook(Decls,Mod,AttrUnifyHookClauses),
-		constraints_code(Decls,NRules,Mod,ConstraintClauses,[]),
+		constraints_code(Decls,NRules,Mod,ConstraintClauses),
 		append_lists([ OtherClauses,
 			       AttachAConstraintClauses,
 			       DettachAConstraintClauses,
@@ -178,10 +191,27 @@ partition_clauses([C|Cs],Ds,Rs,OCs,Mod) :-
       append(D,RDs,Ds),
       Rs = RRs,
       OCs = ROCs
-  ;   C = ( :- module(Mod,_)) ->
+  ;   is_module_declaration(C,Mod) ->
       Ds = RDs,
       Rs = RRs,
       OCs = [C|ROCs]
+  ;   C = (handler _) ->
+      format('CHR compiler WARNING: ~w.\n',[C]),
+      format('    `-->  SICStus compatibility: ignoring handler/1 declaration.\n',[]),
+      Ds = RDs,
+      Rs = RRs,
+      OCs = ROCs
+  ;   C = (rules _) ->
+      format('CHR compiler WARNING: ~w.\n',[C]),
+      format('    `-->  SICStus compatibility: ignoring rules/1 declaration.\n',[]),
+      Ds = RDs,
+      Rs = RRs,
+      OCs = ROCs
+  ;   C = option(OptionName,OptionValue) ->
+      handle_option(OptionName,OptionValue),
+      Ds = RDs,
+      Rs = RRs,
+      OCs = ROCs
   ;   Ds = RDs,
       Rs = RRs,
       OCs = [C|ROCs]
@@ -189,7 +219,11 @@ partition_clauses([C|Cs],Ds,Rs,OCs,Mod) :-
   partition_clauses(Cs,RDs,RRs,ROCs,Mod).
 
 is_declaration(D, Constraints) :-		%% constraint declaration
-  D = (:- Decl),
+  ( D = (:- Decl) ->
+	true
+  ;
+	D = Decl
+  ),
   Decl =.. [constraints,Cs],
   conj2list(Cs,Constraints).
 
@@ -274,6 +308,8 @@ get_ids([C|Cs],[N|IDs],[NC|NCs],N,NN) :-
 	M is N + 1,
 	get_ids(Cs,IDs,NCs, M,NN).
 
+is_module_declaration((:- module(Mod)),Mod).
+is_module_declaration((:- module(Mod,_)),Mod).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -285,39 +321,183 @@ check_rules(Rules,Decls) :-
 	check_rules(Rules,Decls,1).
 
 check_rules([],_,_).
-check_rules([pragma(Rule,_,_,Name)|Rest],Decls,N) :-
-	Rule = rule(H1,H2,_,_),
-	append(H1,H2,HeadConstraints),
-	check_head_constraints(HeadConstraints,Decls,Name,N),
+check_rules([PragmaRule|Rest],Decls,N) :-
+	check_rule(PragmaRule,Decls,N),
 	N1 is N + 1,
 	check_rules(Rest,Decls,N1).
 
+check_rule(PragmaRule,Decls,N) :-
+	PragmaRule = pragma(Rule,_IDs,Pragmas,_Name),
+	Rule = rule(H1,H2,_,_),
+	append(H1,H2,HeadConstraints),
+	check_head_constraints(HeadConstraints,Decls,PragmaRule,N),
+	check_pragmas(Pragmas,PragmaRule,N).
+
 check_head_constraints([],_,_,_).
-check_head_constraints([Constr|Rest],Decls,Name,N) :-
+check_head_constraints([Constr|Rest],Decls,PragmaRule,N) :-
 	functor(Constr,F,A),
 	( member(F/A,Decls) ->
-		check_head_constraints(Rest,Decls,Name,N)
+		check_head_constraints(Rest,Decls,PragmaRule,N)
 	;
-		write('ERROR: Undeclared constraint '),
-		write(F/A),
-		( Name = yes(ActualName) ->
-			write(' used in head of rule: '),
-			write(ActualName)
-		;
-			write(' used in head of rule number '),
-			write(N)
-		),
-		writeln('!'),
+		format('CHR compiler ERROR: Undeclared constraint ~w in head of ~@.\n',
+		       [F/A,chr_pp:format_rule(PragmaRule,N)]),
+		format('    `--> Constraint should be on of ~w.\n',[Decls]),
 		fail
+	).
+
+check_pragmas([],_,_).
+check_pragmas([Pragma|Pragmas],PragmaRule,N) :-
+	check_pragma(Pragma,PragmaRule,N),
+	check_pragmas(Pragmas,PragmaRule,N).
+
+check_pragma(Pragma,PragmaRule,N) :-
+	var(Pragma), !,
+	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',
+               [Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('    `--> Pragma should not be a variable!\n',[]),
+	fail.
+
+check_pragma(passive(ID), PragmaRule, N) :-
+	!,
+	PragmaRule = pragma(_,ids(IDs1,IDs2),_,_),
+	( memberchk_eq(ID,IDs1) ->
+		true
+	; memberchk_eq(ID,IDs2) ->
+		true
+	;
+		format('CHR compiler ERROR: invalid identifier ~w in pragma passive in ~@.\n',
+                       [ID,chr_pp:format_rule(PragmaRule,N)]),
+		fail
+	).
+
+check_pragma(Pragma, PragmaRule, N) :-
+	Pragma = unique(_,_),
+	!,
+	format('CHR compiler WARNING: undocument pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('    `--> Only use this pragma if you know what you are doing.\n',[]).
+
+check_pragma(Pragma, PragmaRule, N) :-
+	Pragma = already_in_heads,
+	!,
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
+
+check_pragma(Pragma, PragmaRule, N) :-
+	Pragma = already_in_head(_),
+	!,
+	format('CHR compiler WARNING: currently unsupported pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('    `--> Pragma is ignored. Termination and correctness may be affected \n',[]).
+	
+check_pragma(Pragma,PragmaRule,N) :-
+	format('CHR compiler ERROR: invalid pragma ~w in ~@.\n',[Pragma,chr_pp:format_rule(PragmaRule,N)]),
+	format('    `--> Pragma should be one of passive/1!\n',[]),
+	fail.
+
+format_rule(PragmaRule,N) :-
+	PragmaRule = pragma(_,_,_,MaybeName),
+	( MaybeName = yes(Name) ->
+		write('rule '), write(Name)
+	;
+		write('rule number '), write(N)
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-chr_pp_flag(unique_analyse_optimise,on).
-chr_pp_flag(check_unnecessary_active,on).
-chr_pp_flag(reorder_heads,on).
-chr_pp_flag(set_semantics_rule,on).
-chr_pp_flag(guard_via_reschedule,on).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Global Options
+%
+
+handle_option(Var,Value) :- 
+	var(Var), !,
+	format('CHR compiler ERROR: ~w.\n',[option(Var,Value)]),
+	format('    `--> First argument should be an atom, not a variable.\n',[]),
+	fail.
+
+handle_option(Name,Value) :- 
+	var(Value), !,
+	format('CHR compiler ERROR: ~w.\n',[option(Name,Value)]),
+	format('    `--> Second argument should be a nonvariable.\n',[]),
+	fail.
+
+handle_option(Name,Value) :-
+	option_definition(Name,Value,Flags),
+	!,
+	set_chr_pp_flags(Flags).
+
+handle_option(Name,Value) :- 
+	\+ option_definition(Name,_,_), !,
+	setof(N,_V ^ _F ^ (chr_pp:option_definition(N,_V,_F)),Ns),
+	format('CHR compiler ERROR: ~w.\n',[option(Name,Value)]),
+	format('    `--> Invalid option name ~w: should be one of ~w.\n',[Name,Ns]),
+	fail.
+
+handle_option(Name,Value) :- 
+	findall(V,option_definition(Name,V,_),Vs), 
+	format('CHR compiler ERROR: ~w.\n',[option(Name,Value)]),
+	format('    `--> Invalid value ~w: should be one of ~w.\n',[Value,Vs]),
+	fail.
+
+option_definition(optimize,full,Flags) :-
+	Flags = [ unique_analyse_optimise  - on,
+                  check_unnecessary_active - full,
+		  reorder_heads		   - on,
+		  set_semantics_rule	   - on,
+		  guard_via_reschedule     - on
+		].
+
+option_definition(optimize,sicstus,Flags) :-
+	Flags = [ unique_analyse_optimise  - off,
+                  check_unnecessary_active - simplification,
+		  reorder_heads		   - off,
+		  set_semantics_rule	   - off,
+		  guard_via_reschedule     - off
+		].
+
+option_definition(optimize,off,Flags) :-
+	Flags = [ unique_analyse_optimise  - off,
+                  check_unnecessary_active - off,
+		  reorder_heads		   - off,
+		  set_semantics_rule	   - off,
+		  guard_via_reschedule     - off
+		].
+
+option_definition(check_guard_bindings,on,Flags) :-
+	Flags = [ guard_locks - on ].
+
+option_definition(check_guard_bindings,off,Flags) :-
+	Flags = [ guard_locks - off ].
+
+init_chr_pp_flags :-
+	chr_pp_flag_definition(Name,[DefaultValue|_]),
+	set_chr_pp_flag(Name,DefaultValue),
+	fail.
+init_chr_pp_flags.		
+
+set_chr_pp_flags([]).
+set_chr_pp_flags([Name-Value|Flags]) :-
+	set_chr_pp_flag(Name,Value),
+	set_chr_pp_flags(Flags).
+
+set_chr_pp_flag(Name,Value) :-
+	atom_concat('$chr_pp_',Name,GlobalVar),
+	nb_setval(GlobalVar,Value).
+
+chr_pp_flag_definition(unique_analyse_optimise,[on,off]).
+chr_pp_flag_definition(check_unnecessary_active,[full,simplification,off]).
+chr_pp_flag_definition(reorder_heads,[on,off]).
+chr_pp_flag_definition(set_semantics_rule,[on,off]).
+chr_pp_flag_definition(guard_via_reschedule,[on,off]).
+chr_pp_flag_definition(guard_locks,[on,off]).
+
+chr_pp_flag(Name,Value) :-
+	atom_concat('$chr_pp_',Name,GlobalVar),
+	nb_getval(GlobalVar,V),
+	( V == [] ->
+		chr_pp_flag_definition(Name,[Value|_])
+	;
+		V = Value
+	).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -627,6 +807,10 @@ generate_attr_unify_hook_many(N,Mod,Clause) :-
 %% |  _ <| |_| | |  __/ | |__| (_) | | | | | | |_) | | | (_| | |_| | (_) | | | |
 %% |_| \_\\__,_|_|\___|  \____\___/|_| |_| |_| .__/|_|_|\__,_|\__|_|\___/|_| |_|
 %%                                           |_|
+
+constraints_code(Constraints,Rules,Mod,Clauses) :-
+	constraints_code(Constraints,Rules,Mod,L,[]),
+	clean_clauses(L,Clauses).
 
 %%	Generate code for all the CHR constraints
 constraints_code(Constraints,Rules,Mod,L,T) :-
@@ -1061,7 +1245,10 @@ entails(X < Y, X1 =< Y1) :- X1 == X, Y1 == Y.
 entails(ground(X),var(X1)) :- X1 == X.
 
 check_unnecessary_active(Constraint,Previous,Rule) :-
-	( chr_pp_flag(check_unnecessary_active,on) ->
+	( chr_pp_flag(check_unnecessary_active,full) ->
+		check_unnecessary_active_main(Constraint,Previous,Rule)
+	; chr_pp_flag(check_unnecessary_active,simplification),
+	  Rule = rule(_,[],_,_) ->
 		check_unnecessary_active_main(Constraint,Previous,Rule)
 	;
 		fail
@@ -1186,7 +1373,7 @@ simplification_code(Head,RestHeads,RestIDs,PragmaRule,F/A,_I,N,Constraints,Mod,I
 	    rest_heads_retrieval_and_matching(RestHeads,RestIDs,Pragmas,Head,Mod,N,Constraints,GetRestHeads,Susps,VarDict1,VarDict)
 	),
 	
-	code_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
+	guard_body_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
 	guard_via_reschedule(GetRestHeads,GuardCopyList,ClauseHead-FirstMatching,RescheduledTest),
 	
 	gen_uncond_susps_detachments(Susps,RestHeads,SuspsDetachments),
@@ -1345,31 +1532,11 @@ gen_get_mod_constraints(Mod,L,Goal,Susps) :-
        )
    ).
 
-code_copies(Rule,VarDict,GuardCopy,BodyCopy) :-
-	Rule = rule(_,_,Guard,Body),
-	my_term_copy(Guard,VarDict,VarDict2,GuardCopyCore),
-	( simple_guard(Guard,VarDict) ->
-		GuardCopy = GuardCopyCore
-	;
-		term_variables(Guard,GuardVars),
-		term_variables(GuardCopyCore,GuardCopyVars),
-		( bagof('chr lock'(Y),X ^ (member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
-			true
-		;
-			Locks = []
-		),
-		list2conj(Locks,LockPhase),
-		( bagof('chr unlock'(Y),X ^ (member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
-			true
-		;
-			Unlocks = []
-		),
-		list2conj(Unlocks,UnlockPhase),
-		GuardCopy = (LockPhase,(GuardCopyCore,UnlockPhase))
-	),
-	my_term_copy(Body,VarDict2,BodyCopy).
+guard_body_copies(Rule,VarDict,GuardCopy,BodyCopy) :-
+	guard_body_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
+	list2conj(GuardCopyList,GuardCopy).
 
-code_copies2(Rule,VarDict,GuardCopyList,BodyCopy) :-
+guard_body_copies2(Rule,VarDict,GuardCopyList,BodyCopy) :-
 	Rule = rule(_,_,Guard,Body),
 	conj2list(Guard,GuardList),
 	split_off_simple_guard(GuardList,VarDict,GuardPrefix,RestGuardList),
@@ -1378,17 +1545,19 @@ code_copies2(Rule,VarDict,GuardCopyList,BodyCopy) :-
 	append(GuardPrefixCopy,[RestGuardCopy],GuardCopyList),
 	term_variables(RestGuardList,GuardVars),
 	term_variables(RestGuardListCopyCore,GuardCopyVars),
-	( bagof('chr lock'(Y),X ^ (member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Locks) ->
-		true
+	( chr_pp_flag(guard_locks,on),
+          bagof(('chr lock'(Y)) - ('chr unlock'(Y)),
+                X ^ (member(X,GuardVars),		% X is a variable appearing in the original guard
+                     lookup_eq(VarDict,X,Y),            % translate X into new variable
+                     memberchk_eq(Y,GuardCopyVars)      % redundant check? or multiple entries for X possible?
+                    ),
+                LocksUnlocks) ->
+		once(pairup(Locks,Unlocks,LocksUnlocks))
 	;
-		Locks = []
-	),
-	list2conj(Locks,LockPhase),
-	( bagof('chr unlock'(Y),X ^ (member(X,GuardVars),lookup_eq(VarDict,X,Y),memberchk_eq(Y,GuardCopyVars)),Unlocks) ->
-		true
-	;
+		Locks = [],
 		Unlocks = []
 	),
+	list2conj(Locks,LockPhase),
 	list2conj(Unlocks,UnlockPhase),
 	list2conj(RestGuardListCopyCore,RestGuardCopyCore),
 	RestGuardCopy = (LockPhase,(RestGuardCopyCore,UnlockPhase)),
@@ -1405,6 +1574,8 @@ split_off_simple_guard([G|Gs],VarDict,S,C) :-
 		C = [G|Gs]
 	).
 
+% simple guard: cheap and benign (does not bind variables)
+
 simple_guard(var(_),    _).
 simple_guard(nonvar(_), _).
 simple_guard(ground(_), _).
@@ -1417,6 +1588,8 @@ simple_guard(_ > _ , _).
 simple_guard(_ < _ , _).
 simple_guard(_ =< _, _).
 simple_guard(_ >= _, _).
+simple_guard(_ =:= _, _).
+simple_guard(_ == _, _).
 
 simple_guard(X is _, VarDict) :-
 	\+ lookup_eq(VarDict,X,_).
@@ -1425,6 +1598,8 @@ simple_guard((G1,G2),VarDict) :-
 	simple_guard(G1,VarDict),
 	simple_guard(G2,VarDict).
 
+simple_guard(\+ G, VarDict) :-
+	simple_guard(G, VarDict).
 
 my_term_copy(X,Dict,Y) :-
    my_term_copy(X,Dict,_,Y).
@@ -1496,7 +1671,7 @@ simpagation_head1_code(Head,RestHeads,OtherIDs,PragmaRule,F/A,_I,N,Constraints,M
    length(RestHeads,RN),
    take(RN,Susps,Susps1),
 
-   code_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
+   guard_body_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
    guard_via_reschedule(GetRestHeads,GuardCopyList,ClauseHead-FirstMatching,RescheduledTest),
 
    gen_uncond_susps_detachments(Susps1,RestHeads,SuspsDetachments),
@@ -1636,7 +1811,7 @@ simpagation_head2_worker_body(Head2,Head1,ID1,RestHeads1,IDs1,RestHeads2,IDs2,Ru
    append([[]|VarsSusp],ExtraVars,RecursiveVars2),
    build_head(F,A,Id,RecursiveVars2,RecursiveCall2),
 
-   code_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
+   guard_body_copies2(Rule,VarDict,GuardCopyList,BodyCopy),
    guard_via_reschedule(RestSuspsRetrieval,GuardCopyList,v(ClauseHead,IteratorSuspTest,FirstMatching),RescheduledTest),
    (   BodyCopy \== true ->
        gen_uncond_attach_goal(F/A,Susp,Mod,Attachment,Generation),
@@ -1738,7 +1913,7 @@ propagation_single_headed(Head,Rule,RuleNb,F/A,Mod,Id,L,T) :-
    NextCall = NextHead,
 
    head_arg_matches(HeadPairs,[],HeadMatching,VarDict),
-   code_copies(Rule,VarDict,GuardCopy,BodyCopy),
+   guard_body_copies(Rule,VarDict,GuardCopy,BodyCopy),
    ( Id == [0] ->
 	gen_cond_allocation(Vars,Susp,F/A,VarsSusp,Mod,Allocation),
 	Allocation1 = Allocation
@@ -1847,7 +2022,7 @@ propagation_body(CurrentHead,PreHeads,Rule,RuleNb,RestHeadNb,F/A,Mod,Id,L,T) :-
  
    different_from_other_susps(CurrentHead,OtherSusp,PreHeads,RestSusps,DiffSuspGoals), 
 
-   code_copies(Rule,VarDict,GuardCopy,BodyCopy),
+   guard_body_copies(Rule,VarDict,GuardCopy,BodyCopy),
    gen_uncond_attach_goal(F/A,Susp,Mod,Attach,Generation),
    gen_state_cond_call(Susp,A,RecursiveCall,Generation,ConditionalRecursiveCall),
 
@@ -2034,7 +2209,7 @@ reorder_heads(Head,RestHeads,RestIDs,NRestHeads,NRestIDs) :-
 		reorder_heads_main(Head,RestHeads,RestIDs,NRestHeads,NRestIDs)
 	;
 		NRestHeads = RestHeads,
-		NRestIDs = NRestIDs
+		NRestIDs = RestIDs
 	).
 
 reorder_heads_main(Head,RestHeads,RestIDs,NRestHeads,NRestIDs) :-
@@ -2132,6 +2307,98 @@ create_get_mutable(V,M,GM) :-
 	%;
 	%	GM = (M = mutable(V))
 	%).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%   ____          _         ____ _                  _             
+%%  / ___|___   __| | ___   / ___| | ___  __ _ _ __ (_)_ __   __ _ 
+%% | |   / _ \ / _` |/ _ \ | |   | |/ _ \/ _` | '_ \| | '_ \ / _` |
+%% | |__| (_) | (_| |  __/ | |___| |  __/ (_| | | | | | | | | (_| |
+%%  \____\___/ \__,_|\___|  \____|_|\___|\__,_|_| |_|_|_| |_|\__, |
+%%                                                           |___/ 
+%%
+%% removes redundant 'true's and other trivial but potentially non-free constructs
+
+clean_clauses([],[]).
+clean_clauses([C|Cs],[NC|NCs]) :-
+	clean_clause(C,NC),
+	clean_clauses(Cs,NCs).
+
+clean_clause(Clause,NClause) :-
+	( Clause = (Head :- Body) ->
+		clean_goal(Body,NBody),
+		( NBody == true ->
+			NClause = Head
+		;
+			NClause = (Head :- NBody)
+		)
+	;
+		NClause = Clause
+	).
+
+clean_goal(Goal,NGoal) :-
+	var(Goal), !,
+	NGoal = Goal.
+clean_goal((G1,G2),NGoal) :-
+	!,
+	clean_goal(G1,NG1),
+	clean_goal(G2,NG2),
+	( NG1 == true ->
+		NGoal = NG2
+	; NG2 == true ->
+		NGoal = NG1
+	;
+		NGoal = (NG1,NG2)
+	).
+clean_goal((If -> Then ; Else),NGoal) :-
+	!,
+	clean_goal(If,NIf),
+	( NIf == true ->
+		clean_goal(Then,NThen),
+		NGoal = NThen
+	; NIf == fail ->
+		clean_goal(Else,NElse),
+		NGoal = NElse
+	;
+		clean_goal(Then,NThen),
+		clean_goal(Else,NElse),
+		NGoal = (NIf -> NThen; NElse)
+	).
+clean_goal((G1 ; G2),NGoal) :-
+	!,
+	clean_goal(G1,NG1),
+	clean_goal(G2,NG2),
+	( NG1 == fail ->
+		NGoal = NG2
+	; NG2 == fail ->
+		NGoal = NG1
+	;
+		NGoal = (NG1 ; NG2)
+	).
+clean_goal(once(G),NGoal) :-
+	!,
+	clean_goal(G,NG),
+	( NG == true ->
+		NGoal = true
+	; NG == fail ->
+		NGoal = fail
+	;
+		NGoal = once(NG)
+	).
+clean_goal((G1 -> G2),NGoal) :-
+	!,
+	clean_goal(G1,NG1),
+	( NG1 == true ->
+		clean_goal(G2,NGoal)
+	; NG1 == fail ->
+		NGoal = fail
+	;
+		clean_goal(G2,NG2),
+		NGoal = (NG1 -> NG2)
+	).
+clean_goal(Goal,Goal).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  _   _ _   _ _ _ _
