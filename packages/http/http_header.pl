@@ -166,7 +166,7 @@ http_reply(authorise(Method, Realm), Out, HrdExtra) :- !,
 	phrase(reply_header(authorise(Method, Realm, HTML), HrdExtra), Header),
 	format(Out, '~s', [Header]),
 	print_html(Out, HTML).
-http_reply(server_error(http(not_modified)), Out, HrdExtra) :- !,
+http_reply(not_modified, Out, HrdExtra) :- !,
 	phrase(page([ title('304 Not Modified')
 		    ],
 		    [ h1('Not Modified'),

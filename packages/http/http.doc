@@ -2,6 +2,7 @@
 \usepackage{times}
 \usepackage{pl}
 \usepackage{html}
+\makeindex
 
 \onefile
 \htmloutput{html}				% Output directory
@@ -361,12 +362,26 @@ print_request([H|T]) :-
 \end{code}
 
 
-\subsubsection{Returning special status codes}
+\subsubsection{Returning special status codes}	\label{sec:httpspecials}
 
-To process requests with the header \const{If-Modified-Since}, the
-wrapper allows the `Body' to throw an exception of the format
-\term{status}{not_modified}.  This causes the server to respond with
-a \const{304 Not Modified} page.
+Besides returning a page by writing it to the current output stream,
+the server goal can raise an exception using throw/1 to generate special
+pages such as \const{not_found}, \const{moved}, etc. The defined
+exceptions are:
+
+\begin{description}
+    \termitem{http_reply}{+Reply, +HdrExtra}
+Return a result page using http_reply/3.  See http_reply/3 for details.
+
+    \termitem{http_reply}{+Reply}
+Equivalent to \term{http_reply}{Reply, []}.
+
+    \termitem{http}{not_modified}
+Equivalent to \term{http_reply}{not_modified, []}.  This exception is
+for backward compatibility and can be used by the server to indicate
+the referenced resource has not been modified since it was requested
+last time.
+\end{description}
 
 
 \subsection{Request format}			\label{sec:request}
@@ -782,6 +797,69 @@ information derived from the exception.
 \end{description}
 
 
+\subsection{Handling HTTP headers}			\label{sec:httpheader}
+
+The library \pllib{http/http_header} provides primitives for parsing and
+composing HTTP headers. Its functionality is normally hidden by the
+other parts of the HTTP server and client libraries.  We provide a brief
+overview of http_reply/3 which can be accessed from the reply body using
+an exception as explain in \secref{httpspecials}.
+
+
+\begin{description}
+    \predicate{http_reply}{+Type, +Stream, +HdrExtra}
+Compose a complete HTTP reply from the term \arg{Type} using additional
+headers from \arg{HdrExtra} to the output stream \arg{Stream}.
+\arg{ExtraHeader} is a list of \term{Field}{Value}.  \arg{Type} is
+one of:
+
+    \begin{description}
+        \termitem{html}{+HTML}
+Produce a HTML page using print_html/1, normally generated using the
+\pllib{http/html_write} described in \secref{htmlwrite}.
+
+        \termitem{file}{+MimeType, +Path}
+Reply the content of the given file, indicating the given MIME type.
+
+        \termitem{tmp_file}{+MimeType, +Path}
+Similar to \term{File}{+MimeType, +Path}, but do not include a
+modification time header.
+
+        \termitem{stream}{+Stream, +Len}
+Reply using the next \arg{Len} characters from \arg{Stream}.  The
+user must provides the MIME type and other attributes through the
+\arg{ExtraHeader} argument.
+
+	\termitem{cgi_stream}{+Stream, +Len}
+Similar to \term{stream}{+Stream, +Len}, but the data on \arg{Stream}
+must contain an HTTP header.
+
+	\term_item{moved}{+URL}
+Generate a ``301 Moved Permanently'' page with the given target
+\arg{URL}.
+
+ 	\termitem{not_found}{+URL}
+Generate a ``404 Not Found'' page.
+
+        \termitem{forbidden}{+URL}
+Generate a ``403 Forbidden'' page, denying access without challenging
+the client.
+
+        \termitem{authorise}{+Method, +Realm}
+Generate a ``401 Authorization Required'', requesting the client to
+retry using proper credentials (i.e.\ user and password).
+
+        \termitem{not_modified}{}
+Generate a ``304 Not Modified'' page, indicating the requested resource
+has not changed since the indicated time.
+
+        \termitem{server_error}{+Error}
+Generate a ``500 Internal server error'' page with a message generated
+from a Prolog exception term (see print_message/2).
+    \end{description}
+\end{description}
+
+
 \subsection{The \pllib{http/html_write} library}	\label{sec:htmlwrite}
 
 \newcommand{\elem}[1]{\const{#1}}
@@ -1160,6 +1238,8 @@ use Prolog directly as a web-server.
 This library is by no means complete and you are free to extend it.
 Partially or completely lacking are notably session management and
 authorisation.
+
+\printindex
 
 \end{document}
 
