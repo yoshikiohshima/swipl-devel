@@ -2703,6 +2703,10 @@ frame has a clause we must consider all variables of this clause.
 This  routine  is  used   by    garbage_collect_clauses/0   as  well  as
 start_consult/1. In the latter case, only  predicates in this sourcefile
 are marked.
+
+Predicates marked with P_FOREIGN_CREF are   foreign  predicates that use
+the frame->clause choicepoint info for  storing the clause-reference for
+the next clause. Amoung these are retract/1, clause/2, etc.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static QueryFrame
@@ -2711,26 +2715,36 @@ mark_predicates_in_environments(PL_local_data_t *ld, LocalFrame fr)
     return NULL;
 
   for(;;)
-  { if ( true(fr, FR_MARKED) )
+  { Definition def;
+
+    if ( true(fr, FR_MARKED) )
       return NULL;			/* from choicepoints only */
     set(fr, FR_MARKED);
     ld->gc._local_frames++;
 
-    if ( true(fr->predicate, NEEDSCLAUSEGC) &&
-	 false(fr->predicate, DYNAMIC) )
+    if ( true(fr->predicate, P_FOREIGN_CREF) && fr->clause )
+    { ClauseRef cref = (ClauseRef)fr->clause;
+
+      def = getProcDefinition(cref->clause->procedure);
+    } else
+      def = fr->predicate;
+
+    if ( def &&
+	 true(def, NEEDSCLAUSEGC) &&
+	 false(def, DYNAMIC) )
     { if ( GD->procedures.reloading )
       { ListCell cell;
 
 	for(cell=GD->procedures.reloading->procedures; cell; cell=cell->next)
 	{ Procedure proc = cell->value;
-	  if ( proc->definition == fr->predicate )
-	  { fr->predicate->references++;
+	  if ( proc->definition == def )
+	  { def->references++;
 	    GD->procedures.active_marked++;
 	    break;
 	  }
 	}
       } else
-	fr->predicate->references++;
+	def->references++;
     }
 
     if ( fr->parent )
@@ -2761,7 +2775,7 @@ markPredicatesInEnvironments(PL_local_data_t *ld)
     assert(qf->magic == QID_MAGIC);
 
     for(; ch; ch = ch->parent)
-    { mark_atoms_in_environments(ld, ch->frame);
+    { mark_predicates_in_environments(ld, ch->frame);
     }
   }
 

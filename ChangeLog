@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: clause garbage collection for references from retract/1,
+    clause/2, etc.
+
   * FIXED: profile detection on older versions of gcc.  Tom Schrijvers.
 
   * FIXED: repetitive qsave_program/2 handling.  Dima.

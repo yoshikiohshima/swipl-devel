@@ -796,6 +796,8 @@ abolishProcedure(Procedure proc, Module module)
 { GET_LD
   Definition def = proc->definition;
 
+  DEBUG(2, Sdprintf("abolishProcedure(%s)\n", predicateName(def)));
+
   startCritical;
   LOCKDEF(def);
   if ( def->module != module )		/* imported predicate; remove link */
@@ -2564,7 +2566,10 @@ startConsult(SourceFile f)
 
       next = cell->next;
       if ( def )
-      { removeClausesProcedure(proc,
+      { DEBUG(2, Sdprintf("removeClausesProcedure(%s), refs = %d\n",
+			  predicateName(def), def->references));
+
+	removeClausesProcedure(proc,
 			       true(def, MULTIFILE) ? f->index : 0);
 
 	if ( true(def, NEEDSCLAUSEGC) )

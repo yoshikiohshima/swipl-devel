@@ -60,6 +60,7 @@ Flags almost always is TRACE_ME.  Additional common flags:
 #define META    PL_FA_TRANSPARENT
 #define NDET	PL_FA_NONDETERMINISTIC
 #define VA	PL_FA_VARARGS
+#define CREF	PL_FA_CREF
 
 #define FRG(n, a, f, flags) { n, a, f, flags }
 
@@ -217,11 +218,11 @@ static const PL_extension foreigns[] = {
 
   FRG("abolish",    		1, pl_abolish1,		     META),
   FRG("abolish",    		2, pl_abolish,		     META),
-  FRG("clause",    		2, pl_clause2,	        NDET|META),
-  FRG("clause",    		3, pl_clause3,	        NDET|META),
-  FRG("$clause",	        4, pl_clause4,	        NDET|META),
-  FRG("nth_clause", 		3, pl_nth_clause,       NDET|META),
-  FRG("retract",    		1, pl_retract,          NDET|META),
+  FRG("clause",    		2, pl_clause2,	        NDET|META|CREF),
+  FRG("clause",    		3, pl_clause3,	        NDET|META|CREF),
+  FRG("$clause",	        4, pl_clause4,	        NDET|META|CREF),
+  FRG("nth_clause", 		3, pl_nth_clause,       NDET|META|CREF),
+  FRG("retract",    		1, pl_retract,          NDET|META|CREF),
   FRG("retractall",		1, pl_retractall,	     META),
 #if O_DEBUGGER
   FRG("$xr_member",		2, pl_xr_member,        NDET|META),
@@ -503,6 +504,7 @@ bindExtensions(const PL_extension *e)
     if ( e->flags & PL_FA_TRANSPARENT )	     flags |= METAPRED;
     if ( e->flags & PL_FA_NONDETERMINISTIC ) flags |= NONDETERMINISTIC;
     if ( e->flags & PL_FA_VARARGS )	     flags |= P_VARARG;
+    if ( e->flags & PL_FA_CREF )	     flags |= P_FOREIGN_CREF;
 
     def = lookupProcedure(lookupFunctorDef(name, e->arity), m)->definition;
     PL_unregister_atom(name);
@@ -567,6 +569,7 @@ registerBuiltins(const PL_extension *f)
     if ( f->flags & PL_FA_TRANSPARENT )	     set(def, METAPRED);
     if ( f->flags & PL_FA_NONDETERMINISTIC ) set(def, NONDETERMINISTIC);
     if ( f->flags & PL_FA_VARARGS )	     set(def, P_VARARG);
+    if ( f->flags & PL_FA_CREF )	     set(def, P_FOREIGN_CREF);
 
     def->definition.function = f->function;
     def->indexPattern = 0;
