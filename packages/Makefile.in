@@ -19,7 +19,8 @@ PKG=	xpce \
 	sgml \
 	sgml/RDF \
 	semweb \
-	http
+	http \
+	chr
 
 # Define additional config options.  If you wish to build the multi-threaded
 # version of SWI-Prolog and pl-mt to the same install-base, you must provide

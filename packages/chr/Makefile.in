@@ -39,6 +39,7 @@ all:
 install:	$(CHRDIR) $(LIBPL)
 		$(INSTALL) -m 644 $(LIBPL) $(CHRDIR)
 		$(INSTALL) -m 644 $(CHRPL) $(LIBDIR)/chr.pl
+		$(INSTALL) -m 644 README   $(CHRDIR)
 		$(PL) -f none -g make -t halt
 
 $(CHRDIR):

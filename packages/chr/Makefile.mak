@@ -24,6 +24,7 @@ install::
 		copy chr_translate.pl "$(CHR)"
 		copy chr_debug.pl "$(CHR)"
 		copy chr_swi.pl "$(LIBDIR)\chr.pl"
+		copy README "$(LIBDIR)\README.TXT"
 		$(MAKEINDEX)
 !ENDIF
 
@@ -35,6 +36,7 @@ uninstall::
 		del "$(CHR)\chr_op.pl"
 		del "$(CHR)\chr_translate.pl"
 		del "$(CHR)\chr_debug.pl"
+		del "$(CHR)\README.TXT"
 		del "$(LIBDIR)\chr.pl"
 		$(MAKEINDEX)
 
