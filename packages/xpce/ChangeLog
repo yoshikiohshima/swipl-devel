@@ -2,6 +2,9 @@
 			   ==============
 
 
+VERSION 6.2.18, distributed with SWI-Prolog 5.3.10
+==================================================
+
 * ENHANCED: Exploit GCC visibility("hidden") attribute.  Improves symbol
   handling for embedded applications on ELF-based systems.
 

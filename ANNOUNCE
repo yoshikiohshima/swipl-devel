@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.9/XPCE 6.2.17 development snapshot
+SWI-Prolog 5.3.10/XPCE 6.2.18 development snapshot
 
 Status
 ======
@@ -7,16 +7,6 @@ Status
     development branch and Prolog programs that do not use the extensions
     appear to run stable.
   
-  * The implementation of global variables is new, but few problems are
-    expected.
-
-  * Expect problems with builtin predicates handling attributed variables.
-    Three types of incorrect behaviour are to be expected: crash (normally
-    on an assertion error), refusing to bind (the attvar is treated as a
-    instantiated term) or refusing to wakeup the unification handler.
-    
-Please report all trouble you encounter.
-
 
 Anticipated features relative to stable 5.2.x release and their status
 ======================================================================
@@ -52,44 +42,40 @@ Anticipated features relative to stable 5.2.x release and their status
     implementation.
 
 
-Brief summary of changes since 5.3.8
+Brief summary of changes since 5.3.9
 ====================================
 
 SWI-Prolog
 ----------
 
-  * Fixed some debug-mode issues
+  * Minor patches and cleanup
 
-  * Made when/2 module aware
-
-  * Turned some traditional printed error messages into exceptions.
+  * Hide ELF symbols to reduce risc for accidental override, reduce
+    startup time, especially when used as embedded shared object.
+    ELF-systems compiled with GCC only.
 
 Packages
 --------
 
-  * CHR: various improvements.  Notably integration in the environment.
+  * XPCE: Hide ELF symbols.  See above.
 
-  * XPCE: Cleanup of operator issues.  Fixed buffer overflow menus with
-    > 1000 entries.
+  * SGML/XML parser: Fixed buffer overflow.  Added xsdp_types.pl
+    (partial support for XSD Primitive Types) and iso_639.pl
+    (ISO-639 language codes).
 
-  * Semweb: fix XML output of rdf_save/[1,2] (unquoted attribute).
+  * RDF: Added support for xml:lang and rdf:dataType
+
+  * Semweb (rdf_db): Added support for xml:lang and rdf:dataType.
+    Fixes to rdf_save/2.
+
 
 Development environment
 -----------------------
 
-  * Improved reporting of syntax error location.
-
-  * Integrated CHR debugger with Prolog commandline debugger
-
-  * Added CHR mode to PceEmacs for syntax highlighting and
-    cross-referencing
-
-  * Limit listing of a module to the predicate actually defined
-    in that module (exclude imported predicates).
+  (none)
 
 
 INCOMPATIBILITIES
 =================
 
-  * Exception terms as generated on syntax errors have an additional
-    field expressing the line-position of the error.
+  (none)

@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.10 (Apr 29, 2004)
+=============================
+
   * FIXED: import warning on $derived_source/3.  Mike Elston.
 
   * FIXED: numbervars option of the write predicates.  Steve Moyle.
