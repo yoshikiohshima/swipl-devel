@@ -538,6 +538,7 @@ pl_ssl_control(PL_SSL_INSTANCE *instance, int action, void *data)
     { int *p = data;
 
       *p = instance->sock;
+      return 0;
     }
     default:
       return -1;

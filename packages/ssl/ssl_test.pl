@@ -83,6 +83,7 @@ server_loop(SSL) :-
 	ssl_accept(SSL, Socket, Peer),
 	debug(connection, 'Connection from ~p', [Peer]),
 	ssl_open(SSL, Socket, In, Out),
+	set_stream(In, timeout(20)),
 	copy_client(In, Out),
 	close(In),
 	close(Out),
