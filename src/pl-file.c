@@ -3095,7 +3095,11 @@ pl_delete_file(term_t name)
   if ( !PL_get_file_name(name, &n, 0) )
     fail;
   
-  return RemoveFile(n);
+  if ( RemoveFile(n) )
+    succeed;
+
+  return PL_error(NULL, 0, MSG_ERRNO, ERR_FILE_OPERATION,
+		    ATOM_delete, ATOM_file, name);
 }
 
 
