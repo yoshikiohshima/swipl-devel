@@ -268,7 +268,7 @@ label_bool([X|L]) :-
 	( X=0;X=1),
 	label_bool(L).
 
-/*								% no write macros in SICStus and hProlog
+/*				% no write macros in SICStus and hProlog
 
 bool_portray(and(A,B,C),Out):- !, Out = (A*B = C).
 bool_portray(or(A,B,C),Out):- !, Out = (A+B = C).
@@ -299,7 +299,7 @@ main(N) :-
 	adder(N),
 	cputime(Now),
 	Time is Now - X,
-	write(bench(bool ,N,Time, 0, hprolog)),write('.'),nl.
+	write(bench(bool, N, Time, 0, hprolog)),write('.'),nl.
 
 adder(N) :-
 	length(Ys,N),
