@@ -65,7 +65,7 @@
 	source/1,			% Src
 	used_class/2,			% Name, Src
 	defined_class/5,		% Name, Super, Summary, Src, Line
-	mode/2.				% Mode, Src
+	(mode)/2.			% Mode, Src
 
 
 		 /*******************************
