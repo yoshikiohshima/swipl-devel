@@ -197,7 +197,7 @@ rehashHTable(Table ht)
 }
 
 
-bool
+Symbol
 addHTable(Table ht, void *name, void *value)
 { Symbol s;
   int v;
@@ -206,7 +206,7 @@ addHTable(Table ht, void *name, void *value)
   v = pointerHashValue(name, ht->buckets);
   if ( lookupHTable(ht, name) )
   { UNLOCK_TABLE(ht);
-    fail;
+    return NULL;
   }
   s = allocHeap(sizeof(struct symbol));
   s->name  = name;
@@ -222,7 +222,7 @@ addHTable(Table ht, void *name, void *value)
   UNLOCK_TABLE(ht);
 
   DEBUG(1, checkHTable(ht));
-  succeed;
+  return s;
 }  
 
 

@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: Merged backtrackable and non-backtrackable global variables.
+    Tom Schrijvers.
+
   * ADDED: term_variables/3: difference list version of term_variables/2.
     Suggested by Tom Schrijvers for the next version of CHR.
 

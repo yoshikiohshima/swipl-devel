@@ -29,6 +29,20 @@
 #undef LD
 #define LD LOCAL_LD
 
+#define MERGED_GVARS 1
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Two implementations of backtrackable global   variables are supported by
+this module. Initially, backtrackable   and  non-backtrackable variables
+were  different  entities  using  different   tables.  Using  the  macro
+MERGED_GVARS, backtrackable and non-backtrackable   global variables are
+the same and it  is  only  the   _assignment_  that  is  different. I.e.
+nb_getval/2  and  b_getval/2  are  synonyms,    but  the  assignment  of
+b_setval/2  is  reversed  on  backtracking,   while  the  assignment  by
+nb_setval/2 is kept. The latter model is fully compatibel to hProlog.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+#ifndef MERGED_GVARS
 
 		 /*******************************
 		 *  BACKTRACKABLE GLOBAL VARS	*
@@ -180,6 +194,8 @@ PRED_IMPL("b_getval", 2, b_getval, 0)
 		  ATOM_variable, A1);
 }
 
+#endif /*MERGED_GVARS*/
+
 
 		 /*******************************
 		 * NON-BACKTRACKABLE GLOBAL VARS*
@@ -215,15 +231,21 @@ free_nb_linkval_symbol(Symbol s)
 }
 
 
-static
-PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
-{ PRED_LD
-  atom_t name;
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Assign  a  global  variable.  For    backtrackable   variables  we  need
+TrailAssignment(), but we can only call that  on addresses on the global
+stack. Therefore we must make  a  reference   to  the  real value if the
+variable is not already a reference.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static int
+setval(term_t var, term_t value, int backtrackable ARG_LD)
+{ atom_t name;
   Word p;
-  word w;
+  word w, old;
   Symbol s;
 
-  if ( !PL_get_atom_ex(A1, &name) )
+  if ( !PL_get_atom_ex(var, &name) )
     fail;
 
   if ( !LD->gvar.nb_vars )
@@ -232,7 +254,7 @@ PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
   }
 
   requireStack(global, sizeof(word));
-  p = valTermRef(A2);
+  p = valTermRef(value);
   deRef(p);
   w = *p;
 
@@ -248,17 +270,32 @@ PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
     }
   }
 
-  if ( (s=lookupHTable(LD->gvar.nb_vars, (void*)name)) )
-  { word old = (word)s->value;
+  if ( !(s=lookupHTable(LD->gvar.nb_vars, (void*)name)) )
+  { s = addHTable(LD->gvar.nb_vars, (void*)name, (void*)ATOM_nil);
+    PL_register_atom(name);
+  }
+  assert(s);
 
-    if ( w != old )
-    { if ( isAtom(old) )
-	PL_unregister_atom(old);
-      s->value = (void *)w;
+  old = (word)s->value;
+  if ( w == old )
+    succeed;
+
+  if ( backtrackable )
+  { if ( isRef(old) )
+    { Word p = unRef(old);
+
+      TrailAssignment(p);
+      *p = w;
+    } else
+    { Word p = allocGlobal(1);
+      *p = old;
+      freezeGlobal(PASS_LD1);
+      s->value = (void*)makeRefG(p);
+      TrailAssignment(p);
+      *p = w;
     }
   } else
-  { addHTable(LD->gvar.nb_vars, (void*)name, (void*)w);
-    PL_register_atom(name);
+  { s->value = (void *)w;
   }
 
   if ( storage(w) == STG_GLOBAL )
@@ -270,12 +307,11 @@ PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
 }
 
 
-static
-PRED_IMPL("nb_getval", 2, nb_getval, 0)
-{ PRED_LD
-  atom_t name;
+static int
+getval(term_t var, term_t value ARG_LD)
+{ atom_t name;
 
-  if ( !PL_get_atom_ex(A1, &name) )
+  if ( !PL_get_atom_ex(var, &name) )
     fail;
 
   if ( LD->gvar.nb_vars )
@@ -284,13 +320,48 @@ PRED_IMPL("nb_getval", 2, nb_getval, 0)
     if ( s )
     { word w = (word)s->value;
 
-      return unify_ptrs(valTermRef(A2), &w PASS_LD);
+      return unify_ptrs(valTermRef(value), &w PASS_LD);
     }
   }
 
-  return PL_error("nb_getval", 2, NULL, ERR_EXISTENCE,
-		  ATOM_variable, A1);
+  return PL_error(NULL, 0, NULL, ERR_EXISTENCE,
+		  ATOM_variable, var);
 }
+
+
+static
+PRED_IMPL("nb_linkval", 2, nb_linkval, 0)
+{ PRED_LD
+
+  return setval(A1, A2, FALSE PASS_LD);
+}
+
+
+static
+PRED_IMPL("nb_getval", 2, nb_getval, 0)
+{ PRED_LD
+  
+  return getval(A1, A2 PASS_LD);
+}
+
+
+#ifdef MERGED_GVARS
+
+static
+PRED_IMPL("b_setval", 2, b_setval, 0)
+{ PRED_LD
+
+  return setval(A1, A2, TRUE PASS_LD);
+}
+
+static
+PRED_IMPL("b_getval", 2, b_getval, 0)
+{ PRED_LD
+  
+  return getval(A1, A2 PASS_LD);
+}
+
+#endif /*MERGED_GVARS*/
 
 
 static

@@ -122,7 +122,7 @@ tab(W, Tab:tab) :->
 	"Add normal tab"::
 	get_super(W, member, tab_stack, TS),
 	send(TS, append, Tab),
-	(   get(Tab, is_displayed, @on)
+	(   get(W, is_displayed, @on)
 	->  send(W, resize, Tab)
 	;   true
 	).
@@ -149,25 +149,30 @@ delegate_to(window).
 initialise(T, Window:window=[window], Name:name=[name]) :->
 	"Create from window and name"::
 	(   Window == @default
-	->  new(P, picture)
-	;   P = Window
+	->  new(W, picture)
+	;   W = Window
 	),
 	(   Name == @default
-	->  get(P, name, TheName)
+	->  get(W, name, TheName)
 	;   TheName = Name
 	),
-	(   get(Window, slot, frame, Frame),
+	(   get(W, decoration, Decor),
+	    Decor \== @nil
+	->  true
+	;   Decor = Window
+	),
+	(   get(Decor, slot, frame, Frame),
 	    Frame \== @nil
-	->  send(Window, lock_object, @on),
-	    send(Frame, delete, Window),
-	    get(Window, unlock, _)
+	->  send(Decor, lock_object, @on),
+	    send(Frame, delete, Decor),
+	    get(Decor, unlock, _)
 	;   true
 	),
 	send_super(T, initialise, TheName),
 	send(T, border, size(0,0)),
-	send_super(T, display, P),
-	send(T, slot, window, P),
-	new(_, mutual_dependency_hyper(T, P, window, tab)).
+	send_super(T, display, Decor),
+	send(T, slot, window, W),
+	new(_, mutual_dependency_hyper(T, W, window, tab)).
 
 
 :- pce_group(resize).
@@ -237,6 +242,31 @@ label_event(G, Ev:event) :->
 
 :- pce_group(frame).
 
+rank(Tab, Rank:'1..') :<-
+	"Get position number of the tab"::
+	get(Tab, device, Stack),
+	get(Stack?graphicals, index, Tab, Rank).
+
+rank(Tab, Rank:'1..') :->
+	"Move tab in rank"::
+	get(Tab, device, Stack),
+	get(Stack?graphicals, index, Tab, Rank0),
+	(   Rank == Rank0
+	->  true
+	;   (   Rank > Rank0
+	    ->  Rank1 is Rank+1
+	    ;   Rank1 = Rank
+	    ),
+	    (   Rank1 == 1
+	    ->  send(Tab, hide)
+	    ;   Before is Rank1 - 1,
+		get(Stack?graphicals, nth1, Before, BeforeGr)
+	    ->  send(Tab, expose, BeforeGr)
+	    ;   send(Tab, expose)		% make last one
+	    ),
+	    send(Stack, layout_labels)
+	).
+
 untab(Tab, W:window) :<-
 	"Remove a tab from the tabbed window and return the window"::
 	get(Tab, window, W),
@@ -247,9 +277,39 @@ untab(Tab, W:window) :<-
 	
 untab(Tab) :->
 	"Turn the window into a toplevel window"::
+	get(Tab, rank, Rank),
 	get(Tab, name, Name),
+	get(Tab, container, dialog, TabbedWindow),
+	get(Tab, display_position, point(X, Y)),
 	get(Tab, untab, Window),
-	send(Window?frame, label, Name?label_name),
-	send(Window, open).
+	send(new(F, window_tab_frame(Window, Name, Rank)), open,
+	     point(X, Y+20)),
+	new(_, partof_hyper(TabbedWindow, F, toplevel, tab)).
 
 :- pce_end_class(window_tab).
+
+
+:- pce_begin_class(window_tab_frame, frame,
+		   "Temporary frame for an untabbed window").
+
+variable(rank, '1..', get, "Saved position in tabbed window").
+
+initialise(F, Window:window, Name:name, Rank:'1..') :->
+	send(F, slot, rank, Rank),
+	send_super(F, initialise, Name?label_name),
+	send(F, append, Window),
+	send(F, done_message, message(F, retab)).
+
+
+retab(F) :->
+	"Bring the window back to its tab"::
+	get(F?members, head, Window),
+	get(F, hypered, tab, TabbedWindow),
+	get(F, rank, Rank),
+	send(F, delete, Window),
+	send(TabbedWindow, append, Window),
+	get(Window, container, tab, Tab),
+	send(Tab, rank, Rank),
+	send(F, destroy).
+
+:- pce_end_class(window_tab_frame).

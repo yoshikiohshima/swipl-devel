@@ -9339,48 +9339,65 @@ ddiiff((_@_A_, _@_B))
 
 66..33 GGlloobbaall vvaarriiaabblleess
 
-Global  variables  are  associations between  names  (atoms)  and  terms
-living on the global stack.   They come in two flavours.   _B_a_c_k_t_r_a_c_k_a_b_l_e
-global variables  as implemented by  b_setval/2 and b_getval/2 have  the
-same semantics as compound term argument using setarg/3:   normal Prolog
-terms can be  assigned and backtracking reverses  the assignment.   They
-avoid  the requirement  to  pass variables  around in  all  intermediate
-predicates.   _N_o_n_-_b_a_c_k_t_r_a_c_k_a_b_l_e global  variables are also  associations
-between  atoms   and  terms,  but   the  assignment  is  retained   over
-backtracking.    Unifications  performed  on parts  (_i_n_s_i_d_e)  the  value
-however adhere to the normal backtracking rules.
+Global  variables are  associations  between  names (atoms)  and  terms.
+They differ in  various ways from storing information using  assert/1 or
+recorda/3.
 
-In  multi-threaded execution,  both  flavours  of global  variables  are
-strickly  local to  the calling  thread.   The  two  flavours of  global
-variables have their own  namespace and therefore an atom may  both have
-a backtrackable and non-backtrackable value associated.
+  o o
+    The  value lives on  the Prolog (global) stack.   This implies  that
+    lookup  time is  independent from the  size of  the term.   This  is
+    particulary  interesting for  large data structures  such as  parsed
+    XML documents or the CHR global constraint store.
+
+  o o
+    They   support  both   global  assignment   using  nb_setval/2   and
+    backtrackable assignment using b_setval/2.
+
+  o o
+    Only  one value (which can be an arbitrary complex Prolog  term) can
+    be associated to a variable at a time.
+
+  o o
+    Their  value cannot be  shared among threads.   Each thread has  its
+    own namespace and values for global variables.
+
+  o o
+    Currently  global variables are  scoped globally.   We may  consider
+    module scoping in future versions.
+
+Both b_setval/2  and nb_setval/2 implicitely  create a  variable if  the
+referenced name does not already refer to a variable.
 
 
 bb__sseettvvaall((_+_N_a_m_e_, _+_V_a_l_u_e))
     Associate  the  term  _V_a_l_u_e  with  the atom  _N_a_m_e  or  replaces  the
-    currently  associated  value  with  _V_a_l_u_e.     On  backtracking  the
-    modifications  are reversed,  which implies  that the variable  gets
-    its old value or ceases to exist.
+    currently  associated value  with _V_a_l_u_e.    If _N_a_m_e  does not  refer
+    to  an existing  global variable  a variable with  initial value  []
+    is  created (the  empty list).   On  backtracking the assignment  is
+    reversed.
 
 
 bb__ggeettvvaall((_+_N_a_m_e_, _-_V_a_l_u_e))
-    Get  the value  associated  with the  backtrackable global  variable
-    _N_a_m_e  and unify  it  with _V_a_l_u_e.    Note that  this unification  may
-    further  instantiate the value of the  global variable.  If this  is
-    undesirable  the normal precautions (double negation or copy_term/2)
-    must  be taken.   The b_getval/2 predicate generates errors if  _N_a_m_e
-    is not an atom or the requested variable does not exist.
+    Get the value  associated with the global variable _N_a_m_e and unify it
+    with _V_a_l_u_e.   Note that this unification may further instantiate the
+    value  of the global  variable.  If  this is undesirable the  normal
+    precautions  (double negation or  copy_term/2) must be  taken.   The
+    b_getval/2 predicate generates errors if _N_a_m_e is not  an atom or the
+    requested variable does not exist.
 
 
 nnbb__sseettvvaall((_+_N_a_m_e_, _+_V_a_l_u_e))
     Associates  a copy of  _V_a_l_u_e created with duplicate_term/2 with  the
-    atom _N_a_m_e.
+    atom  _N_a_m_e.   Note that  this can be  used to  set an initial  value
+    other than [] prior to backtrackable assignment.
 
 
 nnbb__ggeettvvaall((_+_N_a_m_e_, _-_V_a_l_u_e))
-    Unify  _V_a_l_u_e with  the non-backtrackable value  associated to  _N_a_m_e.
-    The  nb_getval/2 predicate generates errors if  _N_a_m_e is not an  atom
-    or the requested variable does not exist.
+    The  nb_getval/2 predicate is  a synonym for  b_getval/2,  introduced
+    for  compatibility  and  symetry.     As  most  scenarios  will  use
+    a  particular  global  variable  either  using  non-backtracable  or
+    backtrackable assignment,  using nb_getval/2can be  used to document
+    that the variable is used non-backtracable.
 
 
 nnbb__lliinnkkvvaall((_+_N_a_m_e_, _+_V_a_l_u_e))
@@ -9405,12 +9422,12 @@ nnbb__lliinnkkvvaall((_+_N_a_m_e_, _+_V_a_l_u_e))
 
 
 nnbb__ccuurrrreenntt((_?_N_a_m_e_, _?_V_a_l_u_e))
-    Enumerate all  defined non-backtrackable global variables with their
-    value.  The order of enumeration is undefined.
+    Enumerate  all defined  variables with their  value.   The order  of
+    enumeration is undefined.
 
 
 nnbb__ddeelleettee((_+_N_a_m_e))
-    Delete the named non-backtrackable global variable.
+    Delete the named global variable.
 
 
 66..33..11 CCoommppaattiibbiilliittyy ooff SSWWII--PPrroolloogg GGlloobbaall VVaarriiaabblleess
@@ -9426,12 +9443,6 @@ implemented.
 GNU-Prolog provides  a rich set of  global variables, including  arrays.
 Arrays  can be  implemented  easily in  SWI-Prolog using  functor/3  and
 setarg/3 due to the unrestricted arity of compound terms.
-
-Both hProlog  and GNU-Prolog  use one  namespace for  the various  types
-of global  variables, where  SWI-Prolog uses  seperate namespaces.    We
-believe  seperating the  namespaces is  desirable due  to the  different
-scoping  of the  two  types.    Alternatively  the variables  should  be
-declared using directives.
 
 
 CChhaapptteerr 77..  CCHHRR:: CCOONNSSTTRRAAIINNTT HHAANNDDLLIINNGG RRUULLEESS
@@ -16625,7 +16636,7 @@ Index
 #>/2, 1045                             nb_setval/2, 670
 #=</2, 1048                            nb_getval/2, 671
 #</2, 1046                             nb_linkval/2, 675
-#\=/2, 1050                            nb_setval/2, 362, 672, 675
+#\=/2, 1050                            nb_setval/2, 362, 667, 672, 675
 ,/2, 177                               netmask/4, 945
 !/0, 176                               netscape _l_i_b_r_a_r_y, 1024, 1100
 !/1, 211                               nextto/3, 987
@@ -16704,7 +16715,7 @@ arithmetic_function/1, 457                2], 105
 asin/1, 445                            permutation/2, 994
 assert/1,  106,  113, 215,  221--      phrase/2, 212, 213
       224,  235,  239, 240,  253,      phrase/3, 212, 214
-      631, 649, 720, 1083              pi/0, 454
+      631, 649, 667, 720, 1083         pi/0, 454
 assert/2, 224--226, 233, 256           PL_abort_hook(), 940
 asserta/1, 38, 113, 222                PL_abort_unhook(), 941
 asserta/2, 225, 233                    PL_action(), 931
@@ -16750,7 +16761,7 @@ autoload/0, 111, 968, 970, 1008        PL_get_blob(),P884L_get_bool(), 813
 
 b_getval/2, 669                        PL_get_chars(), 809
 b_setval/2, 668                        PL_get_file_name(), 927
-b_getval/2, 667, 669                   PL_get_float(), 815
+b_getval/2, 669, 671                   PL_get_float(), 815
 b_setval/2, 667                        PL_get_functor(), 816
 backcomp _l_i_b_r_a_r_y, 17, 21               PL_get_head(), 837
 bagof/3, 123, 471--473, 1094           PL_get_integer(), 811
@@ -16999,7 +17010,7 @@ float/1, 148, 409, 427                 readutil _l_i_b_r_a_r_y, 84, 1017,
 float_fractional_part/1, 428           reconsult/1, 106
 float_integer_part/1, 429              recorda/2, 228
 float_integer_part/1, 430              recorda/3, 227,  229,  233,  250,
-floor/1, 431                                 919, 920, 923
+floor/1, 431                                 667, 919, 920, 923
 flush_output/0, 305                    recorded/2, 232
 flush_output/1, 306                    recorded/3, 231, 233, 972
 flush_output/0, 305                    recordz/2, 230
@@ -17057,7 +17068,7 @@ get_code/[1                            set_input/1, 270, 274
 get_single_char/1, 38, 58              set_prolog_flag/2, 21, 46, 57, 399
 get_time/1, 517, 518, 535              set_stream/2, 261, 271, 287
 getenv/1, 1025                         set_stream_position/2, 266, 269
-getenv/2, 511, 512                     setarg/3, 355, 361, 362, 667, 675
+getenv/2, 511, 512                     setarg/3, 355, 361, 362, 675
 global_url/3, 1038                     setenv/2, 512
 GNU-Emacs, 39                          setof/3, 123, 473, 1094
 go/0, 37                               sformat/2, 493

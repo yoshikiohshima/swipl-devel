@@ -1126,12 +1126,49 @@ avar(findall-1) :-
 		 *	  GLOBAL VARIABLES	*
 		 *******************************/
 
+nogvar(Var) :-
+	catch(nb_getval(Var, _), E, true),
+	E =@= error(existence_error(variable, Var), _).
+
+gvar(set-1) :-
+	nb_setval(gnu, gnat),
+	nb_getval(gnu, gnat),
+	\+ nb_getval(gnu, x),
+	nb_getval(gnu, X),
+	X == gnat,
+	nb_delete(gnu),
+	nogvar(gnu).
+gvar(set-2) :-
+	nb_setval(gnu, gnat(1)),
+	(   b_setval(gnu, gnat(2)),
+	    garbage_collect,
+	    b_getval(gnu, gnat(2)),
+	    fail
+	;   b_getval(gnu, gnat(1))
+	),
+	nb_delete(gnu).
+gvar(set-3) :-
+	nb_setval(gnu, gnat),
+	(   b_setval(gnu, gnat),
+	    garbage_collect,
+	    b_getval(gnu, gnat),
+	    fail
+	;   b_getval(gnu, gnat)
+	),
+	nb_delete(gnu).
+gvar(set-4) :-
+	(   b_setval(gnu, 1),
+	    fail
+	;   b_getval(gnu, [])
+	),
+	nb_delete(gnu).
 gvar(avar-1) :-
 	freeze(A, fail),
 	nb_setval(gvar1, A),
 	nb_getval(gvar1, B),
 	A = B.			% wrong test
 %	A =@= B.		% ... but =@= is broken on attvar
+
 
 
 		 /*******************************
