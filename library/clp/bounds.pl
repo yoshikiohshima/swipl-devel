@@ -161,15 +161,15 @@ parse_expression(Expr,Result) :-
 	; Expr = (L * R) ->
 		parse_expression(L,RL),
 		parse_expression(R,RR),
-		mytimes(RL,RR,Result)
+		mytimes(RL,RR,Result,yes)
 	; Expr = (L - R) ->
 		parse_expression(L,RL),
 		parse_expression(R,RR),
-		mytimes(-1,RR,RRR),
+		mytimes(-1,RR,RRR,yes),
 		myplus(RL,RRR,Result,yes)
 	; Expr = (- E) ->
 		parse_expression(E,RE),
-		mytimes(-1,RE,Result)
+		mytimes(-1,RE,Result,yes)
 	; Expr = max(L,R) ->
 		parse_expression(L,RL),
 		parse_expression(R,RR),
@@ -417,7 +417,7 @@ div(X,Y,Z) :-
 		min_inf(Z)
 	).	
 
-mytimes(X,Y,Z) :-
+mytimes(X,Y,Z,New) :-
 	( nonvar(X) ->
 		( nonvar(Y) ->
 			Z is X * Y
@@ -431,11 +431,15 @@ mytimes(X,Y,Z) :-
 		;
 			get(Y,YL,YU,YExp),
 			get(Z,ZL,ZU,ZExp),
-			YExp1 = [mytimes(X,Z)|YExp],
-			put(Y,YL,YU,YExp1),
 			NZL is max(ZL,min(X * YL,X*YU)),
 			NZU is min(ZU,max(X * YU,X*YL)),
-			put(Z,NZL,NZU,[mytimes2(X,Y)|ZExp]),
+			( New == yes ->
+				YExp1 = [mytimes(X,Z)|YExp],
+				put(Y,YL,YU,YExp1),
+				put(Z,NZL,NZU,[mytimes2(X,Y)|ZExp])
+			;
+				put(Z,NZL,NZU,ZExp)
+			),
 			( get(Y,YL2,YU2,YExp2) ->
 				min_divide(ZL,ZU,X,X,NYLT),
 				NYL is max(YL2,ceiling(NYLT)),
@@ -446,17 +450,21 @@ mytimes(X,Y,Z) :-
 			)		
 		)
 	; nonvar(Y) ->
-		mytimes(Y,X,Z)
+		mytimes(Y,X,Z,New)
 	; nonvar(Z) ->
 		get(X,XL,XU,XExp),
 		get(Y,YL,YU,YExp),
-		YExp1 = [mytimes(X,Z)|YExp],
-		put(Y,YL,YU,YExp1),
 		min_divide(Z,Z,YL,YU,TNXL),
 		max_divide(Z,Z,YL,YU,TNXU),
 		NXL is max(XL,ceiling(TNXL)),
 		NXU is min(XU,floor(TNXU)),		
-		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
+		( New == yes ->
+			YExp1 = [mytimes(X,Z)|YExp],
+			put(Y,YL,YU,YExp1),
+			put(X,NXL,NXU,[mytimes(Y,Z)|XExp])
+		;
+			put(X,NXL,NXU,XExp)
+		),
 		( get(Y,YL2,YU2,YExp2) ->
 			min_divide(Z,Z,NXL,NXU,NYLT),
 			NYL is max(YL2,ceiling(NYLT)),
@@ -474,13 +482,17 @@ mytimes(X,Y,Z) :-
 		get(X,XL,XU,XExp),
 		get(Y,YL,YU,YExp),
 		get(Z,ZL,ZU,ZExp),
-		put(Y,YL,YU,[mytimes(X,Z)|YExp]),
-		put(Z,ZL,ZU,[mytimes2(X,Y)|ZExp]),
 		min_divide(ZL,ZU,YL,YU,TXL),
 		NXL is max(XL,ceiling(TXL)),
 		max_divide(ZL,ZU,YL,YU,TXU),
 		NXU is min(XU,floor(TXU)),
-		put(X,NXL,NXU,[mytimes(Y,Z)|XExp]),
+		( New == yes ->
+			put(Y,YL,YU,[mytimes(X,Z)|YExp]),
+			put(Z,ZL,ZU,[mytimes2(X,Y)|ZExp]),
+			put(X,NXL,NXU,[mytimes(Y,Z)|XExp])
+		;
+			put(X,NXL,NXU,XExp)
+		),
 		( get(Y,YL2,YU2,YExp2) ->
 			min_divide(ZL,ZU,XL,XU,TYL),
 			NYL is max(YL2,ceiling(TYL)),
@@ -884,9 +896,9 @@ trigger_exp(myplus2(A,B),X) :-
 	myplus(A,B,X,no).
 
 trigger_exp(mytimes(Y,Z),X) :-
-	mytimes(X,Y,Z).
+	mytimes(X,Y,Z,no).
 trigger_exp(mytimes2(A,B),X) :-
-	mytimes(A,B,X).
+	mytimes(A,B,X,no).
 
 trigger_exp(mymax(Y,Z),X) :-
 	mymax(X,Y,Z,no).
