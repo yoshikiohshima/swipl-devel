@@ -117,7 +117,8 @@
 #define	    JPL_INIT_JPL_FAILED		104
 #define	    JPL_INIT_PVM_FAILED		105
 
-#define	    JPL_NUM_POOL_ENGINES	5
+#define	    JPL_MAX_POOL_ENGINES	10 /* max pooled Prolog engines */
+#define	    JPL_INITIAL_POOL_ENGINES	 1 /* initially created ones */
 
 
 //=== JNI Prolog<->Java conversion macros ==========================================================
@@ -646,6 +647,7 @@ static int		jpl_status =	JPL_INIT_RAW;  // neither JPL nor PVM initialisation ha
 static jobject		dia =		NULL;  // default init args (after jpl init, until pvm init)
 static jobject		aia =		NULL;  // actual init args (after pvm init)
 static PL_engine_t	*engines =	NULL;  // handles of the pooled Prolog engines
+static int		engines_allocated = 0; /* size of engines array */
 static pthread_mutex_t	engines_mutex = PTHREAD_MUTEX_INITIALIZER;  // for controlling pool access
 static pthread_cond_t	engines_cond =	PTHREAD_COND_INITIALIZER;  // for controlling pool access
 
@@ -3625,10 +3627,10 @@ jpl_do_pvm_init(
 	cp = (char*)(*env)->GetStringUTFChars(env,arg,0);
 	argv[i] = (char*)malloc(strlen(cp)+1);
 	strcpy( argv[i], cp);
-	DEBUG(1, Sdprintf( "  argv[%d] = %s\n", i, argv[i]));  // debugging
+	DEBUG(1, Sdprintf( "  argv[%d] = %s\n", i, argv[i]));
 	(*env)->ReleaseStringUTFChars( env, arg, cp);
 	}
-	DEBUG(1, Sdprintf( "	argv[%d] = NULL\n", argc));  // debugging
+	DEBUG(1, Sdprintf( "	argv[%d] = NULL\n", argc));
     argv[argc] = NULL;
     if ( !PL_initialise(argc,(char**)argv) )	    // NB not (const char**)
 	{
@@ -6101,19 +6103,21 @@ create_pool_engines()
     {
     int		i;
 
-    DEBUG(1, Sdprintf( "JPL creating %d engines:\n", JPL_NUM_POOL_ENGINES));
-    if ( (engines=malloc(sizeof(PL_engine_t)*JPL_NUM_POOL_ENGINES)) == NULL )
+    DEBUG(1, Sdprintf( "JPL creating engine pool:\n"));
+    if ( (engines=malloc(sizeof(PL_engine_t)*JPL_MAX_POOL_ENGINES)) == NULL )
 	{
 	return -1; /* malloc failed */
 	}
+    engines_allocated = JPL_MAX_POOL_ENGINES;
+    memset(engines, 0, sizeof(PL_engine_t)*engines_allocated);
 
     DEBUG(1, Sdprintf( "JPL stashing default engine as [0]\n"));
-    // PL_set_engine( PL_ENGINE_CURRENT, engines[0]);
+    PL_set_engine( PL_ENGINE_CURRENT, &engines[0]);
 
     DEBUG(1, Sdprintf( "JPL detaching default engine\n"));
     // PL_set_engine( NULL, NULL);
 
-    for ( i=0 ; i<JPL_NUM_POOL_ENGINES ; i++ )
+    for ( i=1 ; i<JPL_INITIAL_POOL_ENGINES ; i++ )
 	{
 	if ( (engines[i]=PL_create_engine(NULL)) == NULL )
 	    {
@@ -6149,9 +6153,13 @@ Java_jpl_fli_Prolog_attach_1pool_1engine(
     pthread_mutex_lock( &engines_mutex);
     for ( ; ; )
 	{
-	for ( i=0 ; i<JPL_NUM_POOL_ENGINES ; i++ )
+	try_again:
+	for ( i=0 ; i<engines_allocated ; i++ )
 	    {
 	    int		rc;
+
+	    if ( !engines[i] )
+	        continue;
 
 	    if ( (rc=PL_set_engine(engines[i],NULL)) == PL_ENGINE_SET )
 		{
@@ -6170,7 +6178,19 @@ Java_jpl_fli_Prolog_attach_1pool_1engine(
 		return NULL; // bad engine status: oughta throw exception
 		}
 	    }
-	    DEBUG(1, Sdprintf( "JPL no engines ready; waiting...\n"));
+
+	for ( i=0 ; i<engines_allocated ; i++ )
+	{ if ( !engines[i] )
+	  { DEBUG(1, Sdprintf("JPL no engines ready; creating new one\n"));
+	    if ( (engines[i]=PL_create_engine(NULL)) == NULL )
+	    { Sdprintf("JPL: Failed to create engine %d\n", i);
+	      return NULL;
+	    }
+	    goto try_again;
+	  }
+	}
+
+	DEBUG(1, Sdprintf("JPL no engines ready; waiting...\n"));
 	while( pthread_cond_wait(&engines_cond,&engines_mutex) == EINTR )
 	    {
 	    ;
@@ -6189,9 +6209,9 @@ pool_engine_id(
     {
     int		i;
 
-    for ( i=0 ; i<JPL_NUM_POOL_ENGINES ; i++ )
+    for ( i=0 ; i<engines_allocated ; i++ )
 	{
-	if ( engines[i] == e )
+	if ( engines[i] && engines[i] == e )
 	    {
 	    DEBUG(1, Sdprintf( "JPL current  pool engine[%d] = %p (thread_self = %d)\n", i, e, PL_thread_self()));
 	    return i;
@@ -6213,9 +6233,9 @@ current_pool_engine_handle(
 
     PL_set_engine( PL_ENGINE_CURRENT, e);
     /*
-    for ( i=0 ; i<JPL_NUM_POOL_ENGINES ; i++ )
+    for ( i=0 ; i<engines_allocated ; i++ )
 	{
-	if ( engines[i] == *e )
+	if ( engine[i] && engines[i] == *e )
 	    {
 	    DEBUG(1, Sdprintf( "JPL current  pool engine[%d] = %p (thread_self = %d)\n", i, e, PL_thread_self()));
 	    return i;
@@ -6321,7 +6341,7 @@ Java_jpl_fli_Prolog_release_1pool_1engine(
     {
 
     // Detach our engine, making it available to the pool.
-    // Signal the condition variable as there mey be threads waiting for an engine.
+    // Signal the condition variable as there may be threads waiting for an engine.
 
     if ( jpl_ensure_pvm_init(env) )
 	{
@@ -6329,9 +6349,11 @@ Java_jpl_fli_Prolog_release_1pool_1engine(
 	PL_engine_t e;
 
 	i = current_pool_engine_handle(&e);
-	DEBUG(1, Sdprintf( "JPL releasing engine[%d]=%p\n", i, e));
-	PL_set_engine( NULL, NULL);
-	pthread_cond_signal( &engines_cond); // alert waiters to newly available engine
+	if ( i > 0 )
+	    { DEBUG(1, Sdprintf("JPL releasing engine[%d]=%p\n", i, e));
+	      PL_set_engine(NULL, NULL);
+	      pthread_cond_signal(&engines_cond); // alert waiters
+	    }
 	return i;
 	}
     else
