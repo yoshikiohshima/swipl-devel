@@ -1,5 +1,5 @@
 autom4te.cache
-.class
+*.class
 classes
 jpl.dll
 jpl.so
