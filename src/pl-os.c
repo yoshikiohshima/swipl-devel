@@ -935,15 +935,24 @@ SameFile(const char *f1, const char *f2)
 #ifdef O_XOS
   { char p1[MAXPATHLEN];
     char p2[MAXPATHLEN];
+    int i;
+  
+    for(i=0; i<=1; i++)
+    { if ( i == 0 )
+      { _xos_limited_os_filename(f1, p1);
+	_xos_limited_os_filename(f2, p2);
+      } else
+      { AbsoluteFile(f1, p1);
+	AbsoluteFile(f2, p2);
+      }
 
-    _xos_limited_os_filename(f1, p1);
-    _xos_limited_os_filename(f2, p2);
-    if ( trueFeature(FILE_CASE_FEATURE) )
-    { if ( streq(p1, p2) )
-	succeed;
-    } else
-    { if ( stricmp(p1, p2) == 0 )
-	succeed;
+      if ( trueFeature(FILE_CASE_FEATURE) )
+      { if ( streq(p1, p2) )
+	  succeed;
+      } else
+      { if ( stricmp(p1, p2) == 0 )
+	  succeed;
+      }
     }
   }
 #endif /*O_XOS*/

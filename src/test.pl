@@ -1300,7 +1300,11 @@ io(tell-2) :-
 		 *******************************/
 
 popen(pwd-1) :-
-	open(pipe(pwd), read, Fd),
+	(   current_prolog_flag(windows, true)
+	->  Command = cd
+	;   Command = pwd
+	),
+	open(pipe(Command), read, Fd),
 	collect_line(Fd, String),
 	close(Fd),
 	atom_codes(Pwd, String),

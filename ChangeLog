@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: MS-Windows: same_file/2 for relative paths.
+
   * ADDED: support for open(pipe(Command), ...) for the Windows version
     after recent discussion on the mailinglist.  Works both in plwin.exe
     and plcon.exe thanks to code used from the LUA programming language
