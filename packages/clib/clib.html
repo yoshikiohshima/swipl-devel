@@ -624,7 +624,7 @@ main :-
         format('&lt;BODY&gt;~n', []),
         format('&lt;P&gt;', []),
         print_args(Arguments),
-        format('&lt;BODY&gt;~n&lt;/HTML&gt;~n', []).
+        format('&lt;/BODY&gt;~n&lt;/HTML&gt;~n', []).
 
 print_args([]).
 print_args([A0|T]) :-
@@ -653,7 +653,7 @@ is a Prolog wrapper around the rfc2045 library for deconding MIME
 messages.
 
 <P>The general name `mime' is used for this library as it is anticipated 
-to add MIME-creation functionality to this message.
+to add MIME-creation functionality to this library.
 
 <P>Currently the mime library defines one predicate:
 
@@ -975,8 +975,7 @@ and the Prolog library files in <CODE>$PLBASE/library</CODE>, where
 
 <P>
 <DT><A NAME=note-1 HREF="index.html#back-to-note-1">note-1</A><DD>
-<A NAME="idx:kill2:53"></A><A HREF="#kill/2">kill/2</A> should support 
-interrupt-names as well
+kill/2 should support interrupt-names as well
 <DT><A NAME=note-2 HREF="index.html#back-to-note-2">note-2</A><DD>
 More subtle handling of I/O, especially for debugging is required: 
 communicate with the syslog deamon and optionally start a debugging 

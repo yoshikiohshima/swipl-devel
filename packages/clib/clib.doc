@@ -513,7 +513,7 @@ main :-
 	format('<BODY>~n', []),
 	format('<P>', []),
 	print_args(Arguments),
-	format('<BODY>~n</HTML>~n', []).
+	format('</BODY>~n</HTML>~n', []).
 
 print_args([]).
 print_args([A0|T]) :-
@@ -540,7 +540,7 @@ manipulating MIME messages. The \pllib{mime} library is a Prolog wrapper
 around the rfc2045 library for deconding MIME messages.	
 
 The general name `mime' is used for this library as it is anticipated to
-add MIME-creation functionality to this message.
+add MIME-creation functionality to this library.
 
 Currently the mime library defines one predicate:
 
