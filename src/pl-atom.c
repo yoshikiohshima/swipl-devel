@@ -891,7 +891,7 @@ current_blob(term_t a, term_t type, frg_code call, int i ARG_LD)
       fail;
   }
 
-  for( ; i < entriesBuffer(&atom_array, Atom); i++ )
+  for( ; i < (int)entriesBuffer(&atom_array, Atom); i++ )
   { Atom atom;
 
     if ( (atom = baseBuffer(&atom_array, Atom)[i]) )
