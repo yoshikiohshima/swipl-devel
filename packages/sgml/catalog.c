@@ -195,9 +195,11 @@ init_catalog()
       { strncpy(buf, path, s - path);
 	buf[s - path] = '\0';
 	path = s + 1;
-	register_catalog_file_unlocked(buf, CTL_START);
+	if ( buf[0] )			/* skip empty entries */
+	  register_catalog_file_unlocked(buf, CTL_START);
       } else
-      { register_catalog_file_unlocked(path, CTL_START);
+      { if ( path[0] )			/* skip empty entries */
+	  register_catalog_file_unlocked(path, CTL_START);
 	break;
       }
     }
