@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: portability issue in Makefile (Solaris).  Bill McEnaney.
+
   * FIXED: possibility to crash the debugger on exceptions in callback
     from C.  Salvador Fandiño.
 

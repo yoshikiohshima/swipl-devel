@@ -311,7 +311,7 @@ installdirs=	bin bin/$(ARCH) lib lib/$(ARCH) man boot library \
 iruntime::
 		$(INSTALL_DATA) $(RUNTIME) $(PLBASE)/lib/$(ARCH)
 		$(RANLIB) $(PLBASE)/lib/$(ARCH)/$(PLLIB)
-		if [ -e $(RUNTIMEDIR)/$(SHAREDV) ]; then \
+		if [ -f $(RUNTIMEDIR)/$(SHAREDV) ]; then \
 		  $(INSTALL_DATA) $(RUNTIMEDIR)/$(SHAREDV) $(PLBASE)/lib/$(ARCH) ; \
 		( cd $(PLBASE)/lib/$(ARCH) && rm -f $(SHARED) && ln -s $(SHAREDV) $(SHARED) ) ; \
 		fi
