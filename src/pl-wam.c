@@ -23,7 +23,7 @@
 */
 
 /*#define O_SECURE 1*/
-#define O_DEBUG 1
+/*#define O_DEBUG 1*/
 #include "pl-incl.h"
 
 #define	     BFR (LD->choicepoints)	/* choicepoint registration */

@@ -345,7 +345,8 @@ right_recursion:
     }
 #if O_ATTVAR
     case TAG_ATTVAR:
-    { info->size++;
+    { 
+      info->size++;
       addOpCode(info, PL_TYPE_ATTVAR);
       p = valPAttVar(w);
       goto right_recursion;

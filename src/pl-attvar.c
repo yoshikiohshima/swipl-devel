@@ -85,7 +85,8 @@ assignAttVar(Word av, Word value ARG_LD)
     { Word tmp = av;
       av = value;
       value = tmp;
-    }
+    } else if ( av == value )
+      succeed;
   }
 
   a = valPAttVar(*av);

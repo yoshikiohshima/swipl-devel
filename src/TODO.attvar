@@ -2,7 +2,7 @@ Realising attributed variables
 
 Places dealt with:
 
-	* Implemented attvar/1, make_new_attvar/1, get_attr/2 and put_attr/2.
+	* Implemented attvar/1, get_attr/3, put_attr/3 and del_attr/2.
 	* Adjusted write/1 to write AttVar{L,G}<N>{Attribute}.  Also deals with
 	  looping.
 	* Adjusted recorded database (recorda, recorded, findall, ...)
