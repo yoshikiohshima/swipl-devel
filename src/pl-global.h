@@ -224,6 +224,9 @@ typedef struct
     Procedure   dcall1;			/* $call/1 */
     Procedure	call_cleanup3;		/* call_cleanup/2 */
     Procedure	undefinterc4;		/* $undefined_procedure/4 */
+#ifdef O_ATTVAR
+    Procedure	dwakeup1;		/* system:$wakeup/1 */
+#endif
 
     SourceFile  reloading;		/* source file we are re-loading */
     int		active_marked;		/* #prodedures marked active */
@@ -322,6 +325,13 @@ typedef struct PL_local_data
     term_t	tmp;			/* tmp for errors */
     term_t	pending;		/* used by the debugger */
   } exception;
+
+#ifdef O_ATTVAR
+  struct
+  { term_t	head;			/* Head of wakeup list */
+    term_t	tail;			/* Tail of this list */
+  } attvar;
+#endif
 
   struct
   { ulong	inferences;		/* inferences in this thread */

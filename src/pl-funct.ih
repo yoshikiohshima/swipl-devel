@@ -160,3 +160,6 @@
 #define FUNCTOR_dprof_node1  MK_FUNCTOR(159, 1)
 #define FUNCTOR_file1        MK_FUNCTOR(160, 1)
 #define FUNCTOR_line_count1  MK_FUNCTOR(161, 1)
+#define FUNCTOR_wakeup3      MK_FUNCTOR(162, 3)
+#define FUNCTOR_dwakeup1     MK_FUNCTOR(163, 1)
+#define FUNCTOR_att3         MK_FUNCTOR(164, 3)

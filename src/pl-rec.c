@@ -152,6 +152,7 @@ typedef struct
 #define PL_TYPE_EXT_ATOM	(9)	/* External (inlined) atom */
 #define PL_TYPE_EXT_COMPOUND	(10)	/* External (inlined) functor */
 #define PL_TYPE_EXT_FLOAT	(11)	/* float in standard-byte order */
+#define PL_TYPE_ATTVAR		(12)	/* Attributed variable */
 
 #define addUnalignedBuf(b, ptr, type) \
 	do \
@@ -342,6 +343,14 @@ right_recursion:
 
       return;
     }
+#if O_ATTVAR
+    case TAG_ATTVAR:
+    { info->size++;
+      addOpCode(info, PL_TYPE_ATTVAR);
+      p = valPAttVar(w);
+      goto right_recursion;
+    }
+#endif
     case TAG_ATOM:
     { if ( storage(w) == STG_GLOBAL )	/* this is a variable */
       { long n = ((long)(w) >> 7);
@@ -717,6 +726,13 @@ right_recursion:
       
       return;
     }
+#if O_ATTVAR
+    case PL_TYPE_ATTVAR:
+    { *p = consPtr(b->gstore, TAG_ATTVAR|STG_GLOBAL);
+      p = b->gstore++;
+      goto right_recursion;
+    }
+#endif
     case PL_TYPE_ATOM:
     { *p = fetchWord(b);
 
@@ -870,6 +886,11 @@ right_recursion:
     { skipSizeInt(b);
       return;
     }
+#ifdef O_ATTVAR
+    case PL_TYPE_ATTVAR:
+    { goto right_recursion;
+    }
+#endif
     case PL_TYPE_ATOM:
     { atom_t a = fetchWord(b);
 

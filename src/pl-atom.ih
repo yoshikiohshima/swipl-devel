@@ -519,3 +519,7 @@
 #define ATOM_module_property MK_ATOM(518)
 #define ATOM_parent_goal  MK_ATOM(519)
 #define ATOM_select       MK_ATOM(520)
+#define ATOM_attvar       MK_ATOM(521)
+#define ATOM_wakeup       MK_ATOM(522)
+#define ATOM_dwakeup      MK_ATOM(523)
+#define ATOM_att          MK_ATOM(524)

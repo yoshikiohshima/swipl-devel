@@ -936,6 +936,10 @@ emptyStacks()
   exception_printed     = PL_new_term_ref();
   LD->exception.tmp     = PL_new_term_ref();
   LD->exception.pending = PL_new_term_ref();
+#ifdef O_ATTVAR
+  LD->attvar.head	= PL_new_term_ref();
+  LD->attvar.tail       = PL_new_term_ref();
+#endif
 
   LD->mark_bar          = gLimit;
 }

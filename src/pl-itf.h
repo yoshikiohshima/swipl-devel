@@ -418,6 +418,14 @@ PL_EXPORT(int)		PL_unify_nil(term_t l);
 PL_EXPORT(int)		PL_unify_arg(int index, term_t t, term_t a);
 PL_EXPORT(int)		PL_unify_term(term_t t, ...);
 
+
+		 /*******************************
+		 *     ATTRIBUTED VARIABLES	*
+		 *******************************/
+
+PL_EXPORT(int)		PL_is_attvar(term_t t);
+PL_EXPORT(int)		PL_get_attr(term_t v, term_t a);
+
 		 /*******************************
 		 *	  FILENAME SUPPORT	*
 		 *******************************/

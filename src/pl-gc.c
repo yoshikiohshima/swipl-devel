@@ -454,6 +454,21 @@ forward:				/* Go into the tree */
       current = next;			/* invariant */
       FORWARD;
     }
+#ifdef O_ATTVAR
+    case TAG_ATTVAR:
+    { SECURE(assert(storage(val) == STG_GLOBAL));
+      next = valPtr2(val, STG_GLOBAL);
+      needsRelocation(current);
+      if ( marked(next) )
+	BACKWARD;			/* term has already been marked */
+      val  = get_value(next);		/* invariant */
+					/* backwards pointer */
+      set_value(next, makePtr(current, TAG_ATTVAR PASS_LD));
+      DEBUG(5, Sdprintf("Marking ATTVAR from %p to %p\n", current, next));
+      current = next;			/* invariant */
+      FORWARD;
+    }
+#endif
     case TAG_COMPOUND:
     { int args;
 
@@ -498,13 +513,23 @@ forward:				/* Go into the tree */
 backward:  				/* reversing backwards */
   while( !is_first(current) )
   { word w = get_value(current);
+    int t = tag(w);
 
     next = valPtr(w);
     set_value(current, val);
-    if ( isRef(w) )
-      val = makeRef(current);
-    else
-      val = makePtr(current-1, TAG_COMPOUND PASS_LD);
+    switch(t)
+    { case TAG_REFERENCE:
+	val = makeRef(current);
+        break;
+      case TAG_COMPOUND:
+	val = makePtr(current-1, t PASS_LD);
+        break;
+      case TAG_ATTVAR:
+	val = makePtr(current, t PASS_LD);
+        break;
+      default:
+	assert(0);
+    }
     current= next;
   }
 
@@ -1236,6 +1261,7 @@ is_downward_ref(Word p ARG_LD)
   { case TAG_INTEGER:
       if ( storage(val) == STG_INLINE )
 	fail;
+    case TAG_ATTVAR:
     case TAG_STRING:
     case TAG_FLOAT:
     case TAG_REFERENCE:
@@ -1255,6 +1281,7 @@ is_upward_ref(Word p ARG_LD)
   { case TAG_INTEGER:
       if ( storage(val) == STG_INLINE )
 	fail;
+    case TAG_ATTVAR:
     case TAG_STRING:
     case TAG_FLOAT:
     case TAG_REFERENCE:
@@ -1783,8 +1810,8 @@ pl_garbage_collect(term_t d)
   int nl;
 
   if ( d )
-  { if ( !PL_get_integer(d, &nl) )
-      return warning("garbage_collect/1: instantiation fault");
+  { if ( !PL_get_integer_ex(d, &nl) )
+      fail;
     GD->debug_level = nl;
   }
 #endif

@@ -92,24 +92,22 @@ Second, we can opt  for  inlining  or   not.  Especially  in  the latter
 variation, which is a bit longer, a function might actually be faster.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static word
+word
 linkVal__LD(Word p ARG_LD)
 { word w = *p;
 
-  if ( isVar(w) )
+  if ( needsRef(w) )
     return makeRef(p);
 
   while( isRef(w) )
   { p = unRef(w);
-    if ( isVar(*p) )
+    if ( needsRef(*p) )
       return w;
     w = *p;
   }
 
   return w;
 }
-
-#define linkVal(p) linkVal__LD(p PASS_LD)
 
 term_t
 wordToTermRef(Word p)
@@ -1201,6 +1199,24 @@ PL_get_arg(int index, term_t t, term_t a)
 }
 
 
+#ifdef O_ATTVAR
+int
+PL_get_attr(term_t t, term_t a)
+{ GET_LD
+  word w = valHandle(t);
+
+  if ( isAttVar(w) )
+  { Word p = valPAttVar(w);
+
+    setHandle(a, makeRef(p));		/* reference, so we can assign */
+    succeed;
+  }
+
+  fail;
+}
+#endif
+
+
 int
 PL_get_list__LD(term_t l, term_t h, term_t t ARG_LD)
 { word w = valHandle(l);
@@ -1352,6 +1368,15 @@ PL_is_atom(term_t t)
   return isAtom(w) ? TRUE : FALSE;
 }
 #define PL_is_atom(t) PL_is_atom__LD(t PASS_LD)
+
+
+int
+PL_is_attvar(term_t t)
+{ GET_LD
+  word w = valHandle(t);
+
+  return isAttVar(w) ? TRUE : FALSE;
+}
 
 
 int
@@ -2347,7 +2372,7 @@ PL_strip_module__LD(term_t raw, module_t *m, term_t plain ARG_LD)
   { if ( *m == NULL )
       *m = environment_frame ? contextModule(environment_frame)
 			     : MODULE_user;
-    setHandle(plain, isVar(*p) ? makeRef(p) : *p);
+    setHandle(plain, needsRef(*p) ? makeRef(p) : *p);
   }
 
   succeed;

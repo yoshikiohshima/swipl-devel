@@ -133,6 +133,7 @@ indexOfWord(word w ARG_LD)
 { for(;;)
   { switch(tag(w))
     { case TAG_VAR:
+      case TAG_ATTVAR:
       case TAG_STRING:
       case TAG_FLOAT:
 	return 0L;

@@ -348,7 +348,8 @@ put_sort_list(term_t l, list sl)
 
     n = sl->next;
 					/* see also linkVal() */
-    p[1] = (isVar(*sl->item.term) ? makeRef(sl->item.term) : *sl->item.term);
+    p[1] = (needsRef(*sl->item.term) ? makeRef(sl->item.term)
+				     : *sl->item.term);
     p[0] = FUNCTOR_dot2;
     if ( n )
     { p[2] = consPtr(n, TAG_COMPOUND|STG_GLOBAL);

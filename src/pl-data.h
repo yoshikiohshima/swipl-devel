@@ -196,6 +196,11 @@ and while loading .wic files.  It comes at no price.
 #define unRefL(w)	((Word)valPtr2(w, STG_LOCAL))
 #define deRef(p)	{ while(isRef(*(p))) (p) = unRef(*(p)); }
 #define deRef2(p, d)	{ (d) = (p); deRef(d); }
+#ifdef O_ATTVAR
+#define needsRef(w)	(tag(w) <= TAG_ATTVAR)
+#else
+#define needsRef(w)	isVar(w)
+#endif
 
 
 		 /*******************************
@@ -212,6 +217,26 @@ and while loading .wic files.  It comes at no price.
 #define isList(w)	hasFunctor(w, FUNCTOR_dot2)
 #define isNil(w)	((w) == ATOM_nil)
 
+		 /*******************************
+		 *     ATTRIBUTED VARIABLES	*
+		 *******************************/
+
+#define isAttVar(w)	(tag(w) == TAG_ATTVAR)
+#define valPAttVar(w)	((Word)valPtr2(w, STG_GLOBAL))
+
+#define canBind(w)	needsRef(w)
+#ifdef O_ATTVAR
+#define bindConst(p, c) if ( isVar(*p) ) \
+			{ *p = c; \
+    			  Trail(p); \
+			} else \
+			{ assignAttVar(p, &c PASS_LD); \
+			}
+#else
+#define bindConst(p, c) { *p = c; \
+			  Trail(p); \
+			}
+#endif
 
 		 /*******************************
 		 *	      INDIRECTS		*

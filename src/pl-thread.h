@@ -376,6 +376,7 @@ extern void		initPrologThreads(void);
 #define getInputStream(t, s)	getInputStream__LD(t, s PASS_LD)
 #define valReal(w)		valReal__LD(w PASS_LD)
 #define compileTermToHeap(t, f)	compileTermToHeap__LD(t, f PASS_LD)
+#define linkVal(p)		linkVal__LD(p PASS_LD)
 
 #define _PL_get_arg(n, t, a)	_PL_get_arg__LD(n, t, a PASS_LD)
 #define _PL_put_number(t, n) 	_PL_put_number__LD(t, n PASS_LD)

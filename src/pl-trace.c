@@ -699,7 +699,7 @@ put_frame_goal(term_t goal, LocalFrame frame)
     { Word a;
 
       deRef2(argv+i, a);
-      *argp++ = (isVar(*a) ? makeRef(a) : *a);
+      *argp++ = (needsRef(*a) ? makeRef(a) : *a);
     }
   }
   if ( def->module != MODULE_user &&
@@ -1607,7 +1607,7 @@ pl_prolog_frame_attribute(term_t frame, term_t what,
       { Word a;
 
 	deRef2(argv+n, a);
-	*argp++ = (isVar(*a) ? makeRef(a) : *a);
+	*argp++ = (needsRef(*a) ? makeRef(a) : *a);
       }
     }
   } else if ( key == ATOM_parent_goal )

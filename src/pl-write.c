@@ -36,6 +36,7 @@ typedef struct
 } write_options;
 
 static bool	writeTerm2(term_t term, int prec, write_options *options);
+static bool	writeTerm(term_t t, int prec, write_options *options);
 
 char *
 varName(term_t t, char *name)
@@ -251,6 +252,25 @@ writeQuoted(IOSTREAM *stream, const char *text, int len, int quote,
 }
 
 
+#if O_ATTVAR
+static bool
+writeAttVar(term_t av, write_options *options)
+{ char buf[32];
+  fid_t fid = PL_open_foreign_frame();
+  term_t a = PL_new_term_ref();
+
+  TRY(PutToken(varName(av, buf), options->out));
+  Sputc('{', options->out);
+  PL_get_attr(av, a);
+  TRY(writeTerm(a, 1200, options));
+  Sputc('}', options->out);
+  PL_close_foreign_frame(fid);
+
+  succeed;
+}
+#endif
+
+
 static bool
 writeAtom(atom_t a, write_options *options)
 { Atom atom = atomValue(a);
@@ -291,6 +311,11 @@ writePrimitive(term_t t, write_options *options)
 
   if ( PL_is_variable(t) )
     return PutToken(varName(t, buf), out);
+
+#if O_ATTVAR
+  if ( PL_is_attvar(t) )
+    return writeAttVar(t, options);
+#endif
 
   if ( PL_get_atom(t, &a) )
     return writeAtom(a, options);

@@ -55,6 +55,9 @@ void *		xmalloc(size_t size);
 void *		xrealloc(void *mem, size_t size);
 #endif
 
+/* pl-attvar.c */
+int		assignAttVar(Word av, Word value ARG_LD);
+
 /* pl-wam.c */
 word		pl_count(void);
 bool		unify_ptrs(Word t1, Word t2 ARG_LD);
@@ -330,6 +333,7 @@ void		initFeatureTable(void);
 void		initFeatures(void);
 
 /* pl-fli.c */
+word		linkVal__LD(Word p ARG_LD);
 word		makeNum__LD(long i ARG_LD);
 void		_PL_put_number__LD(term_t t, Number n ARG_LD);
 predicate_t	_PL_predicate(const char *name, int arity, const char *module,

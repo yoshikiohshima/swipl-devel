@@ -113,6 +113,9 @@ handy for it someone wants to add a data type to the system.
   O_LARGEFILES
       Supports files >2GB (if the OS provides it, currently requires
       the GNU c library).
+  O_ATTVAR
+      Include support for attributes variables.
+      This option requires O_DESTRUCTIVE_ASSIGNMENT.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 #define PL_KERNEL		1
@@ -133,6 +136,7 @@ handy for it someone wants to add a data type to the system.
 #define O_LOGICAL_UPDATE	1
 #define O_ATOMGC		1
 #define O_CLAUSEGC		1
+#define O_ATTVAR		1
 
 #ifndef DOUBLE_TO_LONG_CAST_RAISES_SIGFPE
 #ifdef __i386__
@@ -1894,6 +1898,7 @@ typedef struct
 #define PROCEDURE_print_message2	(GD->procedures.print_message2)
 #define PROCEDURE_dcall1		(GD->procedures.dcall1)
 #define PROCEDURE_call_cleanup3		(GD->procedures.call_cleanup3)
+#define PROCEDURE_dwakeup1		(GD->procedures.dwakeup1)
 
 extern const code_info codeTable[]; /* Instruction info (read-only) */
 

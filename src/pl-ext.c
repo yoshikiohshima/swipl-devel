@@ -607,6 +607,9 @@ DECL_PLIST(wam);
 DECL_PLIST(thread);
 DECL_PLIST(profile);
 DECL_PLIST(wic);
+#ifdef O_ATTVAR
+DECL_PLIST(attvar);
+#endif
 
 void
 initBuildIns(void)
@@ -626,6 +629,9 @@ initBuildIns(void)
   REG_PLIST(thread);
   REG_PLIST(profile);
   REG_PLIST(wic);
+#ifdef O_ATTVAR
+  REG_PLIST(attvar);
+#endif
 
   PROCEDURE_garbage_collect0 = lookupProcedure(FUNCTOR_dgarbage_collect1, m);
   PROCEDURE_block3	     = lookupProcedure(FUNCTOR_block3, 		  m);
@@ -635,6 +641,9 @@ initBuildIns(void)
   PROCEDURE_print_message2   = lookupProcedure(FUNCTOR_print_message2, 	  m);
   PROCEDURE_dcall1	     = lookupProcedure(FUNCTOR_dcall1,		  m);
   PROCEDURE_call_cleanup3    = lookupProcedure(FUNCTOR_call_cleanup3,	  m); 
+#ifdef O_ATTVAR
+  PROCEDURE_dwakeup1	     = lookupProcedure(FUNCTOR_dwakeup1,	  m);
+#endif
 					/* allow debugging in call/1 */
   clear(PROCEDURE_dcall1->definition, HIDE_CHILDS);
   set(PROCEDURE_dcall1->definition, DYNAMIC);

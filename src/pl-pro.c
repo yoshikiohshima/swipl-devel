@@ -377,8 +377,37 @@ printk(char *fm, ...)
 }
 
 
-word
-checkData(Word p)
+#define mark(p)		(*(p) |= MARK_MASK)
+#define unmark(p)	(*(p) &= ~MARK_MASK)
+#define marked(p)	(*(p) & MARK_MASK)
+
+static void
+unmark_data(Word p)
+{
+last_arg:
+  deRef(p);
+
+  if ( isAttVar(*p) && marked(p) )
+  { unmark(p);
+    p = valPAttVar(*p);
+    goto last_arg;
+  } else if ( isTerm(*p) && marked(p) )
+  { Functor f;
+    int n, arity;
+
+    unmark(p);
+    f = valueTerm(*p);
+    arity = arityFunctor(f->definition);
+    for(n=0; n<arity-1; n++)
+      unmark_data(&f->arguments[n]);
+    p = &f->arguments[n];
+    goto last_arg;
+  }
+}
+
+
+static word
+check_data(Word p, int *recursive)
 { int arity; int n;
   Word p2;
   word key = 0L;
@@ -397,6 +426,29 @@ last_arg:
 
   if ( isVar(*p) )
     return key+0x737473;		/* just a random number */
+
+#ifdef O_ATTVAR
+  if ( isAttVar(*p) )
+  { if ( marked(p) )			/* loop */
+    { (*recursive)++;
+      return key;
+    }
+
+    key += 0x427e8ac;			/* another random number */
+    p2 = valPAttVar(*p);
+    mark(p);
+
+    if ( !onGlobal(p) )
+      printk("attvar: not on global stack: 0x%x", p);
+    if ( !onGlobal(p2) )
+      printk("attvar: attribute not on global stack: 0x%x --> 0x%x", p, p2);
+    if ( p == p2 )
+      printk("attvar: self-reference: 0x%x", p);
+
+    p = p2;
+    goto last_arg;
+  }
+#endif
 
   if ( isTaggedInt(*p) )
     return key + *p;
@@ -447,7 +499,13 @@ last_arg:
        storage(*p) != STG_GLOBAL )
     printk("Illegal term at: %p: 0x%x", p, *p);
 
+  if ( marked(p) )
+  { (*recursive)++;
+    return key;				/* recursive */
+  }
+
   { Functor f = valueTerm(*p);
+    mark(p);
 
     if ( !onGlobal(f) )
       printk("Term at %p not on global stack", f);
@@ -459,10 +517,23 @@ last_arg:
     if (arity <= 0 || arity > 256)
       printk("Dubious arity (%d)", arity);
     for(n=0; n<arity-1; n++)
-      key += checkData(&f->arguments[n]);
+      key += check_data(&f->arguments[n], recursive);
 	
     p = &f->arguments[n];
     goto last_arg;
   }
 }
+
+
+word
+checkData(Word p)
+{ int recursive = 0;
+  word key;
+
+  key = check_data(p, &recursive);
+  unmark_data(p);
+
+  return key;
+}
+
 #endif /* TEST */

@@ -778,7 +778,8 @@ frameFinished(LocalFrame fr, enum finished reason ARG_LD)
 #ifdef O_DESTRUCTIVE_ASSIGNMENT
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Trailing of destructive assignments.  This feature is used by setarg/3.
+Trailing of destructive assignments. This feature   is  used by setarg/3
+and put_attr/2.
 
 Such an assignment is trailed by first  pushing the assigned address (as
 normal) and then pushing a marked pointer to  a cell on the global stack
@@ -1075,15 +1076,31 @@ right_recursion:
       Trail(t1);
       succeed;
     }
+#ifdef O_ATTVAR
+    *t1 = isAttVar(w2) ? makeRef(t2) : w2;
+#else
     *t1 = w2;
+#endif
     Trail(t1);
     succeed;
   }
   if ( isVar(w2) )
-  { *t2 = w1;
+  {
+#ifdef O_ATTVAR
+    *t2 = isAttVar(w1) ? makeRef(t1) : w1;
+#else
+    *t2 = w1;
+#endif
     Trail(t2);
     succeed;
   }
+
+#ifdef O_ATTVAR
+  if ( isAttVar(w1) )
+    return assignAttVar(t1, t2 PASS_LD);
+  if ( isAttVar(w2) )
+    return assignAttVar(t2, t1 PASS_LD);
+#endif
 
   if ( w1 == w2 )
     succeed;
@@ -2279,13 +2296,12 @@ constant argument.
 
   common_hconst:
         deRef2(ARGP++, k);
-        if (isVar(*k))
-	{ *k = c;
-	  Trail(k);
+        if ( *k == c )
+	  NEXT_INSTRUCTION;
+        if ( canBind(*k) )
+	{ bindConst(k, c);
 	  NEXT_INSTRUCTION;
 	}
-        if (*k == c)
-	  NEXT_INSTRUCTION;
         CLAUSE_FAILED;
   }
 
@@ -2295,17 +2311,17 @@ variable, compare the numbers otherwise.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     VMI(H_INTEGER) MARK(HINT)
-      { register Word k;
+      { Word k;
 
 	deRef2(ARGP++, k);
-	if (isVar(*k))
+	if ( canBind(*k) )
 	{ Word p = allocGlobal(3);
+	  word c = consPtr(p, TAG_INTEGER|STG_GLOBAL);
 
-	  *k   = consPtr(p, TAG_INTEGER|STG_GLOBAL);
-	  Trail(k);
-	  *p++ = mkIndHdr(1, TAG_INTEGER);
-	  *p++ = (long)*PC++;
-	  *p++ = mkIndHdr(1, TAG_INTEGER);
+	  p[0] = mkIndHdr(1, TAG_INTEGER);
+	  p[1] = (long)*PC++;
+	  p[2] = mkIndHdr(1, TAG_INTEGER);
+	  bindConst(k, c);
 	  NEXT_INSTRUCTION;
 	} else if ( isBignum(*k) && valBignum(*k) == (long)*PC++ )
 	  NEXT_INSTRUCTION;
@@ -2317,14 +2333,14 @@ variable, compare the numbers otherwise.
       { Word k;
 
 	deRef2(ARGP++, k);
-	if (isVar(*k))
+	if ( canBind(*k) )
 	{ Word p = allocGlobal(4);
+	  word c = consPtr(p, TAG_FLOAT|STG_GLOBAL);
 
-	  *k   = consPtr(p, TAG_FLOAT|STG_GLOBAL);
-	  Trail(k);
 	  *p++ = mkIndHdr(WORDS_PER_DOUBLE, TAG_FLOAT);
 	  cpDoubleData(p, PC);
 	  *p++ = mkIndHdr(WORDS_PER_DOUBLE, TAG_FLOAT);
+	  bindConst(k, c);
 	  NEXT_INSTRUCTION;
 	} else if ( isReal(*k) )
 	{ Word p = valIndirectP(*k);
@@ -2350,12 +2366,12 @@ General indirect in the head.  Used for strings only at the moment.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
     VMI(H_INDIRECT) MARK(HINDIR);
-      { register Word k;
+      { Word k;
 
 	deRef2(ARGP++, k);
-	if (isVar(*k))
-	{ *k = globalIndirectFromCode(&PC);
-	  Trail(k);
+	if ( canBind(*k) )
+	{ word c = globalIndirectFromCode(&PC);
+	  bindConst(k, c);
 	  NEXT_INSTRUCTION;
 	}
 	if ( isIndirect(*k) && equalIndirectFromCode(*k, &PC) )
@@ -2502,7 +2518,7 @@ stack.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     VMI(H_FIRSTVAR)
       MARK(HFVAR);
-      { varFrame(FR, *PC++) = (isVar(*ARGP) ? makeRef(ARGP) : *ARGP);
+      { varFrame(FR, *PC++) = (needsRef(*ARGP) ? makeRef(ARGP) : *ARGP);
 	ARGP++;
 	NEXT_INSTRUCTION;
       }
@@ -2569,9 +2585,10 @@ the global stack (should we check?  Saves trail! How often?).
     VMI(H_RFUNCTOR)
 	f = (functor_t) *PC++;
         deRef(ARGP);
-	if ( isVar(*ARGP) )
+	if ( canBind(*ARGP) )
 	{ int arity = arityFunctor(f);
 	  Word ap;
+	  word c;
 
 #ifdef O_SHIFT_STACKS
 	  if ( gTop + 1 + arity > gMax )
@@ -2581,8 +2598,8 @@ the global stack (should we check?  Saves trail! How often?).
 #endif
 
 	  ap = gTop;
-	  *ARGP = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
-	  Trail(ARGP);
+	  c = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
+	  bindConst(ARGP, c);
 	  *ap++ = f;
 	  ARGP = ap;
 	  while(arity-- > 0)
@@ -2602,8 +2619,10 @@ the global stack (should we check?  Saves trail! How often?).
 	*aTop++ = ARGP + 1;
     VMI(H_RLIST) MARK(HRLIST);
 	deRef(ARGP);
-	if ( isVar(*ARGP) )
+	if ( canBind(*ARGP) )
 	{ Word ap = gTop;
+	  word c;
+
 #if O_SHIFT_STACKS
   	  if ( ap + 3 > gMax )
 	  { growStacks(FR, BFR, PC, FALSE, TRUE, FALSE);
@@ -2612,8 +2631,8 @@ the global stack (should we check?  Saves trail! How often?).
 #else
 	  requireStack(global, 3*sizeof(word));
 #endif
-	  *ARGP = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
-	  Trail(ARGP);
+	  c = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
+	  bindConst(ARGP, c);
 	  *ap++ = FUNCTOR_dot2;
 	  ARGP = ap;
 	  setVar(*ap++);
@@ -2702,6 +2721,10 @@ backtrack without showing the fail ports explicitely.
 #endif /*O_DEBUGGER*/
 
 	ARGP = argFrameP(lTop, 0);
+#ifdef O_ATTVAR
+	if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+	  goto wakeup;
+#endif
         NEXT_INSTRUCTION;
       }
 
@@ -2817,7 +2840,7 @@ the moment the code marked (**) handles this not very elegant
         catcher = valTermRef(exception_term);
 
 	SECURE(checkData(catcher));
-	DEBUG(0, { Sdprintf("Throwing ");
+	DEBUG(1, { Sdprintf("Throwing ");
 		   PL_write_term(Serror, wordToTermRef(catcher), 1200, 0);
 		   Sdprintf("\n");
 		 });
@@ -3851,7 +3874,7 @@ The VMI for these calls are ICALL_FVN, proc, var-index ...
       { fproc = (Procedure) *PC++;
 	nvars = 1;
 	v = varFrameP(FR, *PC++);
-	*ARGP++ = (isVar(*v) ? makeRefL(v) : *v);
+	*ARGP++ = (needsRef(*v) ? makeRefL(v) : *v);
 	goto common_call_fv;
       }
 
@@ -3859,9 +3882,9 @@ The VMI for these calls are ICALL_FVN, proc, var-index ...
       { fproc = (Procedure) *PC++;
 	nvars = 2;
 	v = varFrameP(FR, *PC++);
-	*ARGP++ = (isVar(*v) ? makeRefL(v) : *v);
+	*ARGP++ = (needsRef(*v) ? makeRefL(v) : *v);
 	v = varFrameP(FR, *PC++);
-	*ARGP++ = (isVar(*v) ? makeRefL(v) : *v);
+	*ARGP++ = (needsRef(*v) ? makeRefL(v) : *v);
 
       common_call_fv:
 	{ Definition def;
@@ -4083,6 +4106,26 @@ program pointer and jump to the common part.
 
 	goto normal_call;
       }
+
+#ifdef O_ATTVAR
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Attributed variable handling
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+      wakeup:
+	next = lTop;
+        DEF = getProcDefinedDefinition(lTop, PC,
+				       PROCEDURE_dwakeup1
+				       PASS_LD);
+	next->context = MODULE_system;
+        next->flags = FR->flags;
+        ARGP = argFrameP(next, 0);
+	ARGP[0] = *valTermRef(LD->attvar.head);
+	setVar(*valTermRef(LD->attvar.head));
+	setVar(*valTermRef(LD->attvar.head));
+
+	goto normal_call;
+#endif
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 I_CALL and I_DEPART form the normal code generated by the  compiler  for
 calling  predicates.   The  arguments  are  already written in the frame
@@ -4298,7 +4341,18 @@ be able to access these!
 	  LOAD_REGISTERS(qid);
 
 	  if ( rval )
+	  {
+#ifdef O_ATTVAR
+	    if ( *valTermRef(LD->attvar.head) ) /* can be faster */
+	    { static code exit;
+
+	      exit = encode(I_EXIT);
+	      PC = &exit;
+	      goto wakeup;
+	    }
+#endif
 	    goto exit_builtin;
+	  }
 
 #if O_CATCHTHROW
 	  if ( exception_term )
@@ -4334,7 +4388,7 @@ values found in the clause,  give  a   reference  to  the clause and set
 	if ( depth > depth_reached )
 	  depth_reached = depth;
 	if ( depth > depth_limit )
-	{ DEBUG(0, Sdprintf("depth-limit\n"));
+	{ DEBUG(2, Sdprintf("depth-limit\n"));
 
 	  if ( debugstatus.debugging )
 	    newChoice(CHP_DEBUG, FR PASS_LD);
