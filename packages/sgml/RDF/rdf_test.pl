@@ -69,19 +69,9 @@ test_file(File) :-
 	write_triples(Triples).
 
 time_file(File) :-
-	time(rdf_parse(File, Triples)),
+	time(load_rdf(File, Triples)),
 	length(Triples, Len),
 	format('Created ~w triples~n', [Len]).
-
-rdf_parse(File, Triples) :-
-	load_structure(File,
-		       XMLTerm,
-		       [ dialect(xmlns),
-			 space(sgml)
-		       ]),
-	find_rdf(XMLTerm, RDFElement),
-	xml_to_plrdf(RDFElement, [], RDF),
-	rdf_triples(RDF, Triples).
 
 passed(Id) :-
 	integer(Id), !,
@@ -90,7 +80,7 @@ passed(Id) :-
 passed(File) :-
 	rdf_reset_ids,
 	ok_file(File, OkFile),
-	rdf_parse(File, Triples),
+	load_rdf(File, Triples),
 	open(OkFile, write, Fd),
 	save_triples(Triples, Fd),
 	close(Fd),
@@ -122,7 +112,7 @@ test(File) :-
 	format('.'), flush_output,
 	rdf_reset_ids,
 	ok_file(File, OkFile),
-	(   rdf_parse(File, Triples)
+	(   load_rdf(File, Triples)
 	->  (   catch(open(OkFile, read, Fd), _, fail)
 	    ->  (   read_triples(Fd, OkTriples),
 		    close(Fd),
