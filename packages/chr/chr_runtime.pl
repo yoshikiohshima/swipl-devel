@@ -98,7 +98,10 @@
 	    'chr novel_production'/2,
 	    'chr extend_history'/2,
 
-	    'chr debug_event'/1
+	    'chr debug_event'/1,
+
+	    chr_trace/0,
+	    chr_notrace/0
 	  ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -118,6 +121,8 @@
 ?- initialization			% SWI
    nb_setval(chr_global,_).
 
+?- initialization
+   nb_setval(chr_debug,off).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr merge_attributes'( As, Bs, Cs) :-
 	sbag_union(As,Bs,Cs).
@@ -464,16 +469,29 @@ sbag_merge([X | Xs],YL,R) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 'chr debug_event'(Event) :-
-	debug_event(Event).
+	nb_getval(chr_debug,D),
+	( D == on ->
+		debug_event(Event)
+	;
+		true
+	).
+
+chr_trace :-
+	nb_setval(chr_debug,on).
+chr_notrace :-
+	nb_setval(chr_debug,off).
 
 debug_event(call(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tCALL\t~@\n',[print_head(Susp)]). 
+	format('CHR DEBUG EVENT:\tCALL\t~@ ? ',[print_head(Susp)]),
+	chr_debug_interact. 
 debug_event(redo(Susp)) :- !,
 	format('CHR DEBUG EVENT:\tREDO\t~@\n',[print_head(Susp)]). 
 debug_event(exit(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tEXIT\t~@\n',[print_head(Susp)]). 
+	format('CHR DEBUG EVENT:\tEXIT\t~@ ? ',[print_head(Susp)]), 
+	chr_debug_interact. 
 debug_event(fail(Susp)) :- !,
-	format('CHR DEBUG EVENT:\tFAIL\t~@\n',[print_head(Susp)]). 
+	format('CHR DEBUG EVENT:\tFAIL\t~@ ? ',[print_head(Susp)]), 
+	chr_debug_interact. 
 debug_event(remove(Susp)) :- !,
 	format('CHR DEBUG EVENT:\tREMOVE\t~@\n',[print_head(Susp)]). 
 debug_event(insert(_ # Susp)) :- !,
@@ -481,7 +499,8 @@ debug_event(insert(_ # Susp)) :- !,
 debug_event(try(H1,H2,G,B)) :- !,
 	format('CHR DEBUG EVENT:\tTRY\t~@\n',[print_rule(H1,H2,G,B)]). 
 debug_event(apply(H1,H2,G,B)) :- !,
-	format('CHR DEBUG EVENT:\tAPPLY\t~@\n',[print_rule(H1,H2,G,B)]). 
+	format('CHR DEBUG EVENT:\tAPPLY\t~@ ? ',[print_rule(H1,H2,G,B)]), 
+	chr_debug_interact. 
 debug_event(Event) :-
 	format('CHR DEBUG EVENT:\t~w.\n',[Event]).
 
@@ -517,3 +536,40 @@ print_head(Susp) :-
 	Goal =.. [F|Args],
 	format('~w # <~w>',[Goal,ID]).
 
+chr_debug_interact :-
+	get_single_char(CharCode),
+	nl,
+	char_code(Command,CharCode),
+	handle_debug_command(Command).
+
+handle_debug_command('\r') :- !,
+	true.	
+handle_debug_command('n') :- !,
+	chr_notrace.
+handle_debug_command('a') :- !,
+	abort.
+handle_debug_command('f') :- !,
+	fail.
+handle_debug_command('?') :- !,
+	print_debug_help,
+	writeln('Enter debug option?'),
+	chr_debug_interact.	
+handle_debug_command('h') :- !,
+	print_debug_help,
+	writeln('Enter debug option?'),
+	chr_debug_interact.	
+handle_debug_command(_) :- 
+	writeln('% Not a valid debug option.'),
+	print_debug_help,
+	writeln('Enter debug option?'),
+	chr_debug_interact.	
+
+print_debug_help :-
+	format('\tCHR debug options:\n',[]),
+	nl,
+	format('\t\t<cr>\tcreep\t\tc\tcreep\n',[]),
+        format('\t\tn\tnodebug\n',[]),
+        format('\t\ta\tabort\n',[]),
+        format('\t\tf\tfail\n',[]),
+	format('\t\t?\thelp\t\th\thelp\n',[]),
+	nl.

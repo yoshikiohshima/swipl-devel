@@ -31,11 +31,14 @@
 
 :- module(chr,
 	  [ chr_compile/2,		% +CHRFile, -PlFile
-	    chr_show_store/1		% +Module
+	    chr_show_store/1,		% +Module
+	    chr_trace/0,
+	    chr_notrace/0
 	  ]).
 :- use_module(library(listing)).	% portray_clause/2
 :- use_module(library('chr/chr_translate')).
 :- use_module(library('chr/chr_debug')).
+:- use_module(library('chr/chr_runtime')).
 :- include(library('chr/chr_op')).
 
 		 /*******************************
