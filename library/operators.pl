@@ -1,11 +1,11 @@
 /*  $Id$
 
-    Part of XPCE --- The SWI-Prolog GUI toolkit
+    Part of SWI-Prolog
 
-    Author:        Jan Wielemaker and Anjo Anjewierden
+    Author:        Jan Wielemaker
     E-mail:        jan@swi.psy.uva.nl
-    WWW:           http://www.swi.psy.uva.nl/projects/xpce/
-    Copyright (C): 1985-2002, University of Amsterdam
+    WWW:           http://www.swi-prolog.org
+    Copyright (C): 1985-2004, University of Amsterdam
 
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@
 */
 
 
-:- module(pce_operator,
+:- module(prolog_operator,
 	[ push_operators/1
 	, pop_operators/0
 	]).
@@ -57,9 +57,13 @@ hello_world World :-
 	....
 
 :- pop_operators.
+
+This module started its life as  part   of  the  XPCE graphics system to
+scope the method definition operators within class definitions. It moved
+to the generic SWI-Prolog library in version 5.3.9.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-:- dynamic
+:- thread_local
 	operator_stack/1.
 
 push_operators(New) :-

@@ -37,7 +37,6 @@
 	  pce_begin_recording/1,	% +- source|documentation
 	  pce_end_recording/0
 	]).
-:- use_module(pce_boot(pce_operator)).
 :- use_module(pce_boot(pce_principal)).
 :- require([ pce_error/1
 	   , pce_info/1
@@ -56,6 +55,8 @@
 	   , genarg/3
 	   , maplist/3
 	   , sub_atom/5
+	   , push_operators/1
+	   , pop_operators/0
 	   ]).
 
 :- dynamic

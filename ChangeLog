@@ -7,6 +7,11 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * MODIFIED: moved XPCE boot file pce_operator.pl to the general Prolog
+    library under the name operators.pl.  Applications that used to fetch
+    this file using unsupported :- use_module(boot(pce_operator)) should
+    now use :- use_module(library(operators)).  
+
   * FIXED: Turn error messages produced	by format/[1-3] into proper
     exceptions.  Dima.
 

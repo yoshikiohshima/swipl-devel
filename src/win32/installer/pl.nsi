@@ -88,6 +88,7 @@ Section "Base system (required)"
   File pl\library\ordsets.pl
   File pl\library\oset.pl
   File pl\library\assoc.pl
+  File pl\library\operators.pl
 
 ; WINDOWS
   File pl\library\dde.pl

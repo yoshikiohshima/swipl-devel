@@ -128,7 +128,7 @@ PLLIBS= MANUAL helpidx.pl help.pl explain.pl \
 	am_match.pl oset.pl ordsets.pl occurs.pl lists.pl \
 	netscape.pl url.pl main.pl assoc.pl \
 	threadutil.pl qpforeign.pl dif.pl when.pl \
-	checklast.pl checkselect.pl
+	checklast.pl checkselect.pl operators.pl
 CLP=	bounds.pl
 PLWIN=	wise.pl dde.pl progman.pl registry.pl
 

@@ -32,7 +32,7 @@
 :- module(emacs_chr_mode, []).
 :- use_module(library(pce)).
 :- use_module(prolog_mode).
-:- use_module(pce_boot(pce_operator)).	% push/pop operators
+:- use_module(library(operators)).	% push/pop operators
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
