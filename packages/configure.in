@@ -28,7 +28,7 @@ findexe()
 }
 
 if [ -z "$PKG" ]; then
-  PKG="clib cpp odbc table sgml sgml/RDF semweb http chr xpce"
+  PKG="clib cpp odbc table sgml sgml/RDF semweb http chr xpce ssl"
 fi
 
 configoptions=""
