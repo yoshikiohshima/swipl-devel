@@ -336,4 +336,7 @@ put_tabs(Out, N) :-
 put_tabs(_, _).
 
 pprint(Out, Term) :-
-	writeq(Out, Term).
+	write_term(Out, Term,
+		   [ quoted(true),
+		     numbervars(true)
+		   ]).
