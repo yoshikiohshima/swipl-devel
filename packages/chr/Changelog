@@ -1,5 +1,7 @@
 Apr 6, 2004
 
+  * JW: Added b (break) to the CHR debugger.
+
   * TS: added chr_expandable/2 clause for pragma/2
 
 Apr 5, 2004

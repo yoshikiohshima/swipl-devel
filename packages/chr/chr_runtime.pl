@@ -106,6 +106,7 @@
 	    chr_trace/0,
 	    chr_notrace/0
 	  ]).
+:- set_prolog_flag(generate_debug_info, false).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                                                        
@@ -644,6 +645,10 @@ handle_debug_command('a',_,_) :- !,
 	abort.
 handle_debug_command('f',_,_) :- !,
 	fail.
+handle_debug_command('b',Event,Depth) :- !,
+	break,
+	print_event(Event,Depth),
+	chr_debug_interact(Event,Depth).
 handle_debug_command('?',Event,Depth) :- !,
 	print_debug_help,
 	print_event(Event,Depth),
@@ -653,7 +658,7 @@ handle_debug_command('h',Event,Depth) :- !,
 handle_debug_command(_,Event,Depth) :- 
 	writeln('% Not a valid debug option.'),
 	print_debug_help,
-	writeln('Enter debug option?'),
+	write('Enter debug option? '),
 	chr_debug_interact(Event,Depth).	
 
 print_debug_help :-
@@ -663,6 +668,7 @@ print_debug_help :-
         format('\t\ts\tskip\n',[]),
         format('\t\tg\tancestors\n',[]),
         format('\t\tn\tnodebug\n',[]),
+        format('\t\tb\tbreak\n',[]),
         format('\t\ta\tabort\n',[]),
         format('\t\tf\tfail\n',[]),
 	format('\t\t?\thelp\t\th\thelp\n',[]),
