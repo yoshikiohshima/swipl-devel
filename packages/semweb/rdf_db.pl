@@ -623,10 +623,7 @@ save_cache(File, Cache) :-
 
 assert_triples([], _).
 assert_triples([rdf(S,P,O)|T], DB) :- !,
-	rdf_global_id(S, Subject),
-	rdf_global_id(P, Predicate),
-	rdf_global_id(O, Object),
-	rdf_assert(Subject, Predicate, Object, DB),
+	rdf_assert(S, P, O, DB),
 	assert_triples(T, DB).
 assert_triples([H|_], _) :-
 	throw(error(type_error(rdf_triple, H), _)).
