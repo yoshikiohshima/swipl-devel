@@ -376,10 +376,10 @@ printk(char *fm, ...)
   trap_gdb();
 }
 
+static long check_marked;
 
-#define mark(p)		(*(p) |= MARK_MASK)
-#define unmark(p)	(*(p) &= ~MARK_MASK)
-#define marked(p)	(*(p) & MARK_MASK)
+#define mark(p)		(*(p) |= MARK_MASK, check_marked++)
+#define unmark(p)	(*(p) &= ~MARK_MASK, check_marked--)
 
 static void
 unmark_data(Word p)
@@ -387,11 +387,11 @@ unmark_data(Word p)
 last_arg:
   deRef(p);
 
-  if ( isAttVar(*p) && marked(p) )
+  if ( isAttVar(*p) && is_marked(p) )
   { unmark(p);
     p = valPAttVar(*p);
     goto last_arg;
-  } else if ( isTerm(*p) && marked(p) )
+  } else if ( isTerm(*p) && is_marked(p) )
   { Functor f;
     int n, arity;
 
@@ -415,7 +415,8 @@ check_data(Word p, int *recursive)
 last_arg:
 
   while(isRef(*p))
-  { p2 = unRef(*p);
+  { assert(!is_marked(p));
+    p2 = unRef(*p);
     if ( p2 > p )
       printk("Reference to higher address");
     if ( !onLocal(p2) && !onGlobal(p2) )
@@ -429,7 +430,7 @@ last_arg:
 
 #ifdef O_ATTVAR
   if ( isAttVar(*p) )
-  { if ( marked(p) )			/* loop */
+  { if ( is_marked(p) )			/* loop */
     { (*recursive)++;
       return key;
     }
@@ -451,10 +452,14 @@ last_arg:
 #endif
 
   if ( isTaggedInt(*p) )
+  { assert(!is_marked(p));
     return key + *p;
+  }
 
   if ( isIndirect(*p) )
   { Word a = addressIndirect(*p);
+
+    assert(!is_marked(p));
 
     if ( !onGlobal(a) )
       printk("Indirect at %p not on global stack", a);
@@ -486,6 +491,7 @@ last_arg:
   { unsigned long idx;
     unsigned long mx = entriesBuffer(&atom_array, Atom);
 
+    assert(!is_marked(p));
     if ( storage(*p) != STG_STATIC )
       printk("Atom doesn't have STG_STATIC");
 
@@ -499,7 +505,7 @@ last_arg:
        storage(*p) != STG_GLOBAL )
     printk("Illegal term at: %p: 0x%x", p, *p);
 
-  if ( marked(p) )
+  if ( is_marked(p) )
   { (*recursive)++;
     return key;				/* recursive */
   }

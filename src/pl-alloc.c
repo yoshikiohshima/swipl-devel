@@ -674,7 +674,7 @@ __consPtr(void *p, int ts)
   unsigned long v = (unsigned long) p;
 
   v -= base_addresses[ts&STG_MASK];
-  assert(v < MAXTAGGEDPTR);
+  assert(v < MAXTAGGEDPTR && !(v&0x3));
   return (v<<5)|ts;
 }
 

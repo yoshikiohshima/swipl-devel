@@ -803,6 +803,7 @@ TrailAssignment(Word p)
 { GET_LD
   Word old = allocGlobal(1);
 
+  assert(!(*p & (MARK_MASK|FIRST_MASK)));
   *old = *p;				/* save the old value on the global */
   requireStack(trail, 2*sizeof(struct trail_entry));
   (tTop++)->address = p;
@@ -820,7 +821,9 @@ __do_undo(mark *m ARG_LD)
 
     if ( isTrailVal(p) )
     { DEBUG(2, Sdprintf("Undoing a trailed assignment\n"));
-      *(--tt)->address = trailVal(p);
+      tt--;
+      *tt->address = trailVal(p);
+      assert(!(*tt->address & (MARK_MASK|FIRST_MASK)));
     } else
       setVar(*p);
   }

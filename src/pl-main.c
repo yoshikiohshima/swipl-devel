@@ -1259,7 +1259,8 @@ vwarning(const char *fm, va_list args)
 
   if ( trueFeature(REPORT_ERROR_FEATURE) )
   { if ( !GD->bootsession && GD->initialised &&
-	 !LD->outofstack )		/* cannot call Prolog */
+	 !LD->outofstack && 		/* cannot call Prolog */
+	 !fm[0] == '$')			/* explicit: don't call Prolog */
     { char message[LINESIZ];
       char *s = message;
       fid_t cid   = PL_open_foreign_frame();

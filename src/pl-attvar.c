@@ -71,8 +71,7 @@ and value to a legal value.
 
 int
 assignAttVar(Word av, Word value ARG_LD)
-{ Word wake = allocGlobal(4);		/* may NOT shift the stacks!!! */
-  Word a;				/*  */
+{ Word wake, a;				/*  */
   Word tail = valTermRef(LD->attvar.tail);
 
   assert(isAttVar(*av));
@@ -90,6 +89,7 @@ assignAttVar(Word av, Word value ARG_LD)
   }
 
   a = valPAttVar(*av);
+  wake    = allocGlobal(4);		/* may NOT shift the stacks!!! */
   wake[0] = FUNCTOR_wakeup3;
   wake[1] = needsRef(*a) ? makeRef(a) : *a;
   wake[2] = needsRef(*value) ? makeRef(value) : *value;
@@ -404,7 +404,7 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 { PRED_LD
   Word v;
 
-  requireStack(global, 7*sizeof(word));
+  requireStack(global, 9*sizeof(word));
 
   v = valTermRef(A1);
   deRef(v);
@@ -431,6 +431,7 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 	gc[0] = FUNCTOR_comma2;
 	gc[1] = linkVal(vp);
 	gc[2] = goal;
+
 	TrailAssignment(vp);
 	*vp = consPtr(gc, TAG_COMPOUND|STG_GLOBAL);
       } else if ( vp )				/* vp points to [] */
@@ -441,6 +442,7 @@ PRED_IMPL("$freeze", 2, freeze, PL_FA_TRANSPARENT)
 	at[2] = goal;
 	at[3] = ATOM_nil;
 
+	assert(*vp == ATOM_nil);
 	TrailAssignment(vp);
 	*vp = consPtr(at, TAG_COMPOUND|STG_GLOBAL);
       } else

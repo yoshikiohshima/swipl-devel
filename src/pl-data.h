@@ -149,6 +149,9 @@ be kept consistent.
 #define MARK_MASK	(0x1<<5)	/* GC mark */
 #define FIRST_MASK	(0x2<<5)	/* GC first mark */
 
+#define is_marked(p)	(*(p) & MARK_MASK)
+#define is_first(p)	(*(p) & FIRST_MASK)
+
 #define tag(w)		((w) & TAG_MASK)
 #define storage(w)	((w) & STG_MASK)
 #define valPtr2(w, s)	((Word)(((w) >> 5) + base_addresses[s]))

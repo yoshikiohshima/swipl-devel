@@ -120,19 +120,17 @@ char tmp[256];				/* for calling print_val(), etc. */
 #endif
 
 #define ldomark(p)	{ *(p) |= MARK_MASK; }
-#define domark(p)	{ if ( marked(p) ) \
+#define domark(p)	{ if ( is_marked(p) ) \
 			    sysError("marked twice: %p (*= 0x%lx), gTop = %p", p, *(p), gTop); \
 			  *(p) |= MARK_MASK; \
 			  total_marked++; \
 			  recordMark(p); \
-			  DEBUG(4, Sdprintf("marked(%p)\n", p)); \
+			  DEBUG(4, Sdprintf("is_marked(%p)\n", p)); \
 			}
 #define unmark(p)	(*(p) &= ~MARK_MASK)
-#define marked(p)	(*(p) & MARK_MASK)
 
 #define mark_first(p)	(*(p) |= FIRST_MASK)
 #define unmark_first(p)	(*(p) &= ~FIRST_MASK)
-#define is_first(p)	(*(p) & FIRST_MASK)
 #define is_ref(w)	isRef(w)
 
 #define get_value(p)	(*(p) & VALUE_MASK)
@@ -180,7 +178,7 @@ forwards void		compact_global(void);
 forwards int		cmp_address(const void *, const void *);
 forwards void		do_check_relocation(Word, char *file, int line ARG_LD);
 forwards void		needsRelocation(void *);
-forwards bool		scan_global(int marked);
+/*forwards bool		scan_global(int marked);*/
 forwards void		check_mark(mark *m);
 #endif
 
@@ -425,7 +423,7 @@ mark_variable(Word start ARG_LD)
 
   DEBUG(3, Sdprintf("marking %p\n", start));
 
-  if ( marked(start) )
+  if ( is_marked(start) )
     sysError("Attempt to mark twice");
 
   local_marked++;
@@ -436,7 +434,7 @@ mark_variable(Word start ARG_LD)
   FORWARD;
 
 forward:				/* Go into the tree */
-  if ( marked(current) )		/* have been here */
+  if ( is_marked(current) )		/* have been here */
     BACKWARD;
   domark(current);
 
@@ -459,7 +457,7 @@ forward:				/* Go into the tree */
     { SECURE(assert(storage(val) == STG_GLOBAL));
       next = valPtr2(val, STG_GLOBAL);
       needsRelocation(current);
-      if ( marked(next) )
+      if ( is_marked(next) )
 	BACKWARD;			/* term has already been marked */
       val  = get_value(next);		/* invariant */
 					/* backwards pointer */
@@ -475,7 +473,7 @@ forward:				/* Go into the tree */
       SECURE(assert(storage(val) == STG_GLOBAL));
       next = valPtr2(val, STG_GLOBAL);
       needsRelocation(current);
-      if ( marked(next) )
+      if ( is_marked(next) )
 	BACKWARD;			/* term has already been marked */
       args = arityFunctor(((Functor)next)->definition) - 1;
       DEBUG(5, Sdprintf("Marking TERM %s/%d at %p\n",
@@ -500,7 +498,7 @@ forward:				/* Go into the tree */
 
       SECURE(assert(storage(val) == STG_GLOBAL));
       needsRelocation(current);
-      if ( marked(next) )		/* can be referenced from multiple */
+      if ( is_marked(next) )		/* can be referenced from multiple */
         BACKWARD;			/* places */
       domark(next);
       DEBUG(3, Sdprintf("Marked indirect data type, size = %ld\n",
@@ -563,7 +561,7 @@ mark_term_refs()
     int n = fr->size;
 
     for( ; n-- > 0; sp++ )
-    { if ( !marked(sp) )		/* can this be marked?? */
+    { if ( !is_marked(sp) )		/* can this be marked?? */
       { if ( isGlobalRef(*sp) )
 	  mark_variable(sp PASS_LD);
 	else
@@ -690,7 +688,7 @@ mark_environments(LocalFrame fr, Code PC)
 #endif
     sp = argFrameP(fr, 0);
     for( ; slots-- > 0; sp++ )
-    { if ( !marked(sp) )
+    { if ( !is_marked(sp) )
       { if ( isGlobalRef(*sp) )
 	  mark_variable(sp PASS_LD);
 	else
@@ -752,7 +750,7 @@ mark_choicepoints(Choice ch, GCTrailEntry te)
 	{ SECURE(assert(ttag(te[1].address) != TAG_TRAILVAL));
 	  te->address = 0;
 	  trailcells_deleted++;
-	} else if ( !marked(tard) )	/* garbage */
+	} else if ( !is_marked(tard) )	/* garbage */
 	{ setVar(*tard);
 	  SECURE(assert(*tard != QID_MAGIC));
 #if O_DESTRUCTIVE_ASSIGNMENT
@@ -826,7 +824,7 @@ mark_trail()
 			&te->address, gp, *gp));
 
       assert(onGlobal(gp));
-      if ( !marked(gp) )
+      if ( !is_marked(gp) )
       { mark_variable(gp PASS_LD);
 	total_marked++;			/* fix counters */
 	local_marked--;
@@ -1005,18 +1003,26 @@ tag_trail()
 { GET_LD
   TrailEntry te;
 
-  for(te = tBase; te < tTop; te++)
-  { if ( te->address )
-    { word mask = ttag(te->address);
-      int stg;
+  for( te = tTop; --te >= tBase; )
+  { Word p = te->address;
+    int stg;
 
-      if ( onLocal(te->address) )
-	stg = STG_LOCAL;
-      else
-	stg = STG_GLOBAL;
+    if ( isTrailVal(p) )
+    { Word p2 = trailValP(p);
 
-      te->address = (Word)consPtr(te->address, stg|mask);
+      SECURE(assert(onGlobal(p2)));
+      te->address = (Word)consPtr(p2, STG_GLOBAL|TAG_TRAILVAL);
+      te--;
     }
+
+    if ( onLocal(te->address) )
+    { stg = STG_LOCAL;
+    } else
+    { SECURE(assert(onGlobal(te->address)));
+      stg = STG_GLOBAL;
+    }
+
+    te->address = (Word)consPtr(te->address, stg);
   }
 }
 
@@ -1060,7 +1066,7 @@ sweep_mark(mark *m ARG_LD)
     if ( is_first(gm-1) )
       goto found;
     prev = previous_gcell(gm);
-    if ( marked(prev) )
+    if ( is_marked(prev) )
     {
     found:
       m->globaltop = gm, STG_GLOBAL;
@@ -1085,7 +1091,7 @@ sweep_foreign()
 
     sweep_mark(&fr->mark PASS_LD);
     for( ; n-- > 0; sp++ )
-    { if ( marked(sp) )
+    { if ( is_marked(sp) )
       {	unmark(sp);
 	if ( isGlobalRef(get_value(sp)) )
 	{ local_marked--;
@@ -1192,7 +1198,7 @@ sweep_environments(LocalFrame fr, Code PC)
 
     sp = argFrameP(fr, 0);
     for( ; slots > 0; slots--, sp++ )
-    { if ( marked(sp) )
+    { if ( is_marked(sp) )
       { unmark(sp);
 	if ( isGlobalRef(get_value(sp)) )
 	{ local_marked--;
@@ -1305,11 +1311,11 @@ compact_global(void)
 
   dest = gBase + total_marked;			/* first FREE cell */
   for( current = gTop; current >= gBase; current-- )
-  { long offset = (marked(current) || is_first(current)
+  { long offset = (is_marked(current) || is_first(current)
 		   			? 0 : offset_cell(current));
     current -= offset;
 
-    if ( marked(current) )
+    if ( is_marked(current) )
     {
 #if O_SECURE
       if ( current != *--v )
@@ -1350,7 +1356,7 @@ compact_global(void)
   DEBUG(2, Sdprintf("Scanning global stack upwards\n"));
   dest = gBase;
   for(current = gBase; current < gTop; )
-  { if ( marked(current) )
+  { if ( is_marked(current) )
     { long l, n;
 
       if ( is_first(current) )
@@ -1449,7 +1455,7 @@ considerGarbageCollect(Stack s)
 
 
 #if O_SECURE || O_DEBUG || defined(O_MAINTENANCE)
-static bool
+bool
 scan_global(int marked)
 { GET_LD
   Word current;
@@ -1458,13 +1464,13 @@ scan_global(int marked)
 
   for( current = gBase; current < gTop; current += (offset_cell(current)+1) )
   { cells++;
-    if ( (!marked && marked(current)) || is_first(current) )
-    { warning("Illegal cell in global stack (up) at %p (*= %p)",
+    if ( (!marked && is_marked(current)) || is_first(current) )
+    { warning("!Illegal cell in global stack (up) at %p (*= %p)",
 	      current, *current);
       if ( isAtom(*current) )
-	warning("%p is atom %s", current, stringAtom(*current));
+	warning("!%p is atom %s", current, stringAtom(*current));
       if ( isTerm(*current) )
-	warning("%p is term %s/%d",
+	warning("!%p is term %s/%d",
 		current,
 		stringAtom(nameFunctor(functorTerm(*current))),
 		arityTerm(*current));
@@ -1478,8 +1484,8 @@ scan_global(int marked)
   for( current = gTop - 1; current >= gBase; current-- )
   { cells --;
     current -= offset_cell(current);
-    if ( (!marked && marked(current)) || is_first(current) )
-    { warning("Illegal cell in global stack (down) at %p (*= %p)",
+    if ( (!marked && is_marked(current)) || is_first(current) )
+    { warning("!Illegal cell in global stack (down) at %p (*= %p)",
 	      current, *current);
       if ( ++errors > 10 )
       { Sdprintf("...\n");
