@@ -488,7 +488,8 @@ $execute(end_of_file, _) :- !,
 	print_message(query, query(eof)).
 $execute(Goal, Bindings) :-
 	$module(TypeIn, TypeIn), 
-	TypeIn:$dwim_correct_goal(Goal, Bindings, Corrected), !, 
+	expand_goal(Goal, Expanded),
+	TypeIn:$dwim_correct_goal(Expanded, Bindings, Corrected), !, 
 	$execute_goal(Corrected, Bindings).
 $execute(_, _) :-
 	notrace, 
@@ -501,8 +502,7 @@ $execute_goal(trace, []) :-
 	fail.
 $execute_goal(Goal, Bindings) :-
 	$module(TypeIn, TypeIn),
-	expand_goal(Goal, Expanded), % warn if expanded?
-	$execute_goal2(TypeIn:Expanded, Bindings).
+	$execute_goal2(TypeIn:Goal, Bindings).
 
 $execute_goal2(Goal, Bindings) :-
 	Goal,
