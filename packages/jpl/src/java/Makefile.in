@@ -6,7 +6,7 @@
 
 JAVAC=@JAVAC@
 JAR=@JAR@
-JPL=../../../jpl.jar
+JPL=../../jpl.jar
 
 CLS=	jpl/Atom.java \
 	jpl/Compound.java \
