@@ -483,7 +483,7 @@ handle_option(Name,Value) :-
 
 handle_option(Name,Value) :- 
 	\+ option_definition(Name,_,_), !,
-	setof(N,_V ^ _F ^ (chr_pp:option_definition(N,_V,_F)),Ns),
+	setof(N,_V ^ _F ^ (option_definition(N,_V,_F)),Ns),
 	format('CHR compiler ERROR: ~w.\n',[option(Name,Value)]),
 	format('    `--> Invalid option name ~w: should be one of ~w.\n',[Name,Ns]),
 	fail.
