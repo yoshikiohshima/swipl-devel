@@ -7,6 +7,8 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * FIXED: cleanup at exit if there are engines not attached to threads.
+
   * ADDED: Hook prolog:error_message//1 to add new error types and print
     them in readable format.
 

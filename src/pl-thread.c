@@ -567,15 +567,19 @@ exitPrologThreads()
 	  DEBUG(1, Sdprintf("Cancelled %d\n", i));
 	  canceled++;
 #else
-	{ int rc;
-
-	  if ( (rc=pthread_cancel(t->tid)) == 0 )
-	  { t->status = PL_THREAD_CANCELED;
-	    canceled++;
+  	  if ( t->tid )
+	  { int rc;
+	    
+	    if ( (rc=pthread_cancel(t->tid)) == 0 )
+	    { t->status = PL_THREAD_CANCELED;
+	      canceled++;
+	    } else
+	    { Sdprintf("Failed to cancel thread %d: %s\n", i, ThError(rc));
+	    }
 	  } else
-	  { Sdprintf("Failed to cancel thread %d: %s\n", i, ThError(rc));
+	  { DEBUG(1, Sdprintf("Destroying engine %d\n", i));
+	    PL_destroy_engine(t->thread_data);
 	  }
-	}
 #endif
 	  break;
 	}

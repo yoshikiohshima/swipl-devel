@@ -4144,6 +4144,18 @@ library_search_path(Path, 'PATH') :-
 	;   Path = []
 	).
 
+%	libjpl(-Spec)
+%	
+%	Return the spec for loading the   JPL shared object. This shared
+%	object must be called libjpl.so as the Java System.loadLibrary()
+%	call used by jpl.jar adds the lib* prefix.
+
+libjpl(File) :-
+	(   current_prolog_flag(unix, true)
+	->  File = foreign(libjpl)
+	;   File = foreign(jpl)
+	).
+
 :- dynamic
 	jvm_ready/0.
 :- volatile
@@ -4152,9 +4164,13 @@ library_search_path(Path, 'PATH') :-
 setup_jvm :-
 	jvm_ready, !.
 setup_jvm :-
-	check_java_environment,
-	load_foreign_library(foreign(jpl)),
+	libjpl(JPL),
+	catch(load_foreign_library(JPL), E, report_java_setup_problem(E)),
 	assert(jvm_ready).
+
+report_java_setup_problem(E) :-
+	print_message(error, E),
+	check_java_environment.
 
 :- initialization
    setup_jvm.
