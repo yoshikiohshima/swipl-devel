@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+  * ADDED: predicate_property/2: `nodebug' to detect predicates without
+    debug info.  Used by the guitracer.
+
   * MODIFIED: listing/0 now only lists predicates defined in the target
     module.  Used to also list imported predicates.  Applications that
     reply on the old behaviour should use listing/1 on all predicates

@@ -1807,7 +1807,7 @@ ISO compliant implementation of current_predicate/2.  Unlike
 current_predicate/2, the current implementation of current_predicate/1
 does not consider predicates that can be autoloaded `current'.
 
-    \predicate{predicate_property}{2}{?Head, ?Property}
+    \predicate{predicate_property}{2}{:Head, ?Property}
 Succeeds if \arg{Head} refers to a predicate that has property
 \arg{Property}. Can be used to test whether a predicate has a certain
 property, obtain all properties known for \arg{Head}, find all
@@ -1815,35 +1815,67 @@ predicates having \arg{property} or even obtaining all information
 available about the current program. \arg{Property} is one of:
 
 \begin{description}
-    \termitem{interpreted}{}
-Is true if the predicate is defined in Prolog. We return true on this
-because, although the code is actually compiled, it is completely
-transparent, just like interpreted code.
-
     \termitem{built_in}{}
 Is true if the predicate is locked as a built-in predicate. This
 implies it cannot be redefined in its definition module and it can
 normally not be seen in the tracer.
 
-    \termitem{foreign}{}
-Is true if the predicate is defined in the C language.
-
     \termitem{dynamic}{}
 Is true if assert/1 and retract/1 may be used to modify the predicate.
 This property is set using dynamic/1.
 
-    \termitem{volatile}{}
-If true, the clauses are not saved into a saved-state
-by qsave_program/[1,2].  This property is set using volatile/1.
+    \termitem{exported}{}
+Is true if the predicate is in the public list of the context module.
+    \termitem{imported_from}{Module}
+Is true if the predicate is imported into the context module from
+module \arg{Module}.
+
+    \termitem{file}{FileName}
+Unify \arg{FileName} with the name of the source file in which the
+predicate is defined.  See also source_file/2.
+
+    \termitem{foreign}{}
+Is true if the predicate is defined in the C language.
+
+    \termitem{indexed}{Head}
+Predicate is indexed (see index/1) according to \arg{Head}. \arg{Head}
+is a term whose name and arity are identical to the predicate. The
+arguments are unified with `1' for indexed arguments, `0' otherwise.
+
+    \termitem{interpreted}{}
+Is true if the predicate is defined in Prolog. We return true on this
+because, although the code is actually compiled, it is completely
+transparent, just like interpreted code.
+
+    \termitem{line_count}{LineNumber}
+Unify \arg{LineNumber} with the line number of the first clause of the
+predicate.  Fails if the predicate is not associated with a file.  See
+also source_file/2.
+
+    \termitem{multifile}{}
+Is true there may be multiple (or no) file providing clauses for the
+predicate.  This property is set using multifile/1.
+
+    \termitem{nodebug}{}
+Details of the predicate are not shown by the debugger. This is the
+default for builtin predicates.  User predicates can be compiled this
+way using the Prolog flag \const{generate_debug_info}.
+
+    \termitem{notrace}{}
+Do not show ports of this predicate in the debugger.
+
+    \termitem{number_of_clauses}{ClauseCount}
+Unify \arg{ClauseCount} to the number of clauses associated with the
+predicate.  Fails for foreign predicates.
 
     \termitem{thread_local}{}
 If true (only possible on the multi-threaded version) each thread has
 its own clauses for the predicate. This property is set using
 thread_local/1.
 
-    \termitem{multifile}{}
-Is true there may be multiple (or no) file providing clauses for the
-predicate.  This property is set using multifile/1.
+    \termitem{transparent}{}
+Is true if the predicate is declared transparent using the
+module_transparent/1 declaration.
 
     \termitem{undefined}{}
 Is true if a procedure definition block for the predicate exists, but
@@ -1853,33 +1885,9 @@ an attempt to call it has been made via one of the meta-call predicates
 or the predicate had a definition in the past. See the library package
 \pllib{check} for example usage.
 
-    \termitem{transparent}{}
-Is true if the predicate is declared transparent using the
-module_transparent/1 declaration.
-
-    \termitem{exported}{}
-Is true if the predicate is in the public list of the context module.
-    \termitem{imported_from}{Module}
-Is true if the predicate is imported into the context module from
-module \arg{Module}.
-
-    \termitem{indexed}{Head}
-Predicate is indexed (see index/1) according to \arg{Head}. \arg{Head}
-is a term whose name and arity are identical to the predicate. The
-arguments are unified with `1' for indexed arguments, `0' otherwise.
-
-    \termitem{file}{FileName}
-Unify \arg{FileName} with the name of the source file in which the
-predicate is defined.  See also source_file/2.
-
-    \termitem{line_count}{LineNumber}
-Unify \arg{LineNumber} with the line number of the first clause of the
-predicate.  Fails if the predicate is not associated with a file.  See
-also source_file/2.
-
-    \termitem{number_of_clauses}{ClauseCount}
-Unify \arg{ClauseCount} to the number of clauses associated with the
-predicate.  Fails for foreign predicates.
+    \termitem{volatile}{}
+If true, the clauses are not saved into a saved-state
+by qsave_program/[1,2].  This property is set using volatile/1.
 \end{description}
 
     \predicate{dwim_predicate}{2}{+Term, -Dwim}
