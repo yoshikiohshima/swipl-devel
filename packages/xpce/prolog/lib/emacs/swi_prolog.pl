@@ -71,6 +71,7 @@ user:message_hook(Term, Level, Lines) :-
 	;   source_location(Path, Line),
 	    make_message(Lines, Message)
 	),
+	atom(Path),			% void surprises
 	\+ object(@loading_emacs),
 	start_emacs,
 	new(Buffer, emacs_buffer(Path)),
