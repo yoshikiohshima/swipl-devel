@@ -4,9 +4,9 @@
 
 .SUFFIXES: .java .class
 
-JAVAC=$(JAVA_HOME)\bin\javac -sourcepath .;fli
+JAVAC=$(JAVA_HOME)\bin\javac
 JAR=$(JAVA_HOME)\bin\jar
-JPL=..\..\..\jpl.jar
+JPL=..\..\jpl.jar
 
 CLS=	jpl\Atom.java \
 	jpl\Compound.java \
