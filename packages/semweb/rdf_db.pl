@@ -140,7 +140,12 @@ rdf_register_ns(Alias, URI) :-
 
 rdf_global_id(Global, Global) :-
 	var(Global), !.
-rdf_global_id(NS:Local, Global) :- !,
+rdf_global_id(NS:Local, Global) :-
+	atom(Global),
+	ns(NS, Full),
+	atom_concat(Full, Local, Global), !.
+rdf_global_id(NS:Local, Global) :-
+	atom(NS), atom(Local), !,
 	(   ns(NS, Full)
 	*-> atom_concat(Full, Local, Global)
 	;   atom_concat(NS, Local, Global)
