@@ -618,6 +618,7 @@ rdf_save(File) :-
 	rdf_save(File, []).
 
 rdf_save(File, Options) :-
+	is_list(Options), !,
 	open(File, write, Out),
 	flag(rdf_db_saved_subjects, OSavedSubjects, 0),
 	flag(rdf_db_saved_triples, OSavedTriples, 0),
@@ -628,6 +629,10 @@ rdf_save(File, Options) :-
 				  OSavedSubjects,
 				  OSavedTriples,
 				  Out)).
+rdf_save(File, DB) :-
+	atom(DB), !,			% backward compatibility
+	rdf_save(File, [db(DB)]).
+
 
 cleanup_save(Reason,
 	     File,
@@ -645,8 +650,7 @@ cleanup_save(Reason,
 
 rdf_do_save(Out, Options) :-
 	rdf_save_header(Out, Options),
-	db(Options, DB),
-	forall(rdf_subject(Subject, DB),
+	forall(rdf_subject(Subject, Options),
 	       rdf_save_non_anon_subject(Out, Subject, Options)),
 	rdf_save_footer(Out), !.	% dubious cut; without the
 					% cleanup handlers isn't called!?
