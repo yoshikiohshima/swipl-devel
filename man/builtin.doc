@@ -3351,10 +3351,11 @@ all operators can be redefined by the user.
 \hline
 1200 & xfx & \op{-->}, \op{:-} \\
 1200 & fx & \op{:-}, \op{?-} \\
-1150 & fx & \op{dynamic}, \op{multifile}, \op{module_transparent},
-            \op{discontiguous}, \op{volatile}, \op{initialization}\\
+1150 & fx & \op{dynamic}, \op{discontiguous}, \op{initialization},
+	    \op{module_transparent}, \op{multifile}, \op{thread_local},
+	    \op{volatile} \\
 1100 & xfy & \op{;}, \op{|} \\
-1050 & xfy & \op{->} \\
+1050 & xfy & \op{->}, op{*->} \\
 1000 & xfy & \op{,} \\
 954 & xfy & \op{\} \\
 900 & fy & \op{\+} \\

@@ -35,6 +35,8 @@
 :- use_module(library(emacs_extend)).
 :- use_module(library(pce_prolog_xref)).
 :- use_module(library(lists)).
+:- use_module(library(operators)).
+:- use_module(library(debug)).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 User extension hooks.
@@ -104,7 +106,7 @@ colourise_buffer(M) :->
 	send(M, setup_styles),
 	send(M, xref_buffer),
 	send(M, report, progress, 'Colourising buffer ...'),
-	do_colourise_buffer(M),
+	colourise_buffer(M),
 	send(M, colourise_comments),
 	statistics(runtime, [_,UsedMilliSeconds]),
 	Used is UsedMilliSeconds/1000,
@@ -147,24 +149,28 @@ xref_buffer(M, Always:[bool]) :->
 		 *	     PREDICATES		*
 		 *******************************/
 
-do_colourise_buffer(M) :-
+colourise_buffer(M) :-
 	get(M, text_buffer, TB),
 	pce_open(TB, read, Fd),
 	(   peek_char(Fd, #)		% skip #! script line
 	->  skip(Fd, 10)
 	;   true
 	),
-	'$style_check'(Old, Old),
+	save_settings(Fd, State),
+	call_cleanup(colourise_buffer(Fd, M),
+		     restore_settings(Fd, State)).
+
+colourise_buffer(Fd, M) :-
+	get(M, text_buffer, TB),
 	repeat,
+	    '$set_source_module'(SM, SM),
 	    catch(read_term(Fd, Term,
 			    [ subterm_positions(TermPos),
 			      singletons(Singletons),
-			      character_escapes(true)
+			      module(SM)
 			    ]),
-		  _E,
-		  (   %print_message(error, _E),
-		      fail
-		  )),
+		  E,
+		  syntax_error(E)),
 	    fix_operators(Term),
 	    (	colourise_term(Term, TB, TermPos),
 		send(M, mark_singletons, Term, Singletons, TermPos)
@@ -172,9 +178,43 @@ do_colourise_buffer(M) :-
 	    ;	print_message(warning,
 			      format('Failed to colourise ~p~n', [Term]))
 	    ),
-	    Term == end_of_file, !,
-	'$style_check'(_, Old),
+	    Term == end_of_file, !.
+
+save_settings(Fd, state(Fd, Style, Esc)) :-
+	push_operators([]),
+	current_prolog_flag(character_escapes, Esc),
+	'$style_check'(Style, Style).
+
+restore_settings(Fd, state(Style, Esc)) :-
+	set_prolog_flag(character_escapes, Esc),
+	'$style_check'(_, Style),
+	pop_operators,
 	close(Fd).
+
+%	emacs_push_op(+Prec, +Type, :Name)
+%	
+%	Define operators into the default source module and register
+%	them to be undone by pop_operators/0.
+
+emacs_push_op(P, T, N0) :-
+	(   N0 = _:_
+	->  N = N0
+	;   '$set_source_module'(M, M),
+	    N = M:N0
+	),
+	push_op(P, T, N),
+	debug(emacs, ':- ~w.', [op(P,T,N)]).
+
+%	syntax_error(+Error)
+%	
+%	Print syntax errors if the debugging topic emacs is active.
+
+syntax_error(E) :-
+	(   debugging(emacs)
+	->  print_message(error, E)
+	;   true
+	),
+	fail.
 
 %	fix_operators(+Term)
 %	
@@ -189,18 +229,23 @@ fix_operators((:-module($(Name),_))) :-
 	fail.				% allow for other expansions
 fix_operators('$:-'(_)) :- !,		% deal with swi('boot/init.pl')
 	style_check(+dollar).
-fix_operators((:-Directive)) :- !,
-	asserta(user:message_hook(_,_,_), Ref),
-	ignore(xref_expand((:-Directive), _)),
-	erase(Ref).
+fix_operators((:- Directive)) :- !,
+	process_directive(Directive).
 fix_operators((:- module(_, ExportedOps))) :-
 	(   member(op(P,A,N), ExportedOps),
-	    catch(op(P,A,N), _, fail),
+	    catch(emacs_push_op(P,A,N), _, fail),
 	    fail
 	;   true
 	).
 fix_operators(_).
 
+
+process_directive(op(P,T,N)) :- !,
+	catch(emacs_push_op(P, T, N), _, true).
+process_directive(Directive) :-
+	asserta(user:message_hook(_,_,_), Ref),
+	ignore(xref_expand((:- Directive), _)),
+	erase(Ref).
 
 %	colourise(+TB, +Stream)
 %

@@ -107,7 +107,8 @@ push_chr_operators :-
 	;   init_chr_operators(Ops),
 	    assert(chr_operators(Ops))
 	),
-	push_operators(Ops).
+	'$set_source_module'(SM, SM),
+	push_operators(SM:Ops).
 
 pop_chr_operators :-
 	pop_operators.
