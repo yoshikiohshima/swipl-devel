@@ -59,7 +59,7 @@ ilib::
 		$(MAKEINDEX)
 
 html-install::	expl-install exjava-install
-		copy /r docs $(PKGDOC)\jpl
+		xcopy /S /I /Y /EXCLUDE:CVS docs "$(PKGDOC)\jpl"
 
 xpce-install::
 
@@ -75,12 +75,12 @@ exjava-install::
 		if not exist "$(EXJAVA)/$(NULL)" $(MKDIR) "$(EXJAVA)"
 		copy examples\java\README "$(EXJAVA)"\README.TXT
 		copy examples\java\env.bat "$(EXJAVA)"
-		for %f in ($(EXJAVAS)) do if not exists "$(EXDIR)\%f\$(NULL)" mkdir "$(EXDIR)\%f\$(NULL)"
+		for %f in ($(EXJAVAS)) do if not exist "$(EXDIR)\%f\$(NULL)" mkdir "$(EXDIR)\%f"
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\run.bat "$(EXDIR)\%f
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\compile.bat "$(EXDIR)\%f
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\README "$(EXDIR)\%f\README.txt
 		for %f in ($(EXJAVAS)) do copy examples\java\%f\%f.java "$(EXDIR)\%f
-		for %f in ($(EXJAVAS)) do if exists examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXDIR)\%f
+		for %f in ($(EXJAVAS)) do if exist examples\java\%f\*.pl copy examples\java\%f\*.pl "$(EXDIR)\%f
 
 uninstall::
 		del "$(PLBASE)\bin\$(PKGDLL).dll"
