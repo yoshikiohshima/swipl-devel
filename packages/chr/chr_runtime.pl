@@ -141,7 +141,7 @@ run_suspensions([S|Next] ) :-
 	    arg( 3, S, Goal),
 	    call( Goal),
 	    					% get_mutable( Post, Mref), % XXX Inlined
-	    ( Mref == mutable(triggered) ->	% Post==triggered ->
+	    ( Mref = mutable(triggered) ->	% Post==triggered ->
 		update_mutable( removed, Mref)
 	    ;
 		true
@@ -165,38 +165,24 @@ locked:attr_unify_hook(_,_) :- fail.
 	not_locked(T).
 
 lock(T) :-
-	( var(T) -> 
-		put_attr( T, locked, x)
-	;
-		functor(T,_,N),
-		lock_arg(N,T)
+	( var(T)
+	-> put_attr(T, locked, x)
+        ;  term_variables(T,L),
+           lockv(L)
 	).
-		
-lock_arg( 0, _) :- ! .
-lock_arg( 1, T) :- ! , arg( 1, T, A), lock( A).
-lock_arg( 2, T) :- ! , arg( 1, T, A), lock( A), arg( 2, T, B), lock( B).
-lock_arg( N, T) :-
-	arg( N, T, A),
-	lock( A),
-	M is N-1,
-	lock_arg( M, T).
+
+lockv([]).
+lockv([T|R]) :- put_attr( T, locked, x), lockv(R).
 
 unlock(T) :-
-	( var(T) ->
-		del_attr( T, locked)
-	;
-		functor( T, _, N),
-		unlock_arg( N, T)
+	( var(T)
+	-> del_attr(T, locked)
+	;  term_variables(T,L),
+           unlockv(L)
 	).
 
-unlock_arg( 0, _) :- ! .
-unlock_arg( 1, T) :- ! , arg( 1, T, A), unlock( A).
-unlock_arg( 2, T) :- ! , arg( 1, T, A), unlock( A), arg( 2, T, B), unlock( B).
-unlock_arg( N, T) :-
-	arg( N, T, A),
-	unlock( A),
-	M is N-1,
-	unlock_arg( M, T).
+unlockv([]).
+unlockv([T|R]) :- del_attr( T, locked), unlockv(R).
 
 none_locked( []).
 none_locked( [V|Vs]) :-
