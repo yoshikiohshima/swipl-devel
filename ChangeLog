@@ -7,6 +7,9 @@
 					http://gollem.swi.psy.uva.nl/bugzilla/
 					--------------------------------------
 
+VERSION 5.3.8 (Apr 07, 2004)
+============================
+
   * FIXED: Quoted write of -(0) and similar cases.  Mike Elston.
 
   * ADDED: Exporting operators from modules.

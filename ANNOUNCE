@@ -1,4 +1,4 @@
-SWI-Prolog 5.3.7/XPCE 6.2.16 development snapshot
+SWI-Prolog 5.3.8/XPCE 6.2.16 development snapshot
 
 Status
 ======
@@ -46,7 +46,7 @@ Anticipated features relative to stable 5.2.x release and their status
 		 (and friends, partial support), asserta/1 (and friends).
 
   * CHR constraint language support
-    Complete
+    Complete.  Debugger is being integrated with the Prolog debugger.
 
   * Domain specific constraint libraries
     Only integer bounds constraint (a subset if CLP(fd)).
@@ -56,28 +56,38 @@ Anticipated features relative to stable 5.2.x release and their status
     implementation.
 
 
-Brief summary of changes since 5.3.5
+Brief summary of changes since 5.3.7
 ====================================
 
 SWI-Prolog
 ----------
 
-  * `Blob' interface for dealing with external references
-  
-  * Debugger to CHR
+  * Fixed a number of issues around load_files/2 (the primitive below
+    consult, use_module, etc).
+
+  * Added exporting operators from modules.
 
 Packages
 --------
 
-  (none)
+  * CHR: various improvements.  Loading files now uses term_expansion
+    rather than creating a .pl file from a .chr file and CHR rules may
+    be defined in files using any extension as long as they include
+    library(chr).  The debugger is improved (added chr_leash/1) and
+    (partly) integrated with the Prolog commandline debugger.
+
+    Synchronised CHR debugging and optimization to the -O and -nodebug
+    flags (optimise and generate_debug_info flags).
+
+  * Clib: added library(prolog_server) to interact with Prolog using
+    a TCP/IP connection via telnet.
 
 Development environment
 -----------------------
 
-  * PceEmacs: Fix to bracket highlighing
-
-  * Make cross-referencer deal properly with Prolog files starting
-    with #!.
+  * Make command history thread-aware
+  * Some fixes to the debugger
+  * Added prolog flag 'generate_debug_info' and option -nodebug
 
 
 INCOMPATIBILITIES
