@@ -75,9 +75,9 @@ predicate calls:
 
 \begin{center}
 \begin{tabular}{|l|l|}
-\hline \\
+\hline 
     SSL server    &     SSL client \\
-\hline \\
+\hline 
     ssl_init/3    &     ssl_init/3 \\
     ssl_accept/3  &     \\
     ssl_open/4    &     ssl_open/3 \\
@@ -166,7 +166,7 @@ flush_output/1 is required to actually send the data to the peer.
 Client side. Establish the connection based on the data passed to
 ssl_init/3 and create the Prolog I/O streams.
 
-    \predicate{ssl_exit}{2}{+SSL}
+    \predicate{ssl_exit}{1}{+SSL}
 Clean up all resources related to the SSL + TCP/IP socket layers.
 \end{description}
 
