@@ -2587,7 +2587,7 @@ the global stack (should we check?  Saves trail! How often?).
         deRef(ARGP);
 	if ( canBind(*ARGP) )
 	{ int arity = arityFunctor(f);
-	  Word ap;
+	  Word ap, ap0;
 	  word c;
 
 #ifdef O_SHIFT_STACKS
@@ -2599,13 +2599,14 @@ the global stack (should we check?  Saves trail! How often?).
 
 	  ap = gTop;
 	  c = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
-	  bindConst(ARGP, c);
 	  *ap++ = f;
-	  ARGP = ap;
+	  ap0 = ap;
 	  while(arity-- > 0)
 	  { setVar(*ap++);
 	  }
 	  gTop = ap;
+	  bindConst(ARGP, c);
+	  ARGP = ap0;
 	  NEXT_INSTRUCTION;
 	}
 	if ( hasFunctor(*ARGP, f) )
@@ -2631,13 +2632,13 @@ the global stack (should we check?  Saves trail! How often?).
 #else
 	  requireStack(global, 3*sizeof(word));
 #endif
+	  ap[0] = FUNCTOR_dot2;
+	  setVar(ap[1]);
+	  setVar(ap[2]);
+	  gTop = ap+3;
 	  c = consPtr(ap, TAG_COMPOUND|STG_GLOBAL);
 	  bindConst(ARGP, c);
-	  *ap++ = FUNCTOR_dot2;
-	  ARGP = ap;
-	  setVar(*ap++);
-	  setVar(*ap++);
-	  gTop = ap;
+	  ARGP = ap+1;
 	  NEXT_INSTRUCTION;
 	}
 	if ( isList(*ARGP) )
