@@ -1,3 +1,27 @@
+/*  $Id$
+
+    Part of JPL -- SWI-Prolog/Java interface
+
+    Author:	   Paul Singleton, Fred Dushin and Jan Wielemaker
+    E-mail:	   paul@jbgb.com
+    WWW:	   http://www.swi-prolog.org
+    Copyright (C): 1985-2004, Paul Singleton
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 //=== jpl.c ========================================================================================
 
 /* tabstop=4 */
@@ -1776,7 +1800,7 @@ jni_get_env()
     }
 
 
-#define		NUM_JVM_OPTIONS 1
+#define		MAX_JVM_OPTIONS 10
 
 int
 jni_create_jvm_c(
@@ -1785,28 +1809,32 @@ jni_create_jvm_c(
     {
     JavaVMInitArgs	vm_args;
     char		cpopt[1000];
-    JavaVMOption	opt[NUM_JVM_OPTIONS];
+    JavaVMOption	opt[MAX_JVM_OPTIONS];
     int			r;
     int			n;
+    int			optn = 0;
 
  // Sprintf( "[creating JVM with 'java.class.path=%s']\n", classpath);
     vm_args.version = JNI_VERSION_1_2;	    // "Java 1.2 please"
-    strcpy( cpopt, "-Djava.class.path=");
-    strcat( cpopt, classpath);		    // oughta check length...
-    vm_args.options = opt;
-    opt[0].optionString = cpopt;
- // opt[1].optionString = "-Djava.compiler=NONE";
- // opt[2].optionString = "exit";	    // I don't understand this yet...
- // opt[2].extraInfo = jvm_exit;
- // opt[3].optionString = "abort";	    // I don't understand this yet...
- // opt[3].extraInfo = jvm_abort;
- // opt[4].optionString = "-Xcheck:jni";    // extra checking of JNI calls
- // opt[5].optionString = "-Xnoclassgc";    // so method/field IDs remain valid (?)
- // opt[4].optionString = "vfprintf";
- // opt[4].extraInfo = fprintf;		    // no O/P, then SEGV
- // opt[4].extraInfo = xprintf;		    // one message, then SEGV
- // opt[5].optionString = "-verbose:jni";
-    vm_args.nOptions = NUM_JVM_OPTIONS;
+    if ( classpath )
+    { strcpy( cpopt, "-Djava.class.path=");
+      strcat( cpopt, classpath);		    // oughta check length...
+      vm_args.options = opt;
+      opt[optn].optionString = cpopt;
+      optn++;
+    }
+ // opt[optn++].optionString = "-Djava.compiler=NONE";
+ // opt[optn].optionString = "exit";	    // I don't understand this yet...
+ // opt[optn++].extraInfo = jvm_exit;
+ // opt[optn].optionString = "abort";	    // I don't understand this yet...
+ // opt[optn++].extraInfo = jvm_abort;
+ // opt[optn++].optionString = "-Xcheck:jni";    // extra checking of JNI calls
+ // opt[optn++].optionString = "-Xnoclassgc";    // so method/field IDs remain valid (?)
+ // opt[optn].optionString = "vfprintf";
+ // opt[optn++].extraInfo = fprintf;		    // no O/P, then SEGV
+ // opt[optn++].extraInfo = xprintf;		    // one message, then SEGV
+ // opt[optn++].optionString = "-verbose:jni";
+    vm_args.nOptions = optn;
  // vm_args.ignoreUnrecognized = TRUE;
 
     return
@@ -1898,15 +1926,8 @@ jni_create_default_jvm()
     {
     char	*cp;
 
-    if ( (cp=getenv("CLASSPATH")) == NULL )
-	{
-	Sprintf( "[JPL: jni_create_default_jvm() failed to get CLASSPATH from environment]\n");
-	return FALSE;
-	}
-    else
-	{
-	return jni_create_jvm(cp)>=0;	    // e.g. 2 -> "JVM already available"
-	}
+    cp = getenv("CLASSPATH");
+    return jni_create_jvm(cp) >= 0;    // e.g. 2 -> "JVM already available"
     }
 
 
