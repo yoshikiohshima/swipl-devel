@@ -1274,7 +1274,7 @@ again:
 
       if ( isRef(f1->definition) )
       { *to = consPtr(unRef(f1->definition), TAG_COMPOUND|STG_GLOBAL);
-        return FALSE;
+        return FALSE;			/* Cyclic */
       } else
       { int arity = arityFunctor(f1->definition);
 	Word oldtop = gTop;

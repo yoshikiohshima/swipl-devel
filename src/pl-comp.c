@@ -1215,6 +1215,12 @@ be a variable, and thus cannot be removed if it is before an I_POPF.
       }
       Output_0(ci, H_VOID);
       return ISVOID;
+    case TAG_ATTVAR:
+      if ( ci->islocal )
+      { goto argvar;
+      } else
+      { assert(0);
+      }
     case TAG_INTEGER:
       if ( storage(*arg) != STG_INLINE )
       {	Output_1(ci, (where&A_HEAD) ? H_INTEGER : B_INTEGER, valBignum(*arg));
