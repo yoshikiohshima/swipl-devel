@@ -11,7 +11,7 @@ authors.
 
 	* Tom Schrijvers, K.U.Leuven	Tom.Schrijvers@cs.kuleuven.ac
 	* Christian Holzbaur		christian@ai.univie.ac.at
-	* Jan Wielemaer 		jan@swi-prolog.org
+	* Jan Wielemaker 		jan@swi-prolog.org
 
 
 Files and their roles:
@@ -29,7 +29,7 @@ Files and their roles:
 
 	# library(chr/chr_debug)
 	Debugging routines, made available to the user through
-	library(chr).  Very incomplete
+	library(chr).  Very incomplete.
 	
 	# library(chr/hprolog)
 	Compatibility to hProlog.  Should be abstracted.
