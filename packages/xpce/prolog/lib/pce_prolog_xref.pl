@@ -781,7 +781,11 @@ assert_export(_, []) :- !.
 assert_export(Src, [H|T]) :-
 	assert_export(Src, H),
 	assert_export(Src, T).
-assert_export(Src, Name/Arity) :-
+assert_export(Src, Name0/Arity) :-
+	(   Name0 = $Hidden		% deal with system modules
+	->  atom_concat($, Hidden, Name)
+	;   Name = Name0
+	),
 	functor(Term, Name, Arity),
 	assert(exported(Term, Src)).
 assert_export(_, op(P, A, N)) :-
