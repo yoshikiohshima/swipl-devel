@@ -90,7 +90,7 @@ actual_pragma --> [atom('passive(')], variable, [atom(')')].
 Additional syntax-related terminology:
 
 \begin{itemize}
-\item \textbf{head:} the constraints in an \texttt{actual\_rule} before
+\item \textbf{head:} the constraints in an \texttt{actual_rule} before
                      the arrow (either \texttt{<=>} or \texttt{==>})
 \end{itemize}
 
