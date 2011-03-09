@@ -89,7 +89,7 @@ uhook(Term, AttVal, Value) :-
 %	Handle  unfreezing  of  conjunctions.  As  meta-calling  control
 %	structures is slower than meta-interpreting them   we do this in
 %	Prolog. Another advantage is that   having unfreeze/1 in between
-%	makes the stacktrace and profiling   easier  to intepret. Please
+%	makes the stacktrace and profiling   easier to interpret. Please
 %	note that we cannot use a direct conjunction as this would break
 %	freeze(X, (a, !, b)).
 
