@@ -68,7 +68,7 @@ call_all_attr_uhooks(att(Module, AttVal, Rest), Value) :-
 %	This predicate deals with reserved attribute names to avoid
 %	the meta-call overhead.
 
-uhook(freeze, Goal, Y) :- !,
+uhook(freeze, Goal, Y) :- !,		% Use $suspend?
 	(   attvar(Y)
 	->  (   get_attr(Y, freeze, G2)
 	    ->	put_attr(Y, freeze, '$and'(G2, Goal))
@@ -77,7 +77,11 @@ uhook(freeze, Goal, Y) :- !,
 	;   unfreeze(Goal)
 	).
 uhook(Module, AttVal, Value) :-
+	atom(Module), !,
 	Module:attr_unify_hook(AttVal, Value).
+uhook(Term, AttVal, Value) :-
+	functor(Term, Module, _),
+	Module:attr_unify_hook(Term, AttVal, Value).
 
 
 %	unfreeze(+ConjunctionOrGoal)
@@ -230,20 +234,31 @@ attvars_residuals([V|Vs]) -->
 	attvars_residuals(Vs).
 
 attvar_residuals([], _) --> [].
-attvar_residuals(att(Module,Value,As), V) -->
+attvar_residuals(att(Name,Value,As), V) -->
 	(   { nonvar(V) }
 	->  % a previous projection predicate could have instantiated
 	    % this variable, for example, to avoid redundant goals
 	    []
-	;   (	{ Module == freeze }
+	;   (	{ Name == freeze }
 	    ->	frozen_residuals(Value, V)
-	    ;	{ current_predicate(Module:attribute_goals/3) }
-	    ->	{ phrase(Module:attribute_goals(V), Goals) },
-		list(Goals)
-	    ;	{ current_predicate(Module:attribute_goal/2) }
-	    ->	{ Module:attribute_goal(V, Goal) },
-		dot_list(Goal)
-	    ;	[put_attr(V, Module, Value)]
+	    ;	{ atom(Name) }
+	    ->	(   { current_predicate(Name:attribute_goals/3) }
+		->  { phrase(Name:attribute_goals(V), Goals) },
+		    list(Goals)
+		;   { current_predicate(Name:attribute_goal/2) }
+		->  { Name:attribute_goal(V, Goal) },
+		    dot_list(Goal)
+		;   [put_attr(V, Name, Value)]
+		)
+	    ;	{ functor(Name, Module, _) },
+		(   { current_predicate(Module:attribute_goals/3) }
+		->  { phrase(Module:attribute_goals(V), Goals) },
+		    list(Goals)
+		;   { current_predicate(Module:attribute_goal/2) }
+		->  { Module:attribute_goal(V, Goal) },
+		    dot_list(Goal)
+		;   [put_attr(V, Name, Value)]
+		)
 	    )
 	),
 	attvar_residuals(As, V).

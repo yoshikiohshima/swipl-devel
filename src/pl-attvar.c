@@ -201,12 +201,54 @@ make_new_attvar(Word p ARG_LD)
 }
 
 
+static int
+get_attr_name_ex__LD(term_t t, Word *name ARG_LD)
+{ Word p = valTermRef(t);
+
+  deRef(p);
+  if ( isAtom(*p) || isTerm(*p) )
+  { *name = p;
+    return TRUE;
+  }
+
+  if ( isVar(*p) )
+    return PL_error(NULL, 0, NULL, ERR_INSTANTIATION);
+
+  return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_key, t);
+}
+
+
+static void
+get_key__LD(Word name, Word key ARG_LD)
+{ if ( isAtom(*name) )
+  { *key = *name;
+  } else
+  { assert(isTerm(*name));
+    *key = functorTerm(*name);
+  }
+}
+
+
+static int
+has_key__LD(Word name, word key ARG_LD)
+{ if ( *name == key )
+    return TRUE;
+  if ( isTerm(*name) && functorTerm(*name) == key )
+    return TRUE;
+
+  return FALSE;
+}
+
+#define get_key(name, key) get_key__LD(name, key PASS_LD)
+#define has_key(name, key) has_key__LD(name, key PASS_LD)
+#define get_attr_name_ex(t, n) get_attr_name_ex__LD(t, n PASS_LD)
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SHIFT-SAFE: Requires 6 global + 1 trail
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static void
-put_new_attvar(Word p, atom_t name, Word value ARG_LD)
+put_new_attvar(Word p, Word name, Word value ARG_LD)
 { Word gp, at;
 
   assert(gTop+6 <= gMax && tTop+1 <= tMax);
@@ -228,7 +270,7 @@ put_new_attvar(Word p, atom_t name, Word value ARG_LD)
   }
 
   at[1] = FUNCTOR_att3;
-  at[2] = name;
+  at[2] = *name;
   at[3] = linkVal(value);
   at[4] = ATOM_nil;
   at[0] = consPtr(&at[1], TAG_COMPOUND|STG_GLOBAL);
@@ -236,7 +278,7 @@ put_new_attvar(Word p, atom_t name, Word value ARG_LD)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int find_attr(Word av, atom_t name, Word *vp)
+int find_attr(Word av, Word name, Word *vp)
 
 Find the location of the value for   the  attribute named `name'. Return
 TRUE if found or FALSE if not found, leaving vp pointing at the ATOM_nil
@@ -247,8 +289,11 @@ Caller must ensure 4 cells space on global stack.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-find_attr(Word av, atom_t name, Word *vp ARG_LD)
+find_attr(Word av, Word name, Word *vp ARG_LD)
 { Word l;
+  word key;
+
+  get_key(name, &key);
 
   deRef(av);
   assert(isAttVar(*av));
@@ -267,7 +312,7 @@ find_attr(Word av, atom_t name, Word *vp ARG_LD)
       { Word n;
 
 	deRef2(&f->arguments[0], n);
-	if ( *n == name )
+	if ( has_key(n, key) )
 	{ *vp = &f->arguments[1];
 
 	  succeed;
@@ -287,7 +332,7 @@ find_attr(Word av, atom_t name, Word *vp ARG_LD)
 
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-put_attr(Word attvar, atom_t name, Word value)
+put_attr(Word attvar, Word name, Word value)
 
 Destructive assignment or adding in a list  of the form att(Name, Value,
 Rest).
@@ -296,12 +341,12 @@ SHIFT-SAFE: Requires max 5 global + 2 trail
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static inline void
-put_att_value(Word vp, atom_t name, Word value ARG_LD)
+put_att_value(Word vp, Word name, Word value ARG_LD)
 { Word at = gTop;
 
   gTop += 4;
   at[0] = FUNCTOR_att3;
-  at[1] = name;
+  at[1] = *name;
   at[2] = linkVal(value);
   at[3] = ATOM_nil;
 
@@ -311,7 +356,7 @@ put_att_value(Word vp, atom_t name, Word value ARG_LD)
 
 
 static int
-put_attr(Word av, atom_t name, Word value ARG_LD)
+put_attr(Word av, Word name, Word value ARG_LD)
 { Word vp;
 
   assert(gTop+5 <= gMax && tTop+2 <= tMax);
@@ -328,9 +373,18 @@ put_attr(Word av, atom_t name, Word value ARG_LD)
 }
 
 
+/* get_attr(Word list, Word name, term_t value)
+
+Fetches an attribute value and puts it in value.
+*/
+
 static int
-get_attr(Word l, atom_t name, term_t value ARG_LD)
-{ for(;;)
+get_attr(Word l, Word name, term_t value, term_t name_t ARG_LD)
+{ word key;
+
+  get_key(name, &key);
+
+  for(;;)
   { deRef(l);
 
     if ( isTerm(*l) )
@@ -340,9 +394,11 @@ get_attr(Word l, atom_t name, term_t value ARG_LD)
       { Word n;
 
 	deRef2(&f->arguments[0], n);
-	if ( *n == name )
-	{ return unify_ptrs(valTermRef(value), &f->arguments[1],
-			    ALLOW_GC|ALLOW_SHIFT PASS_LD);
+	if ( has_key(n, key) )
+	{ if ( name_t )
+	    *valTermRef(name_t) = *n;
+	  *valTermRef(value) = linkVal(&f->arguments[1]);
+	  return TRUE;
 	} else
 	{ l = &f->arguments[2];
 	}
@@ -355,8 +411,11 @@ get_attr(Word l, atom_t name, term_t value ARG_LD)
 
 
 static int
-del_attr(Word av, atom_t name ARG_LD)
+del_attr(Word av, Word name ARG_LD)
 { Word l, prev;
+  word key;
+
+  get_key(name, &key);
 
   deRef(av);
   assert(isAttVar(*av));
@@ -374,7 +433,7 @@ del_attr(Word av, atom_t name ARG_LD)
       { Word n;
 
 	deRef2(&f->arguments[0], n);
-	if ( *n == name )
+	if ( has_key(n, key) )
 	{ TrailAssignment(prev);			/* SHIFT: 1+2 */
 
 	  *prev = f->arguments[2];
@@ -551,12 +610,23 @@ PRED_IMPL("get_attr", 3, get_attr, 0) /* +Var, +Name, -Value */
   deRef(a1);
   if ( isAttVar(*a1) )
   { Word p = valPAttVar(*a1);
-    atom_t name;
+    Word name;
+    term_t value = PL_new_term_ref();
 
-    if ( !PL_get_atom_ex(A2, &name) )
+    if ( !get_attr_name_ex(A2, &name) )
       fail;
+    if ( isAtom(*name) )
+    { return ( get_attr(p, name, value, 0 PASS_LD) &&
+	       PL_unify(A3, value)
+	     );
+    } else
+    { term_t name_t = PL_new_term_ref();
 
-    return get_attr(p, name, A3 PASS_LD);
+      return ( get_attr(p, name, value, name_t PASS_LD) &&
+	       PL_unify(A2, name_t) &&
+	       PL_unify(A3, value)
+	     );
+    }
   }
 
   fail;
@@ -567,7 +637,7 @@ static
 PRED_IMPL("put_attr", 3, put_attr, 0)	/* +Var, +Name, +Value */
 { PRED_LD
   Word av, vp;
-  atom_t name;
+  Word name;
 
   if ( !hasGlobalSpace(1) )		/* 0 means enough for attvars */
   { int rc;
@@ -576,7 +646,7 @@ PRED_IMPL("put_attr", 3, put_attr, 0)	/* +Var, +Name, +Value */
       return raiseStackOverflow(rc);
   }
 
-  if ( !PL_get_atom_ex(A2, &name) )
+  if ( !get_attr_name_ex(A2, &name) )
     fail;
 
   vp = valTermRef(A3);
@@ -643,7 +713,7 @@ static
 PRED_IMPL("del_attr", 2, del_attr2, 0)	/* +Var, +Name */
 { PRED_LD
   Word av;
-  atom_t name;
+  Word name;
 
   if ( !hasGlobalSpace(0) )
   { int rc;
@@ -652,7 +722,7 @@ PRED_IMPL("del_attr", 2, del_attr2, 0)	/* +Var, +Name */
       return raiseStackOverflow(rc);
   }
 
-  if ( !PL_get_atom_ex(A2, &name) )
+  if ( !get_attr_name_ex(A2, &name) )
     return FALSE;
 
   av = valTermRef(A1);
@@ -729,16 +799,17 @@ PRED_IMPL("$freeze", 2, freeze, 0)
   deRef(v);
   if ( isVar(*v) || isAttVar(*v) )
   { Word goal;
+    word freeze = ATOM_freeze;
 
     goal = valTermRef(A2);
     deRef(goal);
 
     if ( isVar(*v) )
-    { put_new_attvar(v, ATOM_freeze, goal PASS_LD);	/* SHIFT: 6+1 */
+    { put_new_attvar(v, &freeze, goal PASS_LD);	/* SHIFT: 6+1 */
     } else
     { Word vp;
 
-      if ( find_attr(v, ATOM_freeze, &vp PASS_LD) )
+      if ( find_attr(v, &freeze, &vp PASS_LD) )
       { Word gc = gTop;
 
 	gTop += 3;
@@ -983,7 +1054,7 @@ as:
 static
 PRED_IMPL("$suspend", 3, suspend, PL_FA_TRANSPARENT)
 { PRED_LD
-  atom_t name;
+  Word name;
   Word v, g;
 
   if ( !hasGlobalSpace(6) )		/* 0 means enough for attvars */
@@ -993,7 +1064,7 @@ PRED_IMPL("$suspend", 3, suspend, PL_FA_TRANSPARENT)
       return raiseStackOverflow(rc);
   }
 
-  if ( !PL_get_atom_ex(A2, &name) )
+  if ( !get_attr_name_ex(A2, &name) )
     return FALSE;
 
   g = valTermRef(A3);
