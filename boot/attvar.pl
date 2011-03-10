@@ -242,7 +242,7 @@ attvar_residuals(att(Name,Value,As), V) -->
 	;   (	{ Name == freeze }
 	    ->	frozen_residuals(Value, V)
 	    ;	{ atom(Name) }
-	    ->	(   { current_predicate(Name:attribute_goals/3) }
+	    ->	(   { current_predicate(Name:attribute_goals//1) }
 		->  { phrase(Name:attribute_goals(V), Goals) },
 		    list(Goals)
 		;   { current_predicate(Name:attribute_goal/2) }
@@ -251,11 +251,11 @@ attvar_residuals(att(Name,Value,As), V) -->
 		;   [put_attr(V, Name, Value)]
 		)
 	    ;	{ functor(Name, Module, _) },
-		(   { current_predicate(Module:attribute_goals/3) }
-		->  { phrase(Module:attribute_goals(V), Goals) },
+		(   { current_predicate(Module:attribute_goals//2) }
+		->  { phrase(Module:attribute_goals(Name, V), Goals) },
 		    list(Goals)
-		;   { current_predicate(Module:attribute_goal/2) }
-		->  { Module:attribute_goal(V, Goal) },
+		;   { current_predicate(Module:attribute_goal/3) }
+		->  { Module:attribute_goal(Name, V, Goal) },
 		    dot_list(Goal)
 		;   [put_attr(V, Name, Value)]
 		)
