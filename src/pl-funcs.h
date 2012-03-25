@@ -311,6 +311,7 @@ COMMON(int)		isSuperModule(Module s, Module m);
 COMMON(void)		clearSupersModule(Module m);
 COMMON(int)		addSuperModule(Module m, Module s, int where);
 COMMON(int)		getUnknownModule(Module m);
+COMMON(int)		getColonSetsContextModule(Module m);
 COMMON(Word)		stripModule(Word term, Module *module ARG_LD);
 COMMON(bool)		isPublicModule(Module module, Procedure proc);
 COMMON(int)		declareModule(atom_t name, atom_t class, atom_t super,

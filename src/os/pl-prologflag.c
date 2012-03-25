@@ -299,6 +299,35 @@ setUnknown(term_t value, atom_t a, Module m)
 }
 
 
+#ifdef O_CALL_AT_MODULE
+static int
+setColonSetsCallingContext(term_t value, int onoff, Module m)
+{ unsigned int flags = m->flags & ~(COLONCONTEXT_MASK);
+
+  if ( onoff )
+    flags |= COLONCONTEXT_TRUE;
+  else
+    flags |= COLONCONTEXT_FALSE;
+
+  if ( !(flags&COLONCONTEXT_FALSE) && (m == MODULE_user || m == MODULE_system) )
+  { GET_LD
+
+    if ( m == MODULE_system && !SYSTEM_MODE )
+    { term_t key = PL_new_term_ref();
+
+      PL_put_atom(key, ATOM_colon_sets_calling_context);
+      return PL_error(NULL, 0, NULL, ERR_PERMISSION,
+		      ATOM_modify, ATOM_flag, key);
+    }
+  }
+
+  m->flags = flags;
+
+  succeed;
+}
+#endif /*O_CALL_AT_MODULE*/
+
+
 static int
 setWriteAttributes(atom_t a)
 { GET_LD
@@ -583,6 +612,11 @@ set_prolog_flag_unlocked(term_t key, term_t value, int flags)
       { if ( !(rval = enableThreads(val)) )
 	  break;			/* don't change value */
 #endif
+#ifdef O_CALL_AT_MODULE
+      } else if ( k == ATOM_colon_sets_calling_context )
+      { if ( !(rval=setColonSetsCallingContext(value, val, m)) )
+	  break;
+#endif
       }
 					/* set the flag value */
       f->value.a = (val ? ATOM_true : ATOM_false);
@@ -787,6 +821,12 @@ unify_prolog_flag_value(Module m, atom_t key, prolog_flag *f, term_t val)
     }
 
     return PL_unify_atom(val, v);
+#ifdef O_CALL_AT_MODULE
+  } else if ( key == ATOM_colon_sets_calling_context )
+  { int v = getColonSetsContextModule(m);
+
+    return PL_unify_bool(val, v);
+#endif
 #ifdef O_PLMT
   } else if ( key == ATOM_system_thread_id )
   { return PL_unify_integer(val, system_thread_id(NULL));

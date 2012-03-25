@@ -845,6 +845,11 @@ with one operation, it turns out to be faster as well.
 #define UNKNOWN_WARNING		(0x0080) /* module */
 #define UNKNOWN_ERROR		(0x0100) /* module */
 #define UNKNOWN_MASK		(UNKNOWN_ERROR|UNKNOWN_WARNING|UNKNOWN_FAIL)
+#ifdef O_CALL_AT_MODULE
+#define COLONCONTEXT_TRUE	(0x0200) /* module */
+#define COLONCONTEXT_FALSE	(0x0400) /* module */
+#define COLONCONTEXT_MASK	(COLONCONTEXT_TRUE|COLONCONTEXT_FALSE)
+#endif
 
 #define CONTROL_F		(0x0002) /* functor (compiled controlstruct) */
 #define ARITH_F			(0x0004) /* functor (arithmetic operator) */

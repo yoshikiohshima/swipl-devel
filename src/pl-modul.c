@@ -463,6 +463,42 @@ getUnknownModule(Module m)
 }
 
 
+#ifdef O_CALL_AT_MODULE
+static int getColonSetsContextModuleFlag(Module m);
+
+static int
+inheritColonSetsContext(Module m)
+{ int u;
+  ListCell c;
+
+  if ( (u = (m->flags & COLONCONTEXT_MASK)) )
+    return u;
+
+  for(c = m->supers; c; c=c->next)
+  { if ( (u = getColonSetsContextModuleFlag(c->value)) )
+      return u;
+  }
+
+  return 0;
+}
+
+
+static int
+getColonSetsContextModuleFlag(Module m)
+{ int c = inheritColonSetsContext(m);
+
+  if ( !c )
+    c = COLONCONTEXT_TRUE;
+
+  return c;
+}
+
+
+int
+getColonSetsContextModule(Module m)
+{ return getColonSetsContextModuleFlag(m) == COLONCONTEXT_TRUE;
+}
+#endif /*O_CALL_AT_MODULE*/
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 stripModule() takes an atom or term, possible embedded in the :/2 module
