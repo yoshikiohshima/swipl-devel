@@ -1902,6 +1902,19 @@ mcall(code call)
 
 #ifdef O_CALL_AT_MODULE
 static inline code
+mcallnoc(code call)
+{ switch(call)
+  { case I_CALL:
+      return I_CALLMNOC;
+    case I_DEPART:
+      return I_DEPARTMNOC;
+    default:
+      assert(0);
+      return (code)0;
+  }
+}
+
+static inline code
 callatm(code call)
 { switch(call)
   { case I_CALL:
@@ -2154,8 +2167,10 @@ appropriate calling instruction.
 #endif
   { if ( tm == ci->module )
       Output_1(ci, call, (code) proc);
-    else
+    else if ( getColonSetsContextModule(ci->module) )
       Output_2(ci, mcall(call), (code)tm, (code)proc);
+    else
+      Output_2(ci, mcallnoc(call), (code)tm, (code)proc);
   }
 
   return TRUE;
@@ -4333,6 +4348,10 @@ decompileBody(decompileInfo *di, code end, Code until ARG_LD)
 			    pushed++;
 			    continue;
 			  }
+#endif
+#ifdef O_CALL_AT_MODULE
+      case I_CALLMNOC:
+      case I_DEPARTMNOC:
 #endif
       case I_DEPARTM:
       case I_CALLM:       { Module m = (Module)XR(*PC++);
