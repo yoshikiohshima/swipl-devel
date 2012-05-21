@@ -135,7 +135,7 @@ initTables(void)
 
 
 Symbol
-lookupHTable(Table ht, void *name)
+rawLookupHTable(Table ht, void *name)
 { Symbol s = ht->entries[pointerHashValue(name, ht->buckets)];
 
   DEBUG(MSG_HASH_STAT, lookups++);
@@ -148,6 +148,16 @@ lookupHTable(Table ht, void *name)
   return NULL;
 }
 
+Symbol
+lookupHTable(Table ht, void *name)
+{ Symbol s;
+
+  LOCK_TABLE(ht);
+  s = rawLookupHTable(ht, name);
+  UNLOCK_TABLE(ht);
+  return s;
+}
+
 #ifdef O_DEBUG
 void
 checkHTable(Table ht)
@@ -158,7 +168,7 @@ checkHTable(Table ht)
   { Symbol s;
 
     for(s=ht->entries[i]; s; s=s->next)
-    { assert(lookupHTable(ht, s->name) == s);
+    { assert(rawLookupHTable(ht, s->name) == s);
       n++;
     }
   }
@@ -243,7 +253,7 @@ addHTable(Table ht, void *name, void *value)
 
   LOCK_TABLE(ht);
   v = (int)pointerHashValue(name, ht->buckets);
-  if ( lookupHTable(ht, name) )
+  if ( rawLookupHTable(ht, name) )
   { UNLOCK_TABLE(ht);
     return NULL;
   }
