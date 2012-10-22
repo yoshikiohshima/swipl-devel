@@ -1567,6 +1567,9 @@ openProtocol(term_t f, int appnd)
   noprotocol();
 
   PL_put_atom(mode, appnd ? ATOM_append : ATOM_write);
+  LOCK();
+  s = openStream(f, mode, 0);
+  UNLOCK();
   if ( (s = openStream(f, mode, 0)) )
   { s->flags |= SIO_NOCLOSE;		/* do not close on abort */
 
@@ -3189,7 +3192,10 @@ openStream(term_t file, term_t mode, term_t options)
 
 static
 PRED_IMPL("open", 4, open4, PL_FA_ISO)
-{ IOSTREAM *s = openStream(A1, A2, A4);
+{ IOSTREAM *s;
+  LOCK();
+  s = openStream(A1, A2, A4);
+  UNLOCK();
 
   if ( s )
     return PL_unify_stream_or_alias(A3, s);
@@ -3200,7 +3206,10 @@ PRED_IMPL("open", 4, open4, PL_FA_ISO)
 
 static
 PRED_IMPL("open", 3, open3, PL_FA_ISO)
-{ IOSTREAM *s = openStream(A1, A2, 0);
+{ IOSTREAM *s;
+  LOCK();
+  s = openStream(A1, A2, 0);
+  UNLOCK();
 
   if ( s )
     return PL_unify_stream_or_alias(A3, s);
