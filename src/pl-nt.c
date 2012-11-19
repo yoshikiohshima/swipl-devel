@@ -635,8 +635,19 @@ interface.
 #ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
 #define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS 0x00001000
 #endif
+static DWORD LOAD_LIBRARY_SEARCH_FLAGS=0;
 
 static const char *dlmsg;
+
+void
+initSearchPathFlags()
+{ if ( GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), 
+                      "AddDllDirectory") )
+  {
+    LOAD_LIBRARY_SEARCH_FLAGS = ( LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|
+                                  LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
+  }
+}
 
 static int
 is_windows_abs_path(const wchar_t *path)
@@ -666,8 +677,7 @@ dlopen(const char *file, int flags)	/* file is in UTF-8, POSIX path */
   }
 
   if ( is_windows_abs_path(wfile) )
-    llflags |= (LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|
-	      LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    llflags |= LOAD_LIBRARY_SEARCH_FLAGS;
 
   if ( (h = LoadLibraryExW(wfile, NULL, llflags)) )
   { dlmsg = "No Error";

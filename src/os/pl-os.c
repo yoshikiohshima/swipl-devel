@@ -134,6 +134,12 @@ initOs(void)
   initEnviron();
 
 #ifdef __WINDOWS__
+  DEBUG(1, Sdprintf("OS:initSearchPathFlags() ...\n"));
+  initSearchPathFlags();
+#endif
+
+  DEBUG(1, Sdprintf("OS:setPrologFlagMask() ...\n"));
+#ifdef __WINDOWS__
   setPrologFlagMask(PLFLAG_FILE_CASE_PRESERVING);
 #else
   setPrologFlagMask(PLFLAG_FILE_CASE);
