@@ -245,6 +245,7 @@ struct PL_global_data
   struct
   { Procedure	dgarbage_collect1;
     Procedure	catch3;
+    Procedure	reset3;
     Procedure	true0;
     Procedure	fail0;
     Procedure	equals2;		/* =/2 */

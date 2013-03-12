@@ -173,6 +173,7 @@ public(Spec)		 :- '$set_pattr'(Spec, pred, (public)).
 	once(0),
 	ignore(0),
 	catch(0,?,0),
+	reset(0,-,?),
 	setup_call_cleanup(0,0,0),
 	setup_call_catcher_cleanup(0,0,?,0),
 	call_cleanup(0,0),
@@ -281,6 +282,16 @@ catch(_Goal, _Catcher, _Recover) :-
 
 prolog_cut_to(_Choice) :-
 	'$cut'.				% Maps to I_CUTCHP
+
+%%	reset(:Goal, -Continue, ?Ball)
+%
+%	Delimited continuation support.
+
+reset(Goal, Cont, Ball) :-
+	call(Goal),
+	Cont = 0,
+	Ball = 0.			% only reached if there is no shift
+
 
 %%	'$recover_and_rethrow'(:Goal, +Term)
 %

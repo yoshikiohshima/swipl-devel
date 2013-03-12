@@ -385,6 +385,7 @@ DECL_PLIST(dde);
 DECL_PLIST(term);
 DECL_PLIST(debug);
 DECL_PLIST(locale);
+DECL_PLIST(cont);
 
 void
 initBuildIns(void)
@@ -441,12 +442,14 @@ initBuildIns(void)
   REG_PLIST(locale);
 #endif
   REG_PLIST(debug);
+  REG_PLIST(cont);
 
 #define LOOKUPPROC(name) \
 	GD->procedures.name = lookupProcedure(FUNCTOR_ ## name, m);
 
   LOOKUPPROC(dgarbage_collect1);
   LOOKUPPROC(catch3);
+  LOOKUPPROC(reset3);
   LOOKUPPROC(true0);
   LOOKUPPROC(fail0);
   LOOKUPPROC(equals2);
