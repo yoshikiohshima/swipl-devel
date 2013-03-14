@@ -71,6 +71,8 @@ const debug_topic debug_topics[] =
   DEBUG_TOPIC(MSG_QUEUE),
   DEBUG_TOPIC(MSG_QUEUE_WAIT),
   DEBUG_TOPIC(MSG_SIGNAL),
+
+  DEBUG_TOPIC(MSG_CONTINUE),
 						/* GC messages */
   DEBUG_TOPIC(MSG_AGC),
   DEBUG_TOPIC(MSG_CLAUSE_GC),

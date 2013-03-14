@@ -71,6 +71,8 @@
 #define MSG_QUEUE_WAIT		 41
 #define MSG_SIGNAL		 42
 
+#define MSG_CONTINUE		 43
+
 						/* GC messages */
 #define	MSG_AGC			 100
 #define	MSG_CLAUSE_GC		 101
