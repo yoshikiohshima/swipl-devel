@@ -889,14 +889,15 @@ with one operation, it turns out to be faster as well.
 Macros for environment frames (local stack frames)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define FR_HIDE_CHILDS		(0x01L)	/* flag of pred after I_DEPART */
-#define FR_SKIPPED		(0x02L)	/* We have skipped on this frame */
-#define FR_MARKED		(0x04L)	/* GC */
-#define FR_MARKED_PRED		(0x08L)	/* GC predicates/clauses */
-#define FR_WATCHED		(0x10L)	/* GUI debugger */
-#define FR_CATCHED		(0x20L)	/* Frame caught an exception */
-#define FR_INBOX		(0x40L) /* Inside box (for REDO in built-in) */
-#define FR_CONTEXT		(0x80L)	/* fr->context is set */
+#define FR_HIDE_CHILDS		(0x01)	/* flag of pred after I_DEPART */
+#define FR_SKIPPED		(0x02)	/* We have skipped on this frame */
+#define FR_MARKED		(0x04)	/* GC */
+#define FR_MARKED_PRED		(0x08)	/* GC predicates/clauses */
+#define FR_WATCHED		(0x10)	/* GUI debugger */
+#define FR_CATCHED		(0x20)	/* Frame caught an exception */
+#define FR_INBOX		(0x40)  /* Inside box (for REDO in built-in) */
+#define FR_CONTEXT		(0x80)	/* fr->context is set */
+#define FR_KEEPLTOP		(0x100)	/* Continuations: to not reset lTop */
 
 #define ARGOFFSET		((int)sizeof(struct localFrame))
 #define VAROFFSET(var)		((var)+(ARGOFFSET/(int)sizeof(word)))
@@ -957,10 +958,11 @@ typedef uint64_t lgen_t;
 #endif /*O_LOGICAL_UPDATE*/
 
 #define FR_CLEAR_NEXT	FR_SKIPPED|FR_WATCHED|FR_CATCHED|FR_HIDE_CHILDS
+#define FR_CLEAR_FLAGS	(FR_CLEAR_NEXT|FR_CONTEXT|FR_KEEPLTOP)
 #define setNextFrameFlags(next, fr) \
 	do \
 	{ (next)->level = (fr)->level+1; \
-	  (next)->flags = ((fr)->flags) & ~(FR_CLEAR_NEXT|FR_CONTEXT); \
+	  (next)->flags = ((fr)->flags) & ~FR_CLEAR_FLAGS; \
 	} while(0)
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
