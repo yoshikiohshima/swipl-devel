@@ -4414,6 +4414,9 @@ atom is referenced by the goal-term anyway.
     if ( false(fd, CONTROL_F) )
     { args    = argTermP(goal, 0);
       arity   = fd->arity;
+    } else if ( true(FR, FR_INRESET) )
+    { DEF = GD->procedures.dmeta_call1->definition;
+      goto mcall_cont;
     } else
     { Clause cl;
       int rc;

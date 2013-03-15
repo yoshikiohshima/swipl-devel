@@ -889,15 +889,16 @@ with one operation, it turns out to be faster as well.
 Macros for environment frames (local stack frames)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-#define FR_HIDE_CHILDS		(0x01)	/* flag of pred after I_DEPART */
-#define FR_SKIPPED		(0x02)	/* We have skipped on this frame */
-#define FR_MARKED		(0x04)	/* GC */
-#define FR_MARKED_PRED		(0x08)	/* GC predicates/clauses */
-#define FR_WATCHED		(0x10)	/* GUI debugger */
-#define FR_CATCHED		(0x20)	/* Frame caught an exception */
-#define FR_INBOX		(0x40)  /* Inside box (for REDO in built-in) */
-#define FR_CONTEXT		(0x80)	/* fr->context is set */
+#define FR_HIDE_CHILDS		(0x001)	/* flag of pred after I_DEPART */
+#define FR_SKIPPED		(0x002)	/* We have skipped on this frame */
+#define FR_MARKED		(0x004)	/* GC */
+#define FR_MARKED_PRED		(0x008)	/* GC predicates/clauses */
+#define FR_WATCHED		(0x010)	/* GUI debugger */
+#define FR_CATCHED		(0x020)	/* Frame caught an exception */
+#define FR_INBOX		(0x040) /* Inside box (for REDO in built-in) */
+#define FR_CONTEXT		(0x080)	/* fr->context is set */
 #define FR_KEEPLTOP		(0x100)	/* Continuations: to not reset lTop */
+#define FR_INRESET		(0x200)	/* Continuations: inside reset/3 */
 
 #define ARGOFFSET		((int)sizeof(struct localFrame))
 #define VAROFFSET(var)		((var)+(ARGOFFSET/(int)sizeof(word)))
