@@ -5645,8 +5645,10 @@ __assert_fail(const char *assertion,
 { Sdprintf("[Thread %d] %s:%d: %s: Assertion failed: %s\n",
 	   PL_thread_self(),
 	   file, line, function, assertion);
-  save_backtrace("crash");
-  print_backtrace_named("crash");
+  if ( GD->initialised )
+  { save_backtrace("crash");
+    print_backtrace_named("crash");
+  }
   abort();
 }
 
