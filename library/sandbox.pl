@@ -440,8 +440,10 @@ safe_primitive(_ =.. _).
 safe_primitive(system:compound_name_arity(_,_,_)).
 safe_primitive(system:compound_name_arguments(_,_,_)).
 safe_primitive(copy_term(_,_)).
+safe_primitive(system:copy_term_nat(_,_)).
 safe_primitive(system:duplicate_term(_,_)).
 safe_primitive(numbervars(_,_,_)).
+safe_primitive(system:numbervars(_,_,_,_)).
 					% dicts
 safe_primitive(system:is_dict(_)).
 safe_primitive(system:is_dict(_,_)).
@@ -545,6 +547,12 @@ safe_primitive(system:assert(X)) :-
 					% Output
 safe_primitive(system:writeln(_)).
 safe_primitive('$messages':print_message(_,_)).
+
+safe_primitive(system:current_output(_)).
+safe_primitive(system:portray_clause(Output, _)) :-
+        safe_output(Output).
+
+safe_primitive(system:line_position(_,_)).
 
 % use_module/1.  We only allow for .pl files that are loaded from
 % relative paths that do not contain /../
