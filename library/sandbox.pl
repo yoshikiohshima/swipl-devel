@@ -548,6 +548,10 @@ safe_primitive(system:assert(X)) :-
 safe_primitive(system:writeln(_)).
 safe_primitive('$messages':print_message(_,_)).
 
+safe_primitive(system:write_canonical(_)).
+safe_primitive(system:write_canonical(Output, _)) :-
+        safe_output(Output).
+
 safe_primitive(system:current_output(_)).
 safe_primitive(system:portray_clause(Output, _)) :-
         safe_output(Output).
