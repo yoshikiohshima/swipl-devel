@@ -492,6 +492,9 @@ safe_primitive(throw(_)).
 					% misc
 safe_primitive(current_prolog_flag(_,_)).
 safe_primitive(current_op(_,_,_)).
+safe_primitive('$syspreds':garbage_collect).
+safe_primitive(system:garbage_collect_atoms).
+safe_primitive(system:garbage_collect_clauses).
 safe_primitive(system:sleep(_)).
 safe_primitive(system:thread_self(_)).
 safe_primitive(system:get_time(_)).
@@ -549,6 +552,8 @@ safe_primitive(system:assert(X)) :-
 safe_primitive(system:writeln(_)).
 safe_primitive('$messages':print_message(_,_)).
 safe_primitive(flush_output).
+%safe_primitive(ttyflush).
+safe_primitive(system:nl).
 
 % use_module/1.  We only allow for .pl files that are loaded from
 % relative paths that do not contain /../
