@@ -884,6 +884,24 @@ and therefore discontiguous warnings.
 This predicate performs the translation of a term \exam{Head-->Body}
 into a normal Prolog clause.  Normally this functionality should be
 accessed using expand_term/2.
+
+    \predicate{var_property}{2}{+Var, ?Property}
+True when \arg{Property} is a property of \arg{Var}. These properties
+are available during goal- and term-expansion. Defines properties are
+below. Future versions are likely to provide more properties, such as
+whether the variable is a singleton or whether the variable is
+referenced in the remainder of the term.  See also goal_expansion/2.
+
+    \begin{description}
+    \termitem{fresh}{Bool}
+Bool has the value \arg{true} is the variable is guaranteed to be
+unbound at entry of the goal.  This implies that the variable first
+appears in this goal or a previous appearance was in a negation
+(\predref{\+}{1}) or the different of a disjunction.
+
+    \termitem{name}{Name}
+True when variable appears with the given name in the source.
+    \end{description}
 \end{description}
 
 
@@ -5568,27 +5586,29 @@ independent of operator changes to the \const{user} module.
 1200 & fx & \op{:-}, \op{?-} \\
 1150 & fx & \op{dynamic}, \op{discontiguous}, \op{initialization},
 	    \op{meta_predicate},
-	    \op{module_transparent}, \op{multifile}, \op{thread_local},
-	    \op{volatile} \\
+	    \op{module_transparent}, \op{multifile}, \op{public},
+	    \op{thread_local}, \op{thread_initialization}, \op{volatile} \\
 1100 & xfy & \op{;}, \op{|} \\
 1050 & xfy & \op{->}, \op{*->} \\
 1000 & xfy & \op{,} \\
 990 & xfx & \op{:=} \\
 900 & fy & \op{\+} \\
-900 & fx & \op{~} \\
-700 & xfx & \op{<}, \op{=}, \op{=..}, \op{=@=}, \op{=:=}, \op{=<}, \op{==},
+700 & xfx & \op{<}, \op{=}, \op{=..}, \op{=@=}, \op{\=@=},
+	    \op{=:=}, \op{=<}, \op{==},
             \op{=\=}, \op{>}, \op{>=}, \op{@<}, \op{@=<}, \op{@>},
-            \op{@>=}, \op{\=}, \op{\==}, \op{is}
+            \op{@>=}, \op{\=}, \op{\==}, \op{as}, \op{is},
 	    \op{>:<}, \op{:<}
 	    \\
 600 & xfy & \op{:} \\
 500 & yfx & \op{+}, \op{-}, \op{/\}, \op{\/}, \op{xor} \\
 500 & fx & \op{?} \\
-400 & yfx & \op{*}, \op{/}, \op{//}, \op{rdiv},
+400 & yfx & \op{*}, \op{/}, \op{//}, \op{div}, \op{rdiv},
             \op{<<}, \op{>>}, \op{mod}, \op{rem} \\
 200 & xfx & \op{**} \\
 200 & xfy & \op{^} \\
-200 & fy & \op{+}, \op{-}, \op{\} \\
+200 & fy  & \op{+}, \op{-}, \op{\} \\
+100 & yfx & \op{.} \\
+1   & fx  & \op{$} \\
 \hline
 \end{tabular}
 \end{center}

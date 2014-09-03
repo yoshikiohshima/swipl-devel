@@ -277,7 +277,7 @@ sat(Sat0) :-
         ;   parse_sat(Sat0, Sat),
             sat_bdd(Sat, BDD),
             sat_roots(Sat, Roots),
-            foldl(root_and, Roots, Sat0-BDD, And-BDD1),
+            roots_and(Roots, Sat0-BDD, And-BDD1),
             maplist(del_bdd, Roots),
             maplist(=(Root), Roots),
             root_put_formula_bdd(Root, And, BDD1),
@@ -286,11 +286,12 @@ sat(Sat0) :-
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Posting many small sat/1 constraints is better than posting a huge
-   conjunction (or negated disjunction), because the node tables are
-   rebuilt and unneeded nodes are removed after BDDs are merged. This
-   is not possible in sat_bdd/2 due to its doubly recursive structure.
-   A better version of sat_bdd/2 would make this obsolete and also
-   improve taut/2 and sat_count/2 in such cases.
+   conjunction (or negated disjunction), because unneeded nodes are
+   removed from node tables after BDDs are merged. This is not
+   possible in sat_bdd/2 because the nodes may occur in other BDDs. A
+   better version of sat_bdd/2 or a proper implementation of a unique
+   table including garbage collection would make this obsolete and
+   also improve taut/2 and sat_count/2 in such cases.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 sat_ands(X) -->
@@ -312,6 +313,10 @@ root_get_formula_bdd(Root, F, BDD) :- get_attr(Root, clpb_bdd, F-BDD).
 
 root_put_formula_bdd(Root, F, BDD) :- put_attr(Root, clpb_bdd, F-BDD).
 
+roots_and(Roots, Sat0-BDD0, Sat-BDD) :-
+        foldl(root_and, Roots, Sat0-BDD0, Sat-BDD),
+        rebuild_hashes(BDD).
+
 root_and(Root, Sat0-BDD0, Sat-BDD) :-
         (   root_get_formula_bdd(Root, F, B) ->
             Sat = F*Sat0,
@@ -326,17 +331,17 @@ root_and(Root, Sat0-BDD0, Sat-BDD) :-
 % satisfied, and with T = 1 if Expr is always true with respect to the
 % current constraints. Fails otherwise.
 
-taut(Sat0, Truth) :-
+taut(Sat0, T) :-
         parse_sat(Sat0, Sat),
         sat_roots(Sat, Roots),
-        catch((foldl(root_and, Roots, _-1, _-Ands),
-               (   unsatisfiable_conjunction(Sat, Ands) -> T = 0
-               ;   unsatisfiable_conjunction(i(1)#Sat, Ands) -> T = 1
+        catch((roots_and(Roots, _-1, _-Ands),
+               (   T = 0, unsatisfiable_conjunction(Sat, Ands) -> true
+               ;   T = 1, unsatisfiable_conjunction(i(1)#Sat, Ands) -> true
                ;   false
                ),
                % reset all attributes
                throw(truth(T))),
-              truth(Truth),
+              truth(T),
               true).
 
 unsatisfiable_conjunction(Sat, Ands) :-
@@ -372,8 +377,7 @@ put_empty_hash(V) :-
 
 bdd_and(NA, NB, And) :-
         apply(*, NA, NB, And),
-        is_bdd(And),
-        rebuild_hashes(And).
+        is_bdd(And).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Node management. Always use an existing node, if there is one.
@@ -477,18 +481,14 @@ eq_and([X|Xs], [Y|Ys], Node0, Node) :-
         eq_and(Xs, Ys, Node1, Node).
 
 counter_network([], [Node], [], Node).
-counter_network([_|Fs], Is0, [Var|Vars], Node) :-
-        indicators_pairing(Is0, Var, Is1),
-        counter_network(Fs, Is1, Vars, Node).
+counter_network([_|Fs], [I|Is0], [Var|Vars], Node) :-
+        indicators_pairing(Is0, I, Var, Is),
+        counter_network(Fs, Is, Vars, Node).
 
-indicators_pairing([], _, []).
-indicators_pairing([I|Is], Var, Nodes) :-
-        indicators_pairing_(Is, I, Var, Nodes).
-
-indicators_pairing_([], _, _, []).
-indicators_pairing_([I|Is], Prev, Var, [Node|Nodes]) :-
+indicators_pairing([], _, _, []).
+indicators_pairing([I|Is], Prev, Var, [Node|Nodes]) :-
         make_node(Var, Prev, I, Node),
-        indicators_pairing_(Is, I, Var, Nodes).
+        indicators_pairing(Is, I, Var, Nodes).
 
 fill_indicators([], _, _).
 fill_indicators([I|Is], Index0, Cs) :-
@@ -612,7 +612,7 @@ attr_unify_hook(index_root(I,Root), Other) :-
             Sat = Sat0*OtherSat,
             sat_roots(Sat, Roots),
             maplist(root_rebuild_bdd, Roots),
-            foldl(root_and, Roots, 1-1, And-BDD1),
+            roots_and(Roots, 1-1, And-BDD1),
             maplist(del_bdd, Roots),
             maplist(=(NewRoot), Roots),
             root_put_formula_bdd(NewRoot, And, BDD1),
@@ -784,7 +784,7 @@ sat_count(Sat0, N) :-
         catch((parse_sat(Sat0, Sat),
                sat_bdd(Sat, BDD),
                sat_roots(Sat, Roots),
-               foldl(root_and, Roots, _-BDD, _-BDD1),
+               roots_and(Roots, _-BDD, _-BDD1),
                % we mark variables that occur in Sat0 as visited ...
                term_variables(Sat0, Vs),
                maplist(put_visited, Vs),
