@@ -165,7 +165,9 @@ safe(G, M, _, Safe, Safe) :-
 	->  true
 	;   M2 = M
 	),
-	safe_primitive(M2:G), !.
+	(   safe_primitive(M2:G)
+	;   predicate_property(M2:G, number_of_rules(0))
+	), !.
 safe(G, M, Parents, Safe0, Safe) :-
 	predicate_property(G, iso),
 	safe_meta_call(G, Called), !,
@@ -726,6 +728,11 @@ safe_output(current_error).
 %
 %	Find ~@ calls from Format and Args.
 
+:- public format_calls/3.			% used in pengines_io
+
+format_calls(Format, _Args, _Calls) :-
+	var(Format), !,
+	instantiation_error(Format).
 format_calls(Format, Args, Calls) :-
 	format_types(Format, Types),
 	format_callables(Types, Args, Calls).

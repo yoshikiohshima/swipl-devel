@@ -162,9 +162,12 @@ truth value when further constraints are added.
    association table node(LID,HID) -> Node, to keep the BDD reduced.
    The association table of each variable must be rebuilt on occasion
    to remove nodes that are no longer reachable. We rebuild the
-   association tables of involved variables after each conjunction of
-   BDDs. This only serves to reclaim memory and does not affect the
-   solver's correctness.
+   association tables of involved variables after BDDs are merged to
+   build a new root. This only serves to reclaim memory: Keeping a
+   node in a local table even when it no longer occurs in any BDD does
+   not affect the solver's correctness. However, apply_shortcut/4
+   relies on the invariant that every node that occurs in the relevant
+   BDDs is also registered in the table of its branching variable.
 
    A root is a logical variable with a single attribute ("clpb_bdd")
    of the form:
@@ -206,6 +209,8 @@ is_sat(A=<B)  :- is_sat(A), is_sat(B).
 is_sat(A>=B)  :- is_sat(A), is_sat(B).
 is_sat(A<B)   :- is_sat(A), is_sat(B).
 is_sat(A>B)   :- is_sat(A), is_sat(B).
+is_sat(+(Ls)) :- must_be(list, Ls).
+is_sat(*(Ls)) :- must_be(list, Ls).
 is_sat(X^F)   :- var(X), is_sat(F).
 is_sat(card(Is,Fs)) :-
         must_be(list(ground), Is),
@@ -215,6 +220,8 @@ is_sat(card(Is,Fs)) :-
 % wrap variables with v(...) and integers with i(...)
 sat_nondefaulty(V, v(V)) :- var(V), !.
 sat_nondefaulty(I, i(I)) :- integer(I), !.
+sat_nondefaulty(+(Ls), F) :- !, foldl(or, Ls, 0, F0), sat_nondefaulty(F0, F).
+sat_nondefaulty(*(Ls), F) :- !, foldl(and, Ls, 1, F0), sat_nondefaulty(F0, F).
 sat_nondefaulty(~A0, ~A) :- !, sat_nondefaulty(A0, A).
 sat_nondefaulty(card(Is,Fs0), card(Is,Fs)) :- !,
         maplist(sat_nondefaulty, Fs0, Fs).
@@ -246,6 +253,9 @@ sat_rewrite(P >= Q, R)  :- sat_rewrite(Q =< P, R).
 sat_rewrite(P < Q, R)   :- sat_rewrite(~P * Q, R).
 sat_rewrite(P > Q, R)   :- sat_rewrite(Q < P, R).
 
+or(A, B, B + A).
+
+and(A, B, B * A).
 
 must_be_sat(Sat) :-
         (   is_sat(Sat) -> true
@@ -385,9 +395,7 @@ bdd_and(NA, NB, And) :-
 
 make_node(Var, Low, High, Node) :-
         (   Low == High -> Node = Low
-        ;   node_id(Low, LID),
-            node_id(High, HID),
-            HEntry = node(LID,HID),
+        ;   low_high_hentry(Low, High, HEntry),
             (   lookup_node(Var, HEntry, Node) -> true
             ;   clpb_next_id('$clpb_next_node', ID),
                 Node = node(ID,Var,Low,High,_Aux),
@@ -400,15 +408,19 @@ make_node(Var, Low, High, Node) -->
         { make_node(Var, Low, High, Node) }.
 
 
+low_high_hentry(Low, High, node(LID,HID)) :-
+        node_id(Low, LID),
+        node_id(High, HID).
+
+
 rebuild_hashes(BDD) :-
         bdd_nodes(put_empty_hash, BDD, Nodes),
         maplist(re_register_node, Nodes).
 
 re_register_node(Node) :-
         node_var_low_high(Node, Var, Low, High),
-        node_id(Low, LID),
-        node_id(High, HID),
-        register_node(Var, node(LID,HID), Node).
+        low_high_hentry(Low, High, HEntry),
+        register_node(Var, HEntry, Node).
 
 register_node(Var, HEntry, Node) :-
         get_attr(Var, clpb_hash, H0),
@@ -458,32 +470,31 @@ existential(V, BDD, Node) :-
 counter_network(Cs, Fs, Node) :-
         same_length([_|Fs], Indicators),
         fill_indicators(Indicators, 0, Cs),
-        same_length(Fs, Vars0),
-        % enumerate variables in reverse order so that they appear
-        % in the correct order in the resulting BDD
-        maplist(enumerate_variable, Vars0),
-        reverse(Vars0, Vars),
-        counter_network(Fs, Indicators, Vars, Node0),
-        maplist(var_index_root, Vars, _, Roots),
-        maplist(=(Root), Roots),
-        root_put_formula_bdd(Root, card(Cs,Fs), Node),
-        eq_and(Vars, Fs, Node0, Node1),
-        foldl(existential, Vars, Node1, Node),
-        % remove attributes to avoid residual goals for these variables,
-        % which are only used temporarily to build the counter network.
-        maplist(del_attrs, Vars).
+        phrase(formulas_variables(Fs, Vars0), ExBDDs),
+        % The counter network is built bottom-up, so variables with
+        % highest index must be processed first.
+        variables_in_index_order(Vars0, Vars1),
+        reverse(Vars1, Vars),
+        counter_network_(Vars, Indicators, Node0),
+        foldl(existential_and, ExBDDs, Node0, Node).
 
-eq_and([], [], Node, Node).
-eq_and([X|Xs], [Y|Ys], Node0, Node) :-
-        sat_rewrite(v(X) =:= Y, Sat),
-        sat_bdd(Sat, B),
-        apply(*, B, Node0, Node1),
-        eq_and(Xs, Ys, Node1, Node).
+% Introduce fresh variables for expressions that are not variables.
+% These variables are later existentially quantified to remove them.
 
-counter_network([], [Node], [], Node).
-counter_network([_|Fs], [I|Is0], [Var|Vars], Node) :-
+formulas_variables([], []) --> [].
+formulas_variables([F|Fs], [V|Vs]) -->
+        (   { F = v(V) } -> []
+        ;   { enumerate_variable(V),
+              sat_rewrite(v(V) =:= F, Sat),
+              sat_bdd(Sat, BDD) },
+            [V-BDD]
+        ),
+        formulas_variables(Fs, Vs).
+
+counter_network_([], [Node], Node).
+counter_network_([Var|Vars], [I|Is0], Node) :-
         indicators_pairing(Is0, I, Var, Is),
-        counter_network(Fs, Is, Vars, Node).
+        counter_network_(Vars, Is, Node).
 
 indicators_pairing([], _, _, []).
 indicators_pairing([I|Is], Prev, Var, [Node|Nodes]) :-
@@ -498,6 +509,13 @@ fill_indicators([I|Is], Index0, Cs) :-
         ),
         Index1 is Index0 + 1,
         fill_indicators(Is, Index1, Cs).
+
+existential_and(Ex-BDD, Node0, Node) :-
+        bdd_and(BDD, Node0, Node1),
+        existential(Ex, Node1, Node),
+        % remove attributes to avoid residual goals for variables that
+        % are only used as substitutes for formulas
+        del_attrs(Ex).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Compute F(NA, NB).
@@ -749,10 +767,13 @@ node_ite(Node, Node-ite(Var,High,Low)) :-
 
 labeling(Vs0) :-
         must_be(list, Vs0),
+        variables_in_index_order(Vs0, Vs),
+        maplist(indomain, Vs).
+
+variables_in_index_order(Vs0, Vs) :-
         maplist(var_with_index, Vs0, IVs0),
         keysort(IVs0, IVs),
-        pairs_values(IVs, Vs),
-        maplist(indomain, Vs).
+        pairs_values(IVs, Vs).
 
 var_with_index(V, I-V) :-
         (   var_index_root(V, I, _) -> true
@@ -797,18 +818,17 @@ sat_count(Sat0, N) :-
                bdd_variables(BDD1, Vs1),
                % ... and then remove remaining variables:
                foldl(existential, Vs1, BDD1, BDD2),
-               maplist(var_with_index, Vs, IVs0),
-               keysort(IVs0, IVs1),
-               foldl(renumber_variable, IVs1, 1, VNum),
+               variables_in_index_order(Vs, IVs),
+               foldl(renumber_variable, IVs, 1, VNum),
                bdd_count(BDD2, VNum, Count0),
                var_u(BDD2, VNum, P),
-               Count is 2^(P - 1)*Count0,
+               N is 2^(P - 1)*Count0,
                % reset all attributes and Aux variables
-               throw(count(Count))),
+               throw(count(N))),
               count(N),
               true).
 
-renumber_variable(_-V, I0, I) :-
+renumber_variable(V, I0, I) :-
         put_attr(V, clpb, index_root(I0,_)),
         I is I0 + 1.
 
