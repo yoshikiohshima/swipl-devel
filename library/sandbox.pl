@@ -561,6 +561,8 @@ safe_primitive(system:get_attrs(_,_)).
 safe_primitive(system:term_attvars(_,_)).
 safe_primitive(system:del_attr(_,_)).
 safe_primitive(system:del_attrs(_)).
+safe_primitive('$attvar':frozen_residuals(_,_,_,_)).
+safe_primitive('$attvar':attvar_residuals(_,_,_,_)).
 					% globals
 safe_primitive(system:b_getval(_,_)).
 safe_primitive(system:b_setval(Var,_)) :-
