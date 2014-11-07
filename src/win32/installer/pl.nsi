@@ -303,6 +303,7 @@ Section "Base system (required)"
   SetOutPath $INSTDIR\library
 ; SYSTEM STUFF
   File ${SWIPL}\library\listing.pl
+  File ${SWIPL}\library\pprint.pl
   File ${SWIPL}\library\qsave.pl
   File ${SWIPL}\library\statistics.pl
   File ${SWIPL}\library\writef.pl
@@ -647,6 +648,16 @@ Section "ODBC Interface"
   File ${SWIPL}\library\odbc.pl
   SetOutPath $INSTDIR\doc\packages
   File ${SWIPL}\doc\packages\odbc.html
+SectionEnd
+
+Section "CQL database Interface"
+  SectionIn 1 3
+  SetOutPath $INSTDIR\library
+  File /r ${SWIPL}\library\cql
+  SetOutPath $INSTDIR\doc\packages
+  File ${SWIPL}\doc\packages\cql.html
+  SetOutPath $INSTDIR\doc\packages\examples
+  File /r ${SWIPL}\doc\packages\examples\cql
 SectionEnd
 
 Section "Google protocol buffers"

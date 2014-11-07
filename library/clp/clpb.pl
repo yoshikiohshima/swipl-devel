@@ -62,8 +62,8 @@ Diagrams (BDDs).
 
 A _Boolean expression_ is one of:
 
-    | *0*                | false                                |
-    | *1*                | true                                 |
+    | `0`                | false                                |
+    | `1`                | true                                 |
     | _variable_         | unknown truth value                  |
     | ~ _Expr_           | logical NOT                          |
     | _Expr_ + _Expr_    | logical OR                           |
@@ -71,18 +71,24 @@ A _Boolean expression_ is one of:
     | _Expr_ # _Expr_    | exclusive OR                         |
     | _Var_ ^ _Expr_     | existential quantification           |
     | _Expr_ =:= _Expr_  | equality                             |
-    | _Expr_ =\= _Expr_  | disequality                          |
-    | _Expr_ =< _Expr_   | less or equal                        |
+    | _Expr_ =\= _Expr_  | disequality (same as #)              |
+    | _Expr_ =< _Expr_   | less or equal (implication)          |
     | _Expr_ >= _Expr_   | greater or equal                     |
     | _Expr_ < _Expr_    | less than                            |
     | _Expr_ > _Expr_    | greater than                         |
-    | card(Is,Exprs)     | _see  below_                         |
+    | card(Is,Exprs)     | _see below_                          |
+    | `+(Exprs)`         | _see below_                          |
+    | `*(Exprs)`         | _see below_                          |
 
 where _Expr_ again denotes a Boolean expression.
 
 The Boolean expression card(Is,Exprs) is true iff the number of true
-expressions in the list _Exprs_ is a member of the list _Is_ of
-integers and integer ranges of the form _From_-_To_.
+expressions in the list `Exprs` is a member of the list `Is` of
+integers and integer ranges of the form `From-To`.
+
+`+(Exprs)` and `*(Exprs)` denote, respectively, the disjunction and
+conjunction of all elements in the list `Exprs` of Boolean
+expressions.
 
 ### Interface predicates   {#clpb-interface}
 
@@ -209,35 +215,21 @@ is_sat(A=<B)  :- is_sat(A), is_sat(B).
 is_sat(A>=B)  :- is_sat(A), is_sat(B).
 is_sat(A<B)   :- is_sat(A), is_sat(B).
 is_sat(A>B)   :- is_sat(A), is_sat(B).
-is_sat(+(Ls)) :- must_be(list, Ls).
-is_sat(*(Ls)) :- must_be(list, Ls).
+is_sat(+(Ls)) :- must_be(list, Ls), maplist(is_sat, Ls).
+is_sat(*(Ls)) :- must_be(list, Ls), maplist(is_sat, Ls).
 is_sat(X^F)   :- var(X), is_sat(F).
 is_sat(card(Is,Fs)) :-
         must_be(list(ground), Is),
         must_be(list, Fs),
         maplist(is_sat, Fs).
 
-% wrap variables with v(...) and integers with i(...)
-sat_nondefaulty(V, v(V)) :- var(V), !.
-sat_nondefaulty(I, i(I)) :- integer(I), !.
-sat_nondefaulty(+(Ls), F) :- !, foldl(or, Ls, 0, F0), sat_nondefaulty(F0, F).
-sat_nondefaulty(*(Ls), F) :- !, foldl(and, Ls, 1, F0), sat_nondefaulty(F0, F).
-sat_nondefaulty(~A0, ~A) :- !, sat_nondefaulty(A0, A).
-sat_nondefaulty(card(Is,Fs0), card(Is,Fs)) :- !,
-        maplist(sat_nondefaulty, Fs0, Fs).
-sat_nondefaulty(S0, S) :-
-        S0 =.. [F,X0,Y0],
-        sat_nondefaulty(X0, X),
-        sat_nondefaulty(Y0, Y),
-        S =.. [F,X,Y].
-
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
    Rewriting to canonical expressions.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 % elementary
-sat_rewrite(v(V), v(V)).
-sat_rewrite(i(I), i(I)).
+sat_rewrite(V, V)       :- var(V), !.
+sat_rewrite(I, I)       :- integer(I).
 sat_rewrite(P0*Q0, P*Q) :- sat_rewrite(P0, P), sat_rewrite(Q0, Q).
 sat_rewrite(P0+Q0, P+Q) :- sat_rewrite(P0, P), sat_rewrite(Q0, Q).
 sat_rewrite(P0#Q0, P#Q) :- sat_rewrite(P0, P), sat_rewrite(Q0, Q).
@@ -245,13 +237,15 @@ sat_rewrite(X^F0, X^F)  :- sat_rewrite(F0, F).
 sat_rewrite(card(Is,Fs0), card(Is,Fs)) :-
         maplist(sat_rewrite, Fs0, Fs).
 % synonyms
-sat_rewrite(~P, R)      :- sat_rewrite(i(1) # P, R).
+sat_rewrite(~P, R)      :- sat_rewrite(1 # P, R).
 sat_rewrite(P =:= Q, R) :- sat_rewrite(~P # Q, R).
 sat_rewrite(P =\= Q, R) :- sat_rewrite(P # Q, R).
 sat_rewrite(P =< Q, R)  :- sat_rewrite(~P + Q, R).
 sat_rewrite(P >= Q, R)  :- sat_rewrite(Q =< P, R).
 sat_rewrite(P < Q, R)   :- sat_rewrite(~P * Q, R).
 sat_rewrite(P > Q, R)   :- sat_rewrite(Q < P, R).
+sat_rewrite(+(Ls), R)   :- foldl(or, Ls, 0, F), sat_rewrite(F, R).
+sat_rewrite(*(Ls), R)   :- foldl(and, Ls, 1, F), sat_rewrite(F, R).
 
 or(A, B, B + A).
 
@@ -266,8 +260,7 @@ no_truth_value(Term) :- domain_error(clpb_expr, Term).
 
 parse_sat(Sat0, Sat) :-
         must_be_sat(Sat0),
-        sat_nondefaulty(Sat0, Sat1),
-        sat_rewrite(Sat1, Sat),
+        sat_rewrite(Sat0, Sat),
         term_variables(Sat, Vs),
         maplist(enumerate_variable, Vs).
 
@@ -307,15 +300,23 @@ sat(Sat0) :-
 sat_ands(X) -->
         (   { var(X) } -> [X]
         ;   { X = (A*B) } -> sat_ands(A), sat_ands(B)
+        ;   { X = *(Ls) } -> sat_ands_(Ls)
         ;   { X = ~Y } -> not_ors(Y)
         ;   [X]
         ).
 
+sat_ands_([]) --> [].
+sat_ands_([L|Ls]) --> [L], sat_ands_(Ls).
+
 not_ors(X) -->
         (   { var(X) } -> [~X]
         ;   { X = (A+B) } -> not_ors(A), not_ors(B)
+        ;   { X = +(Ls) } -> not_ors_(Ls)
         ;   [~X]
         ).
+
+not_ors_([]) --> [].
+not_ors_([L|Ls]) --> [~L], not_ors_(Ls).
 
 del_bdd(Root) :- del_attr(Root, clpb_bdd).
 
@@ -346,7 +347,7 @@ taut(Sat0, T) :-
         sat_roots(Sat, Roots),
         catch((roots_and(Roots, _-1, _-Ands),
                (   T = 0, unsatisfiable_conjunction(Sat, Ands) -> true
-               ;   T = 1, unsatisfiable_conjunction(i(1)#Sat, Ands) -> true
+               ;   T = 1, unsatisfiable_conjunction(1#Sat, Ands) -> true
                ;   false
                ),
                % reset all attributes
@@ -447,9 +448,9 @@ node_var_low_high(Node, Var, Low, High) :-
    and reduced BDD.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-sat_bdd(i(I), I)           :- !.
-sat_bdd(v(V), Node)        :- !, make_node(V, 0, 1, Node).
-sat_bdd(v(V)^Sat, Node)    :- !, sat_bdd(Sat, BDD), existential(V, BDD, Node).
+sat_bdd(V, Node)           :- var(V), !, make_node(V, 0, 1, Node).
+sat_bdd(I, I)              :- integer(I), !.
+sat_bdd(V^Sat, Node)       :- !, sat_bdd(Sat, BDD), existential(V, BDD, Node).
 sat_bdd(card(Is,Fs), Node) :- !, counter_network(Is, Fs, Node).
 sat_bdd(Sat, Node)         :- !,
         Sat =.. [F,A,B],
@@ -483,9 +484,9 @@ counter_network(Cs, Fs, Node) :-
 
 formulas_variables([], []) --> [].
 formulas_variables([F|Fs], [V|Vs]) -->
-        (   { F = v(V) } -> []
+        (   { var(F) } -> { V = F }
         ;   { enumerate_variable(V),
-              sat_rewrite(v(V) =:= F, Sat),
+              sat_rewrite(V =:= F, Sat),
               sat_bdd(Sat, BDD) },
             [V-BDD]
         ),
@@ -493,13 +494,10 @@ formulas_variables([F|Fs], [V|Vs]) -->
 
 counter_network_([], [Node], Node).
 counter_network_([Var|Vars], [I|Is0], Node) :-
-        indicators_pairing(Is0, I, Var, Is),
+        foldl(indicators_pairing(Var), Is0, Is, I, _),
         counter_network_(Vars, Is, Node).
 
-indicators_pairing([], _, _, []).
-indicators_pairing([I|Is], Prev, Var, [Node|Nodes]) :-
-        make_node(Var, Prev, I, Node),
-        indicators_pairing(Is, I, Var, Nodes).
+indicators_pairing(Var, I, Node, Prev, I) :- make_node(Var, Prev, I, Node).
 
 fill_indicators([], _, _).
 fill_indicators([I|Is], Index0, Cs) :-
@@ -743,15 +741,31 @@ with_aux(Pred, Node) :-
         node_aux(Node, Aux),
         call(Pred, Aux).
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+   Internal consistency checks.
+
+   To enable these checks, set the flag clpb_validation to true.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 is_bdd(BDD) :-
-        (   current_prolog_flag(optimise, true) -> true % skip validation
-        ;   bdd_ites(BDD, ITEs0),
-            pairs_values(ITEs0, Ls0),
+        (   current_prolog_flag(clpb_validation, true) ->
+            bdd_ites(BDD, ITEs),
+            pairs_values(ITEs, Ls0),
             sort(Ls0, Ls1),
             (   same_length(Ls0, Ls1) -> true
-            ;   domain_error(reduced_ites, (ITEs0,Ls0,Ls1))
+            ;   domain_error(reduced_ites, (ITEs,Ls0,Ls1))
+            ),
+            (   member(ITE, ITEs), \+ registered_node(ITE) ->
+                domain_error(registered_node, ITE)
+            ;   true
             )
+        ;   true
         ).
+
+registered_node(Node-ite(Var,High,Low)) :-
+        low_high_hentry(Low, High, HEntry),
+        lookup_node(Var, HEntry, Node0),
+        Node == Node0.
 
 bdd_ites(BDD, ITEs) :-
         bdd_nodes(BDD, Nodes),
@@ -793,16 +807,8 @@ indomain(1).
 % Example:
 %
 % ==
-% :- use_module(library(clpb)).
-%
-% or(A, B, B+A).
-% ==
-%
-% Yielding:
-%
-% ==
-% ?- length(Vs, 120), foldl(or, Vs, 0, Expr), sat_count(Expr, N).
-% Vs = [...], Expr = ... + ...,
+% ?- length(Vs, 120), sat_count(+(Vs), N).
+% Vs = [...],
 % N = 1329227995784915872903807060280344575.
 % ==
 
@@ -831,8 +837,6 @@ sat_count(Sat0, N) :-
 renumber_variable(V, I0, I) :-
         put_attr(V, clpb, index_root(I0,_)),
         I is I0 + 1.
-
-ite_variable(_-ite(V,_,_), V).
 
 bdd_count(Node, VNum, Count) :-
         (   integer(Node) -> Count = Node

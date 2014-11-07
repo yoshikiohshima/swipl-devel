@@ -445,7 +445,14 @@ crashHandler(int sig)
 	   PL_thread_self(), sig, signal_name(sig));
   save_backtrace("crash");
   print_backtrace_named("crash");
+  run_on_halt(&GD->os.exit_hooks, 4);
+  signal(sig, SIG_DFL);
+
+#if defined(HAVE_KILL) && defined(HAVE_GETPID)
+  kill(getpid(), sig);
+#else
   abort();
+#endif
 }
 
 void
@@ -457,11 +464,14 @@ initBackTrace(void)
 #ifdef SIGILL
   PL_signal(SIGILL, crashHandler);
 #endif
-#ifdef SIGBUS
+#if defined(SIGBUS) && SIGBUS != SIGSEGV
   PL_signal(SIGBUS, crashHandler);
 #endif
 #ifdef SIGFPE
   PL_signal(SIGFPE, crashHandler);
+#endif
+#ifdef SIGSYS
+  PL_signal(SIGSYS, crashHandler);
 #endif
 }
 

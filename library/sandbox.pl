@@ -41,6 +41,7 @@
 
 :- multifile
 	safe_primitive/1,		% Goal
+	safe_meta_predicate/1,		% Name/Arity
 	safe_meta/2,			% Goal, Calls
 	safe_global_variable/1.		% Name
 
@@ -425,6 +426,7 @@ safe_primitive(system: =@=(_,_)).
 safe_primitive(=(_,_)).
 safe_primitive(\=(_,_)).
 safe_primitive(system:unifiable(_,_,_)).
+safe_primitive(unify_with_occurs_check(_,_)).
 safe_primitive(\==(_,_)).
 					% arithmetic
 safe_primitive(is(_,_)).
@@ -445,8 +447,13 @@ safe_primitive(system:compound_name_arguments(_,_,_)).
 safe_primitive(copy_term(_,_)).
 safe_primitive(system:copy_term_nat(_,_)).
 safe_primitive(system:duplicate_term(_,_)).
+safe_primitive(system:copy_term_nat(_,_)).
 safe_primitive(numbervars(_,_,_)).
-safe_primitive(system:numbervars(_,_,_,_)).
+safe_primitive(system:term_hash(_,_)).
+safe_primitive(system:term_hash(_,_,_,_)).
+safe_primitive(system:variant_sha1(_,_)).
+
+
 					% dicts
 safe_primitive(system:is_dict(_)).
 safe_primitive(system:is_dict(_,_)).
@@ -506,6 +513,16 @@ safe_primitive(system:sleep(_)).
 safe_primitive(system:thread_self(_)).
 safe_primitive(system:get_time(_)).
 safe_primitive(system:statistics(_,_)).
+safe_primitive(system:thread_statistics(Id,_,_)) :-
+	(   var(Id)
+	->  instantiation_error(Id)
+	;   thread_self(Id)
+	).
+safe_primitive(system:thread_property(Id,_)) :-
+	(   var(Id)
+	->  instantiation_error(Id)
+	;   thread_self(Id)
+	).
 safe_primitive(system:format_time(_,_,_)).
 safe_primitive(system:strip_module(_,_,_)).
 safe_primitive('$messages':message_to_string(_,_)).
@@ -565,6 +582,8 @@ safe_primitive(system:nl).
 % use_module/1.  We only allow for .pl files that are loaded from
 % relative paths that do not contain /../
 
+safe_primitive(system:use_module(Spec, _Import)) :-
+	safe_primitive(system:use_module(Spec)).
 safe_primitive(system:use_module(Spec)) :-
 	ground(Spec),
 	(   atom(Spec)
@@ -646,6 +665,7 @@ safe_meta(system:format(Output, Format, Args), Calls) :-
 	format_calls(Format, Args, Calls).
 safe_meta(prolog_debug:debug(_Term, Format, Args), Calls) :-
 	format_calls(Format, Args, Calls).
+safe_meta('$attvar':freeze(_Var,Goal), [Goal]).
 
 %%	safe_meta_call(+Goal, -Called:list(callable)) is semidet.
 %
@@ -657,6 +677,13 @@ safe_meta_call(Goal, _Called) :-
 	fail.
 safe_meta_call(Goal, Called) :-
 	safe_meta(Goal, Called), !.	% call hook
+safe_meta_call(Goal, Called) :-
+	Goal = M:Plain,
+	compound(Plain),
+	compound_name_arity(Plain, Name, Arity),
+	safe_meta_predicate(M:Name/Arity),
+	predicate_property(Goal, meta_predicate(Spec)), !,
+	findall(C, called(Spec, Plain, C), Called).
 safe_meta_call(M:Goal, Called) :- !,
 	generic_goal(Goal, Gen),
 	safe_meta(M:Gen),
@@ -668,7 +695,7 @@ safe_meta_call(Goal, Called) :-
 
 called(Gen, Goal, Called) :-
 	arg(I, Gen, Spec),
-	integer(Spec),
+	calling_meta_spec(Spec),
 	arg(I, Goal, Called0),
 	extend(Spec, Called0, Called).
 
@@ -676,6 +703,19 @@ generic_goal(G, Gen) :-
 	functor(G, Name, Arity),
 	functor(Gen, Name, Arity).
 
+calling_meta_spec(V) :- var(V), !, fail.
+calling_meta_spec(I) :- integer(I), !.
+calling_meta_spec(^).
+calling_meta_spec(//).
+
+
+extend(^, G, Plain) :- !,
+	strip_existential(G, Plain).
+extend(//, DCG, Goal) :- !,
+	(   expand_phrase(DCG, Goal)
+	->  true
+	;   instantiation_error(DCG)	% Ask more instantiation.
+	).				% might not help, but does not harm.
 extend(0, G, G) :- !.
 extend(I, M:G0, M:G) :- !,
 	G0 =.. List,
@@ -688,28 +728,39 @@ extend(I, G0, G) :-
 	append(List, Extra, All),
 	G =.. All.
 
+strip_existential(Var, Var) :-
+	var(Var), !.
+strip_existential(M:G0, M:G) :- !,
+	strip_existential(G0, G).
+strip_existential(_^G0, G) :- !,
+	strip_existential(G0, G).
+strip_existential(G, G).
+
+%%	safe_meta(?Template).
+
 safe_meta((0,0)).
 safe_meta((0;0)).
 safe_meta((0->0)).
-safe_meta(apply:forall(0,0)).
-safe_meta(catch(0,_,0)).
-safe_meta(findall(_,0,_)).
-safe_meta(findall(_,0,_,_)).
-safe_meta(setof(_,0,_)).		% TBD
-safe_meta(bagof(_,0,_)).
+safe_meta((0*->0)).
+safe_meta(catch(0,*,0)).
+safe_meta(findall(*,0,*)).
+safe_meta('$bags':findall(*,0,*,*)).
+safe_meta(setof(*,^,*)).
+safe_meta(bagof(*,^,*)).
+safe_meta('$bags':findnsols(*,*,0,*)).
+safe_meta('$bags':findnsols(*,*,0,*,*)).
 safe_meta(system:call_cleanup(0,0)).
-safe_meta(^(_,0)).
+safe_meta(system:setup_call_cleanup(0,0,0)).
+safe_meta(system:setup_call_catcher_cleanup(0,0,*,0)).
+safe_meta(^(*,0)).
 safe_meta(\+(0)).
-safe_meta(apply:maplist(1, _)).
-safe_meta(apply:maplist(2, _, _)).
-safe_meta(apply:maplist(3, _, _, _)).
 safe_meta(call(0)).
-safe_meta(call(1, _)).
-safe_meta(call(2, _, _)).
-safe_meta(call(3, _, _, _)).
-safe_meta(call(4, _, _, _, _)).
-safe_meta(call(5, _, _, _, _, _)).
-safe_meta(call(6, _, _, _, _, _, _)).
+safe_meta(call(1,*)).
+safe_meta(call(2,*,*)).
+safe_meta(call(3,*,*,*)).
+safe_meta(call(4,*,*,*,*)).
+safe_meta(call(5,*,*,*,*,*)).
+safe_meta(call(6,*,*,*,*,*,*)).
 
 
 %%	safe_output(+Output)
@@ -740,15 +791,16 @@ format_calls(Format, _Args, _Calls) :-
 	instantiation_error(Format).
 format_calls(Format, Args, Calls) :-
 	format_types(Format, Types),
-	format_callables(Types, Args, Calls).
+	(   format_callables(Types, Args, Calls)
+	->  true
+	;   throw(error(format_error(Format, Types, Args), _))
+	).
 
 format_callables([], [], []).
 format_callables([callable|TT], [G|TA], [G|TG]) :- !,
 	format_callables(TT, TA, TG).
 format_callables([_|TT], [_|TA], TG) :- !,
 	format_callables(TT, TA, TG).
-format_callables(Types, Args, _) :-		% TBD: Proper error
-	throw(error(format_error(Types, Args), _)).
 
 
 		 /*******************************
@@ -767,25 +819,27 @@ prolog:sandbox_allowed_directive(Directive) :-
 	debug(sandbox(directive), 'Directive: ~p', [Directive]),
 	fail.
 prolog:sandbox_allowed_directive(M:PredAttr) :-
-	safe_directive(PredAttr), !,
-	(   prolog_load_context(module, M)
-	->  PredAttr =.. [Attr, Preds],
-	    safe_pattr(Preds, Attr)
+	\+ prolog_load_context(module, M), !,
+	debug(sandbox(directive), 'Cross-module directive', []),
+	permission_error(directive, sandboxed, (:- M:PredAttr)).
+prolog:sandbox_allowed_directive(M:PredAttr) :-
+	safe_pattr(PredAttr), !,
+	PredAttr =.. [Attr, Preds],
+	(   safe_pattr(Preds, Attr)
+	->  true
 	;   permission_error(directive, sandboxed, (:- M:PredAttr))
 	).
+prolog:sandbox_allowed_directive(_:Directive) :-
+	safe_directive(Directive), !.
 prolog:sandbox_allowed_directive(G) :-
 	safe_goal(G).
 
-safe_directive(dynamic(_)).
-safe_directive(thread_local(_)).
-safe_directive(discontiguous(_)).
-safe_directive(public(_)).
-safe_directive(op(_,_,Name)) :-
-	(   atom(Name)
-	->  true
-	;   is_list(Name),
-	    maplist(atom, Name)
-	).
+safe_pattr(dynamic(_)).
+safe_pattr(thread_local(_)).
+safe_pattr(volatile(_)).
+safe_pattr(discontiguous(_)).
+safe_pattr(public(_)).
+safe_pattr(meta_predicate(_)).
 
 safe_pattr(Var, _) :-
 	var(Var), !,
@@ -802,6 +856,43 @@ safe_pattr(M:G, Attr) :- !,
 	).
 safe_pattr(_, _).
 
+safe_directive(op(_,_,Name)) :- !,
+	(   atom(Name)
+	->  true
+	;   is_list(Name),
+	    maplist(atom, Name)
+	).
+safe_directive(set_prolog_flag(Flag, Value)) :- !,
+	atom(Flag), ground(Value),
+	safe_directive_flag(Flag, Value).
+safe_directive(use_module(library(X))) :-
+	safe_path(X).
+safe_directive(use_module(library(X), _Imports)) :-
+	safe_path(X).
+safe_directive(ensure_loaded(library(X))) :-
+	safe_path(X).
+safe_directive(style_check(_)).
+
+safe_path(X) :-
+	(   atom(X)
+	;   string(X)
+	), !,
+	X \== '..',
+	\+ sub_atom(X, 0, _, _, '../'),
+	\+ sub_atom(X, _, _, 0, '/..'),
+	\+ sub_atom(X, _, _, _, '/../').
+safe_path(A/B) :- !,
+	safe_path(A),
+	safe_path(B).
+
+%%	safe_directive_flag(+Flag, +Value) is det.
+%
+%	True if it is safe to set the flag Flag in a directive to Value.
+%
+%	@tbd	If we can avoid that files are loaded after changing
+%		this flag, we can allow for more flags.
+
+safe_directive_flag(generate_debug_info, _).
 
 %%	prolog:sandbox_allowed_expansion(:G) is det.
 %
@@ -831,9 +922,11 @@ prolog:sandbox_allowed_expansion(_,_).
 		 *******************************/
 
 :- multifile
-	prolog:message//1.
-	prolog:message_context//1.
+	prolog:message//1,
+	prolog:message_context//1,
+	prolog:error_message//1.
 
+prolog:message_context(sandbox(_G, [])) --> !.
 prolog:message_context(sandbox(_G, Parents)) -->
 	[ nl, 'Reachable from:'-[] ],
 	callers(Parents, 10).
@@ -849,3 +942,18 @@ callers([G|Parents], Level) -->
 prolog:message(bad_safe_declaration(Goal, File, Line)) -->
 	[ '~w:~d: Invalid safe_primitive/1 declaration: ~p'-
 	  [File, Line, Goal] ].
+
+prolog:error_message(format_error(Format, Types, Args)) -->
+	format_error(Format, Types, Args).
+
+format_error(Format, Types, Args) -->
+	{ length(Types, TypeLen),
+	  length(Args, ArgsLen),
+	  (   TypeLen > ArgsLen
+	  ->  Problem = 'not enough'
+	  ;   Problem = 'too many'
+	  )
+	},
+	[ 'format(~q): ~w arguments (found ~w, need ~w)'-
+	  [Format, Problem, ArgsLen, TypeLen]
+	].
