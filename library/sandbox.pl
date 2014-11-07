@@ -504,6 +504,7 @@ safe_primitive(throw(_)).
 					% misc
 safe_primitive(current_prolog_flag(_,_)).
 safe_primitive(current_op(_,_,_)).
+safe_primitive(current_predicate(_)).
 safe_primitive('$syspreds':garbage_collect).
 safe_primitive(system:garbage_collect_atoms).
 safe_primitive(system:garbage_collect_clauses).
