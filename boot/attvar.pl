@@ -251,9 +251,6 @@ attvar_residuals(att(Module,Value,As), V) -->
 list([])     --> [].
 list([L|Ls]) --> [L], list(Ls).
 
-dot_list((A,B)) --> !, dot_list(A), dot_list(B).
-dot_list(A)	--> [A].
-
 delete_attributes(Term) :-
 	term_attvars(Term, Vs),
 	delete_attributes_(Vs).
