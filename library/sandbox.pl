@@ -445,14 +445,12 @@ safe_primitive(_ =.. _).
 safe_primitive(system:compound_name_arity(_,_,_)).
 safe_primitive(system:compound_name_arguments(_,_,_)).
 safe_primitive(copy_term(_,_)).
-safe_primitive(system:copy_term_nat(_,_)).
 safe_primitive(system:duplicate_term(_,_)).
 safe_primitive(system:copy_term_nat(_,_)).
 safe_primitive(numbervars(_,_,_)).
 safe_primitive(system:term_hash(_,_)).
 safe_primitive(system:term_hash(_,_,_,_)).
 safe_primitive(system:variant_sha1(_,_)).
-
 
 					% dicts
 safe_primitive(system:is_dict(_)).
