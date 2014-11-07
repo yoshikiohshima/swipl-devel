@@ -578,9 +578,6 @@ safe_primitive(system:assert(X)) :-
 					% Output
 safe_primitive(system:writeln(_)).
 safe_primitive('$messages':print_message(_,_)).
-safe_primitive(flush_output).
-%safe_primitive(ttyflush).
-safe_primitive(system:nl).
 
 % use_module/1.  We only allow for .pl files that are loaded from
 % relative paths that do not contain /../
