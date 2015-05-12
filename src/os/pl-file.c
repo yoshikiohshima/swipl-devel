@@ -364,6 +364,8 @@ initIO(void)
   LD->prompt.current = ATOM_prompt;
   PL_register_atom(ATOM_prompt);
 
+  LD->IO.stream_type_check = ST_TRUE;
+
   Suser_input  = Sinput;
   Suser_output = Soutput;
   Suser_error  = Serror;

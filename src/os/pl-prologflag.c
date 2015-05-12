@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2012, University of Amsterdam
+    Copyright (C): 1985-2015, University of Amsterdam
 			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
@@ -1229,7 +1229,7 @@ initPrologFlags(void)
   setPrologFlag("quasi_quotations", FT_BOOL, TRUE, PLFLAG_QUASI_QUOTES);
 #endif
   setPrologFlag("write_attributes", FT_ATOM, "ignore");
-  setPrologFlag("stream_type_check", FT_ATOM, "loose");
+  setPrologFlag("stream_type_check", FT_ATOM, "true");
   setPrologFlag("occurs_check", FT_ATOM, "false");
   setPrologFlag("access_level", FT_ATOM, "user");
   setPrologFlag("double_quotes", FT_ATOM,

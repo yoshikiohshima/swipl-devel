@@ -1494,9 +1494,10 @@ or the command line option \cmdlineoption{-nosignals} is active.  See
 Defines whether and how strictly the system validates that byte I/O
 should not be applied to text streams and text I/O should not be applied
 to binary streams. Values are \const{false} (no checking), \const{true}
-(full checking) and \const{loose}.  Using checking mode \const{loose}
-(default), the system accepts byte I/O from text stream that use ISO
-Latin-1 encoding and accepts writing text to binary streams.
+(full checking) and \const{loose}. Using checking mode \const{loose},
+the system accepts byte I/O from text stream that use ISO Latin-1
+encoding and accepts writing text to binary streams.  The default is
+\const{true} as required by the ISO standard.
 
     \prologflagitem{system_thread_id}{int}{r}
 Available in multithreaded version (see \secref{threads}) where the
