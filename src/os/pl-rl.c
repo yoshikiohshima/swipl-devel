@@ -55,7 +55,8 @@ SWI-Prolog.h and SWI-Stream.h
    error by the dmalloc library
 */
 
-#if defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_READLINE_H) && !defined(DMALLOC)
+#if defined(HAVE_LIBEDIT) && defined(HAVE_EDITLINE_READLINE_H) && !defined(DMALLOC) || \
+    defined(HAVE_LIBREADLINE) && defined(HAVE_READLINE_READLINE_H) && !defined(DMALLOC)
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -84,13 +85,20 @@ SWI-Prolog.h and SWI-Stream.h
 #include <stdio.h>			/* readline needs it */
 #include <errno.h>
 #define savestring(x)			/* avoid definition there */
+#ifdef HAVE_EDITLINE_READLINE_H
+#include <editline/readline.h>
+#endif
+#ifdef HAVE_READLINE_READLINE_H
 #include <readline/readline.h>
+#endif
 extern int rl_done;			/* should be in readline.h, but */
 					/* isn't in some versions ... */
 #ifdef HAVE_READLINE_HISTORY_H
 #include <readline/history.h>
 #else
+#ifdef HAVE_LIBREADLINE
 extern void add_history(char *);	/* should be in readline.h */
+#endif
 #endif
 					/* missing prototypes in older */
 					/* readline.h versions */
@@ -323,7 +331,9 @@ rl_sighandler(int sig)
 
   DEBUG(3, Sdprintf("Resetting after signal\n"));
   prepare_signals();
+#if HAVE_RL_RESET_AFTER_SIGNAL
   rl_reset_after_signal ();
+#endif
 }
 
 
@@ -479,7 +489,9 @@ Sread_readline(void *handle, char *buf, size_t size)
 	{ int state = rl_readline_state;
 
 	  rl_clear_pending_input();
+#ifdef HAVE_RL_DISCARD_ARGUMENT
 	  rl_discard_argument();
+#endif
 	  rl_deprep_terminal();
 	  rl_readline_state = (RL_STATE_INITIALIZED);
 	  line = pl_readline(prompt);
@@ -520,10 +532,14 @@ Sread_readline(void *handle, char *buf, size_t size)
 }
 
 
+#ifdef HAVE_LIBREADLINE
 static int
 prolog_complete(int ignore, int key)
 { if ( rl_point > 0 && rl_line_buffer[rl_point-1] != ' ' )
-  { rl_begin_undo_group();
+  {
+#ifdef HAVE_RL_BEGIN_UNDO_GROUP
+    rl_begin_undo_group();
+#endif
     rl_complete(ignore, key);
     if ( rl_point > 0 && rl_line_buffer[rl_point-1] == ' ' )
     {
@@ -531,15 +547,20 @@ prolog_complete(int ignore, int key)
       rl_delete_text(rl_point-1, rl_point);
       rl_point -= 1;
 #else
+#ifdef HAVE_RL_DELETE
       rl_delete(-1, key);
 #endif
+#endif
     }
+#ifdef HAVE_RL_END_UNDO_GROUP
     rl_end_undo_group();
+#endif
   } else
     rl_complete(ignore, key);
 
   return 0;
 }
+#endif
 
 
 static char *
@@ -602,9 +623,12 @@ PL_install_readline(void)
 #else
   rl_basic_word_break_characters = ":\t\n\"\\'`@$><= [](){}+*!,|%&?";
 #endif
+  rl_completion_append_character = '\0';
+#ifdef HAVE_LIBREADLINE
   rl_add_defun("prolog-complete", prolog_complete, '\t');
 #if HAVE_RL_INSERT_CLOSE
   rl_add_defun("insert-close", rl_insert_close, ')');
+#endif
 #endif
 #if HAVE_RL_SET_KEYBOARD_INPUT_TIMEOUT	/* see (*) */
   rl_set_keyboard_input_timeout(20000);
@@ -626,11 +650,13 @@ PL_install_readline(void)
   PRED("rl_read_history",   1, pl_rl_read_history,   0);
   PL_set_prolog_flag("readline",    PL_BOOL, TRUE);
   PL_set_prolog_flag("tty_control", PL_BOOL, TRUE);
+#ifdef HAVE_LIBREADLINE
   PL_license("gpl", "GNU Readline library");
+#endif
   setAccessLevel(alevel);
 }
 
-#else /*HAVE_LIBREADLINE*/
+#else /*HAVE_LIBREADLINE || HAVE_LIBEDIT*/
 
 install_t
 PL_install_readline(void)

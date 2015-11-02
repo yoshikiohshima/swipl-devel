@@ -205,9 +205,13 @@ if test "$MKSTATIC" = yes; then
 fi
 
 readline_ok=no
-AC_ARG_ENABLE(readline, [  --disable-readline	  Do NOT include GNU readline],
+AC_ARG_ENABLE(editline, [  --disable-editline	  Do NOT include BSD editline],
+	      configeditline="$enableval",
+	      configeditline=yes)
+
+AC_ARG_ENABLE(readline, [  --enable-readline	  Enable GNU readline instead of BSD editline],
 	      configreadline="$enableval",
-	      configreadline=yes)
+	      configreadline=no)
 
 AC_ARG_ENABLE(gmp, [  --disable-gmp		  Disable Multi-precision arithmetic],
 	      configgmp="$enableval",
@@ -994,21 +998,7 @@ case "$PLARCH" in
 	;;
 esac
 
-AC_DEFUN([pl_RL_CHECK_VAR],
-[AS_VAR_PUSHDEF([ac_var], [ac_cv_libreadline_var_$1])dnl
-AC_CACHE_CHECK([for $1], [ac_var],
-[AC_LINK_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
-#include <readline/readline.h>], [$1 = 0;])],
-       [AS_VAR_SET([ac_var], [yes])],
-       [AS_VAR_SET([ac_var], [no])])])
- AH_TEMPLATE(AS_TR_CPP([HAVE_$1]),
-        [Define to 1 if libreadline has the `$1' variable.])
- AS_IF([test AS_VAR_GET([ac_var]) = yes],
-       [AC_DEFINE(AS_TR_CPP([HAVE_$1]))])
- AS_VAR_POPDEF([ac_var])dnl
-])
-
-if test "$configreadline" = "yes" -a ! $readline_ok = "yes" ; then
+if test "$configreadline" = "yes"; then
   if test ! -z "$RLPREFIX"; then
     AC_MSG_CHECKING(Whether setting for RLPREFIX is ok)
     if test -f $RLPREFIX/include/readline/readline.h -a \
@@ -1025,13 +1015,6 @@ if test "$configreadline" = "yes" -a ! $readline_ok = "yes" ; then
       fi
       ocflags="$CFLAGS"
       CFLAGS="-I$RLPREFIX/include $CFLAGS"
-      AC_CHECK_FUNCS(rl_completion_matches rl_insert_close)
-      AC_CHECK_FUNCS(rl_set_prompt rl_clear_pending_input)
-      AC_CHECK_FUNCS(rl_event_hook rl_cleanup_after_signal)
-      AC_CHECK_FUNCS(rl_filename_completion_function)
-      AC_CHECK_FUNCS(rl_set_keyboard_input_timeout)
-      AC_CHECK_DECLS([rl_done])
-      FreeBSD="$ocflags"
       readline_ok=yes
     else
       AC_MSG_RESULT(no)
@@ -1061,19 +1044,67 @@ if test "$configreadline" = "yes" -a ! $readline_ok = "yes" ; then
 	  LIBS="-lreadline $LIBS"
 	  AC_DEFINE(HAVE_LIBREADLINE, 1,
 		    [ Define if you have libreadline and headers ])
-	  AC_CHECK_FUNCS(rl_completion_matches rl_insert_close)
-	  AC_CHECK_FUNCS(rl_set_prompt rl_clear_pending_input)
-	  AC_CHECK_FUNCS(rl_cleanup_after_signal)
-	  AC_CHECK_FUNCS(rl_filename_completion_function)
-	  pl_RL_CHECK_VAR([rl_readline_state])
-	  pl_RL_CHECK_VAR([rl_done])
-	  pl_RL_CHECK_VAR([rl_event_hook])
 	fi
       fi
     fi
   fi
+fi
+
+if test "$configeditline" = "yes" -a ! $readline_ok = "yes" ; then
+  if test ! -z "$RLPREFIX"; then
+    AC_MSG_CHECKING(Whether setting for RLPREFIX is ok)
+    if test -f $RLPREFIX/include/editline/readline.h -a \
+	    -f $RLPREFIX/lib/libeditline.$SO_EXT; then
+      LIBS="$LIBS $RLPREFIX/lib/libeditline.$SO_EXT"
+      AC_MSG_RESULT(Using $RLPREFIX)
+      AC_DEFINE(HAVE_LIBEDIT, 1,
+		[Define to 1 if you have libedit])
+      AC_DEFINE(HAVE_EDITLINE_READLINE_H, 1,
+		[Define to 1 if you have <editline/readline.h>])
+      ocflags="$CFLAGS"
+      CFLAGS="-I$RLPREFIX/include $CFLAGS"
+      editline_ok=yes
+    else
+      AC_MSG_RESULT(no)
+      RLPREFIX=
+    fi
+  fi
+
+  if test -z "$RLPREFIX"; then
+    AC_CHECK_LIB(edit, main,
+		 have_libedit=yes)
+
+    if test "$have_libedit" = yes; then
+      AC_CHECK_HEADERS(editline/readline.h)
+      if test "$ac_cv_header_editline_readline_h" = no; then
+	  unset ac_cv_header_editline_readline_h
+	  CFLAGS="$CFLAGS -I/usr/local/include"
+	  AC_CHECK_HEADERS(editline/readline.h)
+	  if test "$ac_cv_header_editline_readline_h" = yes; then
+	      CIFLAGS="$CIFLAGS -I/usr/local/include"
+	  fi
+      fi
+      if test "$ac_cv_header_editline_readline_h" = yes; then
+	editline_ok=yes
+	LIBS="-ledit $LIBS"
+	AC_DEFINE(HAVE_LIBEDIT, 1,
+		  [ Define if you have libedit and headers ])
+      fi
+    fi
+  fi
 else
-  readline_ok=yes			# specified absent
+  editline_ok=no			# specified absent
+fi
+
+if test "$editline_ok" = "yes" -o "$readline_ok" = "yes" ; then
+  AC_CHECK_FUNCS(rl_completion_matches rl_insert_close)
+  AC_CHECK_FUNCS(rl_set_prompt rl_clear_pending_input)
+  AC_CHECK_FUNCS(rl_cleanup_after_signal rl_reset_after_signal)
+  AC_CHECK_FUNCS(rl_begin_undo_group rl_end_undo_group)
+  AC_CHECK_FUNCS(rl_discard_argument rl_delete)
+  AC_CHECK_FUNCS(rl_filename_completion_function)
+  AC_CHECK_FUNCS(rl_set_keyboard_input_timeout)
+  AC_CHECK_DECLS([rl_readline_state, rl_done, rl_event_hook])
 fi
 
 dnl ================================================================
@@ -1994,7 +2025,7 @@ AC_CONFIG_COMMANDS([exe],
 		   ])
 AC_OUTPUT($OutputFiles)
 
-if test "$readline_ok" = no; then
+if test "$editline_ok" = no -a "$readline_ok" = no; then
 cat << _EOM_
 ****************************************************************
 * Could not find a working readline library.  Without this library
