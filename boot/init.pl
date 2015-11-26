@@ -2025,12 +2025,14 @@ load_files(Module:Files, Options) :-
 	;   true
 	),
 	'$compile_type'(What),
-
 	'$save_lex_state'(LexState, Options),
 	'$set_dialect'(Options),
-	'$load_file'(Absolute, Id, LM, Options),
+	call_cleanup('$load_file'(Absolute, Id, LM, Options),
+		     '$end_consult'(LexState, OldModule)).
+
+'$end_consult'(LexState, OldModule) :-
 	'$restore_lex_state'(LexState),
-	'$set_source_module'(_, OldModule).	% Restore old module
+	'$set_source_module'(_, OldModule).
 
 
 :- create_prolog_flag(emulated_dialect, swi, [type(atom)]).
