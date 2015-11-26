@@ -2891,11 +2891,14 @@ PRED_IMPL("$get_clause_attribute", 3, get_clause_attribute, 0)
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 redefineProcedure() is called when a procedure   needs to be defined and
-it seems to have a definition. The (*)   case occurs if this is actually
-false. This happens if a file holding   a  running predicate is reloaded
-because the clauses cannot be wiped.
+it seems to have a definition.
 
 Sf is the `owning' source-file
+
+(*) occurs if this is actually false. This   happens if a file holding a
+running predicate is reloaded because the clauses cannot be wiped.
+(**) there is a definition, but we are reloading and we have not yet
+seen this predicate, so it isn't there.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 int
@@ -2918,6 +2921,8 @@ redefineProcedure(Procedure proc, SourceFile sf, unsigned int suppress)
     def = getProcDefinition__LD(def PASS_LD);
     if ( !(first = hasClausesDefinition(def)) )
       return TRUE;				/* (*) see above */
+    if ( sf->reload && !lookupHTable(sf->reload->procedures, proc) )
+      return TRUE;				/* (**) see above */
 
     if ( first->value.clause->owner_no == sf->index )
     { if ( ((debugstatus.styleCheck & ~suppress) & DISCONTIGUOUS_STYLE) &&

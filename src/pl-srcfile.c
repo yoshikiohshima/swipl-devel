@@ -663,14 +663,16 @@ PRED_IMPL("$unload_file", 1, unload_file, 0)
 
 static int
 startReconsultFile(SourceFile sf)
-{ sf_reload *r;
+{ GET_LD
+  sf_reload *r;
 
   DEBUG(MSG_RECONSULT, Sdprintf("Reconsult %s ...\n", sourceFileName(sf)));
 
   if ( (r = allocHeap(sizeof(*sf->reload))) )
   { memset(r, 0, sizeof(*r));
-    r->procedures = newHTable(16);
-    r->reload_gen = GEN_MAX-PL_thread_self();
+    r->procedures        = newHTable(16);
+    r->reload_gen        = GEN_MAX-PL_thread_self();
+    r->pred_access_count = popNPredicateAccess(0);
     sf->reload = r;
 
     return TRUE;
@@ -695,13 +697,15 @@ static void
 advance_clause(p_reload *r ARG_LD)
 { ClauseRef cref;
 
-  acquire_def(r->predicate);
-  for(cref=r->current_clause; cref; cref = cref->next)
-  { if ( visibleClause(cref->value.clause, r->generation) )
-      break;
+  if ( (cref = r->current_clause) )
+  { acquire_def(r->predicate);
+    for(cref = cref->next; cref; cref = cref->next)
+    { if ( visibleClause(cref->value.clause, r->generation) )
+	break;
+    }
+    release_def(r->predicate);
+    r->current_clause = cref;
   }
-  release_def(r->predicate);
-  r->current_clause = cref;
 }
 
 
@@ -777,27 +781,36 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
       set(reload, P_MODIFIED);
 
-      for(cref2 = find_clause(cref, reload->generation);
-	  cref2;
-	  cref2 = find_clause(cref2, reload->generation))
-      { if ( equal_clause(cref2->value.clause, clause) )
+      acquire_def(def);
+      for(cref2 = cref->next; cref2; cref2 = cref->next)
+      { Clause c2 = cref2->value.clause;
+
+	if ( !visibleClause(c2, reload->generation) )
+	  continue;
+
+	if ( equal_clause(c2, clause) )
 	{ ClauseRef del;
 
-	  for(del = cref;
-	      del != cref2;
-	      del = find_clause(del, reload->generation))
+	  for(del = cref; del != cref2; del = del->next)
 	  { Clause c = del->value.clause;
+
+	    if ( !visibleClause(c, reload->generation) ||
+		 true(c, CL_ERASED) )
+	      continue;
+
 	    c->generation.erased = sf->reload->reload_gen;
 	    DEBUG(MSG_RECONSULT_CLAUSE,
 		  Sdprintf("Deleted clause %d\n",
 			   clauseNo(def, del->value.clause,
 				    reload->generation)));
 	  }
+	  release_def(def);
 
 	  reload->current_clause = cref2;
 	  return keep_clause(reload, clause PASS_LD);
 	}
       }
+      release_def(def);
 
       DEBUG(MSG_RECONSULT_CLAUSE,
 	    Sdprintf("Inserted before clause %d\n",
@@ -827,19 +840,22 @@ endReconsult(SourceFile sf)
   sf_reload *reload;
 
   if ( (reload=sf->reload) )
-  { sf->reload = NULL;
+  { size_t preds = reload->procedures->size;
 
-    for_table(sf->reload->procedures, n, v,
+    sf->reload = NULL;
+
+    for_table(reload->procedures, n, v,
 	      { Procedure proc = n;
 		p_reload *r = v;
 		Definition def = proc->definition;
 
 		reconsultFinalizePredicate(reload, def, r PASS_LD);
-		popPredicateAccess(def);
 		freeHeap(r, sizeof(*r));
 	      });
 
-    destroyHTable(sf->reload->procedures);
+    popNPredicateAccess(preds);
+    assert(reload->pred_access_count == popNPredicateAccess(0));
+    destroyHTable(reload->procedures);
     freeHeap(reload, sizeof(*reload));
   }
 

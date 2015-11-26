@@ -1551,6 +1551,7 @@ typedef struct p_reload
 typedef struct sf_reload
 { Table		procedures;		/* Procedures being reloaded */
   gen_t		reload_gen;		/* Magic gen for reloading */
+  size_t	pred_access_count;	/* Top of predicate access stack */
 } sf_reload;
 
 
