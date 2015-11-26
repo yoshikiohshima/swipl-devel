@@ -688,6 +688,40 @@ find_clause(ClauseRef cref, gen_t generation)
 }
 
 
+static void
+advance_clause(p_reload *r ARG_LD)
+{ ClauseRef cref;
+
+  acquire_def(r->predicate);
+  for(cref=r->current_clause; cref; cref = cref->next)
+  { if ( visibleClause(cref->value.clause, r->generation) )
+      break;
+  }
+  release_def(r->predicate);
+  r->current_clause = cref;
+}
+
+
+static int
+equal_clause(Clause cl1, Clause cl2)
+{ if ( cl1->code_size == cl2->code_size )
+  { size_t bytes = (size_t)cl1->code_size * sizeof(code);
+
+    return memcmp(cl1->codes, cl2->codes, bytes) == 0;
+  }
+
+  return FALSE;
+}
+
+
+static void
+copy_clause_source(Clause dest, Clause src)
+{ dest->source_no = src->source_no;
+  dest->owner_no  = src->owner_no;
+  dest->line_no   = src->line_no;
+}
+
+
 ClauseRef
 assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 { assert(proc == sf->current_procedure);
@@ -695,6 +729,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
   if ( sf->reload && isDefinedProcedure(proc) )
   { p_reload *reload;
     Definition def = proc->definition;
+    ClauseRef cref;
 
     if ( !(reload = lookupHTable(sf->reload->procedures, proc)) )
     { if ( !(reload = allocHeap(sizeof(*reload))) )
@@ -710,6 +745,15 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 					   reload->generation);
       release_def(def);
       addNewHTable(sf->reload->procedures, proc, reload);
+    }
+
+    cref = reload->current_clause;
+    if ( equal_clause(cref->value.clause, clause) )
+    { copy_clause_source(cref->value.clause, clause);
+      freeClauseSilent(clause);
+      advance_clause(reload PASS_LD);
+
+      return cref;
     }
   }
 
