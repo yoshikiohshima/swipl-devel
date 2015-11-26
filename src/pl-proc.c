@@ -1130,8 +1130,10 @@ assertProcedure(Procedure proc, Clause clause, ClauseRef where ARG_LD)
     { if ( cr->next == where )
       { cref->next = where;
 	cr->next = cref;
+	break;
       }
     }
+    assert(cr);
   }
 
   def->impl.clauses.number_of_clauses++;

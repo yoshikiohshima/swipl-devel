@@ -792,7 +792,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       set(reload, P_MODIFIED);
 
       acquire_def(def);
-      for(cref2 = cref->next; cref2; cref2 = cref->next)
+      for(cref2 = cref->next; cref2; cref2 = cref2->next)
       { Clause c2 = cref2->value.clause;
 
 	if ( !visibleClause(c2, reload->generation) )
