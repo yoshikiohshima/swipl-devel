@@ -850,10 +850,41 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 }
 
 
-static int
+static void
+associateSource(SourceFile sf, Procedure proc)
+{ Definition def = proc->definition;
+
+  if ( false(def, FILE_ASSIGNED) )
+  { GET_LD
+
+    DEBUG(2, Sdprintf("Associating %s to %s (%p)\n",
+		      predicateName(def), PL_atom_chars(source_file_name),
+		      def));
+    addProcedureSourceFile(sf, proc);
+
+    if ( SYSTEM_MODE )
+    { set(def, P_LOCKED|HIDE_CHILDS);
+    } else
+    { if ( truePrologFlag(PLFLAG_DEBUGINFO) )
+	clear(def, HIDE_CHILDS);
+      else
+	set(def, HIDE_CHILDS);
+    }
+  }
+}
+
+
+int
 setAttrProcedureSource(SourceFile sf, Procedure proc,
-		       unsigned attr, int set ARG_LD)
-{ return TRUE;
+		       unsigned attr, int val ARG_LD)
+{ if ( val && (attr&&PROC_DEFINED) )
+    associateSource(sf, proc);
+
+  if ( sf->reload )
+  {
+  }
+
+  return setAttrDefinition(proc->definition, attr, val);
 }
 
 

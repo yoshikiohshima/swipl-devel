@@ -2756,8 +2756,8 @@ set_thread_local_definition(Definition def, bool val)
 }
 
 
-static int
-set_attr_definition(Definition def, unsigned attr, int val)
+int
+setAttrDefinition(Definition def, unsigned attr, int val)
 { int rc;
 
   if ( attr == P_DYNAMIC )
@@ -2785,9 +2785,8 @@ pl_set_predicate_attribute(term_t pred,
   Procedure proc;
   Definition def;
   atom_t key;
-  int val, rc;
+  int val;
   uintptr_t att;
-  SourceFile sf;
 
   if ( !PL_get_atom(what, &key) )
     return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_atom, what);
@@ -2806,34 +2805,11 @@ pl_set_predicate_attribute(term_t pred,
   def = proc->definition;
 
   if ( ReadingSource )
-    sf = lookupSourceFile(source_file_name, TRUE);
-  else
-    sf = NULL;
-
-  rc = set_attr_definition(def, att, val);
-
-  if ( rc && val &&
-       (att & PROC_DEFINED) &&
-       false(def, FILE_ASSIGNED) &&
-       ReadingSource )
-  { assert(sf);
-
-    DEBUG(2, Sdprintf("Associating %s to %s (%p)\n",
-		      predicateName(def), PL_atom_chars(source_file_name),
-		      def));
-    addProcedureSourceFile(sf, proc);
-
-    if ( SYSTEM_MODE )
-    { set(def, P_LOCKED|HIDE_CHILDS);
-    } else
-    { if ( truePrologFlag(PLFLAG_DEBUGINFO) )
-	clear(def, HIDE_CHILDS);
-      else
-	set(def, HIDE_CHILDS);
-    }
+  { SourceFile sf = lookupSourceFile(source_file_name, TRUE);
+    return setAttrProcedureSource(sf, proc, att, val PASS_LD);
+  } else
+  { return setAttrDefinition(def, att, val);
   }
-
-  return rc;
 }
 
 

@@ -495,6 +495,7 @@ COMMON(void)		checkDefinition(Definition def);
 COMMON(Procedure)	isStaticSystemProcedure(functor_t fd);
 COMMON(foreign_t)	pl_garbage_collect_clauses(void);
 COMMON(int)		setDynamicDefinition(Definition def, bool isdyn);
+COMMON(int)		setAttrDefinition(Definition def, unsigned attr, int val);
 COMMON(int)		PL_meta_predicate(predicate_t def, const char*);
 
 /* pl-srcfile.c */
@@ -509,7 +510,8 @@ COMMON(void)		addProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(int)		hasProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(ClauseRef)	assertProcedureSource(SourceFile sf, Procedure proc,
 					      Clause clause ARG_LD);
-
+COMMON(int)		setAttrProcedureSource(SourceFile sf, Procedure proc,
+					       unsigned attr, int val ARG_LD);
 
 /* pl-read.c */
 COMMON(void)		resetRead(void);
