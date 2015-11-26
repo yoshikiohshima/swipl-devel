@@ -1459,6 +1459,7 @@ reconsultFinalizePredicate(sf_reload *rl, Definition def, p_reload *r ARG_LD)
 
       if ( cl->generation.erased == rl->reload_gen && false(cl, CL_ERASED) )
       { set(cl, CL_ERASED);
+	cl->generation.erased = update;
 	deleted++;
 	memory += sizeofClause(cl->code_size) + SIZEOF_CREF_CLAUSE;
 	def->impl.clauses.number_of_clauses--;
