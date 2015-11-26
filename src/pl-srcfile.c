@@ -692,7 +692,7 @@ ClauseRef
 assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 { assert(proc == sf->current_procedure);
 
-  if ( sf->reload )
+  if ( sf->reload && isDefinedProcedure(proc) )
   { p_reload *reload;
     Definition def = proc->definition;
 
