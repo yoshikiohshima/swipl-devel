@@ -811,8 +811,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 	    c->generation.erased = sf->reload->reload_gen;
 	    DEBUG(MSG_RECONSULT_CLAUSE,
 		  Sdprintf("  Deleted clause %d\n",
-			   clauseNo(def, del->value.clause,
-				    reload->generation)));
+			   clauseNo(def, c, reload->generation)));
 	  }
 	  release_def(def);
 
@@ -829,7 +828,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 	    Sdprintf("  Inserted before clause %d\n",
 		     clauseNo(def, cref->value.clause, reload->generation)));
       if ( (cref2 = assertProcedure(proc, clause, cref PASS_LD)) )
-	cref->value.clause->generation.created = sf->reload->reload_gen;
+	cref2->value.clause->generation.created = sf->reload->reload_gen;
 
       return cref2;
     } else
@@ -885,6 +884,27 @@ delete_old_predicates(SourceFile sf)
 }
 
 
+static void
+delete_pending_clauses(sf_reload *rl, Definition def, p_reload *r ARG_LD)
+{ ClauseRef cref;
+
+  acquire_def(def);
+  for(cref = r->current_clause; cref; cref = cref->next)
+  { Clause c = cref->value.clause;
+
+    if ( !visibleClause(c, r->generation) ||
+	 true(c, CL_ERASED) )
+      continue;
+
+    c->generation.erased = rl->reload_gen;
+    DEBUG(MSG_RECONSULT_CLAUSE,
+	  Sdprintf("  Deleted clause %d\n",
+		   clauseNo(def, c, r->generation)));
+  }
+  release_def(def);
+}
+
+
 static int
 endReconsult(SourceFile sf)
 { GET_LD
@@ -902,6 +922,7 @@ endReconsult(SourceFile sf)
 		if ( false(r, P_NEW) )
 		{ Definition def = proc->definition;
 
+		  delete_pending_clauses(reload, def, r PASS_LD);
 		  reconsultFinalizePredicate(reload, def, r PASS_LD);
 		} else
 		{ accessed_preds--;
