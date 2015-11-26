@@ -235,14 +235,14 @@ trace_alias(fail, [trace_fail]).
 	'$trace'(A1, Head).
 '$trace'(+H, Head) :- !,
 	trace_alias(_, [H]),
-	'$set_predicate_attribute'(Head, H, 1).
+	'$set_predicate_attribute'(Head, H, true).
 '$trace'(-H, Head) :-
 	trace_alias(H, A0), !,
 	tag_list(A0, -, A1),
 	'$trace'(A1, Head).
 '$trace'(-H, Head) :- !,
 	trace_alias(_, [H]),
-	'$set_predicate_attribute'(Head, H, 0).
+	'$set_predicate_attribute'(Head, H, false).
 '$trace'(H, Head) :-
 	atom(H),
 	'$trace'(+H, Head).

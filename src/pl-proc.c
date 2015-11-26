@@ -2577,7 +2577,14 @@ attribute_mask(atom_t key)
       return p->mask;
   }
 
-  return 0;
+  { GET_LD
+    term_t t;
+
+    return ( (t = PL_new_term_ref()) &&
+	     PL_put_atom(t, key) &&
+	     PL_domain_error("predicate_property", t)
+	   );
+  }
 }
 
 
@@ -2668,8 +2675,7 @@ pl_get_predicate_attribute(term_t pred,
   } else if ( (att = attribute_mask(key)) )
   { return PL_unify_integer(value, (def->flags & att) ? 1 : 0);
   } else
-  { return PL_error(NULL, 0, NULL, ERR_DOMAIN,
-		    PL_new_atom("procedure_property"), what);
+  { return FALSE;
   }
 }
 
@@ -2779,8 +2785,7 @@ setAttrDefinition(Definition def, unsigned attr, int val)
 
 
 word
-pl_set_predicate_attribute(term_t pred,
-			   term_t what, term_t value)
+pl_set_predicate_attribute(term_t pred, term_t what, term_t value)
 { GET_LD
   Procedure proc;
   Definition def;
@@ -2788,13 +2793,11 @@ pl_set_predicate_attribute(term_t pred,
   int val;
   uintptr_t att;
 
-  if ( !PL_get_atom(what, &key) )
-    return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_atom, what);
-  if ( !PL_get_integer(value, &val) || val & ~1 )
-    return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_integer, value);
-  if ( !(att = attribute_mask(key)) )
-    return PL_error(NULL, 0, NULL, ERR_DOMAIN,
-		    PL_new_atom("procedure_property"), what);
+  if ( !PL_get_atom_ex(what, &key) ||
+       !PL_get_bool_ex(value, &val) ||
+       !(att = attribute_mask(key)) )
+    return FALSE;
+
   if ( att & (TRACE_ANY|SPY_ME) )
   { if ( !get_procedure(pred, &proc, 0, GP_RESOLVE) )
       fail;
