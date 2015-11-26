@@ -137,7 +137,7 @@ COMMON(Procedure)	lookupBodyProcedure(functor_t functor, Module tm);
 COMMON(int)		compileClause(Clause *cp, Word head, Word body,
 				      Procedure proc, Module module,
 				      term_t warnings ARG_LD);
-COMMON(Clause)		assert_term(term_t term, int where, atom_t owner,
+COMMON(Clause)		assert_term(term_t term, ClauseRef where, atom_t owner,
 				    SourceLoc loc ARG_LD);
 COMMON(void)		forAtomsInClause(Clause clause, void (func)(atom_t a));
 COMMON(Code)		stepDynPC(Code PC, const code_info *ci);
@@ -175,7 +175,8 @@ COMMON(ClauseRef)	firstClause(Word argv, LocalFrame fr, Definition def,
 				    ClauseChoice next ARG_LD);
 COMMON(ClauseRef)	nextClause__LD(ClauseChoice chp, Word argv, LocalFrame fr,
 				       Definition def ARG_LD);
-COMMON(void)		addClauseToIndexes(Definition def, Clause cl, int where);
+COMMON(int)		addClauseToIndexes(Definition def, Clause cl,
+					   ClauseRef where);
 COMMON(void)		delClauseFromIndex(Definition def, Clause cl);
 COMMON(void)		cleanClauseIndexes(Definition def, gen_t active);
 COMMON(void)		unallocOldClauseIndexes(Definition def);
@@ -461,7 +462,7 @@ COMMON(word)		pl_current_predicate(term_t name, term_t functor, control_t h);
 COMMON(foreign_t)	pl_current_predicate1(term_t spec, control_t ctx);
 COMMON(void)		clear_meta_declaration(Definition def);
 COMMON(ClauseRef)	assertProcedure(Procedure proc, Clause clause,
-					int where ARG_LD);
+					ClauseRef where ARG_LD);
 COMMON(bool)		abolishProcedure(Procedure proc, Module module);
 COMMON(bool)		retractClauseDefinition(Definition def, Clause clause);
 COMMON(void)		freeClauseSilent(Clause c);
@@ -471,6 +472,8 @@ COMMON(ClauseRef)	newClauseRef(Clause cl, word key);
 COMMON(void)		gcClauseRefs(void);
 COMMON(size_t)		removeClausesProcedure(Procedure proc,
 					       int sfindex, int fromfile);
+COMMON(void)		reconsultFinalizePredicate(sf_reload *rl, Definition def,
+						   p_reload *r ARG_LD);
 COMMON(void)		destroyDefinition(Definition def);
 COMMON(Procedure)	resolveProcedure(functor_t f, Module module);
 COMMON(Definition)	trapUndefined(Definition undef ARG_LD);
@@ -617,8 +620,9 @@ COMMON(char *)		procedureName(Procedure proc);
 COMMON(char *)		predicateName(Definition def);
 COMMON(char *)		functorName(functor_t f);
 COMMON(char *)		keyName(word key);
+COMMON(char *)		sourceFileName(SourceFile sf);
 COMMON(char *)		generationName(gen_t gen);
-COMMON(int)		clauseNo(Definition def, Clause clause);
+COMMON(int)		clauseNo(Definition def, Clause clause, gen_t gen);
 COMMON(int)		notImplemented(char *name, int arity);
 COMMON(word)		setBoolean(int *flag, term_t o, term_t n);
 COMMON(word)		setInteger(int *val, term_t old, term_t new);

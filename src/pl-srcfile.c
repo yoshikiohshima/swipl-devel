@@ -665,9 +665,12 @@ static int
 startReconsultFile(SourceFile sf)
 { sf_reload *r;
 
+  DEBUG(MSG_RECONSULT, Sdprintf("Reconsult %s ...\n", sourceFileName(sf)));
+
   if ( (r = allocHeap(sizeof(*sf->reload))) )
   { memset(r, 0, sizeof(*r));
     r->procedures = newHTable(16);
+    r->reload_gen = GEN_MAX-PL_thread_self();
     sf->reload = r;
 
     return TRUE;
@@ -702,6 +705,27 @@ advance_clause(p_reload *r ARG_LD)
 }
 
 
+static void
+copy_clause_source(Clause dest, Clause src)
+{ dest->source_no = src->source_no;
+  dest->owner_no  = src->owner_no;
+  dest->line_no   = src->line_no;
+}
+
+
+static ClauseRef
+keep_clause(p_reload *r, Clause clause ARG_LD)
+{ ClauseRef cref = r->current_clause;
+  Clause keep = cref->value.clause;
+
+  copy_clause_source(keep, clause);
+  freeClauseSilent(clause);
+  advance_clause(r PASS_LD);
+
+  return cref;
+}
+
+
 static int
 equal_clause(Clause cl1, Clause cl2)
 { if ( cl1->code_size == cl2->code_size )
@@ -711,14 +735,6 @@ equal_clause(Clause cl1, Clause cl2)
   }
 
   return FALSE;
-}
-
-
-static void
-copy_clause_source(Clause dest, Clause src)
-{ dest->source_no = src->source_no;
-  dest->owner_no  = src->owner_no;
-  dest->line_no   = src->line_no;
 }
 
 
@@ -745,13 +761,57 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 					   reload->generation);
       release_def(def);
       addNewHTable(sf->reload->procedures, proc, reload);
+      DEBUG(MSG_RECONSULT_PRED,
+	    Sdprintf("Reload %s ...\n", predicateName(def)));
     }
 
-    cref = reload->current_clause;
-    if ( equal_clause(cref->value.clause, clause) )
-    { copy_clause_source(cref->value.clause, clause);
-      freeClauseSilent(clause);
-      advance_clause(reload PASS_LD);
+    if ( (cref = reload->current_clause) )
+    { ClauseRef cref2;
+
+      if ( equal_clause(cref->value.clause, clause) )
+      { DEBUG(MSG_RECONSULT_CLAUSE,
+	      Sdprintf("Keeping clause %d\n",
+		       clauseNo(def, cref->value.clause, reload->generation)));
+	return keep_clause(reload, clause PASS_LD);
+      }
+
+      set(reload, P_MODIFIED);
+
+      for(cref2 = find_clause(cref, reload->generation);
+	  cref2;
+	  cref2 = find_clause(cref2, reload->generation))
+      { if ( equal_clause(cref2->value.clause, clause) )
+	{ ClauseRef del;
+
+	  for(del = cref;
+	      del != cref2;
+	      del = find_clause(del, reload->generation))
+	  { Clause c = del->value.clause;
+	    c->generation.erased = sf->reload->reload_gen;
+	    DEBUG(MSG_RECONSULT_CLAUSE,
+		  Sdprintf("Deleted clause %d\n",
+			   clauseNo(def, del->value.clause,
+				    reload->generation)));
+	  }
+
+	  reload->current_clause = cref2;
+	  return keep_clause(reload, clause PASS_LD);
+	}
+      }
+
+      DEBUG(MSG_RECONSULT_CLAUSE,
+	    Sdprintf("Inserted before clause %d\n",
+		     clauseNo(def, cref->value.clause, reload->generation)));
+      if ( (cref2 = assertProcedure(proc, clause, cref PASS_LD)) )
+	cref->value.clause->generation.created = sf->reload->reload_gen;
+
+      return cref2;
+    } else
+    { if ( (cref = assertProcedure(proc, clause, CL_END PASS_LD)) )
+	cref->value.clause->generation.created = sf->reload->reload_gen;
+      DEBUG(MSG_RECONSULT_CLAUSE, Sdprintf("Added at the end\n"));
+
+      set(reload, P_MODIFIED);
 
       return cref;
     }
@@ -774,6 +834,7 @@ endReconsult(SourceFile sf)
 		p_reload *r = v;
 		Definition def = proc->definition;
 
+		reconsultFinalizePredicate(reload, def, r PASS_LD);
 		popPredicateAccess(def);
 		freeHeap(r, sizeof(*r));
 	      });

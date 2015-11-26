@@ -412,8 +412,8 @@ typedef int			bool;
 #define fail			return FALSE
 #define TRY(goal)		do { if (!(goal)) return FALSE; } while(0)
 
-#define CL_START		0	/* asserta */
-#define CL_END			1	/* assertz */
+#define CL_START		((ClauseRef)1)	/* asserta */
+#define CL_END			((ClauseRef)2)	/* assertz */
 
 typedef void *			caddress;
 
@@ -842,6 +842,8 @@ with one operation, it turns out to be faster as well.
 #define FILE_ASSIGNED		(0x40000000) /* Is assigned to a file */
 #define P_REDEFINED		(0x80000000) /* Overrules a definition */
 #define PROC_DEFINED		(P_DYNAMIC|P_FOREIGN|P_MULTIFILE|P_DISCONTIGUOUS)
+/* flags for p_reload data (reconsult) */
+#define P_MODIFIED		P_DIRTYREG
 
 /* Flags on clauses (packed in unsigned flags : 8) */
 
@@ -1548,6 +1550,7 @@ typedef struct p_reload
 
 typedef struct sf_reload
 { Table		procedures;		/* Procedures being reloaded */
+  gen_t		reload_gen;		/* Magic gen for reloading */
 } sf_reload;
 
 

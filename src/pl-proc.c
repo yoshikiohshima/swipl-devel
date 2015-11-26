@@ -1087,6 +1087,14 @@ activePredicate(const Definition *defs, const Definition def)
 Assert a clause to a procedure. Where askes to assert either at the head
 or at the tail of the clause list.
 
+The `where` argument is one of
+
+  - CL_START (asserta)
+  - CL_END   (assertz)
+  - The clause reference before which the clause must be inserted.
+    This is used by reconsult.  Note that addClauseToIndexes() may
+    not add the clause to the index, but we do not care.
+
 (*) This function updates the indexing information.  If we have a static
 procedure, it deletes the supervisor. This is  probably a bit rough, but
 deals with -for example- clauses for   term_expansion/2. After the first
@@ -1095,7 +1103,7 @@ installed, causing further clauses to have no effect.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 ClauseRef
-assertProcedure(Procedure proc, Clause clause, int where ARG_LD)
+assertProcedure(Procedure proc, Clause clause, ClauseRef where ARG_LD)
 { Definition def = getProcDefinition(proc);
   word key;
   ClauseRef cref;
@@ -1107,14 +1115,23 @@ assertProcedure(Procedure proc, Clause clause, int where ARG_LD)
   acquire_def(def);
   if ( !def->impl.clauses.last_clause )
   { def->impl.clauses.first_clause = def->impl.clauses.last_clause = cref;
-  } else if ( where == CL_START )
+  } else if ( where == CL_START || where == def->impl.clauses.first_clause )
   { cref->next = def->impl.clauses.first_clause;
     def->impl.clauses.first_clause = cref;
-  } else
+  } else if ( where == CL_END )
   { ClauseRef last = def->impl.clauses.last_clause;
 
     last->next = cref;
     def->impl.clauses.last_clause = cref;
+  } else				/* insert before */
+  { ClauseRef cr;
+
+    for(cr = def->impl.clauses.first_clause; cr; cr = cr->next)
+    { if ( cr->next == where )
+      { cref->next = where;
+	cr->next = cref;
+      }
+    }
   }
 
   def->impl.clauses.number_of_clauses++;
@@ -1419,6 +1436,60 @@ mustCleanDefinition(const Definition def)
   }
 
   return FALSE;
+}
+
+
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Finalize a reloaded predicate. This (nearly)   atomically  makes the new
+definition visible.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+void
+reconsultFinalizePredicate(sf_reload *rl, Definition def, p_reload *r ARG_LD)
+{ if ( true(r, P_MODIFIED) )
+  { ClauseRef cref;
+    gen_t update = ATOMIC_INC(&GD->generation);
+    size_t deleted = 0;
+    size_t added   = 0;
+    size_t memory  = 0;
+
+    acquire_def(def);
+    for(cref = def->impl.clauses.first_clause; cref; cref=cref->next)
+    { Clause cl = cref->value.clause;
+
+      if ( cl->generation.erased == rl->reload_gen && false(cl, CL_ERASED) )
+      { set(cl, CL_ERASED);
+	deleted++;
+	memory += sizeofClause(cl->code_size) + SIZEOF_CREF_CLAUSE;
+	def->impl.clauses.number_of_clauses--;
+	def->impl.clauses.erased_clauses++;
+	if ( false(cl, UNIT_CLAUSE) )
+	  def->impl.clauses.number_of_rules--;
+	if ( true(def, P_DYNAMIC) )
+	  deleteActiveClauseFromIndexes(def, cl);
+	registerRetracted(cl);
+      } else if ( cl->generation.created == rl->reload_gen )
+      { cl->generation.created = update;
+	added++;
+      }
+    }
+    release_def(def);
+
+    if ( false(def, P_DYNAMIC) )	/* delete all indexes */
+    { deleteActiveClauseFromIndexes(def, NULL);
+      clearTriedIndexes(def);
+    }
+
+    if ( deleted )
+    { ATOMIC_SUB(&def->module->code_size, memory);
+      ATOMIC_ADD(&GD->clauses.erased_size, memory);
+      ATOMIC_ADD(&GD->clauses.erased, deleted);
+
+      registerDirtyDefinition(def PASS_LD);
+    }
+
+    DEBUG(CHK_SECURE, checkDefinition(def));
+  }
 }
 
 
@@ -3045,7 +3116,7 @@ listGenerations(Definition def)
 
 	      Sdprintf("  %p: [%2d] %8u-%10u%s%s\n",
 		       clause,
-		       clauseNo(def, clause),
+		       clauseNo(def, clause, 0),
 		       clause->generation.created,
 		       clause->generation.erased,
 		       true(clause, CL_ERASED) ? " erased" : "",
@@ -3056,7 +3127,7 @@ listGenerations(Definition def)
 
 	    Sdprintf("%p: [%2d] %8u-%10u%s%s%s\n",
 		     clause,
-		     clauseNo(def, clause),
+		     clauseNo(def, clause, 0),
 		     clause->generation.created,
 		     clause->generation.erased,
 		     true(clause, CL_ERASED) ? " erased" : "",

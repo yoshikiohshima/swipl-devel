@@ -3387,7 +3387,7 @@ The warnings should help explain what is going on here.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 Clause
-assert_term(term_t term, int where, atom_t owner, SourceLoc loc ARG_LD)
+assert_term(term_t term, ClauseRef where, atom_t owner, SourceLoc loc ARG_LD)
 { Clause clause;
   Procedure proc;
   Definition def;
