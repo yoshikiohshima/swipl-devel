@@ -850,6 +850,13 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 }
 
 
+static int
+setAttrProcedureSource(SourceFile sf, Procedure proc,
+		       unsigned attr, int set ARG_LD)
+{ return TRUE;
+}
+
+
 static void
 delete_old_predicates(SourceFile sf)
 { GET_LD

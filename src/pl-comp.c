@@ -3535,7 +3535,7 @@ mode, the predicate is still undefined and is not dynamic or multifile.
   /* assert[az]/1 */
 
   if ( false(def, P_DYNAMIC) )
-  { if ( !setDynamicProcedure(proc, TRUE) )
+  { if ( !setDynamicDefinition(def, TRUE) )
     { freeClauseSilent(clause);
       return NULL;
     }
@@ -3779,7 +3779,7 @@ PRED_IMPL("compile_predicates",  1, compile_predicates, PL_FA_TRANSPARENT)
 			GP_NAMEARITY|GP_FINDHERE|GP_EXISTENCE_ERROR) )
       return FALSE;
 
-    if ( !setDynamicProcedure(proc, FALSE) )
+    if ( !setDynamicDefinition(proc->definition, FALSE) )
       return FALSE;
   }
 

@@ -494,7 +494,7 @@ COMMON(foreign_t)	pl_check_procedure(term_t desc);
 COMMON(void)		checkDefinition(Definition def);
 COMMON(Procedure)	isStaticSystemProcedure(functor_t fd);
 COMMON(foreign_t)	pl_garbage_collect_clauses(void);
-COMMON(int)		setDynamicProcedure(Procedure proc, bool isdyn);
+COMMON(int)		setDynamicDefinition(Definition def, bool isdyn);
 COMMON(int)		PL_meta_predicate(predicate_t def, const char*);
 
 /* pl-srcfile.c */

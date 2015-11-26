@@ -40,7 +40,7 @@ static atom_t	autoLoader(Definition def);
 static Procedure visibleProcedure(functor_t f, Module m);
 static void	freeClause(Clause cl);
 static void	freeClauseRef(ClauseRef cref);
-static int	setDynamicDefinition(Definition def, bool isdyn);
+static int	setDynamicDefinition_unlocked(Definition def, bool isdyn);
 static void	registerDirtyDefinition(Definition def ARG_LD);
 static void	unregisterDirtyDefinition(Definition def);
 
@@ -1194,7 +1194,7 @@ abolishProcedure(Procedure proc, Module module)
 		    ATOM_modify, ATOM_thread_local_procedure, proc);
   } else				/* normal Prolog procedure */
   { removeClausesProcedure(proc, 0, FALSE);
-    setDynamicDefinition(def, FALSE);
+    setDynamicDefinition_unlocked(def, FALSE);
     resetProcedure(proc, FALSE);
   }
 
@@ -2292,7 +2292,7 @@ PRED_IMPL("retract", 1, retract,
       if ( false(def, P_DYNAMIC) )
       { if ( isDefinedProcedure(proc) )
 	  return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, proc);
-	setDynamicProcedure(proc, TRUE); /* implicit */
+	setDynamicDefinition(def, TRUE); /* implicit */
 	fail;				/* no clauses */
       }
 
@@ -2407,7 +2407,7 @@ pl_retractall(term_t head)
   if ( false(def, P_DYNAMIC) )
   { if ( isDefinedProcedure(proc) )
       return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, proc);
-    if ( !setDynamicProcedure(proc, TRUE) )
+    if ( !setDynamicDefinition(def, TRUE) )
       fail;
     succeed;				/* nothing to retract */
   }
@@ -2683,8 +2683,9 @@ sequence hazardous and slow in multi-threaded environment.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-setDynamicDefinition(Definition def, bool isdyn)
+setDynamicDefinition_unlocked(Definition def, bool isdyn)
 { GET_LD
+
   if ( (isdyn && true(def, P_DYNAMIC)) ||
        (!isdyn && false(def, P_DYNAMIC)) )
     return TRUE;
@@ -2703,23 +2704,20 @@ setDynamicDefinition(Definition def, bool isdyn)
 
 
 int
-setDynamicProcedure(Procedure proc, bool isdyn)
-{ Definition def = proc->definition;
-  int rc;
+setDynamicDefinition(Definition def, bool isdyn)
+{ int rc;
 
   LOCKDEF(def);
-  rc = setDynamicDefinition(def, isdyn);
+  rc = setDynamicDefinition_unlocked(def, isdyn);
   UNLOCKDEF(def);
 
   return rc;
 }
 
-
 static int
-set_thread_local_procedure(Procedure proc, bool val)
+set_thread_local_definition(Definition def, bool val)
 {
 #ifdef O_PLMT
-  Definition def = proc->definition;
 
   LOCKDEF(def);
   if ( (val && true(def, P_THREAD_LOCAL)) ||
@@ -2731,7 +2729,7 @@ set_thread_local_procedure(Procedure proc, bool val)
   if ( val )				/* static --> local */
   { if ( def->impl.clauses.first_clause )
     { UNLOCKDEF(def);
-      return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, proc);
+      return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PREDICATE, def);
     }
     set(def, P_DYNAMIC|P_VOLATILE|P_THREAD_LOCAL);
 
@@ -2742,19 +2740,41 @@ set_thread_local_procedure(Procedure proc, bool val)
     return TRUE;
   } else				/* local --> static */
   { UNLOCKDEF(def);
-    return PL_error(NULL, 0, "TBD: better message",
-		    ERR_MODIFY_STATIC_PROC, proc);
+    return PL_error(NULL, 0, "predicate is thread-local",
+		    ERR_MODIFY_STATIC_PREDICATE, def);
   }
 #else
-  setDynamicProcedure(proc, val);
+  setDynamicDefinition(proc, val);
 
   if ( val )
-    set(proc->definition, P_VOLATILE|P_THREAD_LOCAL);
+    set(def, P_VOLATILE|P_THREAD_LOCAL);
   else
-    clear(proc->definition, P_VOLATILE|P_THREAD_LOCAL);
+    clear(def, P_VOLATILE|P_THREAD_LOCAL);
 
   succeed;
 #endif
+}
+
+
+static int
+set_attr_definition(Definition def, unsigned attr, int val)
+{ int rc;
+
+  if ( attr == P_DYNAMIC )
+  { rc = setDynamicDefinition(def, val);
+  } else if ( attr == P_THREAD_LOCAL )
+  { rc = set_thread_local_definition(def, val);
+  } else
+  { if ( !val )
+    { clear(def, attr);
+    } else
+    { set(def, attr);
+    }
+
+    rc = TRUE;
+  }
+
+  return rc;
 }
 
 
@@ -2767,6 +2787,7 @@ pl_set_predicate_attribute(term_t pred,
   atom_t key;
   int val, rc;
   uintptr_t att;
+  SourceFile sf;
 
   if ( !PL_get_atom(what, &key) )
     return PL_error(NULL, 0, NULL, ERR_TYPE, ATOM_atom, what);
@@ -2784,28 +2805,23 @@ pl_set_predicate_attribute(term_t pred,
   }
   def = proc->definition;
 
-  if ( att == P_DYNAMIC )
-  { rc = setDynamicProcedure(proc, val);
-  } else if ( att == P_THREAD_LOCAL )
-  { rc = set_thread_local_procedure(proc, val);
-  } else
-  { if ( !val )
-    { clear(def, att);
-    } else
-    { set(def, att);
-    }
+  if ( ReadingSource )
+    sf = lookupSourceFile(source_file_name, TRUE);
+  else
+    sf = NULL;
 
-    rc = TRUE;
-  }
+  rc = set_attr_definition(def, att, val);
 
   if ( rc && val &&
        (att & PROC_DEFINED) &&
        false(def, FILE_ASSIGNED) &&
        ReadingSource )
-  { DEBUG(2, Sdprintf("Associating %s to %s (%p)\n",
+  { assert(sf);
+
+    DEBUG(2, Sdprintf("Associating %s to %s (%p)\n",
 		      predicateName(def), PL_atom_chars(source_file_name),
 		      def));
-    addProcedureSourceFile(lookupSourceFile(source_file_name, TRUE), proc);
+    addProcedureSourceFile(sf, proc);
 
     if ( SYSTEM_MODE )
     { set(def, P_LOCKED|HIDE_CHILDS);
@@ -3030,7 +3046,7 @@ PRED_IMPL("copy_predicate_clauses", 2, copy_predicate_clauses, PL_FA_TRANSPARENT
   if ( false(copy_def, P_DYNAMIC) )
   { if ( isDefinedProcedure(to) )
       return PL_error(NULL, 0, NULL, ERR_MODIFY_STATIC_PROC, to);
-    if ( !setDynamicProcedure(to, TRUE) )
+    if ( !setDynamicDefinition(copy_def, TRUE) )
       fail;
   }
 
