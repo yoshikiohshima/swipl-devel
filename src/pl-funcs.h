@@ -496,7 +496,7 @@ COMMON(int)		PL_meta_predicate(predicate_t def, const char*);
 
 /* pl-srcfile.c */
 
-COMMON(void)		startConsult(SourceFile f);
+COMMON(int)		startConsult(SourceFile f);
 COMMON(size_t)		highSourceFileIndex(void);
 COMMON(SourceFile)	lookupSourceFile(atom_t name, int create);
 COMMON(SourceFile)	indexToSourceFile(int index);
@@ -504,6 +504,9 @@ COMMON(void)		cleanupSourceFiles(void);
 COMMON(void)		unlinkSourceFileModule(SourceFile sf, Module m);
 COMMON(void)		addProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(int)		hasProcedureSourceFile(SourceFile sf, Procedure proc);
+COMMON(ClauseRef)	assertProcedureSource(SourceFile sf, Procedure proc,
+					      Clause clause, int where ARG_LD);
+
 
 /* pl-read.c */
 COMMON(void)		resetRead(void);

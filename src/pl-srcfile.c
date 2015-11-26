@@ -657,6 +657,41 @@ PRED_IMPL("$unload_file", 1, unload_file, 0)
 }
 
 
+		 /*******************************
+		 *	    RECONSULT		*
+		 *******************************/
+
+static int
+startReconsultFile(SourceFile sf)
+{ sf_reload *r;
+
+  if ( (r = allocHeap(sizeof(*sf->reload))) )
+  { memset(r, 0, sizeof(*r));
+    r->procedures = newHTable(16);
+    sf->reload = r;
+
+    return TRUE;
+  }
+
+  return PL_no_memory();
+}
+
+
+ClauseRef
+assertProcedureSource(SourceFile sf, Procedure proc,
+		      Clause clause, int where ARG_LD)
+{
+
+
+  return assertProcedure(proc, clause, where PASS_LD);
+}
+
+
+
+		 /*******************************
+		 *	      CONSULT		*
+		 *******************************/
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 startConsult(SourceFile sf)
 
@@ -672,12 +707,15 @@ There are two options.
     This way other threads can happily keep running.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-void
+int
 startConsult(SourceFile f)
 { if ( f->count++ > 0 )			/* This is a re-consult */
-    unloadFile(f);
+  { if ( !startReconsultFile(f) )
+      return FALSE;
+  }
 
   f->current_procedure = NULL;
+  return TRUE;
 }
 
 

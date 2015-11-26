@@ -1531,8 +1531,24 @@ struct recordRef
   Record	record;			/* the record itself */
 };
 
+		 /*******************************
+		 *	SOURCE FILE ADMIN	*
+		 *******************************/
+
 #define SF_MAGIC 0x14a3c90f
 #define SF_MAGIC_DESTROYING 0x14a3c910
+
+typedef struct p_reload
+{ Definition	predicate;		/* definition we are working on */
+  ClauseRef	current_clause;		/* currently reloading clause */
+  meta_mask	meta_info;		/* new meta declaration (if any) */
+  unsigned	flags;			/* new flags (P_DYNAMIC, etc.) */
+} p_reload;
+
+typedef struct sf_reload
+{ Table		procedures;		/* Procedures being reloaded */
+} sf_reload;
+
 
 struct sourceFile
 { atom_t	name;			/* name of source file */
@@ -1540,6 +1556,7 @@ struct sourceFile
   ListCell	procedures;		/* List of associated procedures */
   Procedure	current_procedure;	/* currently loading one */
   ListCell	modules;		/* Modules associated to this file */
+  sf_reload     *reload;		/* Reloading context */
 #ifdef O_PLMT
   counting_mutex *mutex;		/* Mutex to guard procedures */
 #endif
@@ -1558,6 +1575,10 @@ struct list_cell
   ListCell	next;		/* next in chain */
 };
 
+
+		 /*******************************
+		 *	      MODULES		*
+		 *******************************/
 
 struct module
 { atom_t	name;		/* name of module */
