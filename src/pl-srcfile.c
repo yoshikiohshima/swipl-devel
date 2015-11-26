@@ -774,7 +774,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
       if ( equal_clause(cref->value.clause, clause) )
       { DEBUG(MSG_RECONSULT_CLAUSE,
-	      Sdprintf("Keeping clause %d\n",
+	      Sdprintf("  Keeping clause %d\n",
 		       clauseNo(def, cref->value.clause, reload->generation)));
 	return keep_clause(reload, clause PASS_LD);
       }
@@ -800,7 +800,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
 	    c->generation.erased = sf->reload->reload_gen;
 	    DEBUG(MSG_RECONSULT_CLAUSE,
-		  Sdprintf("Deleted clause %d\n",
+		  Sdprintf("  Deleted clause %d\n",
 			   clauseNo(def, del->value.clause,
 				    reload->generation)));
 	  }
@@ -813,7 +813,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       release_def(def);
 
       DEBUG(MSG_RECONSULT_CLAUSE,
-	    Sdprintf("Inserted before clause %d\n",
+	    Sdprintf("  Inserted before clause %d\n",
 		     clauseNo(def, cref->value.clause, reload->generation)));
       if ( (cref2 = assertProcedure(proc, clause, cref PASS_LD)) )
 	cref->value.clause->generation.created = sf->reload->reload_gen;
@@ -822,7 +822,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
     } else
     { if ( (cref = assertProcedure(proc, clause, CL_END PASS_LD)) )
 	cref->value.clause->generation.created = sf->reload->reload_gen;
-      DEBUG(MSG_RECONSULT_CLAUSE, Sdprintf("Added at the end\n"));
+      DEBUG(MSG_RECONSULT_CLAUSE, Sdprintf("  Added at the end\n"));
 
       set(reload, P_MODIFIED);
 
@@ -834,6 +834,44 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 }
 
 
+static void
+delete_old_predicates(SourceFile sf)
+{ GET_LD
+  ListCell cell, prev = NULL, next;
+  size_t deleted = 0;
+
+  for(cell = sf->procedures; cell; cell = next)
+  { Procedure proc = cell->value;
+    Definition def = proc->definition;
+
+    next = cell->next;
+
+    if ( false(def, P_FOREIGN) &&
+	 !lookupHTable(sf->reload->procedures, proc) )
+    { deleted += removeClausesProcedure(proc,
+					true(def, P_MULTIFILE) ? sf->index : 0,
+					TRUE);
+
+      if ( false(def, P_MULTIFILE) )
+      { clear(def, FILE_ASSIGNED);
+	clear_meta_declaration(def);
+      }
+
+      DEBUG(MSG_RECONSULT_PRED,
+	    Sdprintf("Deleted %d clauses from predicate %s\n",
+		     (long)deleted, predicateName(def)));
+
+      if ( prev )
+	prev->next = cell->next;
+      else
+	sf->procedures = cell->next;
+    } else
+    { prev = cell;
+    }
+  }
+}
+
+
 static int
 endReconsult(SourceFile sf)
 { GET_LD
@@ -842,7 +880,7 @@ endReconsult(SourceFile sf)
   if ( (reload=sf->reload) )
   { size_t preds = reload->procedures->size;
 
-    sf->reload = NULL;
+    delete_old_predicates(sf);
 
     for_table(reload->procedures, n, v,
 	      { Procedure proc = n;
@@ -856,7 +894,11 @@ endReconsult(SourceFile sf)
     popNPredicateAccess(preds);
     assert(reload->pred_access_count == popNPredicateAccess(0));
     destroyHTable(reload->procedures);
+
+    sf->reload = NULL;
     freeHeap(reload, sizeof(*reload));
+
+    pl_garbage_collect_clauses();
   }
 
   return TRUE;
