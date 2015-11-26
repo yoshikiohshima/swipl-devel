@@ -1044,26 +1044,27 @@ declareModule(atom_t name, atom_t class, atom_t super,
   module->line_no = line;
   LD->modules.source = module;
 
-  for_table(module->procedures, name, value,
-	    { Procedure proc = value;
-	      Definition def = proc->definition;
-	      if ( /*def->module == module &&*/
-		   !true(def, P_DYNAMIC|P_MULTIFILE|P_FOREIGN) )
-	      { if ( def->module == module &&
-		     hasClausesDefinition(def) )
-		{ if ( !rdef )
-		  { rdef = PL_new_term_ref();
-		    rtail = PL_copy_term_ref(rdef);
-		    tmp = PL_new_term_ref();
-		  }
+  if ( !sf->reload )
+  { for_table(module->procedures, name, value,
+	      { Procedure proc = value;
+		Definition def = proc->definition;
+		if ( !true(def, P_DYNAMIC|P_MULTIFILE|P_FOREIGN) )
+		{ if ( def->module == module &&
+		       hasClausesDefinition(def) )
+		  { if ( !rdef )
+		    { rdef = PL_new_term_ref();
+		      rtail = PL_copy_term_ref(rdef);
+		      tmp = PL_new_term_ref();
+		    }
 
-		  PL_unify_list(rtail, tmp, rtail);
-		  unify_definition(MODULE_user, tmp, def, 0, GP_NAMEARITY);
+		    PL_unify_list(rtail, tmp, rtail);
+		    unify_definition(MODULE_user, tmp, def, 0, GP_NAMEARITY);
+		  }
+		  abolishProcedure(proc, module);
 		}
-		abolishProcedure(proc, module);
-	      }
-	    })
-  clearHTable(module->public);
+	      })
+    clearHTable(module->public);
+  }
   if ( super )
     setSuperModule(module, _lookupModule(super));
 
