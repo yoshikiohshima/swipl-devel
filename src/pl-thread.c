@@ -5694,6 +5694,24 @@ popPredicateAccess__LD(Definition def ARG_LD)
   refs->top--;
 }
 
+void
+delPredicateAccess__LD(Definition def ARG_LD)
+{ definition_refs *refs = &LD->predicate_references;
+  definition_ref *dref;
+  size_t top = refs->top;
+
+  for(; top > 0; top--)
+  { size_t idx = MSB(top);
+
+    dref = &refs->blocks[idx][top];
+    if ( dref->predicate == def )
+    { dref->predicate  = NULL;
+      dref->generation = 0;
+      leaveDefinition(def);		/* probably not needed in the end */
+    }
+  }
+}
+
 static inline int
 is_pointer_like(void *ptr)
 {

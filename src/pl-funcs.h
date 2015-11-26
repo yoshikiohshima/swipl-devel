@@ -505,7 +505,7 @@ COMMON(void)		unlinkSourceFileModule(SourceFile sf, Module m);
 COMMON(void)		addProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(int)		hasProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(ClauseRef)	assertProcedureSource(SourceFile sf, Procedure proc,
-					      Clause clause, int where ARG_LD);
+					      Clause clause ARG_LD);
 
 
 /* pl-read.c */

@@ -3515,7 +3515,7 @@ mode, the predicate is still undefined and is not dynamic or multifile.
       of->current_procedure = proc;
     }
 
-    if ( assertProcedureSource(of, proc, clause, where PASS_LD) )
+    if ( assertProcedureSource(of, proc, clause PASS_LD) )
     { if ( warnings && !PL_get_nil(warnings) )
       { fid_t fid = PL_open_foreign_frame();
 	term_t cl = PL_new_term_ref();

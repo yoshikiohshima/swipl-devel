@@ -677,15 +677,69 @@ startReconsultFile(SourceFile sf)
 }
 
 
-ClauseRef
-assertProcedureSource(SourceFile sf, Procedure proc,
-		      Clause clause, int where ARG_LD)
-{
+static ClauseRef
+find_clause(ClauseRef cref, gen_t generation)
+{ for(; cref; cref = cref->next)
+  { if ( visibleClause(cref->value.clause, generation) )
+      break;
+  }
 
-
-  return assertProcedure(proc, clause, where PASS_LD);
+  return cref;
 }
 
+
+ClauseRef
+assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
+{ assert(proc == sf->current_procedure);
+
+  if ( sf->reload )
+  { p_reload *reload;
+    Definition def = proc->definition;
+
+    if ( !(reload = lookupHTable(sf->reload->procedures, proc)) )
+    { if ( !(reload = allocHeap(sizeof(*reload))) )
+      { PL_no_memory();
+	return NULL;
+      }
+      memset(reload, 0, sizeof(*reload));
+      reload->predicate      = def;
+      reload->generation     = GD->generation;
+      pushPredicateAccess(def, reload->generation);
+      acquire_def(def);
+      reload->current_clause = find_clause(def->impl.clauses.first_clause,
+					   reload->generation);
+      release_def(def);
+      addNewHTable(sf->reload->procedures, proc, reload);
+    }
+  }
+
+  return assertProcedure(proc, clause, CL_END PASS_LD);
+}
+
+
+static int
+endReconsult(SourceFile sf)
+{ GET_LD
+  sf_reload *reload;
+
+  if ( (reload=sf->reload) )
+  { sf->reload = NULL;
+
+    for_table(sf->reload->procedures, n, v,
+	      { Procedure proc = n;
+		p_reload *r = v;
+		Definition def = proc->definition;
+
+		popPredicateAccess(def);
+		freeHeap(r, sizeof(*r));
+	      });
+
+    destroyHTable(sf->reload->procedures);
+    freeHeap(reload, sizeof(*reload));
+  }
+
+  return TRUE;
+}
 
 
 		 /*******************************
@@ -751,12 +805,12 @@ PRED_IMPL("$end_consult", 1, end_consult, 0)
   atom_t name;
 
   if ( PL_get_atom_ex(A1, &name) )
-  { SourceFile f;
+  { SourceFile sf;
 
-    if ( (f=lookupSourceFile(name, FALSE)) )
-      f->current_procedure = NULL;
+    if ( (sf=lookupSourceFile(name, FALSE)) )
+      sf->current_procedure = NULL;
 
-    return TRUE;
+    return endReconsult(sf);
   }
 
   return FALSE;

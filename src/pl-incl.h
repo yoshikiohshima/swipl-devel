@@ -1540,6 +1540,7 @@ struct recordRef
 
 typedef struct p_reload
 { Definition	predicate;		/* definition we are working on */
+  gen_t		generation;		/* generation we update */
   ClauseRef	current_clause;		/* currently reloading clause */
   meta_mask	meta_info;		/* new meta declaration (if any) */
   unsigned	flags;			/* new flags (P_DYNAMIC, etc.) */
