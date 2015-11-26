@@ -771,7 +771,9 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       }
       addNewHTable(sf->reload->procedures, proc, reload);
       DEBUG(MSG_RECONSULT_PRED,
-	    Sdprintf("Reload %s ...\n", predicateName(def)));
+	    Sdprintf("%s %s ...\n",
+		     true(reload, P_NEW) ? "New" : "Reload",
+		     predicateName(def)));
     }
 
     if ( true(reload, P_NEW) )
@@ -815,6 +817,9 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 	  release_def(def);
 
 	  reload->current_clause = cref2;
+	  DEBUG(MSG_RECONSULT_CLAUSE,
+		Sdprintf("  Keeping clause %d\n",
+			 clauseNo(def, cref2->value.clause, reload->generation)));
 	  return keep_clause(reload, clause PASS_LD);
 	}
       }
