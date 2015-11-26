@@ -844,6 +844,7 @@ with one operation, it turns out to be faster as well.
 #define PROC_DEFINED		(P_DYNAMIC|P_FOREIGN|P_MULTIFILE|P_DISCONTIGUOUS)
 /* flags for p_reload data (reconsult) */
 #define P_MODIFIED		P_DIRTYREG
+#define P_NEW			SPY_ME
 
 /* Flags on clauses (packed in unsigned flags : 8) */
 

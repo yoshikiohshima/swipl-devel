@@ -746,28 +746,36 @@ ClauseRef
 assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 { assert(proc == sf->current_procedure);
 
-  if ( sf->reload && isDefinedProcedure(proc) )
+  if ( sf->reload )
   { p_reload *reload;
     Definition def = proc->definition;
     ClauseRef cref;
 
     if ( !(reload = lookupHTable(sf->reload->procedures, proc)) )
     { if ( !(reload = allocHeap(sizeof(*reload))) )
-      { PL_no_memory();
+      { freeClauseSilent(clause);
+	PL_no_memory();
 	return NULL;
       }
       memset(reload, 0, sizeof(*reload));
-      reload->predicate      = def;
-      reload->generation     = GD->generation;
-      pushPredicateAccess(def, reload->generation);
-      acquire_def(def);
-      reload->current_clause = find_clause(def->impl.clauses.first_clause,
-					   reload->generation);
-      release_def(def);
+      reload->predicate = def;
+      if ( isDefinedProcedure(proc) )
+      { reload->generation = GD->generation;
+	pushPredicateAccess(def, reload->generation);
+	acquire_def(def);
+	reload->current_clause = find_clause(def->impl.clauses.first_clause,
+					     reload->generation);
+	release_def(def);
+      } else
+      { set(reload, P_NEW);
+      }
       addNewHTable(sf->reload->procedures, proc, reload);
       DEBUG(MSG_RECONSULT_PRED,
 	    Sdprintf("Reload %s ...\n", predicateName(def)));
     }
+
+    if ( true(reload, P_NEW) )
+      return assertProcedure(proc, clause, CL_END PASS_LD);
 
     if ( (cref = reload->current_clause) )
     { ClauseRef cref2;
@@ -878,20 +886,25 @@ endReconsult(SourceFile sf)
   sf_reload *reload;
 
   if ( (reload=sf->reload) )
-  { size_t preds = reload->procedures->size;
+  { size_t accessed_preds = reload->procedures->size;
 
     delete_old_predicates(sf);
 
     for_table(reload->procedures, n, v,
 	      { Procedure proc = n;
 		p_reload *r = v;
-		Definition def = proc->definition;
 
-		reconsultFinalizePredicate(reload, def, r PASS_LD);
+		if ( false(r, P_NEW) )
+		{ Definition def = proc->definition;
+
+		  reconsultFinalizePredicate(reload, def, r PASS_LD);
+		} else
+		{ accessed_preds--;
+		}
 		freeHeap(r, sizeof(*r));
 	      });
 
-    popNPredicateAccess(preds);
+    popNPredicateAccess(accessed_preds);
     assert(reload->pred_access_count == popNPredicateAccess(0));
     destroyHTable(reload->procedures);
 
