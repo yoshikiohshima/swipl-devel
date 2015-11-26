@@ -797,6 +797,8 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
 	if ( !visibleClause(c2, reload->generation) )
 	  continue;
+	if ( true(def, P_MULTIFILE) && c2->owner_no != sf->index )
+	  continue;
 
 	if ( equal_clause(c2, clause) )
 	{ ClauseRef del;
@@ -806,6 +808,8 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
 	    if ( !visibleClause(c, reload->generation) ||
 		 true(c, CL_ERASED) )
+	      continue;
+	    if ( true(def, P_MULTIFILE) && c->owner_no != sf->index )
 	      continue;
 
 	    c->generation.erased = sf->reload->reload_gen;
@@ -885,8 +889,9 @@ delete_old_predicates(SourceFile sf)
 
 
 static void
-delete_pending_clauses(sf_reload *rl, Definition def, p_reload *r ARG_LD)
+delete_pending_clauses(SourceFile sf, Definition def, p_reload *r ARG_LD)
 { ClauseRef cref;
+  sf_reload *rl = sf->reload;
 
   acquire_def(def);
   for(cref = r->current_clause; cref; cref = cref->next)
@@ -894,6 +899,8 @@ delete_pending_clauses(sf_reload *rl, Definition def, p_reload *r ARG_LD)
 
     if ( !visibleClause(c, r->generation) ||
 	 true(c, CL_ERASED) )
+      continue;
+    if ( true(r->predicate, P_MULTIFILE) && c->owner_no != sf->index )
       continue;
 
     c->generation.erased = rl->reload_gen;
@@ -922,7 +929,7 @@ endReconsult(SourceFile sf)
 		if ( false(r, P_NEW) )
 		{ Definition def = proc->definition;
 
-		  delete_pending_clauses(reload, def, r PASS_LD);
+		  delete_pending_clauses(sf, def, r PASS_LD);
 		  reconsultFinalizePredicate(reload, def, r PASS_LD);
 		} else
 		{ accessed_preds--;
