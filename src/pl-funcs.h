@@ -329,6 +329,7 @@ COMMON(int)		addSuperModule(Module m, Module s, int where);
 COMMON(int)		getUnknownModule(Module m);
 COMMON(Word)		stripModule(Word term, Module *module ARG_LD);
 COMMON(bool)		isPublicModule(Module module, Procedure proc);
+COMMON(int)		exportProcedure(Module module, Procedure proc);
 COMMON(int)		declareModule(atom_t name, atom_t class, atom_t super,
 				      SourceFile sf, int line,
 				      int rdef);
@@ -518,6 +519,8 @@ COMMON(int)		setAttrProcedureSource(SourceFile sf, Procedure proc,
 					       unsigned attr, int val ARG_LD);
 COMMON(int)		setMetapredicateSource(SourceFile sf, Procedure proc,
 					       meta_mask mask ARG_LD);
+COMMON(int)		exportProcedureSource(SourceFile sf, Module module,
+					      Procedure proc);
 
 /* pl-read.c */
 COMMON(void)		resetRead(void);

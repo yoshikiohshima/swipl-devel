@@ -1189,6 +1189,17 @@ export/1 exports a procedure specified by its name and arity or
 head from the context module.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+int
+exportProcedure(Module module, Procedure proc)
+{ LOCKMODULE(module);
+  updateHTable(module->public,
+	       (void *)proc->definition->functor->functor,
+	       proc);
+  UNLOCKMODULE(module);
+
+  return TRUE;
+}
+
 static int
 export_pi1(term_t pi, Module module ARG_LD)
 { functor_t fd;
@@ -1201,13 +1212,12 @@ export_pi1(term_t pi, Module module ARG_LD)
     return TRUE;
   proc = lookupProcedure(fd, module);
 
-  LOCKMODULE(module);
-  updateHTable(module->public,
-	       (void *)proc->definition->functor->functor,
-	       proc);
-  UNLOCKMODULE(module);
-
-  return TRUE;
+  if ( ReadingSource )
+  { SourceFile sf = lookupSourceFile(source_file_name, TRUE);
+    return exportProcedureSource(sf, module, proc);
+  } else
+  { return exportProcedure(module, proc);
+  }
 }
 
 static int

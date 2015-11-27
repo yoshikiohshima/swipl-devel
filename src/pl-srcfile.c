@@ -1008,6 +1008,12 @@ fix_metapredicate(p_reload *r)
 }
 
 
+int
+exportProcedureSource(SourceFile sf, Module module, Procedure proc)
+{ return exportProcedure(module, proc);
+}
+
+
 static void
 delete_old_predicates(SourceFile sf)
 { GET_LD
