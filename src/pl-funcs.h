@@ -462,6 +462,7 @@ COMMON(word)		pl_current_predicate(term_t name, term_t functor, control_t h);
 COMMON(foreign_t)	pl_current_predicate1(term_t spec, control_t ctx);
 COMMON(void)		clear_meta_declaration(Definition def);
 COMMON(void)		setMetapredicateMask(Definition def, meta_mask mask);
+COMMON(int)		isTransparentMetamask(Definition def, meta_mask mask);
 COMMON(ClauseRef)	assertProcedure(Procedure proc, Clause clause,
 					ClauseRef where ARG_LD);
 COMMON(bool)		abolishProcedure(Procedure proc, Module module);

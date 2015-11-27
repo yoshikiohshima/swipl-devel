@@ -1511,8 +1511,8 @@ the declaration contains at least one meta-argument (: or 0..9).
 		predicate head has arguments 0..9, :,+,-,?
 */
 
-void
-setMetapredicateMask(Definition def, meta_mask mask)
+int
+isTransparentMetamask(Definition def, meta_mask mask)
 { size_t i, arity = def->functor->arity;
   int transparent = FALSE;
 
@@ -1522,8 +1522,14 @@ setMetapredicateMask(Definition def, meta_mask mask)
       transparent = TRUE;
   }
 
-  def->meta_info = mask;
-  if ( transparent )
+  return transparent;
+}
+
+
+void
+setMetapredicateMask(Definition def, meta_mask mask)
+{ def->meta_info = mask;
+  if ( isTransparentMetamask(def, mask) )
     set(def, P_TRANSPARENT);
   else
     clear(def, P_TRANSPARENT);

@@ -928,7 +928,7 @@ setAttrProcedureSource(SourceFile sf, Procedure proc,
     else
       clear(reload, attr);
 
-    if ( (attr&P_ATEND) )
+    if ( (attr&(P_ATEND|P_TRANSPARENT)) )
       return TRUE;
   }
 
@@ -977,6 +977,10 @@ setMetapredicateSource(SourceFile sf, Procedure proc,
       return FALSE;
 
     reload->meta_info = mask;
+    if ( isTransparentMetamask(proc->definition, mask) )
+      set(reload, P_TRANSPARENT);
+    else
+      clear(reload, P_TRANSPARENT);
     set(reload, P_META);
   } else
   { setMetapredicateMask(proc->definition, mask);
@@ -990,12 +994,14 @@ static void
 fix_metapredicate(p_reload *r)
 { Definition def = r->predicate;
 
-  if ( (def->flags&P_META) != (r->flags&P_META) ||
+  if ( (def->flags&(P_META|P_TRANSPARENT)) != (r->flags&(P_META|P_TRANSPARENT)) ||
        def->meta_info != r->meta_info )
   { if ( true(def, P_META) && false(r, P_META) )
       clear_meta_declaration(def);
     else if ( true(r, P_META) )
       setMetapredicateMask(def, r->meta_info);
+    clear(def, P_TRANSPARENT);
+    set(def, r->flags&P_TRANSPARENT);
 
     freeCodesDefinition(def, FALSE);
   }
