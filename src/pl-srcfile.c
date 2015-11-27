@@ -1054,10 +1054,10 @@ fix_module(Module m, m_reload *r)
   for_table(m->public, n, v,
 	    { if ( !r->public ||
 		   !lookupHTable(r->public, n) )
-	      { DEBUG(MSG_RECONSULT_PRED,
+	      { DEBUG(MSG_RECONSULT_MODULE,
 		      Sdprintf("Delete export %s\n",
 			       procedureName(v)));
-		deleteHTable(m->public, m);
+		deleteHTable(m->public, n);
 	      }
 	    });
   UNLOCKMODULE(m);
