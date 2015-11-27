@@ -845,6 +845,7 @@ with one operation, it turns out to be faster as well.
 /* flags for p_reload data (reconsult) */
 #define P_MODIFIED		P_DIRTYREG
 #define P_NEW			SPY_ME
+#define P_NO_CLAUSES		TRACE_ME
 
 /* Flags on clauses (packed in unsigned flags : 8) */
 

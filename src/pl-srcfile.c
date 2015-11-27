@@ -766,7 +766,9 @@ reloadContext(SourceFile sf, Procedure proc ARG_LD)
     }
     memset(reload, 0, sizeof(*reload));
     reload->predicate = def;
-    if ( isDefinedProcedure(proc) )
+    if ( true(def, P_THREAD_LOCAL|P_FOREIGN) )
+    { set(reload, P_NO_CLAUSES);
+    } else if ( isDefinedProcedure(proc) )
     { reload->generation = GD->generation;
       pushPredicateAccess(def, reload->generation);
       acquire_def(def);
@@ -779,7 +781,9 @@ reloadContext(SourceFile sf, Procedure proc ARG_LD)
     addNewHTable(sf->reload->procedures, proc, reload);
     DEBUG(MSG_RECONSULT_PRED,
 	  Sdprintf("%s %s ...\n",
-		   true(reload, P_NEW) ? "New" : "Reload",
+		   true(reload, P_NEW)        ? "New"   :
+		   true(reload, P_NO_CLAUSES) ? "Alien" :
+					        "Reload",
 		   predicateName(def)));
   }
 
@@ -803,7 +807,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 
     reload->number_of_clauses++;
 
-    if ( true(reload, P_NEW) )
+    if ( true(reload, P_NEW|P_NO_CLAUSES) )
       return assertProcedure(proc, clause, CL_END PASS_LD);
 
     if ( (cref = reload->current_clause) )
@@ -932,6 +936,17 @@ static void
 fix_attributes(SourceFile sf, Definition def, p_reload *r ARG_LD)
 { def->flags &= ~P_ATEND;
   def->flags |= (r->flags&P_ATEND);
+
+  if ( true(def, P_DYNAMIC) && false(r, P_DYNAMIC) )
+    setDynamicDefinition(def, FALSE);
+  if ( true(def, P_THREAD_LOCAL) && false(r, P_THREAD_LOCAL) )
+  { if ( !setThreadLocalDefinition(def, FALSE) )
+    { term_t ex = PL_exception(0);
+
+      printMessage(ATOM_error, ex);
+      PL_clear_exception();
+    }
+  }
 }
 
 
@@ -1011,7 +1026,7 @@ endReconsult(SourceFile sf)
 	      { Procedure proc = n;
 		p_reload *r = v;
 
-		if ( false(r, P_NEW) )
+		if ( false(r, P_NEW|P_NO_CLAUSES) )
 		{ Definition def = proc->definition;
 
 		  delete_pending_clauses(sf, def, r PASS_LD);
@@ -1019,6 +1034,10 @@ endReconsult(SourceFile sf)
 		  reconsultFinalizePredicate(reload, def, r PASS_LD);
 		} else
 		{ accessed_preds--;
+		  if ( true(r, P_NO_CLAUSES) )
+		  { Definition def = proc->definition;
+		    fix_attributes(sf, def, r PASS_LD);
+		  }
 		}
 		freeHeap(r, sizeof(*r));
 	      });

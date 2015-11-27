@@ -2720,8 +2720,8 @@ setDynamicDefinition(Definition def, bool isdyn)
   return rc;
 }
 
-static int
-set_thread_local_definition(Definition def, bool val)
+int
+setThreadLocalDefinition(Definition def, bool val)
 {
 #ifdef O_PLMT
 
@@ -2769,7 +2769,7 @@ setAttrDefinition(Definition def, unsigned attr, int val)
   if ( attr == P_DYNAMIC )
   { rc = setDynamicDefinition(def, val);
   } else if ( attr == P_THREAD_LOCAL )
-  { rc = set_thread_local_definition(def, val);
+  { rc = setThreadLocalDefinition(def, val);
   } else
   { if ( !val )
     { clear(def, attr);

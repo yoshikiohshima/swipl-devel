@@ -495,6 +495,7 @@ COMMON(void)		checkDefinition(Definition def);
 COMMON(Procedure)	isStaticSystemProcedure(functor_t fd);
 COMMON(foreign_t)	pl_garbage_collect_clauses(void);
 COMMON(int)		setDynamicDefinition(Definition def, bool isdyn);
+COMMON(int)		setThreadLocalDefinition(Definition def, bool isdyn);
 COMMON(int)		setAttrDefinition(Definition def, unsigned attr, int val);
 COMMON(int)		PL_meta_predicate(predicate_t def, const char*);
 
