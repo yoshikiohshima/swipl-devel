@@ -1008,9 +1008,59 @@ fix_metapredicate(p_reload *r)
 }
 
 
+void
+registerReloadModule(SourceFile sf, Module module)
+{ GET_LD
+  m_reload *r;
+
+  if ( sf->reload )
+  { Table mt;
+
+    if ( !(mt=sf->reload->modules) )
+      mt = sf->reload->modules = newHTable(8);
+
+    if ( !(r=lookupHTable(mt, module)) )
+    { r = allocHeapOrHalt(sizeof(*r));
+      memset(r, 0, sizeof(*r));
+      addNewHTable(mt, module, r);
+    }
+  }
+}
+
+
 int
 exportProcedureSource(SourceFile sf, Module module, Procedure proc)
-{ return exportProcedure(module, proc);
+{ GET_LD
+  m_reload *r;
+
+  if ( sf->reload && sf->reload->modules &&
+       (r = lookupHTable(sf->reload->modules, module)) )
+  { if ( !r->public )
+      r->public = newHTable(8);
+    updateHTable(r->public,
+		 (void *)proc->definition->functor->functor,
+		 proc);
+  }
+
+  return exportProcedure(module, proc);
+}
+
+
+static void
+fix_module(Module m, m_reload *r)
+{ GET_LD
+
+  LOCKMODULE(m);
+  for_table(m->public, n, v,
+	    { if ( !r->public ||
+		   !lookupHTable(r->public, n) )
+	      { DEBUG(MSG_RECONSULT_PRED,
+		      Sdprintf("Delete export %s\n",
+			       procedureName(v)));
+		deleteHTable(m->public, m);
+	      }
+	    });
+  UNLOCKMODULE(m);
 }
 
 
@@ -1109,6 +1159,19 @@ endReconsult(SourceFile sf)
     popNPredicateAccess(accessed_preds);
     assert(reload->pred_access_count == popNPredicateAccess(0));
     destroyHTable(reload->procedures);
+
+    if ( reload->modules )
+    { for_table(reload->modules, n, v,
+		{ Module m = n;
+		  m_reload *r = v;
+
+		  fix_module(m, r);
+		  if ( r->public )
+		    destroyHTable(r->public);
+		  freeHeap(r, sizeof(*r));
+		});
+      destroyHTable(reload->modules);
+    }
 
     sf->reload = NULL;
     freeHeap(reload, sizeof(*reload));

@@ -521,6 +521,7 @@ COMMON(int)		setMetapredicateSource(SourceFile sf, Procedure proc,
 					       meta_mask mask ARG_LD);
 COMMON(int)		exportProcedureSource(SourceFile sf, Module module,
 					      Procedure proc);
+COMMON(void)		registerReloadModule(SourceFile sf, Module module);
 
 /* pl-read.c */
 COMMON(void)		resetRead(void);

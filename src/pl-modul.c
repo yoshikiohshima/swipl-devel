@@ -1044,7 +1044,9 @@ declareModule(atom_t name, atom_t class, atom_t super,
   module->line_no = line;
   LD->modules.source = module;
 
-  if ( !sf->reload )
+  if ( sf->reload )
+  { registerReloadModule(sf, module);
+  } else
   { for_table(module->procedures, name, value,
 	      { Procedure proc = value;
 		Definition def = proc->definition;

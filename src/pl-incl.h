@@ -1551,10 +1551,16 @@ typedef struct p_reload
   unsigned	number_of_clauses;	/* Number of clauses we've seen */
 } p_reload;
 
+typedef struct m_reload
+{ Module	module;
+  Table		public;			/* new export list */
+} m_reload;
+
 typedef struct sf_reload
 { Table		procedures;		/* Procedures being reloaded */
   gen_t		reload_gen;		/* Magic gen for reloading */
   size_t	pred_access_count;	/* Top of predicate access stack */
+  Table		modules;		/* Modules seen during reload */
 } sf_reload;
 
 
