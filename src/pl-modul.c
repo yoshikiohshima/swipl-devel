@@ -1190,30 +1190,15 @@ head from the context module.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static int
-export_pi(term_t pi, Module module ARG_LD)
+export_pi1(term_t pi, Module module ARG_LD)
 { functor_t fd;
   Procedure proc;
 
-  if ( !PL_strip_module(pi, &module, pi) )
+  if ( !get_functor(pi, &fd, &module, 0, GF_PROCEDURE|GF_NAMEARITY) )
     return FALSE;
 
-  if ( PL_is_functor(pi, FUNCTOR_comma2) )
-  { term_t a1 = PL_new_term_ref();
-    term_t a2 = PL_new_term_ref();
-
-    _PL_get_arg(1, pi, a1);
-    _PL_get_arg(2, pi, a2);
-
-    TRY(export_pi(a1, module PASS_LD));
-    return export_pi(a2, module PASS_LD);
-  }
-
-
-  if ( !get_functor(pi, &fd, &module, 0, GF_PROCEDURE|GF_NAMEARITY) )
-    fail;
-
   if ( (proc = isStaticSystemProcedure(fd)) && true(proc->definition, P_ISO) )
-    succeed;
+    return TRUE;
   proc = lookupProcedure(fd, module);
 
   LOCKMODULE(module);
@@ -1222,7 +1207,28 @@ export_pi(term_t pi, Module module ARG_LD)
 	       proc);
   UNLOCKMODULE(module);
 
-  succeed;
+  return TRUE;
+}
+
+static int
+export_pi(term_t pi, Module module, int depth ARG_LD)
+{ if ( !PL_strip_module(pi, &module, pi) )
+    return FALSE;
+
+  while ( PL_is_functor(pi, FUNCTOR_comma2) )
+  { term_t a1 = PL_new_term_ref();
+
+    if ( ++depth == 100 && !PL_is_acyclic(pi) )
+      return PL_type_error("acyclic_term", pi);
+
+    _PL_get_arg(1, pi, a1);
+    if ( !export_pi(a1, module, depth PASS_LD) )
+      return FALSE;
+    PL_reset_term_refs(a1);
+    _PL_get_arg(2, pi, pi);
+  }
+
+  return export_pi1(pi, module PASS_LD);
 }
 
 
@@ -1232,7 +1238,7 @@ PRED_IMPL("export", 1, export, PL_FA_TRANSPARENT)
 { PRED_LD
   Module module = NULL;
 
-  return export_pi(A1, module PASS_LD);
+  return export_pi(A1, module, 0 PASS_LD);
 }
 
 
