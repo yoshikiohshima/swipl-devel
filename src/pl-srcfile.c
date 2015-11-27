@@ -661,6 +661,8 @@ PRED_IMPL("$unload_file", 1, unload_file, 0)
 		 *	    RECONSULT		*
 		 *******************************/
 
+static void	fix_discontiguous(p_reload *r);
+
 static int
 startReconsultFile(SourceFile sf)
 { GET_LD
@@ -805,7 +807,8 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       return NULL;
     }
 
-    reload->number_of_clauses++;
+    if ( reload->number_of_clauses++ == 0 )
+      fix_discontiguous(reload);
 
     if ( true(reload, P_NEW|P_NO_CLAUSES) )
       return assertProcedure(proc, clause, CL_END PASS_LD);
@@ -947,6 +950,15 @@ fix_attributes(SourceFile sf, Definition def, p_reload *r ARG_LD)
       PL_clear_exception();
     }
   }
+}
+
+
+static void
+fix_discontiguous(p_reload *r)
+{ Definition def = r->predicate;
+
+  if ( true(def, P_DISCONTIGUOUS) && false(r, P_DISCONTIGUOUS) )
+    clear(def, P_DISCONTIGUOUS);
 }
 
 
