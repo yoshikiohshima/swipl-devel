@@ -811,7 +811,7 @@ with one operation, it turns out to be faster as well.
 
 /* Flags on predicates (packed in unsigned int */
 
-#define P_QUASI_QUOTATION_SYNTAX (0x00000004) /* <![Type[Quasi Quote]]> */
+#define P_QUASI_QUOTATION_SYNTAX (0x00000004) /* {|Type||Quasi Quote|} */
 #define P_NON_TERMINAL		(0x00000008) /* Grammar rule (Name//Arity) */
 #define P_SHRUNKPOW2		(0x00000010) /* See reconsider_index() */
 #define P_FOREIGN		(0x00000020) /* Implemented in C */
@@ -1547,6 +1547,7 @@ typedef struct p_reload
   ClauseRef	current_clause;		/* currently reloading clause */
   meta_mask	meta_info;		/* new meta declaration (if any) */
   unsigned	flags;			/* new flags (P_DYNAMIC, etc.) */
+  unsigned	number_of_clauses;	/* Number of clauses we've seen */
 } p_reload;
 
 typedef struct sf_reload

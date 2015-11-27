@@ -742,6 +742,51 @@ equal_clause(Clause cl1, Clause cl2)
 }
 
 
+int
+reloadIsDefined(SourceFile sf, Procedure proc ARG_LD)
+{ p_reload *reload;
+
+  if ( sf->reload && (reload=lookupHTable(sf->reload->procedures, proc)) )
+    return reload->number_of_clauses > 0;
+
+  return FALSE;
+}
+
+
+static p_reload *
+reloadContext(SourceFile sf, Procedure proc ARG_LD)
+{ p_reload *reload;
+
+  if ( !(reload = lookupHTable(sf->reload->procedures, proc)) )
+  { Definition def = proc->definition;
+
+    if ( !(reload = allocHeap(sizeof(*reload))) )
+    { PL_no_memory();
+      return NULL;
+    }
+    memset(reload, 0, sizeof(*reload));
+    reload->predicate = def;
+    if ( isDefinedProcedure(proc) )
+    { reload->generation = GD->generation;
+      pushPredicateAccess(def, reload->generation);
+      acquire_def(def);
+      reload->current_clause = find_clause(def->impl.clauses.first_clause,
+					   reload->generation);
+      release_def(def);
+    } else
+    { set(reload, P_NEW);
+    }
+    addNewHTable(sf->reload->procedures, proc, reload);
+    DEBUG(MSG_RECONSULT_PRED,
+	  Sdprintf("%s %s ...\n",
+		   true(reload, P_NEW) ? "New" : "Reload",
+		   predicateName(def)));
+  }
+
+  return reload;
+}
+
+
 ClauseRef
 assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 { assert(proc == sf->current_procedure);
@@ -751,30 +796,12 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
     Definition def = proc->definition;
     ClauseRef cref;
 
-    if ( !(reload = lookupHTable(sf->reload->procedures, proc)) )
-    { if ( !(reload = allocHeap(sizeof(*reload))) )
-      { freeClauseSilent(clause);
-	PL_no_memory();
-	return NULL;
-      }
-      memset(reload, 0, sizeof(*reload));
-      reload->predicate = def;
-      if ( isDefinedProcedure(proc) )
-      { reload->generation = GD->generation;
-	pushPredicateAccess(def, reload->generation);
-	acquire_def(def);
-	reload->current_clause = find_clause(def->impl.clauses.first_clause,
-					     reload->generation);
-	release_def(def);
-      } else
-      { set(reload, P_NEW);
-      }
-      addNewHTable(sf->reload->procedures, proc, reload);
-      DEBUG(MSG_RECONSULT_PRED,
-	    Sdprintf("%s %s ...\n",
-		     true(reload, P_NEW) ? "New" : "Reload",
-		     predicateName(def)));
+    if ( !(reload = reloadContext(sf, proc PASS_LD)) )
+    { freeClauseSilent(clause);
+      return NULL;
     }
+
+    reload->number_of_clauses++;
 
     if ( true(reload, P_NEW) )
       return assertProcedure(proc, clause, CL_END PASS_LD);
@@ -874,6 +901,8 @@ associateSource(SourceFile sf, Procedure proc)
 }
 
 
+#define P_ATEND	(P_VOLATILE|P_PUBLIC|P_ISO|P_NON_TERMINAL)
+
 int
 setAttrProcedureSource(SourceFile sf, Procedure proc,
 		       unsigned attr, int val ARG_LD)
@@ -881,10 +910,28 @@ setAttrProcedureSource(SourceFile sf, Procedure proc,
     associateSource(sf, proc);
 
   if ( sf->reload )
-  {
+  { p_reload *reload;
+
+    if ( !(reload = reloadContext(sf, proc PASS_LD)) )
+      return FALSE;
+
+    if ( val )
+      set(reload, attr);
+    else
+      clear(reload, attr);
+
+    if ( (attr&P_ATEND) )
+      return TRUE;
   }
 
   return setAttrDefinition(proc->definition, attr, val);
+}
+
+
+static void
+fix_attributes(SourceFile sf, Definition def, p_reload *r ARG_LD)
+{ def->flags &= ~P_ATEND;
+  def->flags |= (r->flags&P_ATEND);
 }
 
 
@@ -968,6 +1015,7 @@ endReconsult(SourceFile sf)
 		{ Definition def = proc->definition;
 
 		  delete_pending_clauses(sf, def, r PASS_LD);
+		  fix_attributes(sf, def, r PASS_LD);
 		  reconsultFinalizePredicate(reload, def, r PASS_LD);
 		} else
 		{ accessed_preds--;
