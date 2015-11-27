@@ -938,18 +938,22 @@ setAttrProcedureSource(SourceFile sf, Procedure proc,
 
 static void
 fix_attributes(SourceFile sf, Definition def, p_reload *r ARG_LD)
-{ def->flags &= ~P_ATEND;
-  def->flags |= (r->flags&P_ATEND);
+{ if ( false(def, P_MULTIFILE) )
+  { def->flags &= ~P_ATEND;
+    def->flags |= (r->flags&P_ATEND);
 
-  if ( true(def, P_DYNAMIC) && false(r, P_DYNAMIC) )
-    setDynamicDefinition(def, FALSE);
-  if ( true(def, P_THREAD_LOCAL) && false(r, P_THREAD_LOCAL) )
-  { if ( !setThreadLocalDefinition(def, FALSE) )
-    { term_t ex = PL_exception(0);
+    if ( true(def, P_DYNAMIC) && false(r, P_DYNAMIC) )
+      setDynamicDefinition(def, FALSE);
+    if ( true(def, P_THREAD_LOCAL) && false(r, P_THREAD_LOCAL) )
+    { if ( !setThreadLocalDefinition(def, FALSE) )
+      { term_t ex = PL_exception(0);
 
-      printMessage(ATOM_error, ex);
-      PL_clear_exception();
+	printMessage(ATOM_error, ex);
+	PL_clear_exception();
+      }
     }
+  } else
+  { def->flags |= (r->flags&P_ATEND);
   }
 
   fix_metapredicate(r);
@@ -994,16 +998,25 @@ static void
 fix_metapredicate(p_reload *r)
 { Definition def = r->predicate;
 
-  if ( (def->flags&(P_META|P_TRANSPARENT)) != (r->flags&(P_META|P_TRANSPARENT)) ||
-       def->meta_info != r->meta_info )
-  { if ( true(def, P_META) && false(r, P_META) )
-      clear_meta_declaration(def);
-    else if ( true(r, P_META) )
-      setMetapredicateMask(def, r->meta_info);
-    clear(def, P_TRANSPARENT);
-    set(def, r->flags&P_TRANSPARENT);
+  if ( false(def, P_MULTIFILE) )
+  { int mfmask = (P_META|P_TRANSPARENT);
 
+    if ( (def->flags&mfmask) != (r->flags&mfmask) ||
+	 def->meta_info != r->meta_info )
+    { if ( true(def, P_META) && false(r, P_META) )
+	clear_meta_declaration(def);
+      else if ( true(r, P_META) )
+	setMetapredicateMask(def, r->meta_info);
+      clear(def, P_TRANSPARENT);
+      set(def, r->flags&P_TRANSPARENT);
+
+      freeCodesDefinition(def, FALSE);
+    }
+  } else if ( true(r, P_META) )
+  { setMetapredicateMask(def, r->meta_info);
     freeCodesDefinition(def, FALSE);
+  } else if ( true(r, P_TRANSPARENT) )
+  { set(def, P_TRANSPARENT);
   }
 }
 
