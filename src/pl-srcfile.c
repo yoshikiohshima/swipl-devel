@@ -662,6 +662,7 @@ PRED_IMPL("$unload_file", 1, unload_file, 0)
 		 *******************************/
 
 static void	fix_discontiguous(p_reload *r);
+static void	fix_metapredicate(p_reload *r);
 
 static int
 startReconsultFile(SourceFile sf)
@@ -908,7 +909,7 @@ associateSource(SourceFile sf, Procedure proc)
 }
 
 
-#define P_ATEND	(P_VOLATILE|P_PUBLIC|P_ISO|P_NON_TERMINAL)
+#define P_ATEND	(P_VOLATILE|P_PUBLIC|P_ISO|P_NOPROFILE|P_NON_TERMINAL)
 
 int
 setAttrProcedureSource(SourceFile sf, Procedure proc,
@@ -950,6 +951,8 @@ fix_attributes(SourceFile sf, Definition def, p_reload *r ARG_LD)
       PL_clear_exception();
     }
   }
+
+  fix_metapredicate(r);
 }
 
 
@@ -959,6 +962,43 @@ fix_discontiguous(p_reload *r)
 
   if ( true(def, P_DISCONTIGUOUS) && false(r, P_DISCONTIGUOUS) )
     clear(def, P_DISCONTIGUOUS);
+}
+
+
+int
+setMetapredicateSource(SourceFile sf, Procedure proc,
+		       meta_mask mask ARG_LD)
+{ associateSource(sf, proc);
+
+  if ( sf->reload )
+  { p_reload *reload;
+
+    if ( !(reload = reloadContext(sf, proc PASS_LD)) )
+      return FALSE;
+
+    reload->meta_info = mask;
+    set(reload, P_META);
+  } else
+  { setMetapredicateMask(proc->definition, mask);
+  }
+
+  return TRUE;
+}
+
+
+static void
+fix_metapredicate(p_reload *r)
+{ Definition def = r->predicate;
+
+  if ( (def->flags&P_META) != (r->flags&P_META) ||
+       def->meta_info != r->meta_info )
+  { if ( true(def, P_META) && false(r, P_META) )
+      clear_meta_declaration(def);
+    else if ( true(r, P_META) )
+      setMetapredicateMask(def, r->meta_info);
+
+    freeCodesDefinition(def, FALSE);
+  }
 }
 
 

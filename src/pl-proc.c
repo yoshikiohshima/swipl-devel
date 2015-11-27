@@ -1511,17 +1511,35 @@ the declaration contains at least one meta-argument (: or 0..9).
 		predicate head has arguments 0..9, :,+,-,?
 */
 
+void
+setMetapredicateMask(Definition def, meta_mask mask)
+{ size_t i, arity = def->functor->arity;
+  int transparent = FALSE;
+
+  for(i=0; i<arity && !transparent; i++)
+  { int ma = (mask>>(4*i))&0xf;
+    if ( ma <= 9 || ma == MA_META || ma == MA_HAT || ma == MA_DCG )
+      transparent = TRUE;
+  }
+
+  def->meta_info = mask;
+  if ( transparent )
+    set(def, P_TRANSPARENT);
+  else
+    clear(def, P_TRANSPARENT);
+  set(def, P_META);
+}
+
+
 static int
 meta_declaration(term_t spec)
 { GET_LD
   term_t head = PL_new_term_ref();
   term_t arg = PL_new_term_ref();
   Procedure proc;
-  Definition def;
   atom_t name;
   size_t i, arity;
   meta_mask mask = 0;
-  int transparent = FALSE;
 
   if ( !get_procedure(spec, &proc, head, GP_DEFINE) ||
        !PL_get_name_arity(head, &name, &arity) )
@@ -1551,7 +1569,6 @@ meta_declaration(term_t spec)
 			ERR_DOMAIN, ATOM_meta_argument_specifier, arg);
       }
       mask |= e<<(i*4);
-      transparent = TRUE;
     } else if ( PL_get_atom(arg, &ma) )
     { meta_mask m;
 
@@ -1559,9 +1576,9 @@ meta_declaration(term_t spec)
       else if ( ma == ATOM_minus )         m = MA_VAR;
       else if ( ma == ATOM_question_mark ) m = MA_ANY;
       else if ( ma == ATOM_star )	   m = MA_ANY; /* * mapped to ? */
-      else if ( ma == ATOM_colon )         m = MA_META, transparent = TRUE;
-      else if ( ma == ATOM_hat )           m = MA_HAT,  transparent = TRUE;
-      else if ( ma == ATOM_gdiv )          m = MA_DCG,  transparent = TRUE;
+      else if ( ma == ATOM_colon )         m = MA_META;
+      else if ( ma == ATOM_hat )           m = MA_HAT;
+      else if ( ma == ATOM_gdiv )          m = MA_DCG;
       else goto domain_error;
 
       mask |= m<<(i*4);
@@ -1571,18 +1588,13 @@ meta_declaration(term_t spec)
     }
   }
 
-  def = proc->definition;
-  def->meta_info = mask;
-  if ( transparent )
-    set(def, P_TRANSPARENT);
-  else
-    clear(def, P_TRANSPARENT);
-  set(def, P_META);
-
-  if ( false(def, FILE_ASSIGNED) && ReadingSource )
-    addProcedureSourceFile(lookupSourceFile(source_file_name, TRUE), proc);
-
-  return TRUE;
+  if ( ReadingSource )
+  { SourceFile sf = lookupSourceFile(source_file_name, TRUE);
+    return setMetapredicateSource(sf, proc, mask PASS_LD);
+  } else
+  { setMetapredicateMask(proc->definition, mask);
+    return TRUE;
+  }
 }
 
 
