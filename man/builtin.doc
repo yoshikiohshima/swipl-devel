@@ -1150,6 +1150,11 @@ restarted.
     possible to refer to predicates defined \emph{after} the location
     they are used.  This may cause a file to work properly while being
     reloaded, but failing while being loaded in a fresh image.
+    \item Using goal_expansion/2 that calls compile_aux_predicates/1,
+    assuming that multiple expansions can use the same auxiliary
+    definition must use predicate_property/2 using the property
+    \const{defined} to test whether the definition is already defined
+    in the current context.
 \end{itemize}
 
 
