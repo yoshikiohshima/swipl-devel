@@ -73,7 +73,7 @@ strip(In, Code, Out) :-
 
 load_prolog([], []).
 load_prolog([load(File)|T0], T) :- !,
-	user:ensure_loaded(File),
+	user:consult(File),
 	load_prolog(T0, T).
 load_prolog([H|T0], [H|T]) :-
 	load_prolog(T0, T).
