@@ -1262,9 +1262,11 @@ PRED_IMPL("$end_consult", 1, end_consult, 0)
   { SourceFile sf;
 
     if ( (sf=lookupSourceFile(name, FALSE)) )
-      sf->current_procedure = NULL;
+    { sf->current_procedure = NULL;
+      return endReconsult(sf);
+    }
 
-    return endReconsult(sf);
+    return TRUE;
   }
 
   return FALSE;
