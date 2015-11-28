@@ -2643,7 +2643,7 @@ pl_get_predicate_attribute(term_t pred,
   } else if ( key == ATOM_defined )
   { int d;
 
-    if ( isDefinedProcedure(proc) )
+    if ( isDefinedProcedureSource(proc) )
       d = 1;
     else
       d = 0;
@@ -2942,7 +2942,8 @@ redefineProcedure(Procedure proc, SourceFile sf, unsigned int suppress)
 
     if ( first->value.clause->owner_no == sf->index )
     { if ( ((debugstatus.styleCheck & ~suppress) & DISCONTIGUOUS_STYLE) &&
-	   false(def, P_DISCONTIGUOUS) )
+	   false(def, P_DISCONTIGUOUS) &&
+	   sf->current_procedure )
       { printMessage(ATOM_warning,
 		     PL_FUNCTOR_CHARS, "discontiguous", 2,
 		       _PL_PREDICATE_INDICATOR, proc,

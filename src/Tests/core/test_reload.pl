@@ -140,6 +140,11 @@ test(del_export, Exports == [p1/0]) :-
 	reload(del_export, 1),
 	reload(del_export, 2),
 	module_property(del_export, exports(Exports)).
+test(reload_maplist) :-
+	reload(reload_maplist, 1),
+	assertion(reload_maplist:square_list([1,2,3], [1,16,81])),
+	reload(reload_maplist, 1),
+	assertion(reload_maplist:square_list([1,2,3], [1,16,81])).
 
 :- end_tests(reconsult).
 

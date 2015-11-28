@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (C): 1985-2012, University of Amsterdam,
+    Copyright (C): 1985-2015, University of Amsterdam,
 			      VU University Amsterdam
 
     This library is free software; you can redistribute it and/or
@@ -513,6 +513,7 @@ COMMON(void)		unlinkSourceFileModule(SourceFile sf, Module m);
 COMMON(void)		addProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(int)		hasProcedureSourceFile(SourceFile sf, Procedure proc);
 COMMON(int)		reloadIsDefined(SourceFile sf, Procedure proc ARG_LD);
+COMMON(int)		isDefinedProcedureSource(Procedure proc);
 COMMON(ClauseRef)	assertProcedureSource(SourceFile sf, Procedure proc,
 					      Clause clause ARG_LD);
 COMMON(int)		setAttrProcedureSource(SourceFile sf, Procedure proc,

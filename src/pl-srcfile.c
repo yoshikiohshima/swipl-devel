@@ -750,9 +750,26 @@ reloadIsDefined(SourceFile sf, Procedure proc ARG_LD)
 { p_reload *reload;
 
   if ( sf->reload && (reload=lookupHTable(sf->reload->procedures, proc)) )
-    return reload->number_of_clauses > 0;
+  { return ( true(reload, PROC_DEFINED) ||
+	     reload->number_of_clauses > 0 );
+  }
 
   return FALSE;
+}
+
+
+int
+isDefinedProcedureSource(Procedure proc)
+{ GET_LD
+
+  if ( ReadingSource )
+  { SourceFile sf = lookupSourceFile(source_file_name, FALSE);
+
+    if ( sf && sf == indexToSourceFile(proc->source_no) && sf->reload )
+      return reloadIsDefined(sf, proc PASS_LD);
+  }
+
+  return isDefinedProcedure(proc);
 }
 
 
