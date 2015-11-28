@@ -796,12 +796,12 @@ reloadContext(SourceFile sf, Procedure proc ARG_LD)
 
 ClauseRef
 assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
-{ assert(proc == sf->current_procedure);
-
-  if ( sf->reload )
+{ if ( sf && sf->reload )
   { p_reload *reload;
     Definition def = proc->definition;
     ClauseRef cref;
+
+    assert(proc == sf->current_procedure);
 
     if ( !(reload = reloadContext(sf, proc PASS_LD)) )
     { freeClauseSilent(clause);
