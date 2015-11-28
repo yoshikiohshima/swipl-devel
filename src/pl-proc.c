@@ -2768,7 +2768,7 @@ setThreadLocalDefinition(Definition def, bool val)
 		    ERR_MODIFY_STATIC_PREDICATE, def);
   }
 #else
-  setDynamicDefinition(proc, val);
+  setDynamicDefinition(def, val);
 
   if ( val )
     set(def, P_VOLATILE|P_THREAD_LOCAL);
