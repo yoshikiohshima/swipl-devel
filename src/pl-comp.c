@@ -3517,7 +3517,9 @@ mode, the predicate is still undefined and is not dynamic or multifile.
     }
 
     if ( (cref=assertProcedureSource(of, proc, clause PASS_LD)) )
-    { if ( warnings && !PL_get_nil(warnings) )
+    { clause = cref->value.clause;
+
+      if ( warnings && !PL_get_nil(warnings) )
       { fid_t fid = PL_open_foreign_frame();
 	term_t cl = PL_new_term_ref();
 
@@ -3528,7 +3530,7 @@ mode, the predicate is still undefined and is not dynamic or multifile.
 	PL_discard_foreign_frame(fid);
       }
 
-      return cref->value.clause;
+      return clause;
     }
     return NULL;
   }
