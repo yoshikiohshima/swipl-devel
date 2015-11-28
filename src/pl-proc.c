@@ -1070,9 +1070,11 @@ gcClauseRefs(void)
 
 static int
 activePredicate(const Definition *defs, const Definition def)
-{ for( ; *defs; defs++)
-  { if ( *defs == def )
-      return TRUE;
+{ if ( defs )
+  { for( ; *defs; defs++)
+    { if ( *defs == def )
+	return TRUE;
+    }
   }
 
   return FALSE;
