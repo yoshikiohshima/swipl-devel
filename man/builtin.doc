@@ -3279,7 +3279,7 @@ Predicate is declared public using public/1.  Note that without further
 definition, public predicates are considered undefined and this property
 is \emph{not} reported.
 
-    \termitem{quasi_quotation_syntax}
+    \termitem{quasi_quotation_syntax}{}
 The predicate (with arity~4) is declared to provide quasi quotation
 syntax with quasi_quotation_syntax/1.
 
