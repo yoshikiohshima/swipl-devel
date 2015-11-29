@@ -98,8 +98,11 @@ test(add_pred, Clauses == [p1,p2]) :-
 	clauses(add_pred, Clauses).
 test(del_pred, Clauses == [p1]) :-
 	reload(del_pred, 1),
+	assertion(del_pred:p2),
 	reload(del_pred, 2),
-	clauses(del_pred, Clauses).
+	clauses(del_pred, Clauses),
+	catch(del_pred:p2, Error, true),
+	assertion(subsumes_term(error(existence_error(_,_),_), Error)).
 test(add_attr_end) :-
 	reload(add_attr_end, 1),
 	reload(add_attr_end, 2),
