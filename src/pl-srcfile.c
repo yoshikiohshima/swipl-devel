@@ -1115,6 +1115,7 @@ delete_old_predicates(SourceFile sf)
       if ( false(def, P_MULTIFILE) )
       { clear(def, FILE_ASSIGNED);
 	clear_meta_declaration(def);
+	freeCodesDefinition(def, TRUE);
       }
 
       DEBUG(MSG_RECONSULT_PRED,
