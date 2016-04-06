@@ -51,6 +51,8 @@
 :- use_module(library(assoc)).
 :- use_module(library(apply_macros)).
 
+:- create_prolog_flag(clpb_residuals, default, []).
+
 /** <module> Constraint Logic Programming over Boolean Variables
 
 ### Introduction                        {#clpb-intro}
@@ -1764,7 +1766,7 @@ warn_if_bounded_arithmetic :-
 :- initialization(warn_if_bounded_arithmetic).
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-   Sanbox declarations
+   Sandbox declarations
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 :- multifile
@@ -1774,4 +1776,8 @@ warn_if_bounded_arithmetic :-
 sandbox:safe_global_variable('$clpb_next_var').
 sandbox:safe_global_variable('$clpb_next_node').
 sandbox:safe_global_variable('$clpb_atoms').
-sandbox:safe_primitive(set_prolog_flag(clpb_residuals, _)).
+sandbox:safe_primitive(set_prolog_flag(Flag, _)) :-
+	(   var(Flag)
+	->  instantiation_error(Flag)
+	;   Flag == clpb_residuals
+	).
