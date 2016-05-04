@@ -134,6 +134,11 @@ trie_empty(trie *trie)
 {
 }
 
+static int
+trie_insert(trie *trie, Word k, word v)
+{
+}
+
 
 		 /*******************************
 		 *	  PROLOG BINDING	*
@@ -200,8 +205,25 @@ PRED_IMPL("trie_destroy", 1, trie_destroy, 0)
 }
 
 
+static
 PRED_IMPL("trie_insert", 3, trie_insert, 0)
-{
+{ PRED_LD
+  trie *trie;
+
+  if ( get_trie(A1, &trie) )
+  { Word kp, vp;
+
+    kp = valTermRef(A2);
+    vp = valTermRef(A3);
+    deRef(vp);
+
+    if ( !isAtomic(*vp) || isFloat(*vp) )
+      return PL_type_error("primitive", A3);
+    if ( isBignum(*vp) )
+      return PL_domain_error("primitive", A3);
+
+    return trie_insert(trie, kp, *vp);
+  }
 
   return FALSE;
 }

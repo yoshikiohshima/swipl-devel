@@ -39,7 +39,10 @@
 #define TRIE_CMAGIC 0x4bcbcf88
 
 typedef struct trie_node
-{
+{ word value;
+  union
+  { Table	table;			/* key --> node */
+  } children;
 } trie_node;
 
 typedef struct trie
