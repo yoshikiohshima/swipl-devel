@@ -381,6 +381,7 @@ DECL_PLIST(debug);
 DECL_PLIST(locale);
 DECL_PLIST(dict);
 DECL_PLIST(cont);
+DECL_PLIST(trie);
 
 void
 initBuildIns(void)
@@ -443,6 +444,7 @@ initBuildIns(void)
   REG_PLIST(debug);
   REG_PLIST(dict);
   REG_PLIST(cont);
+  REG_PLIST(trie);
 
 #define LOOKUPPROC(name) \
 	{ GD->procedures.name = lookupProcedure(FUNCTOR_ ## name, m); \
