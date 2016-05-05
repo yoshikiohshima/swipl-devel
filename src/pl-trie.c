@@ -630,7 +630,9 @@ previous_choice(trie_gen_state *state)
   if ( ch->choice.table )
     freeTableEnum(ch->choice.table);
   state->tail = ch->prev;
-  if ( !state->tail )
+  if ( state->tail )
+    state->tail->next = NULL;
+  else
     state->head = NULL;
   PL_free(ch);
 
@@ -642,11 +644,13 @@ static int
 advance_node(trie_choice *ch)
 { if ( ch->choice.table )
   { void *k, *v;
-    advanceTableEnum(ch->choice.table, &k, &v);
-    ch->key   = (word)k;
-    ch->child = (trie_node*)v;
 
-    return TRUE;
+    if ( advanceTableEnum(ch->choice.table, &k, &v) )
+    { ch->key   = (word)k;
+      ch->child = (trie_node*)v;
+
+      return TRUE;
+    }
   }
 
   return FALSE;
@@ -687,7 +691,9 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
     { size_t arity = arityFunctor(ch->key);
 
       *vp = consPtr(gp, TAG_COMPOUND|STG_GLOBAL);
-      Sdprintf("Term %s at %s\n", functorName(ch->key), print_addr(gp,NULL));
+      DEBUG(MSG_TRIE_PUT_TERM,
+	    Sdprintf("Term %s at %s\n",
+		     functorName(ch->key), print_addr(gp,NULL)));
 
       *gp++ = ch->key;
       if ( !is_compound )
@@ -707,7 +713,9 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
       if ( tag(ch->key) == TAG_VAR )
       { assert(0);
       } else
-      { Sdprintf("%s at %s\n", print_val(ch->key, NULL), print_addr(vp,NULL));
+      { DEBUG(MSG_TRIE_PUT_TERM,
+	      Sdprintf("%s at %s\n",
+		       print_val(ch->key, NULL), print_addr(vp,NULL)));
 	*vp = ch->key;				/* TBD: markAtom()! */
       }
     }
@@ -715,7 +723,7 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
       vp = nextTermAgendaNoDeRef(&agenda);
   }
 
-  gTop = vp;
+  gTop = gp;
   *valTermRef(term) = v;
 
   return TRUE;
