@@ -36,6 +36,19 @@
 #include "pl-trie.h"
 #include "pl-termwalk.c"
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+This file implements tries of  terms.  The   trie  itself  lives  in the
+program space and is represented by a (symbol) handle. This implies that
+tries are subject to garbage collection.
+
+A path through a trie represents a  sequence of tokens. For representing
+terms, these tokens are functor symbols,   variables  and atomic values.
+The _value_ associated with a  term  always   appears  in  a _leaf_ node
+because a sequence that represents a term   is  _never_ the prefix of of
+the sequence of another term.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+
 static void trie_destroy(trie *trie);
 
 		 /*******************************
