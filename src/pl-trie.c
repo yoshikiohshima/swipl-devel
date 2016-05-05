@@ -517,6 +517,268 @@ PRED_IMPL("trie_lookup", 3, trie_lookup, 0)
 }
 
 
+/**
+ * trie_gen(+Trie, ?Key, -Value) is nondet.
+ *
+ * True when Key-Value appears in Trie.
+ *
+ * This needs to keep  a  list  of   choice  points  for  each node with
+ * multiple children. Eventually, this is probably going to be a virtual
+ * machine extension, using real choice points.
+ */
+
+typedef struct trie_choice
+{ union
+  { void *any;
+    TableEnum table;
+  } choice;
+  word key;
+  trie_node *child;
+  size_t gsize;
+  struct trie_choice *next;
+  struct trie_choice *prev;
+} trie_choice;
+
+typedef struct
+{ trie_choice *head;		/* head of trie nodes */
+  trie_choice *tail;		/* tail of trie nodes */
+} trie_gen_state;
+
+
+static size_t
+key_gsize(word key)
+{ if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
+    return arityFunctor(key)+1;
+				/* TBD: indirect types */
+  return 0;
+}
+
+
+static void
+clear_trie_state(trie_gen_state *state)
+{ trie_choice *ch, *next;
+
+  for(ch=state->head; ch; ch=next)
+  { next = ch->next;
+
+    if ( ch->choice.table )
+      freeTableEnum(ch->choice.table);
+    PL_free(ch);
+  }
+}
+
+
+trie_choice *
+add_choice(trie_gen_state *state, trie_node *node)
+{ trie_choice *ch = PL_malloc(sizeof(*ch));
+  trie_children children = node->children;
+
+  if ( children.any )
+  { size_t psize = state->tail ? state->tail->gsize : 0;
+
+    switch( children.any->type )
+    { case TN_KEY:
+      {	ch->key    = children.key->key;
+	ch->child  = children.key->child;
+        ch->choice.any = NULL;
+	break;
+      }
+      case TN_HASHED:
+      { void *k, *v;
+
+	ch->choice.table = newTableEnum(children.hash->table);
+        advanceTableEnum(ch->choice.table, &k, &v);
+	ch->key   = (word)k;
+	ch->child = (trie_node*)v;
+	break;
+      }
+      default:
+	assert(0);
+    }
+
+    ch->gsize = psize + key_gsize(ch->key);
+  } else
+  { memset(ch, 0, sizeof(*ch));
+  }
+
+  ch->next = NULL;
+  ch->prev = state->tail;
+  state->tail = ch;
+  if ( !state->head )
+    state->head = ch;
+
+  return ch;
+}
+
+
+static int
+descent_node(trie_gen_state *state, trie_choice *ch)
+{ while(ch->child)
+  { ch = add_choice(state, ch->child);
+  }
+
+  return TRUE;
+}
+
+
+static trie_choice *
+previous_choice(trie_gen_state *state)
+{ trie_choice *ch = state->tail;
+
+  if ( ch->choice.table )
+    freeTableEnum(ch->choice.table);
+  state->tail = ch->prev;
+  if ( !state->tail )
+    state->head = NULL;
+  PL_free(ch);
+
+  return state->tail;
+}
+
+
+static int
+advance_node(trie_choice *ch)
+{ if ( ch->choice.table )
+  { void *k, *v;
+    advanceTableEnum(ch->choice.table, &k, &v);
+    ch->key   = (word)k;
+    ch->child = (trie_node*)v;
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+static int
+next_choice(trie_gen_state *state)
+{ trie_choice *ch;
+
+  for( ch = state->tail;
+       ch;
+       ch = previous_choice(state) )
+  { if ( advance_node(ch) )
+      return descent_node(state, ch);
+  }
+
+  return FALSE;
+}
+
+
+static int
+put_trie_term(term_t term, trie_gen_state *state ARG_LD)
+{ int rc;
+  Word gp, vp;
+  word v;
+  trie_choice *ch;
+  term_agenda agenda;
+  int is_compound = FALSE;
+
+  if ( (rc=ensureGlobalSpace(state->tail->gsize, ALLOW_GC)) != TRUE )
+    return raiseStackOverflow(rc);
+
+  gp = gTop;
+  vp = &v;
+  for( ch = state->head; ch; ch = ch->next )
+  { if ( tagex(ch->key) == (TAG_ATOM|STG_GLOBAL) )
+    { size_t arity = arityFunctor(ch->key);
+
+      *vp = consPtr(gp, TAG_COMPOUND|STG_GLOBAL);
+      *gp++ = ch->key;
+      if ( !is_compound )
+      { initTermAgenda(&agenda, arity, gp);
+	is_compound = TRUE;
+      } else
+      { if ( !pushWorkAgenda(&agenda, arity, gp) )
+	{ clearTermAgenda(&agenda);
+	  return raiseStackOverflow(MEMORY_OVERFLOW);
+	}
+      }
+      gp += arity;
+    } else
+    { if ( tag(ch->key) == TAG_VAR )
+      { assert(0);
+      } else
+      { *vp = ch->key;
+      }
+    }
+    if ( is_compound )
+      vp = nextTermAgendaNoDeRef(&agenda);
+  }
+
+  *valTermRef(term) = v;
+  return TRUE;
+}
+
+
+static
+PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
+{ PRED_LD
+  trie_gen_state state_buf;
+  trie_gen_state *state;
+  term_t value;
+  fid_t fid;
+
+  switch( CTX_CNTRL )
+  { case FRG_FIRST_CALL:
+    { trie *trie;
+
+      if ( get_trie(A1, &trie) )
+      { state = &state_buf;
+	memset(state, 0, sizeof(*state));
+
+	if ( trie->root )
+	{ descent_node(state, add_choice(state, trie->root));
+	  break;
+	}
+      }
+      return FALSE;
+    }
+    case FRG_REDO:
+      state = CTX_PTR;
+      break;
+    case FRG_CUTTED:
+      state = CTX_PTR;
+      clear_trie_state(state);
+      freeForeignState(state, sizeof(*state));
+      return TRUE;
+  }
+
+next:
+  value = PL_new_term_ref();
+  fid = PL_open_foreign_frame();
+
+  for( ; state->head; next_choice(state) )
+  { if ( !put_trie_term(value, state PASS_LD) )
+    { PL_close_foreign_frame(fid);
+      return FALSE;				/* resource error */
+    }
+    if ( PL_unify(A2, value) )
+    { if ( next_choice(state) )
+      { if ( state == &state_buf )
+	{ state = allocForeignState(sizeof(*state));
+	  memcpy(state, &state_buf, sizeof(*state));
+	}
+	PL_close_foreign_frame(fid);
+	ForeignRedoPtr(state);
+      } else
+      { clear_trie_state(state);
+	PL_close_foreign_frame(fid);
+	return TRUE;
+      }
+    } else if ( PL_exception(0) )
+    { return FALSE;				/* error */
+    } else
+    { PL_rewind_foreign_frame(fid);
+    }
+  }
+
+  clear_trie_state(state);
+  PL_close_foreign_frame(fid);
+  return FALSE;
+}
+
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/
@@ -526,6 +788,7 @@ BeginPredDefs(trie)
   PRED_DEF("trie_destroy",        1, trie_destroy,       0)
   PRED_DEF("trie_insert",         3, trie_insert,        0)
   PRED_DEF("trie_lookup",         3, trie_lookup,        0)
+  PRED_DEF("trie_gen",            3, trie_gen,           PL_FA_NONDETERMINISTIC)
 EndPredDefs
 
 void
