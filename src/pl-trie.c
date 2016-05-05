@@ -206,22 +206,29 @@ insert_child(trie_node *n, word key ARG_LD)
     if ( children.any )
     { switch( children.any->type )
       { case TN_KEY:
-	{ trie_children_hashed *hnode = PL_malloc(sizeof(*hnode));
-	  trie_node *new = new_trie_node();
+	{ if ( children.key->key == key )
+	  { return children.key->child;
+	  } else
+	  { trie_children_hashed *hnode = PL_malloc(sizeof(*hnode));
+	    trie_node *new = new_trie_node();
 
-	  hnode->type  = TN_HASHED;
-	  hnode->table = newHTable(4);
-	  hnode->table->free_symbol = free_hnode_symbol;
-	  addHTable(hnode->table, (void*)key, (void*)new);
+	    hnode->type  = TN_HASHED;
+	    hnode->table = newHTable(4);
+	    hnode->table->free_symbol = free_hnode_symbol;
+	    addHTable(hnode->table, (void*)children.key->key,
+				    children.key->child);
+	    addHTable(hnode->table, (void*)key, (void*)new);
 
-	  if ( COMPARE_AND_SWAP(&n->children.hash, NULL, hnode) )
-	    return new;
-	  destroy_hnode(hnode);
-	  continue;
+	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
+	      return new;
+	    destroy_hnode(hnode);
+	    continue;
+	  }
 	}
 	case TN_HASHED:
 	{ trie_node *new = new_trie_node();
-	  trie_node *old = addHTable(children.hash->table, (void*)key, (void*)new);
+	  trie_node *old = addHTable(children.hash->table,
+				     (void*)key, (void*)new);
 
 	  if ( new != old )
 	    destroy_node(new);
