@@ -572,11 +572,10 @@ trie_choice *
 add_choice(trie_gen_state *state, trie_node *node)
 { trie_choice *ch = PL_malloc(sizeof(*ch));
   trie_children children = node->children;
+  size_t psize = state->tail ? state->tail->gsize : 0;
 
   if ( children.any )
-  { size_t psize = state->tail ? state->tail->gsize : 0;
-
-    switch( children.any->type )
+  { switch( children.any->type )
     { case TN_KEY:
       {	ch->key    = children.key->key;
 	ch->child  = children.key->child;
@@ -595,17 +594,20 @@ add_choice(trie_gen_state *state, trie_node *node)
       default:
 	assert(0);
     }
-
-    ch->gsize = psize + key_gsize(ch->key);
   } else
   { memset(ch, 0, sizeof(*ch));
+    ch->child = node;
   }
+
+  ch->gsize = psize + key_gsize(ch->key);
 
   ch->next = NULL;
   ch->prev = state->tail;
-  state->tail = ch;
-  if ( !state->head )
+  if ( state->tail )
+    state->tail->next = ch;
+  else
     state->head = ch;
+  state->tail = ch;
 
   return ch;
 }
@@ -613,7 +615,7 @@ add_choice(trie_gen_state *state, trie_node *node)
 
 static int
 descent_node(trie_gen_state *state, trie_choice *ch)
-{ while(ch->child)
+{ while( ch->child->children.any )
   { ch = add_choice(state, ch->child);
   }
 
@@ -667,7 +669,7 @@ next_choice(trie_gen_state *state)
 
 
 static int
-put_trie_term(term_t term, trie_gen_state *state ARG_LD)
+put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
 { int rc;
   Word gp, vp;
   word v;
@@ -685,6 +687,8 @@ put_trie_term(term_t term, trie_gen_state *state ARG_LD)
     { size_t arity = arityFunctor(ch->key);
 
       *vp = consPtr(gp, TAG_COMPOUND|STG_GLOBAL);
+      Sdprintf("Term %s at %s\n", functorName(ch->key), print_addr(gp,NULL));
+
       *gp++ = ch->key;
       if ( !is_compound )
       { initTermAgenda(&agenda, arity, gp);
@@ -697,17 +701,23 @@ put_trie_term(term_t term, trie_gen_state *state ARG_LD)
       }
       gp += arity;
     } else
-    { if ( tag(ch->key) == TAG_VAR )
+    { if ( !ch->next )
+      { *value = ch->child->value;
+      }
+      if ( tag(ch->key) == TAG_VAR )
       { assert(0);
       } else
-      { *vp = ch->key;
+      { Sdprintf("%s at %s\n", print_val(ch->key, NULL), print_addr(vp,NULL));
+	*vp = ch->key;				/* TBD: markAtom()! */
       }
     }
     if ( is_compound )
       vp = nextTermAgendaNoDeRef(&agenda);
   }
 
+  gTop = vp;
   *valTermRef(term) = v;
+
   return TRUE;
 }
 
@@ -717,7 +727,8 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
 { PRED_LD
   trie_gen_state state_buf;
   trie_gen_state *state;
-  term_t value;
+  term_t key;
+  word value;
   fid_t fid;
 
   switch( CTX_CNTRL )
@@ -745,16 +756,15 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
       return TRUE;
   }
 
-next:
-  value = PL_new_term_ref();
-  fid = PL_open_foreign_frame();
+  key   = PL_new_term_ref();
+  fid   = PL_open_foreign_frame();
 
   for( ; state->head; next_choice(state) )
-  { if ( !put_trie_term(value, state PASS_LD) )
+  { if ( !put_trie_term(key, &value, state PASS_LD) )
     { PL_close_foreign_frame(fid);
       return FALSE;				/* resource error */
     }
-    if ( PL_unify(A2, value) )
+    if ( PL_unify(A2, key) && _PL_unify_atomic(A3, value) )
     { if ( next_choice(state) )
       { if ( state == &state_buf )
 	{ state = allocForeignState(sizeof(*state));
