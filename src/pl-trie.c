@@ -68,9 +68,7 @@ release_trie_ref(atom_t aref)
   trie *t;
 
   if ( (t=ref->trie) )
-  { trie_destroy(t);			/* can be called twice */
-    PL_free(t);
-  }
+    trie_destroy(t);			/* can be called twice */
 
   return TRUE;
 }
@@ -111,6 +109,21 @@ static PL_blob_t trie_blob =
 
 static trie_node       *new_trie_node(void);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
+static void		trie_empty(trie *trie);
+static void		destroy_node(trie_node *n);
+
+static inline void
+acquire_key(word key)
+{ if ( isAtom(key) )
+    PL_register_atom(key);
+}
+
+static inline void
+release_key(word key)
+{ if ( isAtom(key) )
+    PL_unregister_atom(key);
+}
+
 
 static trie*
 trie_create(void)
@@ -137,7 +150,11 @@ trie_destroy(trie *trie)
 
 static void
 trie_empty(trie *trie)
-{
+{ trie_node *node = trie->root;
+
+  if ( COMPARE_AND_SWAP(&trie->root, node, NULL) )
+  { destroy_node(node);				/* TBD: verify not accessed */
+  }
 }
 
 
@@ -183,6 +200,7 @@ destroy_node(trie_node *n)
   if ( children.any )
   { switch( children.any->type )
     { case TN_KEY:
+	release_key(children.key->key);
 	break;
       case TN_HASHED:
 	destroy_hnode(children.hash);
@@ -195,7 +213,10 @@ destroy_node(trie_node *n)
 
 static void
 free_hnode_symbol(void *key, void *value)
-{ destroy_node(value);
+{ word k = (word)key;
+
+  release_key(k);
+  destroy_node(value);
 }
 
 
@@ -221,7 +242,9 @@ insert_child(trie_node *n, word key ARG_LD)
 	    addHTable(hnode->table, (void*)key, (void*)new);
 
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
+	    { acquire_key(key);
 	      return new;
+	    }
 	    destroy_hnode(hnode);
 	    continue;
 	  }
@@ -246,7 +269,9 @@ insert_child(trie_node *n, word key ARG_LD)
       child->child = new_trie_node();
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
+      { acquire_key(key);
 	return child->child;
+      }
       destroy_node(child->child);
       PL_free(child);
     }
