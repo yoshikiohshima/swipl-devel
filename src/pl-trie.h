@@ -38,12 +38,38 @@
 #define TRIE_MAGIC  0x4bcbcf87
 #define TRIE_CMAGIC 0x4bcbcf88
 
+typedef enum
+{ TN_KEY,				/* Single key */
+  TN_HASHED				/* Hashed */
+} tn_node_type;
+
+typedef struct try_children_any
+{ tn_node_type type;
+} try_children_any;
+
+typedef struct trie_children_hashed
+{ tn_node_type type;
+  Table table;
+} trie_children_hashed;
+
+typedef struct trie_children_key
+{ tn_node_type type;
+  word key;
+  struct trie_node *child;
+} trie_children_key;
+
+typedef union trie_children
+{ try_children_any     *any;
+  trie_children_key    *key;
+  trie_children_hashed *hash;
+} trie_children;
+
+
 typedef struct trie_node
 { word value;
-  union
-  { Table	table;			/* key --> node */
-  } children;
+  trie_children children;
 } trie_node;
+
 
 typedef struct trie
 { atom_t     symbol;			/* The associated symbol */
