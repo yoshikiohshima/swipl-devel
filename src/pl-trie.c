@@ -535,6 +535,7 @@ typedef struct trie_choice
   word key;
   trie_node *child;
   size_t gsize;
+  unsigned int nvars;
   struct trie_choice *next;
   struct trie_choice *prev;
 } trie_choice;
@@ -550,6 +551,13 @@ key_gsize(word key)
 { if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
     return arityFunctor(key)+1;
 				/* TBD: indirect types */
+  return 0;
+}
+
+static unsigned int
+key_nvar(word key)
+{ if ( tag(key) == TAG_VAR )
+    return (unsigned int)(key>>7);
   return 0;
 }
 
@@ -573,6 +581,8 @@ add_choice(trie_gen_state *state, trie_node *node)
 { trie_choice *ch = PL_malloc(sizeof(*ch));
   trie_children children = node->children;
   size_t psize = state->tail ? state->tail->gsize : 0;
+  unsigned int nvars = state->tail ? state->tail->nvars : 0;
+  unsigned int keyvar;
 
   if ( children.any )
   { switch( children.any->type )
@@ -600,6 +610,11 @@ add_choice(trie_gen_state *state, trie_node *node)
   }
 
   ch->gsize = psize + key_gsize(ch->key);
+  if ( (keyvar=key_nvar(ch->key)) > nvars )
+  { DEBUG(MSG_TRIE_PUT_TERM, Sdprintf("Got var %d\n", keyvar));
+    nvars = keyvar;
+  }
+  ch->nvars = nvars;
 
   ch->next = NULL;
   ch->prev = state->tail;
@@ -661,9 +676,7 @@ static int
 next_choice(trie_gen_state *state)
 { trie_choice *ch;
 
-  for( ch = state->tail;
-       ch;
-       ch = previous_choice(state) )
+  for( ch = state->tail; ch; ch = previous_choice(state) )
   { if ( advance_node(ch) )
       return descent_node(state, ch);
   }
@@ -671,6 +684,7 @@ next_choice(trie_gen_state *state)
   return FALSE;
 }
 
+#define NVARS_FAST 100
 
 static int
 put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
@@ -680,9 +694,17 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
   trie_choice *ch;
   term_agenda agenda;
   int is_compound = FALSE;
+  Word varp_buf[NVARS_FAST];
+  Word *varp;
+  int nvars = state->tail->nvars+1;		/* last node may add one */
 
   if ( (rc=ensureGlobalSpace(state->tail->gsize, ALLOW_GC)) != TRUE )
     return raiseStackOverflow(rc);
+
+  varp = nvars <= NVARS_FAST
+		? varp_buf
+		: PL_malloc(nvars*sizeof(*varp));
+  memset(varp, 0, nvars*sizeof(*varp));
 
   gp = gTop;
   vp = &v;
@@ -702,6 +724,8 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
       } else
       { if ( !pushWorkAgenda(&agenda, arity, gp) )
 	{ clearTermAgenda(&agenda);
+	  if ( varp != varp_buf )
+	    PL_free(varp);
 	  return raiseStackOverflow(MEMORY_OVERFLOW);
 	}
       }
@@ -710,8 +734,21 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
     { if ( !ch->next )
       { *value = ch->child->value;
       }
+
       if ( tag(ch->key) == TAG_VAR )
-      { assert(0);
+      { unsigned int index = (unsigned int)(ch->key>>7) - 1;
+
+	DEBUG(MSG_TRIE_PUT_TERM,
+	       Sdprintf("var %d at %s\n", (int)index,
+			print_addr(vp,NULL)));
+
+	if ( !varp[index] )
+	{ setVar(*vp);
+	  varp[index] = vp;
+	} else
+	{ *vp = makeRefG(varp[index]);
+	}
+
       } else
       { DEBUG(MSG_TRIE_PUT_TERM,
 	      Sdprintf("%s at %s\n",
@@ -724,6 +761,9 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
     if ( is_compound )
       vp = nextTermAgendaNoDeRef(&agenda);
   }
+
+  if ( varp != varp_buf )
+    PL_free(varp);
 
   gTop = gp;
   *valTermRef(term) = v;
@@ -766,8 +806,8 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
       return TRUE;
   }
 
-  key   = PL_new_term_ref();
-  fid   = PL_open_foreign_frame();
+  key = PL_new_term_ref();
+  fid = PL_open_foreign_frame();
 
   for( ; state->head; next_choice(state) )
   { if ( !put_trie_term(key, &value, state PASS_LD) )
