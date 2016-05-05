@@ -109,7 +109,8 @@ static PL_blob_t trie_blob =
 		 *	     THE TRIE		*
 		 *******************************/
 
-static trie_node *new_trie_node(void);
+static trie_node       *new_trie_node(void);
+static void		clear_vars(Word k, size_t var_number ARG_LD);
 
 static trie*
 trie_create(void)
@@ -254,49 +255,75 @@ insert_child(trie_node *n, word key ARG_LD)
 
 
 static trie_node *
-follow_node(trie_node *n, word value ARG_LD)
+follow_node(trie_node *n, word value, int add ARG_LD)
 { trie_node *child;
 
   if ( (child=get_child(n, value PASS_LD)) )
     return child;
 
-  return insert_child(n, value PASS_LD);
+  if ( add )
+    return insert_child(n, value PASS_LD);
+  else
+    return NULL;
 }
 
 
-static int
-trie_insert(trie *trie, Word k, word v ARG_LD)
+static trie_node *
+trie_lookup(trie *trie, Word k, int add ARG_LD)
 { term_agenda agenda;
   Word p;
   trie_node *node = trie->root;
+  size_t var_number = 0;
 
   initTermAgenda(&agenda, 1, k);
-  while( (p=nextTermAgenda(&agenda)) )
+  while( node && (p=nextTermAgenda(&agenda)) )
   { word w = *p;
 
     switch( tag(w) )
-    { case TAG_ATOM:
-      { node = follow_node(node, w PASS_LD);
+    { case TAG_VAR:
+	if ( isVar(w) )
+	  *p = w = ((((word)++var_number))<<7)|TAG_VAR;
+        node = follow_node(node, w, add PASS_LD);
+	break;
+      case TAG_ATTVAR:
+	assert(0);
         break;
-      }
       case TAG_COMPOUND:
       { Functor f = valueTerm(w);
         int arity = arityFunctor(f->definition);
-	node = follow_node(node, f->definition PASS_LD);
+	node = follow_node(node, f->definition, add PASS_LD);
 
 	pushWorkAgenda(&agenda, arity, f->arguments);
 	break;
       }
       default:
-	assert(0);
+      { if ( !isIndirect(w) )
+	{ node = follow_node(node, w, add PASS_LD);
+	} else
+	{ assert(0);
+	}
+      }
     }
   }
   clearTermAgenda(&agenda);
+  clear_vars(k, var_number PASS_LD);
+
+  return node;
+}
+
+
+
+static int
+trie_insert(trie *trie, Word k, word v ARG_LD)
+{ trie_node *node;
+
+  if ( !(node = trie_lookup(trie, k, TRUE PASS_LD)) )
+    return FALSE;
 
   if ( node->value )
   { if ( node->value == v )
       return FALSE;				/* existing */
-    return -1;
+    return -1;					/* permission error */
   }
   node->value = v;
 
@@ -304,37 +331,39 @@ trie_insert(trie *trie, Word k, word v ARG_LD)
 }
 
 
-static trie_node *
-trie_lookup(trie *trie, Word k ARG_LD)
-{ term_agenda agenda;
-  Word p;
-  trie_node *node = trie->root;
+static void
+clear_vars(Word k, size_t var_number ARG_LD)
+{ if ( var_number > 0 )
+  { term_agenda agenda;
+    Word p;
 
-  initTermAgenda(&agenda, 1, k);
-  while( node && (p=nextTermAgenda(&agenda)) )
-  { word w = *p;
+    initTermAgenda(&agenda, 1, k);
+    while( var_number > 0 && (p=nextTermAgenda(&agenda)) )
+    { word w = *p;
 
-    switch( tag(w) )
-    { case TAG_ATOM:
-      { node = get_child(node, w PASS_LD);
-        break;
+      switch( tag(w) )
+      { case TAG_VAR:
+	{ if ( !isVar(*p) )
+	  { setVar(*p);
+	    --var_number;
+	  }
+	  break;
+	}
+        case TAG_COMPOUND:
+	{ Functor f = valueTerm(w);
+	  int arity = arityFunctor(f->definition);
+
+	  pushWorkAgenda(&agenda, arity, f->arguments);
+	  break;
+	}
       }
-      case TAG_COMPOUND:
-      { Functor f = valueTerm(w);
-        int arity = arityFunctor(f->definition);
-	node = get_child(node, f->definition PASS_LD);
-
-	pushWorkAgenda(&agenda, arity, f->arguments);
-	break;
-      }
-      default:
-	assert(0);
     }
-  }
-  clearTermAgenda(&agenda);
+    clearTermAgenda(&agenda);
 
-  return node;
+    assert(var_number == 0);
+  }
 }
+
 
 
 		 /*******************************
@@ -409,6 +438,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
 
   if ( get_trie(A1, &trie) )
   { Word kp, vp;
+    int rc;
 
     kp = valTermRef(A2);
     vp = valTermRef(A3);
@@ -419,7 +449,10 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
     if ( isBignum(*vp) )
       return PL_domain_error("primitive", A3);
 
-    return trie_insert(trie, kp, *vp PASS_LD);
+    if ( (rc=trie_insert(trie, kp, *vp PASS_LD)) >= 0 )
+      return rc;
+
+    return PL_permission_error("modify", "trie_key", A2);
   }
 
   return FALSE;
@@ -437,7 +470,7 @@ PRED_IMPL("trie_lookup", 3, trie_lookup, 0)
 
     kp = valTermRef(A2);
 
-    if ( (node = trie_lookup(trie, kp PASS_LD)) &&
+    if ( (node = trie_lookup(trie, kp, FALSE PASS_LD)) &&
 	 node->value )
       return _PL_unify_atomic(A3, node->value);
   }
