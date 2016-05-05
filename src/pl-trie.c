@@ -34,6 +34,7 @@
 
 #include "pl-incl.h"
 #include "pl-trie.h"
+#include "pl-termwalk.c"
 
 static void trie_destroy(trie *trie);
 
@@ -108,6 +109,8 @@ static PL_blob_t trie_blob =
 		 *	     THE TRIE		*
 		 *******************************/
 
+static trie_node *new_trie_node(void);
+
 static trie*
 trie_create(void)
 { trie *trie;
@@ -115,6 +118,7 @@ trie_create(void)
   if ( (trie = PL_malloc(sizeof(*trie))) )
   { memset(trie, 0, sizeof(*trie));
 
+    trie->root = new_trie_node();
     return trie;
   } else
   { PL_resource_error("memory");
@@ -125,7 +129,8 @@ trie_create(void)
 
 static void
 trie_destroy(trie *trie)
-{ PL_free(trie);
+{ Sdprintf("Destroying trie %p\n", trie);
+  PL_free(trie);
 }
 
 
@@ -134,9 +139,161 @@ trie_empty(trie *trie)
 {
 }
 
+
+static trie_node *
+get_child(trie_node *n, word key ARG_LD)
+{ trie_children children = n->children;
+
+  if ( children.any )
+  { switch( children.any->type )
+    { case TN_KEY:
+	if ( children.key->key == key )
+	  return children.key->child;
+        return NULL;
+      case TN_HASHED:
+	return lookupHTable(children.hash->table, (void*)key);
+      default:
+	assert(0);
+    }
+  }
+
+  return NULL;
+}
+
+
+static trie_node *
+new_trie_node(void)
+{ trie_node *n = PL_malloc(sizeof(*n));
+
+  memset(n, 0, sizeof(*n));
+  return n;
+}
+
+
+static void
+destroy_hnode(trie_children_hashed *hnode)
+{ destroyHTable(hnode->table);
+}
+
+static void
+destroy_node(trie_node *n)
+{ trie_children children = n->children;
+
+  if ( children.any )
+  { switch( children.any->type )
+    { case TN_KEY:
+	break;
+      case TN_HASHED:
+	destroy_hnode(children.hash);
+        break;
+    }
+  }
+
+  PL_free(n);
+}
+
+static void
+free_hnode_symbol(void *key, void *value)
+{ destroy_node(value);
+}
+
+
+static trie_node *
+insert_child(trie_node *n, word key ARG_LD)
+{ for(;;)
+  { trie_children children = n->children;
+
+    if ( children.any )
+    { switch( children.any->type )
+      { case TN_KEY:
+	{ trie_children_hashed *hnode = PL_malloc(sizeof(*hnode));
+	  trie_node *new = new_trie_node();
+
+	  hnode->type  = TN_HASHED;
+	  hnode->table = newHTable(4);
+	  hnode->table->free_symbol = free_hnode_symbol;
+	  addHTable(hnode->table, (void*)key, (void*)new);
+
+	  if ( COMPARE_AND_SWAP(&n->children.hash, NULL, hnode) )
+	    return new;
+	  destroy_hnode(hnode);
+	  continue;
+	}
+	case TN_HASHED:
+	{ trie_node *new = new_trie_node();
+	  trie_node *old = addHTable(children.hash->table, (void*)key, (void*)new);
+
+	  if ( new != old )
+	    destroy_node(new);
+	  return old;
+	}
+	default:
+	  assert(0);
+      }
+    } else
+    { trie_children_key *child = PL_malloc(sizeof(*child));
+
+      child->type  = TN_KEY;
+      child->key   = key;
+      child->child = new_trie_node();
+
+      if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
+	return child->child;
+      destroy_node(child->child);
+      PL_free(child);
+    }
+  }
+}
+
+
+static trie_node *
+follow_node(trie_node *n, word value ARG_LD)
+{ trie_node *child;
+
+  if ( (child=get_child(n, value PASS_LD)) )
+    return child;
+
+  return insert_child(n, value PASS_LD);
+}
+
+
 static int
-trie_insert(trie *trie, Word k, word v)
-{
+trie_insert(trie *trie, Word k, word v ARG_LD)
+{ term_agenda agenda;
+  Word p;
+  trie_node *node = trie->root;
+
+  initTermAgenda(&agenda, 1, k);
+  while( (p=nextTermAgenda(&agenda)) )
+  { word w = *p;
+
+    switch( tag(w) )
+    { case TAG_ATOM:
+      { node = follow_node(node, w PASS_LD);
+        break;
+      }
+      case TAG_COMPOUND:
+      { Functor f = valueTerm(w);
+        int arity = arityFunctor(f->definition);
+	node = follow_node(node, f->definition PASS_LD);
+
+	pushWorkAgenda(&agenda, arity, f->arguments);
+	break;
+      }
+      default:
+	assert(0);
+    }
+  }
+  clearTermAgenda(&agenda);
+
+  if ( node->value )
+  { if ( node->value == v )
+      return FALSE;				/* existing */
+    return -1;
+  }
+  node->value = v;
+
+  return TRUE;
 }
 
 
@@ -222,7 +379,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
     if ( isBignum(*vp) )
       return PL_domain_error("primitive", A3);
 
-    return trie_insert(trie, kp, *vp);
+    return trie_insert(trie, kp, *vp PASS_LD);
   }
 
   return FALSE;
