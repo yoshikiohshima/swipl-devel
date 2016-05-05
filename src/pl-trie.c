@@ -716,7 +716,9 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
       { DEBUG(MSG_TRIE_PUT_TERM,
 	      Sdprintf("%s at %s\n",
 		       print_val(ch->key, NULL), print_addr(vp,NULL)));
-	*vp = ch->key;				/* TBD: markAtom()! */
+	if ( isAtom(ch->key) )
+	  pushVolatileAtom(ch->key);
+	*vp = ch->key;
       }
     }
     if ( is_compound )
