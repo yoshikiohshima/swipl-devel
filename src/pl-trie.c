@@ -297,6 +297,39 @@ trie_insert(trie *trie, Word k, word v ARG_LD)
 }
 
 
+static trie_node *
+trie_lookup(trie *trie, Word k ARG_LD)
+{ term_agenda agenda;
+  Word p;
+  trie_node *node = trie->root;
+
+  initTermAgenda(&agenda, 1, k);
+  while( node && (p=nextTermAgenda(&agenda)) )
+  { word w = *p;
+
+    switch( tag(w) )
+    { case TAG_ATOM:
+      { node = get_child(node, w PASS_LD);
+        break;
+      }
+      case TAG_COMPOUND:
+      { Functor f = valueTerm(w);
+        int arity = arityFunctor(f->definition);
+	node = get_child(node, f->definition PASS_LD);
+
+	pushWorkAgenda(&agenda, arity, f->arguments);
+	break;
+      }
+      default:
+	assert(0);
+    }
+  }
+  clearTermAgenda(&agenda);
+
+  return node;
+}
+
+
 		 /*******************************
 		 *	  PROLOG BINDING	*
 		 *******************************/
@@ -386,6 +419,25 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
 }
 
 
+static
+PRED_IMPL("trie_lookup", 3, trie_lookup, 0)
+{ PRED_LD
+  trie *trie;
+
+  if ( get_trie(A1, &trie) )
+  { Word kp;
+    trie_node *node;
+
+    kp = valTermRef(A2);
+
+    if ( (node = trie_lookup(trie, kp PASS_LD)) &&
+	 node->value )
+      return _PL_unify_atomic(A3, node->value);
+  }
+
+  return FALSE;
+}
+
 
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
@@ -395,6 +447,7 @@ BeginPredDefs(trie)
   PRED_DEF("trie_new",            1, trie_new,           0)
   PRED_DEF("trie_destroy",        1, trie_destroy,       0)
   PRED_DEF("trie_insert",         3, trie_insert,        0)
+  PRED_DEF("trie_lookup",         3, trie_lookup,        0)
 EndPredDefs
 
 void
