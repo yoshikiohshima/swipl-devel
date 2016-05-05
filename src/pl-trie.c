@@ -156,7 +156,7 @@ trie_create(void)
 
 static void
 trie_destroy(trie *trie)
-{ Sdprintf("Destroying trie %p\n", trie);
+{ DEBUG(MSG_TRIE_GC, Sdprintf("Destroying trie %p\n", trie));
   PL_free(trie);
 }
 
@@ -338,7 +338,10 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
       { if ( !isIndirect(w) )
 	{ node = follow_node(node, w, add PASS_LD);
 	} else
-	{ assert(0);
+	{ term_t t = pushWordAsTermRef(p);
+	  Sdprintf("Bad term: "); pl_writeln(t);
+	  popTermRef();
+	  assert(0);
 	}
       }
     }
@@ -789,7 +792,7 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
       { state = &state_buf;
 	memset(state, 0, sizeof(*state));
 
-	if ( trie->root )
+	if ( trie->root->children.any )
 	{ descent_node(state, add_choice(state, trie->root));
 	  break;
 	}
