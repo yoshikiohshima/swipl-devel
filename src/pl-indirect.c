@@ -110,6 +110,29 @@ new_indirect_table(void)
 }
 
 
+void
+destroy_indirect_table(indirect_table *tab)
+{ int i;
+  indirect_buckets *buckets, *prev;
+  indirect_array *arr = &tab->array;
+
+  simpleMutexDelete(&tab->mutex);
+  for(i=MSB(MAX_INDIRECT_BLOCKS); i<32; i++)
+  { if ( arr->blocks[i] )
+      PL_free(arr->blocks[i]);
+  }
+
+  for(buckets = tab->table; buckets; buckets = prev)
+  { prev = buckets->prev;
+
+    PL_free(buckets->buckets);
+    PL_free(buckets);
+  }
+
+  PL_free(tab);
+}
+
+
 word
 intern_indirect(indirect_table *tab, word val, int create ARG_LD)
 { Word	 idata     = addressIndirect(val);	/* points at header */
