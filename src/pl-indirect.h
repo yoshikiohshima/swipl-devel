@@ -78,7 +78,8 @@ COMMON(indirect_table*)	new_indirect_table(void);
 COMMON(void)		destroy_indirect_table(indirect_table *tab);
 COMMON(word)		intern_indirect(indirect_table *tab, word val,
 					int create ARG_LD);
-COMMON(word)		global_interned_indirect(indirect_table *tab,
-						 word val ARG_LD);
+COMMON(word)		extern_indirect(indirect_table *tab,
+					word val, Word *gp ARG_LD);
+COMMON(size_t)		gsize_indirect(indirect_table *tab, word val);
 
 #endif /*_PL_INDIRECT_H*/

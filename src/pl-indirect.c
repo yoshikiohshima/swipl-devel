@@ -332,7 +332,7 @@ rehash_indirect_table(indirect_table *tab)
 
 
 word
-global_interned_indirect(indirect_table *tab, word val ARG_LD)
+extern_indirect(indirect_table *tab, word val, Word *gp ARG_LD)
 { size_t index = val>>LMASK_BITS;
   int idx = MSB(index);
   indirect *h = &tab->array.blocks[idx][index];
@@ -348,14 +348,32 @@ global_interned_indirect(indirect_table *tab, word val ARG_LD)
     }
   }
 
-  r = p = gTop;
+  if ( gp )
+    r = p = *gp;
+  else
+    r = p = gTop;
   *p++ = h->header;
   memcpy(p, h->data, wsize*sizeof(word));
   p += wsize;
   *p++ = h->header;
-  gTop = p;
+
+  if ( gp )
+    *gp = p;
+  else
+    gTop = p;
 
   return consPtr(r, tag(val)|STG_GLOBAL);
+}
+
+
+size_t
+gsize_indirect(indirect_table *tab, word val)
+{ size_t index = val>>LMASK_BITS;
+  int idx = MSB(index);
+  indirect *h = &tab->array.blocks[idx][index];
+  size_t wsize = wsizeofInd(h->header);
+
+  return wsize+2;
 }
 
 
@@ -398,7 +416,7 @@ PRED_IMPL("extern_indirect", 2, extern_indirect, 0)
   { word w = i;
     term_t t = PL_new_term_ref();
 
-    *valTermRef(t) = global_interned_indirect(tab, w PASS_LD);
+    *valTermRef(t) = extern_indirect(tab, w, NULL PASS_LD);
     return PL_unify(A2, t);
   }
 
