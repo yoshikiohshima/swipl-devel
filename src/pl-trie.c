@@ -807,6 +807,9 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
       clear_trie_state(state);
       freeForeignState(state, sizeof(*state));
       return TRUE;
+    default:
+      assert(0);
+      return FALSE;
   }
 
   key = PL_new_term_ref();
