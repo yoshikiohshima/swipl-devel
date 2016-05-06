@@ -75,6 +75,7 @@ typedef struct
 		 *******************************/
 
 COMMON(indirect_table*)	new_indirect_table(void);
+COMMON(void)		destroy_indirect_table(indirect_table *tab);
 COMMON(word)		intern_indirect(indirect_table *tab, word val,
 					int create ARG_LD);
 COMMON(word)		global_interned_indirect(indirect_table *tab,
