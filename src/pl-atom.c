@@ -405,7 +405,7 @@ allocateAtomBlock(int idx)
 }
 
 static Atom
-reserveAtom()
+reserveAtom(void)
 { size_t index;
 #ifdef O_ATOMGC				/* try to find a hole! */
   int i;
