@@ -359,7 +359,7 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
 	{ word i = trie_intern_indirect(trie, w, add PASS_LD);
 
 	  if ( i )
-	    node = follow_node(node, w, add PASS_LD);
+	    node = follow_node(node, i, add PASS_LD);
 	  else
 	    node = NULL;
 	}
