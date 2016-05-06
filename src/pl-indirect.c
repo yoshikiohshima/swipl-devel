@@ -103,6 +103,8 @@ new_indirect_table(void)
   memset(newtab->buckets, 0, newtab->size*sizeof(*newtab->buckets));
   newtab->prev = NULL;
   tab->table = newtab;
+  tab->no_hole_before = 1;
+  tab->highest = 1;
 
   return tab;
 }
@@ -326,6 +328,7 @@ global_interned_indirect(indirect_table *tab, word val ARG_LD)
   r = p = gTop;
   *p++ = h->header;
   memcpy(p, h->data, wsize*sizeof(word));
+  p += wsize;
   *p++ = h->header;
   gTop = p;
 
