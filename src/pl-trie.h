@@ -34,6 +34,7 @@
 
 #ifndef _PL_TRUE_H
 #define _PL_TRUE_H
+#include "pl-indirect.h"
 
 #define TRIE_MAGIC  0x4bcbcf87
 #define TRIE_CMAGIC 0x4bcbcf88
@@ -72,9 +73,10 @@ typedef struct trie_node
 
 
 typedef struct trie
-{ atom_t     symbol;			/* The associated symbol */
-  int	     magic;
-  trie_node *root;			/* the root node */
+{ atom_t		symbol;		/* The associated symbol */
+  int			magic;		/* TRIE_MAGIC */
+  trie_node	       *root;		/* the root node */
+  indirect_table       *indirects;	/* indirect values */
 } trie;
 
 COMMON(void)	initTries(void);

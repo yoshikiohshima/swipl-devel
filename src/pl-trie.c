@@ -34,6 +34,7 @@
 
 #include "pl-incl.h"
 #include "pl-trie.h"
+#include "pl-indirect.h"
 #include "pl-termwalk.c"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -164,10 +165,12 @@ trie_destroy(trie *trie)
 static void
 trie_empty(trie *trie)
 { trie_node *node = trie->root;
+  indirect_table *it = trie->indirects;
 
   if ( COMPARE_AND_SWAP(&trie->root, node, NULL) )
-  { destroy_node(node);				/* TBD: verify not accessed */
-  }
+    destroy_node(node);				/* TBD: verify not accessed */
+  if ( COMPARE_AND_SWAP(&trie->indirects, it, NULL) )
+    destroy_indirect_table(it);
 }
 
 
@@ -306,6 +309,21 @@ follow_node(trie_node *n, word value, int add ARG_LD)
 }
 
 
+static word
+trie_intern_indirect(trie *trie, word w, int add ARG_LD)
+{ for(;;)
+  { if ( trie->indirects )
+    { return intern_indirect(trie->indirects, w, add PASS_LD);
+    } else
+    { indirect_table *newtab = new_indirect_table();
+
+      if ( !COMPARE_AND_SWAP(&trie->indirects, NULL, newtab) )
+	destroy_indirect_table(newtab);
+    }
+  }
+}
+
+
 static trie_node *
 trie_lookup(trie *trie, Word k, int add ARG_LD)
 { term_agenda agenda;
@@ -338,10 +356,12 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
       { if ( !isIndirect(w) )
 	{ node = follow_node(node, w, add PASS_LD);
 	} else
-	{ term_t t = pushWordAsTermRef(p);
-	  Sdprintf("Bad term: "); pl_writeln(t);
-	  popTermRef();
-	  assert(0);
+	{ word i = trie_intern_indirect(trie, w, add PASS_LD);
+
+	  if ( i )
+	    node = follow_node(node, w, add PASS_LD);
+	  else
+	    node = NULL;
 	}
       }
     }
@@ -546,21 +566,24 @@ typedef struct trie_choice
 typedef struct
 { trie_choice *head;		/* head of trie nodes */
   trie_choice *tail;		/* tail of trie nodes */
+  trie        *trie;		/* trie we operate on */
 } trie_gen_state;
 
 
 static size_t
-key_gsize(word key)
+key_gsize(trie *trie, word key)
 { if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
     return arityFunctor(key)+1;
-				/* TBD: indirect types */
+  if ( isIndirect(key) )
+    return gsize_indirect(trie->indirects, key);
+
   return 0;
 }
 
 static unsigned int
 key_nvar(word key)
 { if ( tag(key) == TAG_VAR )
-    return (unsigned int)(key>>7);
+    return (unsigned int)(key>>LMASK_BITS);
   return 0;
 }
 
@@ -612,7 +635,7 @@ add_choice(trie_gen_state *state, trie_node *node)
     ch->child = node;
   }
 
-  ch->gsize = psize + key_gsize(ch->key);
+  ch->gsize = psize + key_gsize(state->trie, ch->key);
   if ( (keyvar=key_nvar(ch->key)) > nvars )
   { DEBUG(MSG_TRIE_PUT_TERM, Sdprintf("Got var %d\n", keyvar));
     nvars = keyvar;
@@ -758,7 +781,11 @@ put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
 		       print_val(ch->key, NULL), print_addr(vp,NULL)));
 	if ( isAtom(ch->key) )
 	  pushVolatileAtom(ch->key);
-	*vp = ch->key;
+	if ( !isIndirect(ch->key) )
+	{ *vp = ch->key;
+	} else
+	{ *vp = extern_indirect(state->trie->indirects, ch->key, &gp PASS_LD);
+	}
       }
     }
     if ( is_compound )
@@ -793,7 +820,8 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
 	memset(state, 0, sizeof(*state));
 
 	if ( trie->root->children.any )
-	{ descent_node(state, add_choice(state, trie->root));
+	{ state->trie = trie;
+	  descent_node(state, add_choice(state, trie->root));
 	  break;
 	}
       }
