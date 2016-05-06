@@ -70,7 +70,7 @@ static indirect *create_indirect(indirect *h, size_t index, word val ARG_LD);
 #define acquire_itable_bucket(b) (void)0
 #define release_itable_buckets() (void)0
 
-#define TIGHT(buckets, tab) ((buckets)->size > (tab)->count)
+#define TIGHT(buckets, tab) ((buckets)->size < (tab)->count)
 
 #define INDIRECT_STATE_MASK		((unsigned int)0x3 << (INTBITSIZE-2))
 #define INDIRECT_RESERVED_REFERENCE	((unsigned int)0x1 << (INTBITSIZE-1))
@@ -88,6 +88,7 @@ indirect_table *
 new_indirect_table(void)
 { indirect_table *tab = PL_malloc(sizeof(*tab));
   indirect_array *arr = &tab->array;
+  indirect_buckets *newtab = PL_malloc(sizeof(*newtab));
   int i;
 
   memset(tab, 0, sizeof(*tab));
@@ -96,6 +97,12 @@ new_indirect_table(void)
   for(i=0; i<MSB(MAX_INDIRECT_BLOCKS); i++)
   { arr->blocks[i] = arr->preallocated;
   }
+
+  newtab->size = 8;
+  newtab->buckets = PL_malloc(newtab->size*sizeof(*newtab->buckets));
+  memset(newtab->buckets, 0, newtab->size*sizeof(*newtab->buckets));
+  newtab->prev = NULL;
+  tab->table = newtab;
 
   return tab;
 }
@@ -248,7 +255,8 @@ create_indirect(indirect *h, size_t index, word val ARG_LD)
 { Word	 idata = addressIndirect(val);	/* points at header */
   size_t isize = wsizeofInd(*idata);	/* include header */
 
-  h->header = (index<<LMASK_BITS)|tag(val)|STG_STATIC;
+  h->handle = (index<<LMASK_BITS)|tag(val)|STG_STATIC;
+  h->header = idata[0];
   h->data   = PL_malloc(isize*sizeof(word));
   memcpy(h->data, &idata[1], isize*sizeof(word));
 
