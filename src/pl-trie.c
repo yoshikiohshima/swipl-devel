@@ -514,6 +514,55 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
       }
       acquire_key(*vp);
       node->value = *vp;
+
+      return TRUE;
+    }
+
+    return FALSE;				/* (resource) error */
+  }
+
+  return FALSE;
+}
+
+
+/**
+ * trie_insert_new(+Trie, +Term, -Handle) is semidet.
+ *
+ * Add Term to Trie and unify Handle with a handle to the term.
+ * Fails if Term is already in Trie.
+ *
+ * @bug Handle is currently a pointer.  In future versions we will
+ * use a dynamic array for the trie nodes and return an integer to
+ * guarantee safe lookup.
+ */
+
+static
+PRED_IMPL("trie_insert_new", 3, trie_insert_new, 0)
+{ PRED_LD
+  trie *trie;
+
+  if ( get_trie(A1, &trie) )
+  { Word kp, vp;
+    trie_node *node;
+
+    kp = valTermRef(A2);
+    vp = valTermRef(A3);
+    deRef(vp);
+
+    if ( !isAtomic(*vp) || isFloat(*vp) )
+      return PL_type_error("primitive", A3);
+    if ( isBignum(*vp) )
+      return PL_domain_error("primitive", A3);
+
+    if ( (node = trie_lookup(trie, kp, TRUE PASS_LD)) )
+    { if ( node->value )
+      { if ( node->value == ATOM_nil )
+	  return FALSE;				/* already in trie */
+	return PL_permission_error("modify", "trie_key", A2);
+      }
+      node->value = ATOM_nil;
+
+      return PL_unify_pointer(A3, node);
     }
 
     return FALSE;				/* (resource) error */
