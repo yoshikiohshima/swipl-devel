@@ -125,6 +125,7 @@ static trie_node       *new_trie_node(void);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
 static void		trie_empty(trie *trie);
 static void		destroy_node(trie_node *n);
+static void		clear_node(trie_node *n);
 
 static inline void
 acquire_key(word key)
@@ -146,7 +147,6 @@ trie_create(void)
   if ( (trie = PL_malloc(sizeof(*trie))) )
   { memset(trie, 0, sizeof(*trie));
 
-    trie->root = new_trie_node();
     return trie;
   } else
   { PL_resource_error("memory");
@@ -164,11 +164,9 @@ trie_destroy(trie *trie)
 
 static void
 trie_empty(trie *trie)
-{ trie_node *node = trie->root;
-  indirect_table *it = trie->indirects;
+{ indirect_table *it = trie->indirects;
 
-  if ( COMPARE_AND_SWAP(&trie->root, node, NULL) )
-    destroy_node(node);				/* TBD: verify not accessed */
+  clear_node(&trie->root);			/* TBD: verify not accessed */
   if ( COMPARE_AND_SWAP(&trie->indirects, it, NULL) )
     destroy_indirect_table(it);
 }
@@ -210,22 +208,28 @@ destroy_hnode(trie_children_hashed *hnode)
 }
 
 static void
-destroy_node(trie_node *n)
+clear_node(trie_node *n)
 { trie_children children = n->children;
 
-  if ( children.any )
+  if ( COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
   { switch( children.any->type )
     { case TN_KEY:
 	release_key(children.key->key);
+        PL_free(children.key);
 	break;
       case TN_HASHED:
 	destroy_hnode(children.hash);
         break;
     }
   }
+}
 
+static void
+destroy_node(trie_node *n)
+{ clear_node(n);
   PL_free(n);
 }
+
 
 static void
 free_hnode_symbol(void *key, void *value)
@@ -334,7 +338,7 @@ static trie_node *
 trie_lookup(trie *trie, Word k, int add ARG_LD)
 { term_agenda agenda;
   Word p;
-  trie_node *node = trie->root;
+  trie_node *node = &trie->root;
   size_t var_number = 0;
 
   initTermAgenda(&agenda, 1, k);
@@ -871,9 +875,9 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
       { state = &state_buf;
 	memset(state, 0, sizeof(*state));
 
-	if ( trie->root->children.any )
+	if ( trie->root.children.any )
 	{ state->trie = trie;
-	  descent_node(state, add_choice(state, trie->root));
+	  descent_node(state, add_choice(state, &trie->root));
 	  break;
 	}
       }
@@ -933,6 +937,7 @@ BeginPredDefs(trie)
   PRED_DEF("trie_new",            1, trie_new,           0)
   PRED_DEF("trie_destroy",        1, trie_destroy,       0)
   PRED_DEF("trie_insert",         3, trie_insert,        0)
+  PRED_DEF("trie_insert_new",     3, trie_insert_new,    0)
   PRED_DEF("trie_lookup",         3, trie_lookup,        0)
   PRED_DEF("trie_gen",            3, trie_gen,           PL_FA_NONDETERMINISTIC)
 EndPredDefs
