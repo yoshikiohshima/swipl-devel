@@ -379,25 +379,6 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
 }
 
 
-
-static int
-trie_insert(trie *trie, Word k, word v ARG_LD)
-{ trie_node *node;
-
-  if ( !(node = trie_lookup(trie, k, TRUE PASS_LD)) )
-    return FALSE;
-
-  if ( node->value )
-  { if ( node->value == v )
-      return FALSE;				/* existing */
-    return -1;					/* permission error */
-  }
-  node->value = v;
-
-  return TRUE;
-}
-
-
 static void
 clear_vars(Word k, size_t var_number ARG_LD)
 { if ( var_number > 0 )
@@ -498,6 +479,15 @@ PRED_IMPL("trie_destroy", 1, trie_destroy, 0)
 }
 
 
+/**
+ * trie_insert(+Trie, +Key, +Value) is semidet.
+ *
+ * True if Key was added as a new   key  to the trie and associated with
+ * Value. False if Key was already in the trie with Value
+ *
+ * @error permission_error if Key was associated with a different value
+ */
+
 static
 PRED_IMPL("trie_insert", 3, trie_insert, 0)
 { PRED_LD
@@ -505,7 +495,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
 
   if ( get_trie(A1, &trie) )
   { Word kp, vp;
-    int rc;
+    trie_node *node;
 
     kp = valTermRef(A2);
     vp = valTermRef(A3);
@@ -516,10 +506,17 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
     if ( isBignum(*vp) )
       return PL_domain_error("primitive", A3);
 
-    if ( (rc=trie_insert(trie, kp, *vp PASS_LD)) >= 0 )
-      return rc;
+    if ( (node = trie_lookup(trie, kp, TRUE PASS_LD)) )
+    { if ( node->value )
+      { if ( node->value == *vp )
+	  return FALSE;				/* already in trie */
+	return PL_permission_error("modify", "trie_key", A2);
+      }
+      acquire_key(*vp);
+      node->value = *vp;
+    }
 
-    return PL_permission_error("modify", "trie_key", A2);
+    return FALSE;				/* (resource) error */
   }
 
   return FALSE;
