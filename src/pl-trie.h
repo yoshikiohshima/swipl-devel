@@ -68,6 +68,7 @@ typedef union trie_children
 
 typedef struct trie_node
 { word value;
+  struct trie_node *parent;
   trie_children children;
 } trie_node;
 

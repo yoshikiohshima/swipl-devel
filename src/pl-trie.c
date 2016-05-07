@@ -259,6 +259,7 @@ insert_child(trie_node *n, word key ARG_LD)
 
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
 	    { acquire_key(key);
+	      new->parent = n;
 	      return new;
 	    }
 	    destroy_hnode(hnode);
@@ -271,9 +272,11 @@ insert_child(trie_node *n, word key ARG_LD)
 				     (void*)key, (void*)new);
 
 	  if ( new == old )
+	  { new->parent = n;
 	    acquire_key(key);
-	  else
-	    destroy_node(new);
+	  } else
+	  { destroy_node(new);
+	  }
 	  return old;
 	}
 	default:
@@ -288,6 +291,7 @@ insert_child(trie_node *n, word key ARG_LD)
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
       { acquire_key(key);
+	child->child->parent = n;
 	return child->child;
       }
       destroy_node(child->child);
