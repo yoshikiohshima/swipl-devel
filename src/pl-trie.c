@@ -546,17 +546,10 @@ PRED_IMPL("trie_insert_new", 3, trie_insert_new, 0)
   trie *trie;
 
   if ( get_trie(A1, &trie) )
-  { Word kp, vp;
+  { Word kp;
     trie_node *node;
 
     kp = valTermRef(A2);
-    vp = valTermRef(A3);
-    deRef(vp);
-
-    if ( !isAtomic(*vp) || isFloat(*vp) )
-      return PL_type_error("primitive", A3);
-    if ( isBignum(*vp) )
-      return PL_domain_error("primitive", A3);
 
     if ( (node = trie_lookup(trie, kp, TRUE PASS_LD)) )
     { if ( node->value )
