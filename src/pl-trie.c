@@ -718,7 +718,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
     size_t gsize = 0;
     unsigned int nvars = 0;
     build_state state;
-    size_t i;
+    ssize_t i;
 						/* get the keys */
     for(node = ptr; node->parent; node = node->parent )
     { keys[kc++] = node->value;			/* TBD: resize */
@@ -736,7 +736,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
     }
 
     if ( init_build_state(&state, trie_ptr, gsize, nvars) )
-    { for(i=0; i<kc; i++)
+    { for(i=kc-1; i>=0; i--)
       { if ( !eval_key(&state, keys[i] PASS_LD) )
 	{ rc = FALSE;
 	  break;
