@@ -270,7 +270,9 @@ insert_child(trie_node *n, word key ARG_LD)
 	  trie_node *old = addHTable(children.hash->table,
 				     (void*)key, (void*)new);
 
-	  if ( new != old )
+	  if ( new == old )
+	    acquire_key(key);
+	  else
 	    destroy_node(new);
 	  return old;
 	}
