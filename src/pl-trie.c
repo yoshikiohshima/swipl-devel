@@ -121,7 +121,7 @@ static PL_blob_t trie_blob =
 		 *	     THE TRIE		*
 		 *******************************/
 
-static trie_node       *new_trie_node(void);
+static trie_node       *new_trie_node(word key);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
 static void		trie_empty(trie *trie);
 static void		destroy_node(trie_node *n);
@@ -194,10 +194,13 @@ get_child(trie_node *n, word key ARG_LD)
 
 
 static trie_node *
-new_trie_node(void)
+new_trie_node(word key)
 { trie_node *n = PL_malloc(sizeof(*n));
 
   memset(n, 0, sizeof(*n));
+  acquire_key(key);
+  n->key = key;
+
   return n;
 }
 
@@ -211,10 +214,10 @@ static void
 clear_node(trie_node *n)
 { trie_children children = n->children;
 
+  release_key(n->key);
   if ( COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
   { switch( children.any->type )
     { case TN_KEY:
-	release_key(children.key->key);
         PL_free(children.key);
 	break;
       case TN_HASHED:
@@ -233,9 +236,8 @@ destroy_node(trie_node *n)
 
 static void
 free_hnode_symbol(void *key, void *value)
-{ word k = (word)key;
+{ (void)key;
 
-  release_key(k);
   destroy_node(value);
 }
 
@@ -252,7 +254,7 @@ insert_child(trie_node *n, word key ARG_LD)
 	  { return children.key->child;
 	  } else
 	  { trie_children_hashed *hnode = PL_malloc(sizeof(*hnode));
-	    trie_node *new = new_trie_node();
+	    trie_node *new = new_trie_node(key);
 
 	    hnode->type  = TN_HASHED;
 	    hnode->table = newHTable(4);
@@ -262,8 +264,7 @@ insert_child(trie_node *n, word key ARG_LD)
 	    addHTable(hnode->table, (void*)key, (void*)new);
 
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
-	    { acquire_key(key);
-	      new->parent = n;
+	    { new->parent = n;
 	      return new;
 	    }
 	    destroy_hnode(hnode);
@@ -271,13 +272,12 @@ insert_child(trie_node *n, word key ARG_LD)
 	  }
 	}
 	case TN_HASHED:
-	{ trie_node *new = new_trie_node();
+	{ trie_node *new = new_trie_node(key);
 	  trie_node *old = addHTable(children.hash->table,
 				     (void*)key, (void*)new);
 
 	  if ( new == old )
 	  { new->parent = n;
-	    acquire_key(key);
 	  } else
 	  { destroy_node(new);
 	  }
@@ -291,11 +291,10 @@ insert_child(trie_node *n, word key ARG_LD)
 
       child->type  = TN_KEY;
       child->key   = key;
-      child->child = new_trie_node();
+      child->child = new_trie_node(key);
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
-      { acquire_key(key);
-	child->child->parent = n;
+      { child->child->parent = n;
 	return child->child;
       }
       destroy_node(child->child);
@@ -348,7 +347,7 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
     switch( tag(w) )
     { case TAG_VAR:
 	if ( isVar(w) )
-	  *p = w = ((((word)++var_number))<<7)|TAG_VAR;
+	  *p = w = ((((word)++var_number))<<LMASK_BITS)|TAG_VAR;
         node = follow_node(node, w, add PASS_LD);
 	break;
       case TAG_ATTVAR:
@@ -726,7 +725,8 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
     ssize_t i;
 						/* get the keys */
     for(node = ptr; node->parent; node = node->parent )
-    { keys[kc++] = node->value;			/* TBD: resize */
+    { assert(node->key);
+      keys[kc++] = node->key;			/* TBD: resize */
       assert(kc < MAX_FAST);
     }
     trie_ptr = (trie *)((char*)node - offsetof(trie, root));
