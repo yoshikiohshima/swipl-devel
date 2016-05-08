@@ -712,6 +712,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
 { PRED_LD
   word fast[MAX_FAST];
   Word keys = fast;
+  size_t keys_allocated = MAX_FAST;
   size_t kc = 0;
   void *ptr;
   int rc = TRUE;
@@ -726,8 +727,23 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
 						/* get the keys */
     for(node = ptr; node->parent; node = node->parent )
     { assert(node->key);
+      if ( kc == keys_allocated )
+      { keys_allocated *= 2;
+	if ( keys == fast )
+	{ if ( (keys = malloc(sizeof(*keys)*keys_allocated)) )
+	    memcpy(keys, fast, sizeof(fast));
+	  else
+	    return PL_resource_error("memory");
+	} else
+	{ Word newkeys;
+	  if ( !(newkeys=realloc(keys, keys_allocated)) )
+	  { free(keys);
+	    return PL_resource_error("memory");
+	  }
+	}
+      }
+
       keys[kc++] = node->key;			/* TBD: resize */
-      assert(kc < MAX_FAST);
     }
     trie_ptr = (trie *)((char*)node - offsetof(trie, root));
     assert(trie_ptr->magic == TRIE_MAGIC);
@@ -761,7 +777,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
     }
 
     if ( keys != fast )
-      PL_free(keys);
+      free(keys);
   } else
     rc = FALSE;
 
