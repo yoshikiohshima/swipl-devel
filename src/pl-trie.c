@@ -605,14 +605,13 @@ init_build_state(build_state *state, trie *trie,
 		 size_t gsize, unsigned int nvars ARG_LD)
 { int rc;
 
-  state->is_compound = FALSE;
-  state->vp = &state->result;
-  state->gp = gTop;
-  state->trie = trie;
-
   if ( (rc=ensureGlobalSpace(gsize, ALLOW_GC)) != TRUE )
     return raiseStackOverflow(rc);
 
+  state->is_compound = FALSE;
+  state->vp   = &state->result;
+  state->gp   = gTop;
+  state->trie = trie;
   state->varp = nvars <= NVARS_FAST
 		       ? state->varp_buf
 		       : PL_malloc(nvars*sizeof(*state->varp));
