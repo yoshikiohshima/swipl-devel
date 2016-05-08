@@ -602,11 +602,13 @@ typedef struct
 } build_state;
 
 static int
-init_build_state(build_state *state, trie *trie, size_t gsize, unsigned int nvars)
+init_build_state(build_state *state, trie *trie,
+		 size_t gsize, unsigned int nvars ARG_LD)
 { int rc;
 
   state->is_compound = FALSE;
   state->vp = &state->result;
+  state->gp = gTop;
   state->trie = trie;
 
   if ( (rc=ensureGlobalSpace(gsize, ALLOW_GC)) != TRUE )
@@ -691,6 +693,9 @@ eval_key(build_state *state, word key ARG_LD)
     }
   }
 
+  if ( state->is_compound )
+    state->vp = nextTermAgendaNoDeRef(&state->agenda);
+
   return TRUE;
 }
 
@@ -735,7 +740,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
 	nvars = nv;
     }
 
-    if ( init_build_state(&state, trie_ptr, gsize, nvars) )
+    if ( init_build_state(&state, trie_ptr, gsize, nvars PASS_LD) )
     { for(i=kc-1; i>=0; i--)
       { if ( !eval_key(&state, keys[i] PASS_LD) )
 	{ rc = FALSE;
@@ -918,92 +923,34 @@ next_choice(trie_gen_state *state)
 
 
 static int
-put_trie_term(term_t term, Word value, trie_gen_state *state ARG_LD)
-{ int rc;
-  Word gp, vp;
-  word v;
+put_trie_term(term_t term, Word value, trie_gen_state *gstate ARG_LD)
+{ int rc = TRUE;
   trie_choice *ch;
-  term_agenda agenda;
-  int is_compound = FALSE;
-  Word varp_buf[NVARS_FAST];
-  Word *varp;
-  int nvars = state->tail->nvars+1;		/* last node may add one */
+  build_state bstate;
 
-  if ( (rc=ensureGlobalSpace(state->tail->gsize, ALLOW_GC)) != TRUE )
-    return raiseStackOverflow(rc);
-
-  varp = nvars <= NVARS_FAST
-		? varp_buf
-		: PL_malloc(nvars*sizeof(*varp));
-  memset(varp, 0, nvars*sizeof(*varp));
-
-  gp = gTop;
-  vp = &v;
-  for( ch = state->head; ch; ch = ch->next )
-  { if ( tagex(ch->key) == (TAG_ATOM|STG_GLOBAL) )
-    { size_t arity = arityFunctor(ch->key);
-
-      *vp = consPtr(gp, TAG_COMPOUND|STG_GLOBAL);
-      DEBUG(MSG_TRIE_PUT_TERM,
-	    Sdprintf("Term %s at %s\n",
-		     functorName(ch->key), print_addr(gp,NULL)));
-
-      *gp++ = ch->key;
-      if ( !is_compound )
-      { initTermAgenda(&agenda, arity, gp);
-	is_compound = TRUE;
-      } else
-      { if ( !pushWorkAgenda(&agenda, arity, gp) )
-	{ clearTermAgenda(&agenda);
-	  if ( varp != varp_buf )
-	    PL_free(varp);
-	  return raiseStackOverflow(MEMORY_OVERFLOW);
-	}
+  if ( init_build_state(&bstate,
+			gstate->trie,
+			gstate->tail->gsize,
+			gstate->tail->nvars+1 PASS_LD) )
+  { for( ch = gstate->head; ch; ch = ch->next )
+    { if ( !eval_key(&bstate, ch->key PASS_LD) )
+      { rc = FALSE;
+	break;
       }
-      gp += arity;
-    } else
-    { if ( !ch->next )
+      if ( !ch->next )
       { *value = ch->child->value;
       }
-
-      if ( tag(ch->key) == TAG_VAR )
-      { unsigned int index = (unsigned int)(ch->key>>7) - 1;
-
-	DEBUG(MSG_TRIE_PUT_TERM,
-	       Sdprintf("var %d at %s\n", (int)index,
-			print_addr(vp,NULL)));
-
-	if ( !varp[index] )
-	{ setVar(*vp);
-	  varp[index] = vp;
-	} else
-	{ *vp = makeRefG(varp[index]);
-	}
-
-      } else
-      { DEBUG(MSG_TRIE_PUT_TERM,
-	      Sdprintf("%s at %s\n",
-		       print_val(ch->key, NULL), print_addr(vp,NULL)));
-	if ( isAtom(ch->key) )
-	  pushVolatileAtom(ch->key);
-	if ( !isIndirect(ch->key) )
-	{ *vp = ch->key;
-	} else
-	{ *vp = extern_indirect(state->trie->indirects, ch->key, &gp PASS_LD);
-	}
-      }
     }
-    if ( is_compound )
-      vp = nextTermAgendaNoDeRef(&agenda);
-  }
 
-  if ( varp != varp_buf )
-    PL_free(varp);
+    clear_build_state(&bstate);
+    if ( rc )
+    { gTop = bstate.gp;
+      *valTermRef(term) = bstate.result;
+    }
+  } else
+    rc = FALSE;
 
-  gTop = gp;
-  *valTermRef(term) = v;
-
-  return TRUE;
+  return rc;
 }
 
 
