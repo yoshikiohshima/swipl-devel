@@ -725,8 +725,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
     ssize_t i;
 						/* get the keys */
     for(node = ptr; node->parent; node = node->parent )
-    { assert(node->key);
-      if ( kc == keys_allocated )
+    { if ( kc == keys_allocated )
       { keys_allocated *= 2;
 	if ( keys == fast )
 	{ if ( (keys = malloc(sizeof(*keys)*keys_allocated)) )
@@ -735,14 +734,14 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
 	    return PL_resource_error("memory");
 	} else
 	{ Word newkeys;
-	  if ( !(newkeys=realloc(keys, keys_allocated)) )
+	  if ( !(newkeys=realloc(keys, sizeof(*keys)*keys_allocated)) )
 	  { free(keys);
 	    return PL_resource_error("memory");
 	  }
 	}
       }
 
-      keys[kc++] = node->key;			/* TBD: resize */
+      keys[kc++] = node->key;
     }
     trie_ptr = (trie *)((char*)node - offsetof(trie, root));
     assert(trie_ptr->magic == TRIE_MAGIC);
@@ -770,6 +769,7 @@ PRED_IMPL("trie_term", 2, trie_term, 0)
 	gTop = state.gp;
 	v = PL_new_term_ref();
 	*valTermRef(v) = state.result;
+	DEBUG(CHK_SECURE, PL_check_data(v));
 
 	rc = PL_unify(A2, v);
       }
@@ -961,6 +961,7 @@ put_trie_term(term_t term, Word value, trie_gen_state *gstate ARG_LD)
     if ( rc )
     { gTop = bstate.gp;
       *valTermRef(term) = bstate.result;
+      DEBUG(CHK_SECURE, PL_check_data(term));
     }
   } else
     rc = FALSE;
