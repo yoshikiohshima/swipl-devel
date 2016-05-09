@@ -167,7 +167,7 @@ trie_empty(trie *trie)
 { indirect_table *it = trie->indirects;
 
   clear_node(&trie->root);			/* TBD: verify not accessed */
-  if ( COMPARE_AND_SWAP(&trie->indirects, it, NULL) )
+  if ( it && COMPARE_AND_SWAP(&trie->indirects, it, NULL) )
     destroy_indirect_table(it);
 }
 
@@ -215,7 +215,8 @@ clear_node(trie_node *n)
 { trie_children children = n->children;
 
   release_key(n->key);
-  if ( COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
+  if ( children.any &&
+       COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
   { switch( children.any->type )
     { case TN_KEY:
         PL_free(children.key);
