@@ -47,6 +47,13 @@ terms, these tokens are functor symbols,   variables  and atomic values.
 The _value_ associated with a  term  always   appears  in  a _leaf_ node
 because a sequence that represents a term   is  _never_ the prefix of of
 the sequence of another term.
+
+TODO
+  - Query and limit size of the tries
+  - Avoid using a hash-table for small number of branches
+  - Thread safe reclaiming
+    - Reclaim single-child node after moving to a hash
+  - Provide pruning of the trie (thread safe)
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
@@ -924,7 +931,7 @@ descent_node(trie_gen_state *state, trie_choice *ch)
   { ch = add_choice(state, ch->child);
   }
 
-  return TRUE;
+  return ch->child->value != 0;
 }
 
 
@@ -967,8 +974,9 @@ next_choice(trie_gen_state *state)
 { trie_choice *ch;
 
   for( ch = state->tail; ch; ch = previous_choice(state) )
-  { if ( advance_node(ch) )
-      return descent_node(state, ch);
+  { if ( advance_node(ch) &&
+	 descent_node(state, ch) )
+      return TRUE;
   }
 
   return FALSE;
@@ -1027,7 +1035,11 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
 
 	if ( trie->root.children.any )
 	{ state->trie = trie;
-	  descent_node(state, add_choice(state, &trie->root));
+	  if ( !descent_node(state, add_choice(state, &trie->root)) &&
+	       !next_choice(state) )
+	  { clear_trie_state(state);
+	    return FALSE;
+	  }
 	  break;
 	}
       }
