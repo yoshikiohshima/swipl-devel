@@ -242,6 +242,44 @@ destroy_node(trie_node *n)
 }
 
 
+/*
+ * Prune a branch of the trie that does not end in a node.  This should
+ * be used after deletion or unsuccessful insertion, e.g., by trying to
+ * insert a cyclic term
+ *
+ * TBD: Need to think about concurrency here.
+ */
+
+static void
+prune_node(trie *trie, trie_node *n)
+{ trie_node *p;
+  int empty = TRUE;
+
+  for(; empty && n->parent; n = p)
+  { trie_children children;
+
+    p = n->parent;
+    children = p->children;
+
+    if ( children.any )
+    { switch( children.any->type )
+      { case TN_KEY:
+	  if ( COMPARE_AND_SWAP(&p->children.any, children.any, NULL) )
+	    PL_free(children.any);
+	  break;
+	case TN_HASHED:
+	  deleteHTable(children.hash->table, (void*)n->key);
+	  empty = children.hash->table->size == 0;
+	  break;
+      }
+    }
+
+    destroy_node(n);
+    ATOMIC_DEC(&trie->node_count);
+  }
+}
+
+
 static void
 free_hnode_symbol(void *key, void *value)
 { (void)key;
@@ -305,6 +343,7 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
       { child->child->parent = n;
+	ATOMIC_INC(&trie->node_count);
 	return child->child;
       }
       destroy_node(child->child);
@@ -367,18 +406,20 @@ trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
 	break;
       case TAG_ATTVAR:
 	rc = TRIE_LOOKUP_CONTAINS_ATTVAR;
+        prune_node(trie, node);
         node = NULL;
         break;
       case TAG_COMPOUND:
       { Functor f = valueTerm(w);
         int arity = arityFunctor(f->definition);
-	node = follow_node(trie, node, f->definition, add PASS_LD);
 
-	if ( ++compounds == 1000 && !is_acyclic(p PASS_LD) )
+	if ( add && ++compounds == 1000 && !is_acyclic(p PASS_LD) )
 	{ rc = TRIE_LOOKUP_CYCLIC;
+	  prune_node(trie, node);
 	  node = NULL;
 	} else
-	{ pushWorkAgenda(&agenda, arity, f->arguments);
+	{ node = follow_node(trie, node, f->definition, add PASS_LD);
+	  pushWorkAgenda(&agenda, arity, f->arguments);
 	}
 	break;
       }
