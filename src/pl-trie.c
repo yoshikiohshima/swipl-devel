@@ -535,13 +535,15 @@ PRED_IMPL("trie_new", 1, trie_new, 0)
   tref ref;
 
   if ( (ref.trie = trie_create()) )
-  { int new;
+  { int new, rc;
 
     ref.trie->symbol = lookupBlob((void*)&ref, sizeof(ref),
 				   &trie_blob, &new);
     ref.trie->magic = TRIE_MAGIC;
+    rc = unify_trie(A1, ref.trie);
+    PL_unregister_atom(ref.trie->symbol);
 
-    return unify_trie(A1, ref.trie);
+    return rc;
   }
 
   return FALSE;
