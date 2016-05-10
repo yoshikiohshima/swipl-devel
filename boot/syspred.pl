@@ -1062,6 +1062,8 @@ trie_property(Trie, Property) :-
 	'$trie_property'(Trie, Property).
 
 trie_property(node_count(_)).
+trie_property(size(_)).
+trie_property(hashed(_)).
 
 
 

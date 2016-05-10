@@ -487,6 +487,55 @@ clear_vars(Word k, size_t var_number ARG_LD)
 }
 
 
+typedef struct trie_stats
+{ size_t bytes;
+  size_t nodes;
+  size_t hashes;
+} trie_stats;
+
+
+static void
+stat_node(trie_node *n, trie_stats *stats)
+{ trie_children children = n->children;
+
+  stats->nodes++;
+  stats->bytes += sizeof(*n);
+
+  if ( children.any )
+  { switch( children.any->type )
+    { case TN_KEY:
+	stats->bytes += sizeof(*children.key);
+        break;
+      case TN_HASHED:
+      { TableEnum e = newTableEnum(children.hash->table);
+	void *k, *v;
+
+	stats->bytes += sizeofTable(children.hash->table);
+
+	while( advanceTableEnum(e, &k, &v) )
+	  stat_node(v, stats);
+
+	freeTableEnum(e);
+	break;
+      }
+      default:
+	assert(0);
+    }
+  }
+}
+
+
+static void
+stat_trie(trie *t, trie_stats *stats)
+{ stats->bytes  = sizeof(*t) - sizeof(t->root);
+  stats->nodes  = 0;
+  stats->hashes = 0;
+
+  stat_node(&t->root, stats);
+}
+
+
+
 
 		 /*******************************
 		 *	  PROLOG BINDING	*
@@ -1153,7 +1202,16 @@ PRED_IMPL("$trie_property", 2, trie_property, 0)
       _PL_get_arg(1, A2, arg);
 
       if ( name == ATOM_node_count )
-	return PL_unify_integer(arg, trie->node_count);
+      { return PL_unify_integer(arg, trie->node_count);
+      } else if ( name == ATOM_size )
+      { trie_stats stats;
+	stat_trie(trie, &stats);
+	return PL_unify_int64(arg, stats.bytes);
+      } else if ( name == ATOM_hashed )
+      { trie_stats stats;
+	stat_trie(trie, &stats);
+	return PL_unify_int64(arg, stats.hashes);
+      }
     }
   }
 
