@@ -53,7 +53,9 @@ TODO
   - Avoid using a hash-table for small number of branches
   - Thread safe reclaiming
     - Reclaim single-child node after moving to a hash
-  - Provide pruning of the trie (thread safe)
+    - Make pruning the trie thread-safe
+  - Provide deletion from a trie
+  - Make trie_gen/3 take the known prefix into account
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
@@ -1172,7 +1174,6 @@ BeginPredDefs(trie)
   PRED_DEF("trie_term",		  2, trie_term,		 0)
   PRED_DEF("trie_gen",            3, trie_gen,           PL_FA_NONDETERMINISTIC)
   PRED_DEF("$trie_property",      2, trie_property,      0)
-
 EndPredDefs
 
 void
