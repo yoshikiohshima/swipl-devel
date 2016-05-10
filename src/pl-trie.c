@@ -334,12 +334,17 @@ trie_intern_indirect(trie *trie, word w, int add ARG_LD)
 }
 
 
-static trie_node *
-trie_lookup(trie *trie, Word k, int add ARG_LD)
+#define TRIE_LOOKUP_CONTAINS_ATTVAR	-10
+#define TRIE_LOOKUP_CYCLIC		-11
+
+static int
+trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
 { term_agenda agenda;
   Word p;
   trie_node *node = &trie->root;
   size_t var_number = 0;
+  int rc = TRUE;
+  int compounds = 0;
 
   initTermAgenda(&agenda, 1, k);
   while( node && (p=nextTermAgenda(&agenda)) )
@@ -352,14 +357,20 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
         node = follow_node(node, w, add PASS_LD);
 	break;
       case TAG_ATTVAR:
-	assert(0);
+	rc = TRIE_LOOKUP_CONTAINS_ATTVAR;
+        node = NULL;
         break;
       case TAG_COMPOUND:
       { Functor f = valueTerm(w);
         int arity = arityFunctor(f->definition);
 	node = follow_node(node, f->definition, add PASS_LD);
 
-	pushWorkAgenda(&agenda, arity, f->arguments);
+	if ( ++compounds == 1000 && !is_acyclic(p PASS_LD) )
+	{ rc = TRIE_LOOKUP_CYCLIC;
+	  node = NULL;
+	} else
+	{ pushWorkAgenda(&agenda, arity, f->arguments);
+	}
 	break;
       }
       default:
@@ -379,7 +390,14 @@ trie_lookup(trie *trie, Word k, int add ARG_LD)
   clearTermAgenda(&agenda);
   clear_vars(k, var_number PASS_LD);
 
-  return node;
+  if ( rc == TRUE )
+  { if ( node )
+      *nodep = node;
+    else
+      rc = FALSE;
+  }
+
+  return rc;
 }
 
 
@@ -449,6 +467,18 @@ get_trie(term_t t, trie **tp)
 }
 
 
+static int
+trie_error(int rc, term_t culprit)
+{ switch(rc)
+  { case TRIE_LOOKUP_CONTAINS_ATTVAR:
+      return PL_type_error("free_of_attvar", culprit);
+    case TRIE_LOOKUP_CYCLIC:
+      return PL_type_error("acyclic_term", culprit);
+    default:
+      return FALSE;
+  }
+}
+
 static
 PRED_IMPL("trie_new", 1, trie_new, 0)
 { PRED_LD
@@ -500,6 +530,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
   if ( get_trie(A1, &trie) )
   { Word kp, vp;
     trie_node *node;
+    int rc;
 
     kp = valTermRef(A2);
     vp = valTermRef(A3);
@@ -510,7 +541,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
     if ( isBignum(*vp) )
       return PL_domain_error("primitive", A3);
 
-    if ( (node = trie_lookup(trie, kp, TRUE PASS_LD)) )
+    if ( (rc=trie_lookup(trie, &node, kp, TRUE PASS_LD)) == TRUE )
     { if ( node->value )
       { if ( node->value == *vp )
 	  return FALSE;				/* already in trie */
@@ -522,7 +553,7 @@ PRED_IMPL("trie_insert", 3, trie_insert, 0)
       return TRUE;
     }
 
-    return FALSE;				/* (resource) error */
+    return trie_error(rc, A2);
   }
 
   return FALSE;
@@ -548,10 +579,11 @@ PRED_IMPL("trie_insert_new", 3, trie_insert_new, 0)
   if ( get_trie(A1, &trie) )
   { Word kp;
     trie_node *node;
+    int rc;
 
     kp = valTermRef(A2);
 
-    if ( (node = trie_lookup(trie, kp, TRUE PASS_LD)) )
+    if ( (rc=trie_lookup(trie, &node, kp, TRUE PASS_LD)) == TRUE )
     { if ( node->value )
       { if ( node->value == ATOM_nil )
 	  return FALSE;				/* already in trie */
@@ -562,7 +594,7 @@ PRED_IMPL("trie_insert_new", 3, trie_insert_new, 0)
       return PL_unify_pointer(A3, node);
     }
 
-    return FALSE;				/* (resource) error */
+    return trie_error(rc, A2);
   }
 
   return FALSE;
@@ -577,12 +609,17 @@ PRED_IMPL("trie_lookup", 3, trie_lookup, 0)
   if ( get_trie(A1, &trie) )
   { Word kp;
     trie_node *node;
+    int rc;
 
     kp = valTermRef(A2);
 
-    if ( (node = trie_lookup(trie, kp, FALSE PASS_LD)) &&
-	 node->value )
-      return _PL_unify_atomic(A3, node->value);
+    if ( (rc=trie_lookup(trie, &node, kp, FALSE PASS_LD)) == TRUE )
+    { if ( node->value )
+	return _PL_unify_atomic(A3, node->value);
+      return FALSE;
+    }
+
+    return trie_error(rc, A2);
   }
 
   return FALSE;
