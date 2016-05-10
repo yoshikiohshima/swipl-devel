@@ -77,6 +77,7 @@ typedef struct trie_node
 typedef struct trie
 { atom_t		symbol;		/* The associated symbol */
   int			magic;		/* TRIE_MAGIC */
+  unsigned int		node_count;	/* # nodes */
   trie_node	        root;		/* the root node */
   indirect_table       *indirects;	/* indirect values */
 } trie;

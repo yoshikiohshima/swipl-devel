@@ -251,7 +251,7 @@ free_hnode_symbol(void *key, void *value)
 
 
 static trie_node *
-insert_child(trie_node *n, word key ARG_LD)
+insert_child(trie *trie, trie_node *n, word key ARG_LD)
 { for(;;)
   { trie_children children = n->children;
 
@@ -273,6 +273,7 @@ insert_child(trie_node *n, word key ARG_LD)
 
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
 	    { new->parent = n;
+	      ATOMIC_INC(&trie->node_count);
 	      return new;
 	    }
 	    destroy_hnode(hnode);
@@ -286,6 +287,7 @@ insert_child(trie_node *n, word key ARG_LD)
 
 	  if ( new == old )
 	  { new->parent = n;
+	    ATOMIC_INC(&trie->node_count);
 	  } else
 	  { destroy_node(new);
 	  }
@@ -313,14 +315,14 @@ insert_child(trie_node *n, word key ARG_LD)
 
 
 static trie_node *
-follow_node(trie_node *n, word value, int add ARG_LD)
+follow_node(trie *trie, trie_node *n, word value, int add ARG_LD)
 { trie_node *child;
 
   if ( (child=get_child(n, value PASS_LD)) )
     return child;
 
   if ( add )
-    return insert_child(n, value PASS_LD);
+    return insert_child(trie, n, value PASS_LD);
   else
     return NULL;
 }
@@ -361,7 +363,7 @@ trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
     { case TAG_VAR:
 	if ( isVar(w) )
 	  *p = w = ((((word)++var_number))<<LMASK_BITS)|TAG_VAR;
-        node = follow_node(node, w, add PASS_LD);
+        node = follow_node(trie, node, w, add PASS_LD);
 	break;
       case TAG_ATTVAR:
 	rc = TRIE_LOOKUP_CONTAINS_ATTVAR;
@@ -370,7 +372,7 @@ trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
       case TAG_COMPOUND:
       { Functor f = valueTerm(w);
         int arity = arityFunctor(f->definition);
-	node = follow_node(node, f->definition, add PASS_LD);
+	node = follow_node(trie, node, f->definition, add PASS_LD);
 
 	if ( ++compounds == 1000 && !is_acyclic(p PASS_LD) )
 	{ rc = TRIE_LOOKUP_CYCLIC;
@@ -382,12 +384,12 @@ trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
       }
       default:
       { if ( !isIndirect(w) )
-	{ node = follow_node(node, w, add PASS_LD);
+	{ node = follow_node(trie, node, w, add PASS_LD);
 	} else
 	{ word i = trie_intern_indirect(trie, w, add PASS_LD);
 
 	  if ( i )
-	    node = follow_node(node, i, add PASS_LD);
+	    node = follow_node(trie, node, i, add PASS_LD);
 	  else
 	    node = NULL;
 	}
@@ -1091,6 +1093,29 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
   return FALSE;
 }
 
+
+static
+PRED_IMPL("$trie_property", 2, trie_property, 0)
+{ PRED_LD
+  trie *trie;
+
+  if ( get_trie(A1, &trie) )
+  { atom_t name; size_t arity;
+
+    if ( PL_get_name_arity(A2, &name, &arity) && arity == 1 )
+    { term_t arg = PL_new_term_ref();
+
+      _PL_get_arg(1, A2, arg);
+
+      if ( name == ATOM_node_count )
+	return PL_unify_integer(arg, trie->node_count);
+    }
+  }
+
+  return FALSE;
+}
+
+
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/
@@ -1103,6 +1128,8 @@ BeginPredDefs(trie)
   PRED_DEF("trie_lookup",         3, trie_lookup,        0)
   PRED_DEF("trie_term",		  2, trie_term,		 0)
   PRED_DEF("trie_gen",            3, trie_gen,           PL_FA_NONDETERMINISTIC)
+  PRED_DEF("$trie_property",      2, trie_property,      0)
+
 EndPredDefs
 
 void
