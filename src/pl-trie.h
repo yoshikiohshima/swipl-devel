@@ -87,5 +87,6 @@ typedef struct trie
 
 COMMON(void)	initTries(void);
 COMMON(int)	get_trie(term_t t, trie **tp);
+COMMON(int)	put_trie_term(trie_node *node, term_t term ARG_LD);
 
 #endif /*_PL_TRIE_H*/

@@ -487,6 +487,190 @@ clear_vars(Word k, size_t var_number ARG_LD)
 }
 
 
+		 /*******************************
+		 *    BUILD TERM FROM PATH	*
+		 *******************************/
+
+#define NVARS_FAST 100
+
+typedef struct
+{ term_agenda agenda;
+  int is_compound;
+  Word gp;					/* global pointer */
+  Word vp;					/* result location */
+  Word *varp;					/* variable pointers */
+  word result;					/* final term */
+  trie *trie;					/* trie we work on */
+  Word varp_buf[NVARS_FAST];			/* variable pointer buffer */
+} build_state;
+
+static int
+init_build_state(build_state *state, trie *trie,
+		 size_t gsize, unsigned int nvars ARG_LD)
+{ int rc;
+
+  if ( (rc=ensureGlobalSpace(gsize, ALLOW_GC)) != TRUE )
+    return raiseStackOverflow(rc);
+
+  state->is_compound = FALSE;
+  state->vp   = &state->result;
+  state->gp   = gTop;
+  state->trie = trie;
+  state->varp = nvars <= NVARS_FAST
+		       ? state->varp_buf
+		       : PL_malloc(nvars*sizeof(*state->varp));
+  memset(state->varp, 0, nvars*sizeof(*state->varp));
+
+  return TRUE;
+}
+
+static void
+clear_build_state(build_state *state)
+{ if ( state->varp != state->varp_buf )
+    PL_free(state->varp);
+}
+
+static size_t
+key_gsize(trie *trie, word key)
+{ if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
+    return arityFunctor(key)+1;
+  if ( isIndirect(key) )
+    return gsize_indirect(trie->indirects, key);
+
+  return 0;
+}
+
+static unsigned int
+key_nvar(word key)
+{ if ( tag(key) == TAG_VAR )
+    return (unsigned int)(key>>LMASK_BITS);
+  return 0;
+}
+
+static int
+eval_key(build_state *state, word key ARG_LD)
+{ if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
+  { size_t arity = arityFunctor(key);
+
+    *state->vp = consPtr(state->gp, TAG_COMPOUND|STG_GLOBAL);
+    DEBUG(MSG_TRIE_PUT_TERM,
+	  Sdprintf("Term %s at %s\n",
+		   functorName(key), print_addr(state->gp,NULL)));
+
+    *state->gp++ = key;
+    if ( !state->is_compound )
+    { initTermAgenda(&state->agenda, arity, state->gp);
+      state->is_compound = TRUE;
+    } else
+    { if ( !pushWorkAgenda(&state->agenda, arity, state->gp) )
+      { clearTermAgenda(&state->agenda);
+	return raiseStackOverflow(MEMORY_OVERFLOW);
+      }
+    }
+    state->gp += arity;
+  } else if ( tag(key) == TAG_VAR )
+  { unsigned int index = (unsigned int)(key>>LMASK_BITS) - 1;
+
+    DEBUG(MSG_TRIE_PUT_TERM,
+	  Sdprintf("var %d at %s\n", (int)index,
+		   print_addr(state->vp,NULL)));
+
+    if ( !state->varp[index] )
+    { setVar(*state->vp);
+      state->varp[index] = state->vp;
+    } else
+    { *state->vp = makeRefG(state->varp[index]);
+    }
+  } else
+  { DEBUG(MSG_TRIE_PUT_TERM,
+	  Sdprintf("%s at %s\n",
+		   print_val(key, NULL), print_addr(state->vp,NULL)));
+    if ( isAtom(key) )
+      pushVolatileAtom(key);
+    if ( !isIndirect(key) )
+    { *state->vp = key;
+    } else
+    { *state->vp = extern_indirect(state->trie->indirects,
+				   key, &state->gp PASS_LD);
+    }
+  }
+
+  if ( state->is_compound )
+    state->vp = nextTermAgendaNoDeRef(&state->agenda);
+
+  return TRUE;
+}
+
+
+#define MAX_FAST 256
+
+int
+put_trie_term(trie_node *node, term_t term ARG_LD)
+{ word fast[MAX_FAST];
+  Word keys = fast;
+  size_t keys_allocated = MAX_FAST;
+  size_t kc = 0;
+  int rc = TRUE;
+  trie *trie_ptr;
+  size_t gsize = 0;
+  unsigned int nvars = 0;
+  build_state state;
+  ssize_t i;
+
+						/* get the keys */
+  for( ; node->parent; node = node->parent )
+  { if ( kc == keys_allocated )
+    { keys_allocated *= 2;
+      if ( keys == fast )
+      { if ( (keys = malloc(sizeof(*keys)*keys_allocated)) )
+	  memcpy(keys, fast, sizeof(fast));
+	else
+	  return PL_resource_error("memory");
+      } else
+      { Word newkeys;
+	if ( !(newkeys=realloc(keys, sizeof(*keys)*keys_allocated)) )
+	{ free(keys);
+	  return PL_resource_error("memory");
+	}
+      }
+    }
+
+    keys[kc++] = node->key;
+  }
+  trie_ptr = (trie *)((char*)node - offsetof(trie, root));
+  assert(trie_ptr->magic == TRIE_MAGIC);
+
+  for(i=0; i<kc; i++)				/* compute sizes */
+  { unsigned nv;
+
+    gsize += key_gsize(trie_ptr, keys[i]);
+    if ( (nv=key_nvar(keys[i])) > nvars )
+      nvars = nv;
+  }
+
+  if ( init_build_state(&state, trie_ptr, gsize, nvars PASS_LD) )
+  { for(i=kc-1; i>=0; i--)
+    { if ( !eval_key(&state, keys[i] PASS_LD) )
+      { rc = FALSE;
+	break;
+      }
+    }
+
+    clear_build_state(&state);
+    if ( rc )
+    { gTop = state.gp;
+      *valTermRef(term) = state.result;
+      DEBUG(CHK_SECURE, PL_check_data(term));
+    }
+  }
+
+  if ( keys != fast )
+    free(keys);
+
+  return rc;
+}
+
+
 typedef struct trie_stats
 { size_t bytes;
   size_t nodes;
@@ -728,116 +912,6 @@ PRED_IMPL("trie_lookup", 3, trie_lookup, 0)
   return FALSE;
 }
 
-#define NVARS_FAST 100
-
-typedef struct
-{ term_agenda agenda;
-  int is_compound;
-  Word gp;					/* global pointer */
-  Word vp;					/* result location */
-  Word *varp;					/* variable pointers */
-  word result;					/* final term */
-  trie *trie;					/* trie we work on */
-  Word varp_buf[NVARS_FAST];			/* variable pointer buffer */
-} build_state;
-
-static int
-init_build_state(build_state *state, trie *trie,
-		 size_t gsize, unsigned int nvars ARG_LD)
-{ int rc;
-
-  if ( (rc=ensureGlobalSpace(gsize, ALLOW_GC)) != TRUE )
-    return raiseStackOverflow(rc);
-
-  state->is_compound = FALSE;
-  state->vp   = &state->result;
-  state->gp   = gTop;
-  state->trie = trie;
-  state->varp = nvars <= NVARS_FAST
-		       ? state->varp_buf
-		       : PL_malloc(nvars*sizeof(*state->varp));
-  memset(state->varp, 0, nvars*sizeof(*state->varp));
-
-  return TRUE;
-}
-
-static void
-clear_build_state(build_state *state)
-{ if ( state->varp != state->varp_buf )
-    PL_free(state->varp);
-}
-
-static size_t
-key_gsize(trie *trie, word key)
-{ if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
-    return arityFunctor(key)+1;
-  if ( isIndirect(key) )
-    return gsize_indirect(trie->indirects, key);
-
-  return 0;
-}
-
-static unsigned int
-key_nvar(word key)
-{ if ( tag(key) == TAG_VAR )
-    return (unsigned int)(key>>LMASK_BITS);
-  return 0;
-}
-
-static int
-eval_key(build_state *state, word key ARG_LD)
-{ if ( tagex(key) == (TAG_ATOM|STG_GLOBAL) )
-  { size_t arity = arityFunctor(key);
-
-    *state->vp = consPtr(state->gp, TAG_COMPOUND|STG_GLOBAL);
-    DEBUG(MSG_TRIE_PUT_TERM,
-	  Sdprintf("Term %s at %s\n",
-		   functorName(key), print_addr(state->gp,NULL)));
-
-    *state->gp++ = key;
-    if ( !state->is_compound )
-    { initTermAgenda(&state->agenda, arity, state->gp);
-      state->is_compound = TRUE;
-    } else
-    { if ( !pushWorkAgenda(&state->agenda, arity, state->gp) )
-      { clearTermAgenda(&state->agenda);
-	return raiseStackOverflow(MEMORY_OVERFLOW);
-      }
-    }
-    state->gp += arity;
-  } else if ( tag(key) == TAG_VAR )
-  { unsigned int index = (unsigned int)(key>>LMASK_BITS) - 1;
-
-    DEBUG(MSG_TRIE_PUT_TERM,
-	  Sdprintf("var %d at %s\n", (int)index,
-		   print_addr(state->vp,NULL)));
-
-    if ( !state->varp[index] )
-    { setVar(*state->vp);
-      state->varp[index] = state->vp;
-    } else
-    { *state->vp = makeRefG(state->varp[index]);
-    }
-  } else
-  { DEBUG(MSG_TRIE_PUT_TERM,
-	  Sdprintf("%s at %s\n",
-		   print_val(key, NULL), print_addr(state->vp,NULL)));
-    if ( isAtom(key) )
-      pushVolatileAtom(key);
-    if ( !isIndirect(key) )
-    { *state->vp = key;
-    } else
-    { *state->vp = extern_indirect(state->trie->indirects,
-				   key, &state->gp PASS_LD);
-    }
-  }
-
-  if ( state->is_compound )
-    state->vp = nextTermAgendaNoDeRef(&state->agenda);
-
-  return TRUE;
-}
-
 
 /**
  * trie_term(+Handle, -Term) is det.
@@ -845,83 +919,19 @@ eval_key(build_state *state, word key ARG_LD)
  * Retrieve a term for a handle returned by trie_insert_new/3.
  */
 
-#define MAX_FAST 256
-
 static
 PRED_IMPL("trie_term", 2, trie_term, 0)
 { PRED_LD
-  word fast[MAX_FAST];
-  Word keys = fast;
-  size_t keys_allocated = MAX_FAST;
-  size_t kc = 0;
   void *ptr;
-  int rc = TRUE;
 
   if ( PL_get_pointer_ex(A1, &ptr) )
-  { trie_node *node;
-    trie *trie_ptr;
-    size_t gsize = 0;
-    unsigned int nvars = 0;
-    build_state state;
-    ssize_t i;
-						/* get the keys */
-    for(node = ptr; node->parent; node = node->parent )
-    { if ( kc == keys_allocated )
-      { keys_allocated *= 2;
-	if ( keys == fast )
-	{ if ( (keys = malloc(sizeof(*keys)*keys_allocated)) )
-	    memcpy(keys, fast, sizeof(fast));
-	  else
-	    return PL_resource_error("memory");
-	} else
-	{ Word newkeys;
-	  if ( !(newkeys=realloc(keys, sizeof(*keys)*keys_allocated)) )
-	  { free(keys);
-	    return PL_resource_error("memory");
-	  }
-	}
-      }
+  { term_t v = PL_new_term_ref();
 
-      keys[kc++] = node->key;
-    }
-    trie_ptr = (trie *)((char*)node - offsetof(trie, root));
-    assert(trie_ptr->magic == TRIE_MAGIC);
+    return ( put_trie_term(ptr, v PASS_LD) &&
+	     PL_unify(A2, v) );
+  }
 
-    for(i=0; i<kc; i++)				/* compute sizes */
-    { unsigned nv;
-
-      gsize += key_gsize(trie_ptr, keys[i]);
-      if ( (nv=key_nvar(keys[i])) > nvars )
-	nvars = nv;
-    }
-
-    if ( init_build_state(&state, trie_ptr, gsize, nvars PASS_LD) )
-    { for(i=kc-1; i>=0; i--)
-      { if ( !eval_key(&state, keys[i] PASS_LD) )
-	{ rc = FALSE;
-	  break;
-	}
-      }
-
-      clear_build_state(&state);
-      if ( rc )
-      { term_t v;
-
-	gTop = state.gp;
-	v = PL_new_term_ref();
-	*valTermRef(v) = state.result;
-	DEBUG(CHK_SECURE, PL_check_data(v));
-
-	rc = PL_unify(A2, v);
-      }
-    }
-
-    if ( keys != fast )
-      free(keys);
-  } else
-    rc = FALSE;
-
-  return rc;
+  return FALSE;
 }
 
 
@@ -1080,7 +1090,7 @@ next_choice(trie_gen_state *state)
 
 
 static int
-put_trie_term(term_t term, Word value, trie_gen_state *gstate ARG_LD)
+put_trie_path(term_t term, Word value, trie_gen_state *gstate ARG_LD)
 { int rc = TRUE;
   trie_choice *ch;
   build_state bstate;
@@ -1158,7 +1168,7 @@ PRED_IMPL("trie_gen", 3, trie_gen, PL_FA_NONDETERMINISTIC)
   fid = PL_open_foreign_frame();
 
   for( ; state->head; next_choice(state) )
-  { if ( !put_trie_term(key, &value, state PASS_LD) )
+  { if ( !put_trie_path(key, &value, state PASS_LD) )
     { PL_close_foreign_frame(fid);
       return FALSE;				/* resource error */
     }
@@ -1230,7 +1240,7 @@ BeginPredDefs(trie)
   PRED_DEF("trie_insert_new",     3, trie_insert_new,    0)
   PRED_DEF("trie_lookup",         3, trie_lookup,        0)
   PRED_DEF("trie_term",		  2, trie_term,		 0)
-  PRED_DEF("trie_gen",            3, trie_gen,           PL_FA_NONDETERMINISTIC)
+  PRED_DEF("trie_gen",            3, trie_gen, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$trie_property",      2, trie_property,      0)
 EndPredDefs
 
