@@ -32,60 +32,49 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _PL_TRIE_H
-#define _PL_TRIE_H
-#include "pl-indirect.h"
-
-#define TRIE_MAGIC  0x4bcbcf87
-#define TRIE_CMAGIC 0x4bcbcf88
+#ifndef _PL_TABLING_H
+#define _PL_TABLING_H
+#include "pl-trie.h"
 
 typedef enum
-{ TN_KEY,				/* Single key */
-  TN_HASHED				/* Hashed */
-} tn_node_type;
+{ CLUSTER_ANSWERS,
+  CLUSTER_SUSPENSIONS
+} cluster_type;
 
-typedef struct try_children_any
-{ tn_node_type type;
-} try_children_any;
-
-typedef struct trie_children_hashed
-{ tn_node_type type;
-  Table table;
-} trie_children_hashed;
-
-typedef struct trie_children_key
-{ tn_node_type type;
-  word key;
-  struct trie_node *child;
-} trie_children_key;
-
-typedef union trie_children
-{ try_children_any     *any;
-  trie_children_key    *key;
-  trie_children_hashed *hash;
-} trie_children;
+#define WORKLIST_MAGIC	0x67e9124e
 
 
-typedef struct trie_node
-{ word value;
-  word key;
-  struct trie_node *parent;
-  trie_children children;
-} trie_node;
+		 /*******************************
+		 *     GLOBAL ENTRY POINTS	*
+		 *******************************/
+
+typedef struct worklist_set
+{ buffer members;
+} worklist_set;
 
 
-typedef struct trie
-{ atom_t		symbol;		/* The associated symbol */
-  int			magic;		/* TRIE_MAGIC */
-  unsigned int		node_count;	/* # nodes */
-  trie_node	        root;		/* the root node */
-  indirect_table       *indirects;	/* indirect values */
-  union
-  { struct worklist *worklist;		/* tabling worklist */
-  } data;
-} trie;
+		 /*******************************
+		 *	   TABLE WORKLIST	*
+		 *******************************/
 
-COMMON(void)	initTries(void);
-COMMON(int)	get_trie(term_t t, trie **tp);
+typedef struct cluster
+{ cluster_type type;
+  struct cluster *next;
+  struct cluster *prev;
+  buffer members;
+} cluster;
 
-#endif /*_PL_TRIE_H*/
+typedef struct worklist
+{ cluster      *head;			/* answer and dependency clusters */
+  cluster      *tail;
+  cluster      *riac;			/* rightmost inner answer cluster */
+  int		magic;			/* WORKLIST_MAGIC */
+  unsigned	working : 1;		/* unfolded_do_all_work in progress */
+  unsigned	in_global_wl : 1;	/* already in global worklist */
+  unsigned	active : 1;
+
+  trie	       *table;			/* table I belong to */
+} worklist;
+
+
+#endif /*_PL_TABLING_H*/

@@ -548,7 +548,7 @@ unify_trie__LD(term_t t, trie *trie ARG_LD)
 { return PL_unify_atom(t, trie->symbol);
 }
 
-static int
+int
 get_trie(term_t t, trie **tp)
 { void *data;
   PL_blob_t *type;
