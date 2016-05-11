@@ -97,6 +97,23 @@ add_to_answer_cluster(cluster *c, trie_node *answer)
 { addBuffer(&c->members, answer, trie_node*);
 }
 
+static trie_node*
+get_answer_from_cluster(cluster *c, size_t index)
+{ if ( index < entriesBuffer(&c->members, trie_node*) )
+    return fetchBuffer(&c->members, index, trie_node*);
+  return NULL;
+}
+
+static int
+inc_scp_index(cluster *c, size_t *index)
+{ if ( *index + 1 < entriesBuffer(&c->members, trie_node*) )
+  { (*index)++;
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
 static cluster *
 new_suspension_cluster(term_t first)
 { cluster *c;
@@ -114,6 +131,21 @@ add_to_suspension_cluster(cluster *c, term_t suspension)
 { addBuffer(&c->members, PL_record(suspension), record_t);
 }
 
+static record_t
+get_suspension_from_cluster(cluster *c, size_t index)
+{ if ( index < entriesBuffer(&c->members, record_t) )
+    return fetchBuffer(&c->members, index, record_t);
+  return 0;
+}
+
+static int
+inc_acp_index(cluster *c, size_t *index)
+{ if ( *index + 1 < entriesBuffer(&c->members, record_t) )
+  { (*index)++;
+    return TRUE;
+  }
+  return FALSE;
+}
 
 		 /*******************************
 		 *	   TABLE WORKLIST	*
@@ -130,6 +162,16 @@ new_worklist(trie *trie)
   trie->data.worklist = wl;
 
   return wl;
+}
+
+
+/* The work is done if there is no answer cluster or there is
+   no suspension right of the answer cluster
+*/
+
+static int
+worklist_work_done(worklist *wl)
+{ return !wl->riac || !wl->riac->next;
 }
 
 
@@ -158,6 +200,22 @@ wkl_append_right(worklist *wl, cluster *c)
   { c->next = c->prev = NULL;
     wl->head = wl->tail = c;
   }
+}
+
+
+static void
+wkl_swap_clusters(cluster *acp, cluster *scp)
+{ cluster *a = acp->prev;		/* before the couple */
+  cluster *z = scp->next;		/* after the couple */
+
+  assert(acp->next == scp);
+
+  if ( a ) a->next = scp;
+  if ( z ) z->prev = acp;
+  scp->prev = a;
+  acp->next = z;
+  scp->next = acp;
+  acp->prev = scp;
 }
 
 
@@ -305,6 +363,93 @@ PRED_IMPL("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
   return FALSE;
 }
 
+/** '$tbl_wkl_done'(+Worklist) is semidet.
+ *
+ * True if the worklist is complete
+ */
+
+static
+PRED_IMPL("$tbl_wkl_done", 1, tbl_wkl_done, 0)
+{ worklist *wl;
+
+  return get_worklist(A1, &wl) && worklist_work_done(wl);
+}
+
+
+typedef struct
+{ cluster *acp;
+  cluster *scp;
+  size_t acp_index;
+  size_t scp_index;
+} wkl_step_state;
+
+static
+PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
+{ PRED_LD
+  trie_node *an;
+  record_t sr;
+  wkl_step_state *state;
+
+  switch( CTX_CNTRL )
+  { case FRG_FIRST_CALL:
+    { worklist *wl;
+
+      if ( get_worklist(A1, &wl) )
+      { cluster *acp, *scp;
+
+	if ( (acp=wl->riac) && (scp=acp->next) )
+	{ wkl_swap_clusters(acp, scp);
+
+	  state = allocForeignState(sizeof(*state));
+	  state->acp = acp;
+	  state->scp = scp;
+	  state->acp_index = 0;
+	  state->scp_index = 0;
+
+	  break;
+	}
+      }
+
+      return FALSE;
+    }
+    case FRG_REDO:
+      state = CTX_PTR;
+      break;
+    case FRG_CUTTED:
+      state = CTX_PTR;
+      freeForeignState(state, sizeof(*state));
+      return TRUE;
+    default:
+      assert(0);
+      return FALSE;
+  }
+
+  if ( (an=get_answer_from_cluster(state->acp, state->acp_index)) )
+  { if ( (sr=get_suspension_from_cluster(state->scp, state->scp_index)) )
+    { term_t answer     = PL_new_term_ref();
+      term_t suspension = PL_new_term_ref();
+
+      if ( !( put_trie_term(an, answer PASS_LD) &&
+	      PL_recorded(sr, suspension) &&
+	      PL_unify(A2, answer) &&
+	      PL_unify(A3, suspension) ) )
+	return FALSE;			/* resource error */
+
+      if ( !inc_scp_index(state->scp, &state->scp_index) )
+      { state->scp_index = 0;
+	if ( !inc_acp_index(state->acp, &state->scp_index) )
+	{ freeForeignState(state, sizeof(*state));
+	  return TRUE;
+	}
+      }
+
+      ForeignRedoPtr(state);
+    }
+  }
+
+  freeForeignState(state, sizeof(*state));
+  return FALSE;
+}
 
 
 		 /*******************************
@@ -316,4 +461,6 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_pop_worklist",	      1, tbl_pop_worklist,	 0)
   PRED_DEF("$tbl_wkl_add_answer",     2, tbl_wkl_add_answer,	 0)
   PRED_DEF("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
+  PRED_DEF("$tbl_wkl_done",           1, tbl_wkl_done,           0)
+  PRED_DEF("$tbl_wkl_step",           3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
 EndPredDefs
