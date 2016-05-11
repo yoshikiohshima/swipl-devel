@@ -32,8 +32,8 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef _PL_TRUE_H
-#define _PL_TRUE_H
+#ifndef _PL_TRIE_H
+#define _PL_TRIE_H
 #include "pl-indirect.h"
 
 #define TRIE_MAGIC  0x4bcbcf87
@@ -84,4 +84,4 @@ typedef struct trie
 
 COMMON(void)	initTries(void);
 
-#endif /*_PL_TRUE_H*/
+#endif /*_PL_TRIE_H*/
