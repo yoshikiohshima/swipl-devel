@@ -221,7 +221,7 @@ wkl_swap_clusters(cluster *acp, cluster *scp)
 
 static void
 potentially_add_to_global_worklist(worklist *wl)
-{ if ( !wl->in_global_wl )
+{ if ( !wl->in_global_wl && !wl->executing )
     add_global_worklist(wl);
 }
 
@@ -376,15 +376,35 @@ PRED_IMPL("$tbl_wkl_done", 1, tbl_wkl_done, 0)
 }
 
 
+/** '$tbl_wkl_work'(+Worklist, -Answer, -Suspension) is nondet.
+ *
+ * True when Answer must be tried on Suspension.  Backtracking
+ * basically does
+ *
+ *   ==
+ *   member(Answer, RIAC),
+ *   member(Suspension, LastSuspensionCluster)
+ *   ==
+ *
+ * If the carthesian product is exhausted it tries to re-start using the
+ * possible new RIAC and SCP.  During its execution, worklist->executing
+ * is TRUE to avoid the worklist to   become part of the global worklist
+ * again.
+ *
+ * This replaces table_get_work/3 from the pure Prolog implementation.
+ */
+
 typedef struct
-{ cluster *acp;
+{ worklist *list;
+  cluster *acp;
   cluster *scp;
   size_t acp_index;
   size_t scp_index;
+  int next_step;
 } wkl_step_state;
 
 static
-PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
+PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 { PRED_LD
   trie_node *an;
   record_t sr;
@@ -401,10 +421,13 @@ PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
 	{ wkl_swap_clusters(acp, scp);
 
 	  state = allocForeignState(sizeof(*state));
-	  state->acp = acp;
-	  state->scp = scp;
+	  state->list	   = wl;
+	  state->acp	   = acp;
+	  state->scp	   = scp;
 	  state->acp_index = 0;
 	  state->scp_index = 0;
+	  state->next_step = FALSE;
+	  wl->executing    = TRUE;
 
 	  break;
 	}
@@ -417,6 +440,7 @@ PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
       break;
     case FRG_CUTTED:
       state = CTX_PTR;
+      state->list->executing = FALSE;
       freeForeignState(state, sizeof(*state));
       return TRUE;
     default:
@@ -424,7 +448,20 @@ PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
       return FALSE;
   }
 
-  if ( (an=get_answer_from_cluster(state->acp, state->acp_index)) )
+  if ( state->next_step )
+  { cluster *acp, *scp;
+
+    if ( (acp=state->list->riac) && (scp=acp->next) )
+    { state->acp       = acp;
+      state->scp       = scp;
+      state->acp_index = 0;
+      state->scp_index = 0;
+      state->next_step = FALSE;
+    }
+  }
+
+  if ( state->next_step == FALSE &&
+       (an=get_answer_from_cluster(state->acp, state->acp_index)) )
   { if ( (sr=get_suspension_from_cluster(state->scp, state->scp_index)) )
     { term_t answer     = PL_new_term_ref();
       term_t suspension = PL_new_term_ref();
@@ -438,15 +475,14 @@ PRED_IMPL("$tbl_wkl_step", 3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
       if ( !inc_scp_index(state->scp, &state->scp_index) )
       { state->scp_index = 0;
 	if ( !inc_acp_index(state->acp, &state->scp_index) )
-	{ freeForeignState(state, sizeof(*state));
-	  return TRUE;
-	}
+	  state->next_step = TRUE;
       }
 
       ForeignRedoPtr(state);
     }
   }
 
+  state->list->executing = FALSE;
   freeForeignState(state, sizeof(*state));
   return FALSE;
 }
@@ -462,5 +498,5 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_add_answer",     2, tbl_wkl_add_answer,	 0)
   PRED_DEF("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
   PRED_DEF("$tbl_wkl_done",           1, tbl_wkl_done,           0)
-  PRED_DEF("$tbl_wkl_step",           3, tbl_wkl_step, PL_FA_NONDETERMINISTIC)
+  PRED_DEF("$tbl_wkl_work",           3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 EndPredDefs

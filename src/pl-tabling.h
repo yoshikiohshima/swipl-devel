@@ -69,7 +69,7 @@ typedef struct worklist
   cluster      *tail;
   cluster      *riac;			/* rightmost inner answer cluster */
   int		magic;			/* WORKLIST_MAGIC */
-  unsigned	working : 1;		/* unfolded_do_all_work in progress */
+  unsigned	executing : 1;		/* $tbl_wkl_work/3 in progress */
   unsigned	in_global_wl : 1;	/* already in global worklist */
   unsigned	active : 1;
 
