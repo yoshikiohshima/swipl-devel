@@ -514,7 +514,7 @@ struct PL_local_data
   struct
   { struct worklist_set *worklist;		/* Worklist of current query */
     struct worklist_set *created_worklists;	/* Worklists created */
-    struct trie      *variant_tables;	/* Variant --> table */
+    struct trie      *variant_table;	/* Variant --> table */
   } tabling;
 
   struct

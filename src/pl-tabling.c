@@ -77,6 +77,42 @@ pop_worklist(void)
 
 
 		 /*******************************
+		 *     THREAD VARIANT TABLE	*
+		 *******************************/
+
+static trie *
+thread_variant_table(ARG1_LD)
+{ if ( !LD->tabling.variant_table )
+    LD->tabling.variant_table = trie_create();
+
+  return LD->tabling.variant_table;
+}
+
+
+static trie *
+get_variant_table(term_t t, int create ARG_LD)
+{ trie *variants = thread_variant_table(PASS_LD1);
+  trie_node *node;
+  int rc;
+  Word v = valTermRef(t);
+
+  if ( (rc=trie_lookup(variants, &node, v, create PASS_LD)) == TRUE )
+  { if ( node->value )
+    { return symbol_trie(node->value);
+    } else if ( create )
+    { trie *vt = trie_create();
+      node->value = trie_symbol(vt);
+      return vt;
+    } else
+      return NULL;
+  }
+
+  trie_error(rc, t);
+  return NULL;
+}
+
+
+		 /*******************************
 		 *  ANSWER/SUSPENSION CLUSTERS	*
 		 *******************************/
 
@@ -261,6 +297,27 @@ wkl_add_suspension(worklist *wl, term_t suspension)
 		 /*******************************
 		 *	PROLOG CONNECTION	*
 		 *******************************/
+
+#define WL_IS_SPECIAL(wl)  (((intptr_t)(wl)) & 0x1)
+#define WL_IS_WORKLIST(wl) ((wl) && !WL_IS_SPECIAL(wl))
+
+#define WL_COMPLETE ((worklist *)0x11)
+
+static int
+unify_table_status(term_t t, trie *trie ARG_LD)
+{ worklist *wl = trie->data.worklist;
+
+  if ( WL_IS_WORKLIST(wl) )
+    return PL_unify_pointer(t, wl);
+  if ( !wl )
+    return PL_unify_atom(t, ATOM_fresh);
+  if ( wl == WL_COMPLETE )
+    return PL_unify_atom(t, ATOM_complete);
+
+  assert(0);
+  return FALSE;
+}
+
 
 static int
 get_worklist(term_t t, worklist **wlp)
@@ -509,6 +566,29 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 }
 
 
+/** '$tbl_variant_table'(+Variant, -Trie, -Status) is det.
+ *
+ * Retrieve the table for Variant. Status is one of
+ *
+ *   - `fresh` if the table is new
+ *   - `complete` if the table is completed
+ *   - A worklist pointer
+ */
+
+static
+PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
+{ PRED_LD
+  trie *trie;
+
+  if ( (trie=get_variant_table(A1, TRUE PASS_LD)) )
+  { return ( _PL_unify_atomic(A2, trie->symbol) &&
+	     unify_table_status(A3, trie PASS_LD) );
+  }
+
+  return FALSE;
+}
+
+
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/
@@ -520,4 +600,5 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
   PRED_DEF("$tbl_wkl_done",           1, tbl_wkl_done,           0)
   PRED_DEF("$tbl_wkl_work",           3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
+  PRED_DEF("$tbl_variant_table",      3, tbl_variant_table,      0)
 EndPredDefs
