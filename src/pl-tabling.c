@@ -129,6 +129,12 @@ new_answer_cluster(trie_node *first)
 }
 
 static void
+free_answer_cluster(cluster *c)
+{ discardBuffer(&c->members);
+  PL_free(c);
+}
+
+static void
 add_to_answer_cluster(cluster *c, trie_node *answer)
 { addBuffer(&c->members, answer, trie_node*);
 }
@@ -141,8 +147,9 @@ get_answer_from_cluster(cluster *c, size_t index)
 }
 
 static int
-inc_scp_index(cluster *c, size_t *index)
-{ if ( *index + 1 < entriesBuffer(&c->members, trie_node*) )
+inc_acp_index(cluster *c, size_t *index)
+{ assert(c->type == CLUSTER_ANSWERS);
+  if ( *index + 1 < entriesBuffer(&c->members, trie_node*) )
   { (*index)++;
     return TRUE;
   }
@@ -163,6 +170,19 @@ new_suspension_cluster(term_t first)
 }
 
 static void
+free_suspension_cluster(cluster *c)
+{ record_t *base = baseBuffer(&c->members, record_t);
+  size_t entries = entriesBuffer(&c->members, record_t);
+  size_t i;
+
+  for(i=0; i<entries; i++)
+    PL_erase(base[i]);
+
+  discardBuffer(&c->members);
+  PL_free(c);
+}
+
+static void
 add_to_suspension_cluster(cluster *c, term_t suspension)
 { addBuffer(&c->members, PL_record(suspension), record_t);
 }
@@ -175,13 +195,22 @@ get_suspension_from_cluster(cluster *c, size_t index)
 }
 
 static int
-inc_acp_index(cluster *c, size_t *index)
+inc_scp_index(cluster *c, size_t *index)
 { if ( *index + 1 < entriesBuffer(&c->members, record_t) )
   { (*index)++;
     return TRUE;
   }
   return FALSE;
 }
+
+static void
+free_cluster(cluster *c)
+{ if ( c->type == CLUSTER_ANSWERS )
+    free_answer_cluster(c);
+  else
+    free_suspension_cluster(c);
+}
+
 
 		 /*******************************
 		 *	   TABLE WORKLIST	*
@@ -199,6 +228,21 @@ new_worklist(trie *trie)
 
   return wl;
 }
+
+
+static void
+free_worklist(worklist *wl)
+{ cluster *c, *next;
+
+  for(c=wl->head; c; c = next)
+  { next = c->next;
+
+    free_cluster(c);
+  }
+
+  PL_free(wl);
+}
+
 
 
 /* The work is done if there is no answer cluster or there is
@@ -589,6 +633,25 @@ PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
 }
 
 
+static
+PRED_IMPL("$tbl_table_complete", 1, tbl_table_complete, 0)
+{ trie *trie;
+
+  if ( get_trie(A1, &trie) )
+  { worklist *wl = trie->data.worklist;
+
+    if ( WL_IS_WORKLIST(wl) )
+      free_worklist(wl);
+
+    trie->data.worklist = WL_COMPLETE;
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/
@@ -601,4 +664,5 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_done",           1, tbl_wkl_done,           0)
   PRED_DEF("$tbl_wkl_work",           3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$tbl_variant_table",      3, tbl_variant_table,      0)
+  PRED_DEF("$tbl_table_complete",     1, tbl_table_complete,     0)
 EndPredDefs
