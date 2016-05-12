@@ -36,16 +36,28 @@
 #include "pl-tabling.h"
 
 static worklist_set *
+thread_worklist(worklist_set **wlp)
+{ if ( *wlp == NULL )
+  { worklist_set *wl = PL_malloc(sizeof(*wl));
+    initBuffer(&wl->members);
+    *wlp = wl;
+  }
+
+  return *wlp;
+}
+
+static worklist_set *
 global_worklist(void)
 { GET_LD
 
-  if ( !LD->tabling.worklist )
-  { worklist_set *wl = PL_malloc(sizeof(*wl));
-    initBuffer(&wl->members);
-    LD->tabling.worklist = wl;
-  }
+  return thread_worklist(&LD->tabling.worklist);
+}
 
-  return LD->tabling.worklist;
+static worklist_set *
+newly_created_worklist(void)
+{ GET_LD
+
+  return thread_worklist(&LD->tabling.created_worklists);
 }
 
 		 /*******************************
@@ -74,6 +86,31 @@ pop_worklist(void)
 
   return NULL;
 }
+
+
+static void
+add_newly_created_worklist(worklist *wl)
+{ worklist_set *wls = newly_created_worklist();
+
+  addBuffer(&wls->members, wl, worklist*);
+}
+
+static void
+reset_newly_created_worklists(void)
+{ worklist_set *wls = newly_created_worklist();
+
+  discardBuffer(&wls->members);
+  initBuffer(&wls->members);
+}
+
+static size_t
+newly_created_worklists(worklist ***wlp)
+{ worklist_set *wls = newly_created_worklist();
+
+  *wlp = (worklist**)baseBuffer(&wls->members, worklist*);
+  return entriesBuffer(&wls->members, worklist*);
+}
+
 
 
 		 /*******************************
@@ -409,6 +446,7 @@ PRED_IMPL("$tbl_new_worklist", 2, tbl_new_worklist, 0)
   { worklist *wl = new_worklist(trie);
 
     add_global_worklist(wl);
+    add_newly_created_worklist(wl);
     return PL_unify_pointer(A1, wl);
   }
 
@@ -633,6 +671,12 @@ PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
 }
 
 
+/** '$tbl_table_complete'(+Trie)
+ *
+ * Set the completion status of Trie.  This deletes the worklist
+ * from the trie.
+ */
+
 static
 PRED_IMPL("$tbl_table_complete", 1, tbl_table_complete, 0)
 { trie *trie;
@@ -650,7 +694,27 @@ PRED_IMPL("$tbl_table_complete", 1, tbl_table_complete, 0)
   return FALSE;
 }
 
+/** '$tbl_table_complete_all'
+ *
+ * Complete and reset all newly created tables.
+ */
 
+static
+PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
+{ size_t i, ntables;
+  worklist **wls;
+
+  ntables = newly_created_worklists(&wls);
+  for(i=0; i<ntables; i++)
+  { worklist *wl = wls[i];
+    trie *trie = wl->table;
+
+    trie->data.worklist = WL_COMPLETE;
+    free_worklist(wl);
+  }
+
+  return TRUE;
+}
 
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
@@ -665,4 +729,5 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_work",           3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$tbl_variant_table",      3, tbl_variant_table,      0)
   PRED_DEF("$tbl_table_complete",     1, tbl_table_complete,     0)
+  PRED_DEF("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
 EndPredDefs
