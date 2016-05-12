@@ -149,12 +149,13 @@ release_key(word key)
 }
 
 
-static trie*
+trie *
 trie_create(void)
 { trie *trie;
 
   if ( (trie = PL_malloc(sizeof(*trie))) )
   { memset(trie, 0, sizeof(*trie));
+    trie->magic = TRIE_MAGIC;
 
     return trie;
   } else
@@ -725,6 +726,39 @@ stat_trie(trie *t, trie_stats *stats)
 		 *	  PROLOG BINDING	*
 		 *******************************/
 
+atom_t
+trie_symbol(trie *trie)
+{ if ( !trie->symbol )
+  { tref ref;
+    int new;
+
+    ref.trie = trie;
+    trie->symbol = lookupBlob((void*)&ref, sizeof(ref),
+			      &trie_blob, &new);
+  }
+
+  return trie->symbol;
+}
+
+
+trie *
+symbol_trie(atom_t symbol)
+{ void *data;
+  size_t len;
+  PL_blob_t *type;
+
+  if ( (data = PL_blob_data(symbol, &len, &type)) && type == &trie_blob )
+  { tref *ref = data;
+
+    if ( ref->trie->magic == TRIE_MAGIC )
+      return ref->trie;
+  }
+
+  assert(0);
+  return NULL;
+}
+
+
 #define unify_trie(t, trie) unify_trie__LD(t, trie PASS_LD)
 
 static int
@@ -767,16 +801,14 @@ trie_error(int rc, term_t culprit)
 static
 PRED_IMPL("trie_new", 1, trie_new, 0)
 { PRED_LD
-  tref ref;
+  trie *trie;
 
-  if ( (ref.trie = trie_create()) )
-  { int new, rc;
+  if ( (trie = trie_create()) )
+  { atom_t symbol = trie_symbol(trie);
+    int rc;
 
-    ref.trie->symbol = lookupBlob((void*)&ref, sizeof(ref),
-				   &trie_blob, &new);
-    ref.trie->magic = TRIE_MAGIC;
-    rc = unify_trie(A1, ref.trie);
-    PL_unregister_atom(ref.trie->symbol);
+    rc = unify_trie(A1, trie);
+    PL_unregister_atom(symbol);
 
     return rc;
   }

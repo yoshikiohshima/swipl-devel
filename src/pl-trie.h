@@ -86,10 +86,13 @@ typedef struct trie
 } trie;
 
 COMMON(void)	initTries(void);
+COMMON(trie *)	trie_create(void);
 COMMON(int)	get_trie(term_t t, trie **tp);
 COMMON(int)	put_trie_term(trie_node *node, term_t term ARG_LD);
 COMMON(int)	trie_lookup(trie *trie, trie_node **nodep, Word k,
 			    int add ARG_LD);
 COMMON(int)	trie_error(int rc, term_t culprit);
+COMMON(atom_t)	trie_symbol(trie *trie);
+COMMON(trie *)	symbol_trie(atom_t symbol);
 
 #endif /*_PL_TRIE_H*/
