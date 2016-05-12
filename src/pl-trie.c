@@ -387,7 +387,7 @@ trie_intern_indirect(trie *trie, word w, int add ARG_LD)
 #define TRIE_LOOKUP_CONTAINS_ATTVAR	-10
 #define TRIE_LOOKUP_CYCLIC		-11
 
-static int
+int
 trie_lookup(trie *trie, trie_node **nodep, Word k, int add ARG_LD)
 { term_agenda agenda;
   Word p;
@@ -752,7 +752,7 @@ get_trie(term_t t, trie **tp)
 }
 
 
-static int
+int
 trie_error(int rc, term_t culprit)
 { switch(rc)
   { case TRIE_LOOKUP_CONTAINS_ATTVAR:

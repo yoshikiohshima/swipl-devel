@@ -226,7 +226,7 @@ potentially_add_to_global_worklist(worklist *wl)
 }
 
 
-static void
+static int
 wkl_add_answer(worklist *wl, trie_node *node)
 { potentially_add_to_global_worklist(wl);
   if ( wl->head && wl->head->type == CLUSTER_ANSWERS )
@@ -237,10 +237,12 @@ wkl_add_answer(worklist *wl, trie_node *node)
     if ( !wl->riac )
       wl->riac = c;
   }
+
+  return TRUE;
 }
 
 
-static void
+static int
 wkl_add_suspension(worklist *wl, term_t suspension)
 { potentially_add_to_global_worklist(wl);
   if ( wl->tail && wl->tail->type == CLUSTER_SUSPENSIONS )
@@ -251,6 +253,8 @@ wkl_add_suspension(worklist *wl, term_t suspension)
     if ( c->prev && c->prev->type == CLUSTER_ANSWERS )
       wl->riac = c->prev;
   }
+
+  return TRUE;
 }
 
 
@@ -273,6 +277,7 @@ get_worklist(term_t t, worklist **wlp)
   return PL_type_error("worklist", t);
 }
 
+/*
 static int
 get_trie_node(term_t t, trie_node **np)
 { GET_LD
@@ -286,7 +291,7 @@ get_trie_node(term_t t, trie_node **np)
 
   return PL_type_error("trie_node", t);
 }
-
+*/
 
 /** '$tbl_new_worklist'(-Worklist, +Trie) is det.
  *
@@ -326,21 +331,37 @@ PRED_IMPL("$tbl_pop_worklist", 1, tbl_pop_worklist, 0)
   return FALSE;
 }
 
-/** '$tbl_wkl_add_answer'(+Worklist, +AnswerHandle) is det.
+/** '$tbl_wkl_add_answer'(+Worklist, +Term) is semidet.
  *
- * Add an answer to the worklist. The   answer  is represented by a trie
- * node in the answer table.
+ * Add an answer to the worklist's trie  and the worklist answer cluster
+ * using trie_insert_new/3. Fails if a  variant   of  Term is already in
+ * Worklist.
  */
 
 static
 PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
-{ worklist *wl;
-  trie_node *node = NULL;		/* keep compiler happy */
+{ PRED_LD
+  worklist *wl;
 
-  if ( get_worklist(A1, &wl) &&
-       get_trie_node(A2, &node) )
-  { wkl_add_answer(wl, node);
-    return TRUE;
+  if ( get_worklist(A1, &wl) )
+  { Word kp;
+    trie_node *node;
+    int rc;
+
+    kp = valTermRef(A2);
+
+    if ( (rc=trie_lookup(wl->table, &node, kp, TRUE PASS_LD)) == TRUE )
+    { if ( node->value )
+      { if ( node->value == ATOM_nil )
+	  return FALSE;				/* already in trie */
+	return PL_permission_error("modify", "trie_key", A2);
+      }
+      node->value = ATOM_nil;
+
+      return wkl_add_answer(wl, node);
+    }
+
+    return trie_error(rc, A2);
   }
 
   return FALSE;
