@@ -59,8 +59,6 @@ TODO
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 
-static void trie_destroy(trie *trie);
-
 		 /*******************************
 		 *	       SYMBOL		*
 		 *******************************/
@@ -132,7 +130,6 @@ static PL_blob_t trie_blob =
 
 static trie_node       *new_trie_node(word key);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
-static void		trie_empty(trie *trie);
 static void		destroy_node(trie_node *n);
 static void		clear_node(trie_node *n);
 
@@ -165,14 +162,15 @@ trie_create(void)
 }
 
 
-static void
+void
 trie_destroy(trie *trie)
 { DEBUG(MSG_TRIE_GC, Sdprintf("Destroying trie %p\n", trie));
+  trie_empty(trie);
   PL_free(trie);
 }
 
 
-static void
+void
 trie_empty(trie *trie)
 { indirect_table *it = trie->indirects;
 

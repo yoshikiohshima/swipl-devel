@@ -35,6 +35,9 @@
 #include "pl-incl.h"
 #include "pl-tabling.h"
 
+static void	free_worklist(worklist *wl);
+
+
 static worklist_set *
 thread_worklist(worklist_set **wlp)
 { if ( *wlp == NULL )
@@ -89,6 +92,23 @@ pop_worklist(void)
 
 
 static void
+reset_global_worklist(void)
+{ worklist_set *wls = global_worklist();
+  worklist **wlp = (worklist**)baseBuffer(&wls->members, worklist*);
+  size_t i, nwpl = entriesBuffer(&wls->members, worklist*);
+
+  for(i=0; i<nwpl; i++)
+  { worklist *wl = wlp[i];
+
+    free_worklist(wl);
+  }
+
+  discardBuffer(&wls->members);
+  initBuffer(&wls->members);
+}
+
+
+static void
 add_newly_created_worklist(worklist *wl)
 { worklist_set *wls = newly_created_worklist();
 
@@ -120,9 +140,20 @@ newly_created_worklists(worklist ***wlp)
 static trie *
 thread_variant_table(ARG1_LD)
 { if ( !LD->tabling.variant_table )
-    LD->tabling.variant_table = trie_create();
+  { LD->tabling.variant_table = trie_create();
+    trie_symbol(LD->tabling.variant_table);
+  }
 
   return LD->tabling.variant_table;
+}
+
+
+static void
+clear_variant_table(ARG1_LD)
+{ if ( LD->tabling.variant_table )
+  { trie_destroy(LD->tabling.variant_table);
+    LD->tabling.variant_table = NULL;
+  }
 }
 
 
@@ -671,6 +702,18 @@ PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
 }
 
 
+static
+PRED_IMPL("$tbl_variant_table", 1, tbl_variant_table, 0)
+{ PRED_LD
+  trie *trie = LD->tabling.variant_table;
+
+  if ( trie )
+    return _PL_unify_atomic(A1, trie->symbol);
+
+  return FALSE;
+}
+
+
 /** '$tbl_table_status'(+Trie, -Status)
  *
  * Set the status of Trie. Old is unified to one of `fresh`, `active`, a
@@ -720,6 +763,22 @@ PRED_IMPL("$tbl_scheduling_component", 2, tbl_scheduling_component, 0)
 }
 
 
+/** '$tbl_abolish_all_tables' is det.
+ *
+ * Clear the thread table data.
+ */
+
+static
+PRED_IMPL("$tbl_abolish_all_tables", 0, tbl_abolish_all_tables, 0)
+{ PRED_LD
+
+  reset_global_worklist();
+  reset_newly_created_worklists();
+  clear_variant_table(PASS_LD1);
+
+  return TRUE;
+}
+
 
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
@@ -733,7 +792,9 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_done",		1, tbl_wkl_done,	     0)
   PRED_DEF("$tbl_wkl_work",		3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$tbl_variant_table",	3, tbl_variant_table,	     0)
+  PRED_DEF("$tbl_variant_table",        1, tbl_variant_table,        0)
   PRED_DEF("$tbl_table_status",		2, tbl_table_status,	     0)
   PRED_DEF("$tbl_table_complete_all",	0, tbl_table_complete_all,   0)
   PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
+  PRED_DEF("$tbl_abolish_all_tables",   0, tbl_abolish_all_tables,   0)
 EndPredDefs

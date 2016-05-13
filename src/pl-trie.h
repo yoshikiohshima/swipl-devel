@@ -87,6 +87,8 @@ typedef struct trie
 
 COMMON(void)	initTries(void);
 COMMON(trie *)	trie_create(void);
+COMMON(void)	trie_destroy(trie *trie);
+COMMON(void)	trie_empty(trie *trie);
 COMMON(int)	get_trie(term_t t, trie **tp);
 COMMON(int)	put_trie_term(trie_node *node, term_t term ARG_LD);
 COMMON(int)	trie_lookup(trie *trie, trie_node **nodep, Word k,
