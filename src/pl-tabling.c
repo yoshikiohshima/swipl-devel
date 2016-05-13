@@ -347,14 +347,17 @@ static void
 update_riac(worklist *wl, cluster *acp)
 { cluster *c;
 
-  for(c=acp->prev; c; c = c->prev)
-  { if ( c->type == CLUSTER_ANSWERS )
-    { wl->riac = c;
-      return;
+  if ( !acp->next ||
+       acp->next->type == CLUSTER_ANSWERS )
+  { for(c=acp->prev; c; c = c->prev)
+    { if ( c->type == CLUSTER_ANSWERS )
+      { wl->riac = c;
+	return;
+      }
     }
-  }
 
-  wl->riac = NULL;
+    wl->riac = NULL;
+  }
 }
 
 
