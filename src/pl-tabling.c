@@ -224,7 +224,6 @@ inc_acp_index(cluster *c, size_t *index)
   return FALSE;
 }
 
-
 static cluster *
 new_suspension_cluster(term_t first)
 { cluster *c;
@@ -279,6 +278,17 @@ free_cluster(cluster *c)
     free_suspension_cluster(c);
 }
 
+#ifdef O_DEBUG
+static int
+acp_size(cluster *c)
+{ return entriesBuffer(&c->members, trie_node*);
+}
+
+static int
+scp_size(cluster *c)
+{ return entriesBuffer(&c->members, record_t);
+}
+#endif
 
 		 /*******************************
 		 *	   TABLE WORKLIST	*
@@ -591,6 +601,7 @@ typedef struct
   cluster *scp;
   size_t acp_index;
   size_t scp_index;
+  int iteration;
   int next_step;
 } wkl_step_state;
 
@@ -612,13 +623,14 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 	{ wkl_swap_clusters(acp, scp);
 
 	  state = allocForeignState(sizeof(*state));
+	  memset(state, 0, sizeof(*state));
 	  state->list	   = wl;
 	  state->acp	   = acp;
 	  state->scp	   = scp;
-	  state->acp_index = 0;
-	  state->scp_index = 0;
-	  state->next_step = FALSE;
 	  wl->executing    = TRUE;
+	  DEBUG(MSG_TABLING_WORK,
+		Sdprintf("Processing workset (#ACP=%d, #SCP=%d)\n",
+			 acp_size(acp), scp_size(scp)));
 
 	  break;
 	}
@@ -648,6 +660,13 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
       state->acp_index = 0;
       state->scp_index = 0;
       state->next_step = FALSE;
+      DEBUG(MSG_TABLING_WORK,
+	    Sdprintf("Re-processing workset [%d] (#ACP=%d, #SCP=%d)\n",
+		     ++state->iteration, acp_size(acp), scp_size(scp)));
+      if ( state->iteration > 10 )
+      { Sdprintf("> 10 iterations; aborted\n");
+	return FALSE;
+      }
     }
   }
 
@@ -661,11 +680,21 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 	      PL_recorded(sr, suspension) &&
 	      PL_unify(A2, answer) &&
 	      PL_unify(A3, suspension) ) )
+      { freeForeignState(state, sizeof(*state));
 	return FALSE;			/* resource error */
+      }
+
+      DEBUG(MSG_TABLING_WORK,
+	    { Sdprintf("Work: %d %d\n\t",
+		       (int)state->acp_index+1, (int)state->scp_index+1);
+	      PL_write_term(Serror, answer, 1200, PL_WRT_NEWLINE);
+	      Sdprintf("\t");
+	      PL_write_term(Serror, suspension, 1200, PL_WRT_NEWLINE);
+	    });
 
       if ( !inc_scp_index(state->scp, &state->scp_index) )
       { state->scp_index = 0;
-	if ( !inc_acp_index(state->acp, &state->scp_index) )
+	if ( !inc_acp_index(state->acp, &state->acp_index) )
 	  state->next_step = TRUE;
       }
 
