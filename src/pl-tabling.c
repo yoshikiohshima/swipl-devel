@@ -734,22 +734,35 @@ PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
     trie->data.worklist = WL_COMPLETE;
     free_worklist(wl);
   }
+  reset_newly_created_worklists();
 
   return TRUE;
 }
+
+
+static
+PRED_IMPL("$tbl_scheduling_component", 2, tbl_scheduling_component, 0)
+{ PRED_LD
+
+  return ( PL_unify_bool(A1, LD->tabling.has_scheduling_component) &&
+	   PL_get_bool_ex(A2, &LD->tabling.has_scheduling_component) );
+}
+
+
 
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/
 
 BeginPredDefs(tabling)
-  PRED_DEF("$tbl_new_worklist",	      2, tbl_new_worklist,	 0)
-  PRED_DEF("$tbl_pop_worklist",	      1, tbl_pop_worklist,	 0)
-  PRED_DEF("$tbl_wkl_add_answer",     2, tbl_wkl_add_answer,	 0)
-  PRED_DEF("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
-  PRED_DEF("$tbl_wkl_done",           1, tbl_wkl_done,           0)
-  PRED_DEF("$tbl_wkl_work",           3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
-  PRED_DEF("$tbl_variant_table",      3, tbl_variant_table,      0)
-  PRED_DEF("$tbl_table_status",       3, tbl_table_status,       0)
-  PRED_DEF("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
+  PRED_DEF("$tbl_new_worklist",		2, tbl_new_worklist,	     0)
+  PRED_DEF("$tbl_pop_worklist",		1, tbl_pop_worklist,	     0)
+  PRED_DEF("$tbl_wkl_add_answer",	2, tbl_wkl_add_answer,	     0)
+  PRED_DEF("$tbl_wkl_add_suspension",	2, tbl_wkl_add_suspension,   0)
+  PRED_DEF("$tbl_wkl_done",		1, tbl_wkl_done,	     0)
+  PRED_DEF("$tbl_wkl_work",		3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
+  PRED_DEF("$tbl_variant_table",	3, tbl_variant_table,	     0)
+  PRED_DEF("$tbl_table_status",		3, tbl_table_status,	     0)
+  PRED_DEF("$tbl_table_complete_all",	0, tbl_table_complete_all,   0)
+  PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
 EndPredDefs
