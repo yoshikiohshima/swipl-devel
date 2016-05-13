@@ -642,8 +642,9 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
       { cluster *acp, *scp;
 
 	if ( (acp=wl->riac) && (scp=acp->next) )
-	{ wkl_swap_clusters(wl, acp, scp);
-
+	{ DEBUG(MSG_TABLING_WORK,
+		print_worklist("Next step: ", wl));
+	  wkl_swap_clusters(wl, acp, scp);
 	  state = allocForeignState(sizeof(*state));
 	  memset(state, 0, sizeof(*state));
 	  state->list	   = wl;
@@ -652,9 +653,6 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 	  state->acp_index = state->acp_size = acp_size(acp);
 	  state->scp_index = state->scp_size = scp_size(scp);
 	  wl->executing    = TRUE;
-	  DEBUG(MSG_TABLING_WORK,
-		Sdprintf("Processing workset (#ACP=%d, #SCP=%d)\n",
-			 acp_size(acp), scp_size(scp)));
 
 	  break;
 	}
@@ -679,15 +677,14 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   { cluster *acp, *scp;
 
     if ( (acp=state->list->riac) && (scp=acp->next) )
-    { wkl_swap_clusters(state->list, acp, scp);
+    { DEBUG(MSG_TABLING_WORK,
+		print_worklist("Next step: ", state->list));
+      wkl_swap_clusters(state->list, acp, scp);
       state->acp       = acp;
       state->scp       = scp;
-      state->acp_index = state->acp_size;
-      state->scp_index = state->scp_size;
+      state->acp_index = state->acp_size = acp_size(acp);
+      state->scp_index = state->scp_size = scp_size(acp);
       state->next_step = FALSE;
-      DEBUG(MSG_TABLING_WORK,
-	    Sdprintf("Re-processing workset [%d] (#ACP=%d, #SCP=%d)\n",
-		     ++state->iteration, acp_size(acp), scp_size(scp)));
     } else
     { DEBUG(MSG_TABLING_WORK,
 	    Sdprintf("No more work in worklist\n"));
