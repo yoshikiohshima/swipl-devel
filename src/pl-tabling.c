@@ -36,6 +36,9 @@
 #include "pl-tabling.h"
 
 static void	free_worklist(worklist *wl);
+#ifdef O_DEBUG
+static void	print_worklist(const char *prefix, worklist *wl);
+#endif
 
 
 static worklist_set *
@@ -341,18 +344,37 @@ wkl_append_right(worklist *wl, cluster *c)
 
 
 static void
-wkl_swap_clusters(cluster *acp, cluster *scp)
+update_riac(worklist *wl)
+{ cluster *c;
+
+  for(c=wl->tail; c; c = c->prev)
+  { if ( c->type == CLUSTER_ANSWERS )
+    { wl->riac = c;
+      return;
+    }
+  }
+
+  assert(0);
+}
+
+
+static void
+wkl_swap_clusters(worklist *wl, cluster *acp, cluster *scp)
 { cluster *a = acp->prev;		/* before the couple */
   cluster *z = scp->next;		/* after the couple */
 
   assert(acp->next == scp);
 
-  if ( a ) a->next = scp;
-  if ( z ) z->prev = acp;
+  if ( a ) a->next = scp; else wl->head = scp;
+  if ( z ) z->prev = acp; else wl->tail = acp;
   scp->prev = a;
   acp->next = z;
   scp->next = acp;
   acp->prev = scp;
+
+  update_riac(wl);
+
+  DEBUG(MSG_TABLING_WORK, print_worklist("Swapped: ", wl));
 }
 
 
@@ -374,6 +396,7 @@ wkl_add_answer(worklist *wl, trie_node *node)
     if ( !wl->riac )
       wl->riac = c;
   }
+  DEBUG(MSG_TABLING_WORK, print_worklist("Added answer: ", wl));
 
   return TRUE;
 }
@@ -390,9 +413,29 @@ wkl_add_suspension(worklist *wl, term_t suspension)
     if ( c->prev && c->prev->type == CLUSTER_ANSWERS )
       wl->riac = c->prev;
   }
+  DEBUG(MSG_TABLING_WORK, print_worklist("Added suspension: ", wl));
 
   return TRUE;
 }
+
+
+#ifdef O_DEBUG
+static void
+print_worklist(const char *prefix, worklist *wl)
+{ cluster *c;
+
+  Sdprintf("%s", prefix);
+  for(c=wl->head; c; c=c->next)
+  { if ( c->type == CLUSTER_ANSWERS )
+    { Sdprintf("ACP(%d)%s ", acp_size(c), c == wl->riac ? "[RIAC]" : "");
+    } else
+    { Sdprintf("SCP(%d) ", scp_size(c));
+    }
+  }
+  Sdprintf("\n");
+}
+#endif
+
 
 
 		 /*******************************
@@ -599,7 +642,7 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
       { cluster *acp, *scp;
 
 	if ( (acp=wl->riac) && (scp=acp->next) )
-	{ wkl_swap_clusters(acp, scp);
+	{ wkl_swap_clusters(wl, acp, scp);
 
 	  state = allocForeignState(sizeof(*state));
 	  memset(state, 0, sizeof(*state));
@@ -636,7 +679,7 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   { cluster *acp, *scp;
 
     if ( (acp=state->list->riac) && (scp=acp->next) )
-    { wkl_swap_clusters(acp, scp);
+    { wkl_swap_clusters(state->list, acp, scp);
       state->acp       = acp;
       state->scp       = scp;
       state->acp_index = state->acp_size;
