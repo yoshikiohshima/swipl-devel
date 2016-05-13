@@ -383,7 +383,6 @@ wkl_add_suspension(worklist *wl, term_t suspension)
 #define WL_IS_WORKLIST(wl) ((wl) && !WL_IS_SPECIAL(wl))
 
 #define WL_COMPLETE ((worklist *)0x11)
-#define WL_ACTIVE   ((worklist *)0x21)
 
 static int
 unify_table_status(term_t t, trie *trie ARG_LD)
@@ -395,8 +394,6 @@ unify_table_status(term_t t, trie *trie ARG_LD)
     return PL_unify_atom(t, ATOM_fresh);
   if ( wl == WL_COMPLETE )
     return PL_unify_atom(t, ATOM_complete);
-  if ( wl == WL_ACTIVE )
-    return PL_unify_atom(t, ATOM_active);
 
   assert(0);
   return FALSE;
@@ -674,7 +671,7 @@ PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
 }
 
 
-/** '$tbl_table_status'(+Trie, -Old, +New)
+/** '$tbl_table_status'(+Trie, -Status)
  *
  * Set the status of Trie. Old is unified to one of `fresh`, `active`, a
  * worklist  or  `complete`.  New  is  one    of  `fresh`,  `active`  or
@@ -682,38 +679,12 @@ PRED_IMPL("$tbl_variant_table", 3, tbl_variant_table, 0)
  */
 
 static
-PRED_IMPL("$tbl_table_status", 3, tbl_table_status, 0)
+PRED_IMPL("$tbl_table_status", 2, tbl_table_status, 0)
 { PRED_LD
   trie *trie;
 
-  if ( get_trie(A1, &trie) )
-  { worklist *wl = trie->data.worklist;
-
-    if ( unify_table_status(A2, trie PASS_LD) )
-    { atom_t a;
-
-      if ( PL_get_atom_ex(A3, &a) )
-      { if ( a == ATOM_active )
-	{ if ( WL_IS_WORKLIST(wl) )
-	    free_worklist(wl);
-	  trie->data.worklist = WL_ACTIVE;
-	} else if ( a == ATOM_complete )
-	{ if ( WL_IS_WORKLIST(wl) )
-	    free_worklist(wl);
-	  trie->data.worklist = WL_COMPLETE;
-	} else if ( a == ATOM_fresh )
-	{ if ( WL_IS_WORKLIST(wl) )
-	    free_worklist(wl);
-	  trie->data.worklist = NULL;
-	} else
-	  return PL_domain_error("table_status", A3);
-      }
-
-      return TRUE;
-    }
-  }
-
-  return FALSE;
+  return ( get_trie(A1, &trie) &&
+	   unify_table_status(A2, trie PASS_LD) );
 }
 
 /** '$tbl_table_complete_all'
@@ -762,7 +733,7 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_wkl_done",		1, tbl_wkl_done,	     0)
   PRED_DEF("$tbl_wkl_work",		3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$tbl_variant_table",	3, tbl_variant_table,	     0)
-  PRED_DEF("$tbl_table_status",		3, tbl_table_status,	     0)
+  PRED_DEF("$tbl_table_status",		2, tbl_table_status,	     0)
   PRED_DEF("$tbl_table_complete_all",	0, tbl_table_complete_all,   0)
   PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
 EndPredDefs
