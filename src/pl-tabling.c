@@ -344,17 +344,17 @@ wkl_append_right(worklist *wl, cluster *c)
 
 
 static void
-update_riac(worklist *wl)
+update_riac(worklist *wl, cluster *acp)
 { cluster *c;
 
-  for(c=wl->tail; c; c = c->prev)
+  for(c=acp->prev; c; c = c->prev)
   { if ( c->type == CLUSTER_ANSWERS )
     { wl->riac = c;
       return;
     }
   }
 
-  assert(0);
+  wl->riac = NULL;
 }
 
 
@@ -372,7 +372,7 @@ wkl_swap_clusters(worklist *wl, cluster *acp, cluster *scp)
   scp->next = acp;
   acp->prev = scp;
 
-  update_riac(wl);
+  update_riac(wl, acp);
 
   DEBUG(MSG_TABLING_WORK, print_worklist("Swapped: ", wl));
 }
@@ -643,7 +643,7 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 
 	if ( (acp=wl->riac) && (scp=acp->next) )
 	{ DEBUG(MSG_TABLING_WORK,
-		print_worklist("Next step: ", wl));
+		print_worklist("First step: ", wl));
 	  wkl_swap_clusters(wl, acp, scp);
 	  state = allocForeignState(sizeof(*state));
 	  memset(state, 0, sizeof(*state));
@@ -678,12 +678,14 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 
     if ( (acp=state->list->riac) && (scp=acp->next) )
     { DEBUG(MSG_TABLING_WORK,
-		print_worklist("Next step: ", state->list));
+	    print_worklist("Next step: ", state->list));
+      assert(acp->type == CLUSTER_ANSWERS);
+      assert(scp->type == CLUSTER_SUSPENSIONS);
       wkl_swap_clusters(state->list, acp, scp);
       state->acp       = acp;
       state->scp       = scp;
       state->acp_index = state->acp_size = acp_size(acp);
-      state->scp_index = state->scp_size = scp_size(acp);
+      state->scp_index = state->scp_size = scp_size(scp);
       state->next_step = FALSE;
     } else
     { DEBUG(MSG_TABLING_WORK,
