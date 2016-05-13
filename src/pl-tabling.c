@@ -214,16 +214,6 @@ get_answer_from_cluster(cluster *c, size_t index)
   return NULL;
 }
 
-static int
-inc_acp_index(cluster *c, size_t *index)
-{ assert(c->type == CLUSTER_ANSWERS);
-  if ( *index + 1 < entriesBuffer(&c->members, trie_node*) )
-  { (*index)++;
-    return TRUE;
-  }
-  return FALSE;
-}
-
 static cluster *
 new_suspension_cluster(term_t first)
 { cluster *c;
@@ -261,15 +251,6 @@ get_suspension_from_cluster(cluster *c, size_t index)
   return 0;
 }
 
-static int
-inc_scp_index(cluster *c, size_t *index)
-{ if ( *index + 1 < entriesBuffer(&c->members, record_t) )
-  { (*index)++;
-    return TRUE;
-  }
-  return FALSE;
-}
-
 static void
 free_cluster(cluster *c)
 { if ( c->type == CLUSTER_ANSWERS )
@@ -278,7 +259,6 @@ free_cluster(cluster *c)
     free_suspension_cluster(c);
 }
 
-#ifdef O_DEBUG
 static int
 acp_size(cluster *c)
 { return entriesBuffer(&c->members, trie_node*);
@@ -288,7 +268,6 @@ static int
 scp_size(cluster *c)
 { return entriesBuffer(&c->members, record_t);
 }
-#endif
 
 		 /*******************************
 		 *	   TABLE WORKLIST	*
@@ -599,8 +578,10 @@ typedef struct
 { worklist *list;
   cluster *acp;
   cluster *scp;
-  size_t acp_index;
-  size_t scp_index;
+  int acp_size;
+  int scp_size;
+  int acp_index;
+  int scp_index;
   int iteration;
   int next_step;
 } wkl_step_state;
@@ -608,8 +589,6 @@ typedef struct
 static
 PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 { PRED_LD
-  trie_node *an;
-  record_t sr;
   wkl_step_state *state;
 
   switch( CTX_CNTRL )
@@ -627,6 +606,8 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 	  state->list	   = wl;
 	  state->acp	   = acp;
 	  state->scp	   = scp;
+	  state->acp_index = state->acp_size = acp_size(acp);
+	  state->scp_index = state->scp_size = scp_size(scp);
 	  wl->executing    = TRUE;
 	  DEBUG(MSG_TABLING_WORK,
 		Sdprintf("Processing workset (#ACP=%d, #SCP=%d)\n",
@@ -655,25 +636,27 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   { cluster *acp, *scp;
 
     if ( (acp=state->list->riac) && (scp=acp->next) )
-    { state->acp       = acp;
+    { wkl_swap_clusters(acp, scp);
+      state->acp       = acp;
       state->scp       = scp;
-      state->acp_index = 0;
-      state->scp_index = 0;
+      state->acp_index = state->acp_size;
+      state->scp_index = state->scp_size;
       state->next_step = FALSE;
       DEBUG(MSG_TABLING_WORK,
 	    Sdprintf("Re-processing workset [%d] (#ACP=%d, #SCP=%d)\n",
 		     ++state->iteration, acp_size(acp), scp_size(scp)));
-      if ( state->iteration > 10 )
-      { Sdprintf("> 10 iterations; aborted\n");
-	return FALSE;
-      }
+    } else
+    { DEBUG(MSG_TABLING_WORK,
+	    Sdprintf("No more work in worklist\n"));
     }
   }
 
-  if ( state->next_step == FALSE &&
-       (an=get_answer_from_cluster(state->acp, state->acp_index)) )
-  { if ( (sr=get_suspension_from_cluster(state->scp, state->scp_index)) )
-    { term_t answer     = PL_new_term_ref();
+  if ( state->next_step == FALSE && state->acp_index > 0 )
+  { trie_node *an = get_answer_from_cluster(state->acp, state->acp_index-1);
+
+    if ( state->scp_index > 0 )
+    { record_t sr       = get_suspension_from_cluster(state->scp, state->scp_index-1);
+      term_t answer     = PL_new_term_ref();
       term_t suspension = PL_new_term_ref();
 
       if ( !( put_trie_term(an, answer PASS_LD) &&
@@ -686,15 +669,15 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 
       DEBUG(MSG_TABLING_WORK,
 	    { Sdprintf("Work: %d %d\n\t",
-		       (int)state->acp_index+1, (int)state->scp_index+1);
+		       (int)state->acp_index, (int)state->scp_index);
 	      PL_write_term(Serror, answer, 1200, PL_WRT_NEWLINE);
 	      Sdprintf("\t");
 	      PL_write_term(Serror, suspension, 1200, PL_WRT_NEWLINE);
 	    });
 
-      if ( !inc_scp_index(state->scp, &state->scp_index) )
-      { state->scp_index = 0;
-	if ( !inc_acp_index(state->acp, &state->acp_index) )
+      if ( --state->scp_index == 0 )
+      { state->scp_index = state->scp_size;
+	if ( --state->acp_index == 0 )
 	  state->next_step = TRUE;
       }
 
