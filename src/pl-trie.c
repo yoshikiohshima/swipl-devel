@@ -311,7 +311,8 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	    addHTable(hnode->table, (void*)key, (void*)new);
 
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
-	    { new->parent = n;
+	    { PL_free(children.any);		/* TBD: Safely free */
+	      new->parent = n;
 	      ATOMIC_INC(&trie->node_count);
 	      return new;
 	    }
