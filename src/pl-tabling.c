@@ -53,17 +53,13 @@ thread_worklist(worklist_set **wlp)
 }
 
 static worklist_set *
-global_worklist(void)
-{ GET_LD
-
-  return thread_worklist(&LD->tabling.worklist);
+global_worklist(PL_local_data_t *ld)
+{ return thread_worklist(&ld->tabling.worklist);
 }
 
 static worklist_set *
-newly_created_worklist(void)
-{ GET_LD
-
-  return thread_worklist(&LD->tabling.created_worklists);
+newly_created_worklist(PL_local_data_t *ld)
+{ return thread_worklist(&ld->tabling.created_worklists);
 }
 
 		 /*******************************
@@ -71,8 +67,8 @@ newly_created_worklist(void)
 		 *******************************/
 
 static void
-add_global_worklist(worklist *wl)
-{ worklist_set *wls = global_worklist();
+add_global_worklist(worklist *wl ARG_LD)
+{ worklist_set *wls = global_worklist(LD);
 
   addBuffer(&wls->members, wl, worklist*);
   wl->in_global_wl = TRUE;
@@ -80,8 +76,8 @@ add_global_worklist(worklist *wl)
 
 
 static worklist *
-pop_worklist(void)
-{ worklist_set *wls = global_worklist();
+pop_worklist(ARG1_LD)
+{ worklist_set *wls = global_worklist(LD);
 
   if ( !isEmptyBuffer(&wls->members) )
   { worklist *wl = popBuffer(&wls->members, worklist*);
@@ -95,40 +91,50 @@ pop_worklist(void)
 
 
 static void
-reset_global_worklist(void)
-{ worklist_set *wls = global_worklist();
-  worklist **wlp = (worklist**)baseBuffer(&wls->members, worklist*);
-  size_t i, nwpl = entriesBuffer(&wls->members, worklist*);
+reset_global_worklist(PL_local_data_t *ld)
+{ worklist_set *wls;
 
-  for(i=0; i<nwpl; i++)
-  { worklist *wl = wlp[i];
+  if ( (wls = ld->tabling.worklist) )
+  { worklist **wlp = (worklist**)baseBuffer(&wls->members, worklist*);
+    size_t i, nwpl = entriesBuffer(&wls->members, worklist*);
 
-    free_worklist(wl);
+    ld->tabling.worklist = NULL;
+
+    for(i=0; i<nwpl; i++)
+    { worklist *wl = wlp[i];
+
+      free_worklist(wl);
+    }
+
+    discardBuffer(&wls->members);
+    initBuffer(&wls->members);
+    PL_free(wls);
   }
-
-  discardBuffer(&wls->members);
-  initBuffer(&wls->members);
 }
 
 
 static void
-add_newly_created_worklist(worklist *wl)
-{ worklist_set *wls = newly_created_worklist();
+add_newly_created_worklist(worklist *wl ARG_LD)
+{ worklist_set *wls = newly_created_worklist(LD);
 
   addBuffer(&wls->members, wl, worklist*);
 }
 
 static void
-reset_newly_created_worklists(void)
-{ worklist_set *wls = newly_created_worklist();
+reset_newly_created_worklists(PL_local_data_t *ld)
+{ worklist_set *wls;
 
-  discardBuffer(&wls->members);
-  initBuffer(&wls->members);
+  if ( (wls = ld->tabling.created_worklists) )
+  { ld->tabling.created_worklists = NULL;
+    discardBuffer(&wls->members);
+    initBuffer(&wls->members);
+    PL_free(wls);
+  }
 }
 
 static size_t
-newly_created_worklists(worklist ***wlp)
-{ worklist_set *wls = newly_created_worklist();
+newly_created_worklists(worklist ***wlp ARG_LD)
+{ worklist_set *wls = newly_created_worklist(LD);
 
   *wlp = (worklist**)baseBuffer(&wls->members, worklist*);
   return entriesBuffer(&wls->members, worklist*);
@@ -181,6 +187,15 @@ get_variant_table(term_t t, int create ARG_LD)
   trie_error(rc, t);
   return NULL;
 }
+
+
+void
+clearThreadTablingData(PL_local_data_t *ld)
+{ reset_global_worklist(ld);
+  reset_newly_created_worklists(ld);
+  clear_variant_table(ld);
+}
+
 
 
 		 /*******************************
@@ -382,15 +397,15 @@ wkl_swap_clusters(worklist *wl, cluster *acp, cluster *scp)
 
 
 static void
-potentially_add_to_global_worklist(worklist *wl)
+potentially_add_to_global_worklist(worklist *wl ARG_LD)
 { if ( !wl->in_global_wl && !wl->executing )
-    add_global_worklist(wl);
+    add_global_worklist(wl PASS_LD);
 }
 
 
 static int
-wkl_add_answer(worklist *wl, trie_node *node)
-{ potentially_add_to_global_worklist(wl);
+wkl_add_answer(worklist *wl, trie_node *node ARG_LD)
+{ potentially_add_to_global_worklist(wl PASS_LD);
   if ( wl->head && wl->head->type == CLUSTER_ANSWERS )
   { add_to_answer_cluster(wl->head, node);
   } else
@@ -406,8 +421,8 @@ wkl_add_answer(worklist *wl, trie_node *node)
 
 
 static int
-wkl_add_suspension(worklist *wl, term_t suspension)
-{ potentially_add_to_global_worklist(wl);
+wkl_add_suspension(worklist *wl, term_t suspension ARG_LD)
+{ potentially_add_to_global_worklist(wl PASS_LD);
   if ( wl->tail && wl->tail->type == CLUSTER_SUSPENSIONS )
   { add_to_suspension_cluster(wl->tail, suspension);
   } else
@@ -511,8 +526,8 @@ PRED_IMPL("$tbl_new_worklist", 2, tbl_new_worklist, 0)
   if ( get_trie(A2, &trie) )
   { worklist *wl = new_worklist(trie);
 
-    add_global_worklist(wl);
-    add_newly_created_worklist(wl);
+    add_global_worklist(wl PASS_LD);
+    add_newly_created_worklist(wl PASS_LD);
     return PL_unify_pointer(A1, wl);
   }
 
@@ -530,7 +545,7 @@ PRED_IMPL("$tbl_pop_worklist", 1, tbl_pop_worklist, 0)
 { PRED_LD
   worklist *wl;
 
-  if ( (wl=pop_worklist()) )
+  if ( (wl=pop_worklist(LD)) )
     return PL_unify_pointer(A1, wl);
 
   return FALSE;
@@ -563,7 +578,7 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
       }
       node->value = ATOM_nil;
 
-      return wkl_add_answer(wl, node);
+      return wkl_add_answer(wl, node PASS_LD);
     }
 
     return trie_error(rc, A2);
@@ -579,10 +594,11 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
 
 static
 PRED_IMPL("$tbl_wkl_add_suspension", 2, tbl_wkl_add_suspension, 0)
-{ worklist *wl;
+{ PRED_LD
+  worklist *wl;
 
   if ( get_worklist(A1, &wl) )
-  { wkl_add_suspension(wl, A2);
+  { wkl_add_suspension(wl, A2 PASS_LD);
     return TRUE;
   }
 
@@ -794,10 +810,11 @@ PRED_IMPL("$tbl_table_status", 2, tbl_table_status, 0)
 
 static
 PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
-{ size_t i, ntables;
+{ PRED_LD
+  size_t i, ntables;
   worklist **wls;
 
-  ntables = newly_created_worklists(&wls);
+  ntables = newly_created_worklists(&wls PASS_LD);
   for(i=0; i<ntables; i++)
   { worklist *wl = wls[i];
     trie *trie = wl->table;
@@ -805,7 +822,7 @@ PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
     trie->data.worklist = WL_COMPLETE;
     free_worklist(wl);
   }
-  reset_newly_created_worklists();
+  reset_newly_created_worklists(LD);
 
   return TRUE;
 }
@@ -829,9 +846,7 @@ static
 PRED_IMPL("$tbl_abolish_all_tables", 0, tbl_abolish_all_tables, 0)
 { PRED_LD
 
-  reset_global_worklist();
-  reset_newly_created_worklists();
-  clear_variant_table(PASS_LD1);
+  clearThreadTablingData(LD);
 
   return TRUE;
 }
