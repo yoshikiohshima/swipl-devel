@@ -77,4 +77,6 @@ typedef struct worklist
 } worklist;
 
 
+COMMON(void) clearThreadTablingData(PL_local_data_t *ld);
+
 #endif /*_PL_TABLING_H*/
