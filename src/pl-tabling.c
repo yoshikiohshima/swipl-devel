@@ -166,7 +166,7 @@ thread_variant_table(ARG1_LD)
 static void
 clear_variant_table(ARG1_LD)
 { if ( LD->tabling.variant_table )
-  { trie_destroy(LD->tabling.variant_table);
+  { trie_empty(LD->tabling.variant_table);
     LD->tabling.variant_table = NULL;
   }
 }
