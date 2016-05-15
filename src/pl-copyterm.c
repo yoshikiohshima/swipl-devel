@@ -24,6 +24,7 @@
 
 /*#define O_DEBUG 1*/
 #include "pl-incl.h"
+#include "pl-copyterm.h"
 #define AC_TERM_WALK_LR 1
 #include "pl-termwalk.c"
 
@@ -599,6 +600,110 @@ copy_term_refs(term_t from, term_t to, int flags ARG_LD)
 int
 duplicate_term(term_t in, term_t copy ARG_LD)
 { return copy_term_refs(in, copy, COPY_ATTRS PASS_LD);
+}
+
+		 /*******************************
+		 *	  FAST HEAP TERMS	*
+		 *******************************/
+
+#define REL_END (~(unsigned int)0)
+
+static int
+needs_relocation(word w)
+{ return ( isTerm(w) || isRef(w) || isIndirect(w) );
+}
+
+static word
+relocate_down(word w, size_t offset)
+{ return (((w>>5)-offset)<<5) | tag(w);
+}
+
+static word
+relocate_up(word w, size_t offset)
+{ return (((w>>5)+offset)<<5) | tag(w);
+}
+
+
+fastheap_term *
+term_to_fastheap(term_t t ARG_LD)
+{ term_t copy = PL_new_term_ref();
+  Word gcopy, gtop, p, o;
+  size_t relocations=0;
+  fastheap_term *fht;
+  unsigned int *r;
+  size_t last_rel = 0;
+  size_t offset;
+
+  duplicate_term(t, copy PASS_LD);
+  gcopy = valTermRef(copy);
+  gtop  = gTop;
+  deRef(gcopy);					/* term at gcopy .. gTop */
+
+  for(p=gcopy; p<gtop; p++)
+  { if ( needs_relocation(*p) )
+      relocations++;
+  }
+
+  if ( !(fht = malloc(sizeof(fastheap_term) +
+		      ((char*)gtop-(char *)gcopy) +
+		      (relocations+1) * sizeof(unsigned int))) )
+  { PL_resource_error("memory");
+    return NULL;
+  }
+
+  fht->data_len    = gtop-gcopy;
+  fht->data        = addPointer(fht, sizeof(fastheap_term));
+  fht->relocations = addPointer(fht->data, fht->data_len*sizeof(word));
+
+  offset = gcopy-gBase;
+  for(p=gcopy, o=fht->data, r=fht->relocations; p<gtop; p++)
+  { if ( needs_relocation(*p) )
+    { size_t this_rel = p-gcopy;
+      *o++ = relocate_down(*p, offset);
+      *r++ = this_rel-last_rel;
+      last_rel = this_rel;
+    } else
+    { *o++ = *p++;
+    }
+  }
+  *r++ = REL_END;
+
+  return fht;
+}
+
+
+void
+free_fastheap(fastheap_term *fht)
+{ free(fht);
+}
+
+
+int
+put_fastheap(fastheap_term *fht, term_t t ARG_LD)
+{ Word p, o;
+  size_t offset;
+  unsigned int *r;
+
+  if ( !hasGlobalSpace(fht->data_len) )
+  { int rc;
+
+    if ( (rc=ensureGlobalSpace(fht->data_len, ALLOW_GC|ALLOW_SHIFT)) != TRUE )
+      return raiseStackOverflow(rc);
+  }
+
+  o = gTop;
+  memcpy(o, fht->data, fht->data_len*sizeof(word));
+
+  offset = o-gBase;
+  for(r = fht->relocations, p=o; *r != REL_END; r++)
+  { p += *r;
+    *p = relocate_up(*p, offset);
+  }
+
+  gTop += fht->data_len*sizeof(word);
+  *valTermRef(t) = makeRefG(o);
+
+  return TRUE;
 }
 
 
