@@ -613,14 +613,20 @@ needs_relocation(word w)
 { return ( isTerm(w) || isRef(w) || isIndirect(w) );
 }
 
+#if SIZEOF_VOIDP == 8
+#define PTR_SHIFT (LMASK_BITS+1)
+#else
+#define PTR_SHIFT LMASK_BITS
+#endif
+
 static word
 relocate_down(word w, size_t offset)
-{ return (((w>>5)-offset)<<5) | tag(w);
+{ return (((w>>PTR_SHIFT)-offset)<<PTR_SHIFT) | tagex(w);
 }
 
 static word
 relocate_up(word w, size_t offset)
-{ return (((w>>5)+offset)<<5) | tag(w);
+{ return (((w>>PTR_SHIFT)+offset)<<PTR_SHIFT) | tagex(w);
 }
 
 
@@ -663,7 +669,7 @@ term_to_fastheap(term_t t ARG_LD)
       *r++ = this_rel-last_rel;
       last_rel = this_rel;
     } else
-    { *o++ = *p++;
+    { *o++ = *p;
     }
   }
   *r++ = REL_END;
