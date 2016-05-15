@@ -596,6 +596,16 @@ copy_term_refs(term_t from, term_t to, int flags ARG_LD)
 }
 
 
+int
+duplicate_term(term_t in, term_t copy ARG_LD)
+{ return copy_term_refs(in, copy, COPY_ATTRS PASS_LD);
+}
+
+
+		 /*******************************
+		 *	  PROLOG BINDING	*
+		 *******************************/
+
 static
 PRED_IMPL("copy_term", 2, copy_term, 0)
 { PRED_LD
@@ -610,12 +620,6 @@ PRED_IMPL("copy_term", 2, copy_term, 0)
 
     fail;
   }
-}
-
-
-int
-duplicate_term(term_t in, term_t copy ARG_LD)
-{ return copy_term_refs(in, copy, COPY_ATTRS PASS_LD);
 }
 
 
