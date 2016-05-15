@@ -630,6 +630,20 @@ relocate_up(word w, size_t offset)
 }
 
 
+static inline size_t
+offset_cell(Word p)
+{ word m = *p;				/* was get_value(p) */
+  size_t offset;
+
+  if ( unlikely(storage(m) == STG_LOCAL) )
+    offset = wsizeofInd(m) + 1;
+  else
+    offset = 0;
+
+  return offset;
+}
+
+
 fastheap_term *
 term_to_fastheap(term_t t ARG_LD)
 { term_t copy = PL_new_term_ref();
@@ -648,6 +662,8 @@ term_to_fastheap(term_t t ARG_LD)
   for(p=gcopy; p<gtop; p++)
   { if ( needs_relocation(*p) )
       relocations++;
+    else
+      p += offset_cell(p);
   }
 
   if ( !(fht = malloc(sizeof(fastheap_term) +
@@ -670,6 +686,7 @@ term_to_fastheap(term_t t ARG_LD)
       last_rel = this_rel;
     } else
     { *o++ = *p;
+      p += offset_cell(p);
     }
   }
   *r++ = REL_END;
