@@ -34,6 +34,12 @@
 
 #include "pl-incl.h"
 #include "pl-tabling.h"
+#include "pl-copyterm.h"
+
+#define record_t fastheap_term *
+#define PL_record(t)      term_to_fastheap(t PASS_LD)
+#define PL_recorded(r, t) put_fastheap(r, t PASS_LD)
+#define PL_erase(r)	  free_fastheap(r)
 
 static void	free_worklist(worklist *wl);
 #ifdef O_DEBUG
@@ -233,7 +239,7 @@ get_answer_from_cluster(cluster *c, size_t index)
 }
 
 static cluster *
-new_suspension_cluster(term_t first)
+new_suspension_cluster(term_t first ARG_LD)
 { cluster *c;
 
   c = PL_malloc(sizeof(*c));
@@ -258,7 +264,7 @@ free_suspension_cluster(cluster *c)
 }
 
 static void
-add_to_suspension_cluster(cluster *c, term_t suspension)
+add_to_suspension_cluster(cluster *c, term_t suspension ARG_LD)
 { addBuffer(&c->members, PL_record(suspension), record_t);
 }
 
@@ -424,9 +430,9 @@ static int
 wkl_add_suspension(worklist *wl, term_t suspension ARG_LD)
 { potentially_add_to_global_worklist(wl PASS_LD);
   if ( wl->tail && wl->tail->type == CLUSTER_SUSPENSIONS )
-  { add_to_suspension_cluster(wl->tail, suspension);
+  { add_to_suspension_cluster(wl->tail, suspension PASS_LD);
   } else
-  { cluster *c = new_suspension_cluster(suspension);
+  { cluster *c = new_suspension_cluster(suspension PASS_LD);
     wkl_append_right(wl, c);
     if ( c->prev && c->prev->type == CLUSTER_ANSWERS )
       wl->riac = c->prev;
