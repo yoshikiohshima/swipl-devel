@@ -726,7 +726,7 @@ put_fastheap(fastheap_term *fht, term_t t ARG_LD)
     *p = relocate_up(*p, offset);
   }
 
-  gTop += fht->data_len*sizeof(word);
+  gTop += fht->data_len;
   *valTermRef(t) = makeRefG(o);
 
   return TRUE;
