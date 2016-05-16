@@ -630,20 +630,6 @@ relocate_up(word w, size_t offset)
 }
 
 
-static inline size_t
-offset_cell(Word p)
-{ word m = *p;				/* was get_value(p) */
-  size_t offset;
-
-  if ( unlikely(storage(m) == STG_LOCAL) )
-    offset = wsizeofInd(m) + 1;
-  else
-    offset = 0;
-
-  return offset;
-}
-
-
 fastheap_term *
 term_to_fastheap(term_t t ARG_LD)
 { term_t copy = PL_new_term_ref();
@@ -653,6 +639,8 @@ term_to_fastheap(term_t t ARG_LD)
   unsigned int *r;
   size_t last_rel = 0;
   size_t offset;
+  size_t indirect_cells = 0;
+  Word indirects;
 
   duplicate_term(t, copy PASS_LD);
   gcopy = valTermRef(copy);
@@ -661,32 +649,47 @@ term_to_fastheap(term_t t ARG_LD)
 
   for(p=gcopy; p<gtop; p++)
   { if ( needs_relocation(*p) )
+    { if ( isIndirect(*p) )
+      { Word ip = addressIndirect(*p);
+	indirect_cells += wsizeofInd(*ip)+2;
+      }
       relocations++;
-    else
-      p += offset_cell(p);
+    }
   }
 
   if ( !(fht = malloc(sizeof(fastheap_term) +
 		      ((char*)gtop-(char *)gcopy) +
+		      indirect_cells * sizeof(word) +
 		      (relocations+1) * sizeof(unsigned int))) )
   { PL_resource_error("memory");
     return NULL;
   }
 
-  fht->data_len    = gtop-gcopy;
+  fht->data_len    = (gtop-gcopy) + indirect_cells;
   fht->data        = addPointer(fht, sizeof(fastheap_term));
   fht->relocations = addPointer(fht->data, fht->data_len*sizeof(word));
+  indirects        = fht->data + (gtop-gcopy);
 
   offset = gcopy-gBase;
   for(p=gcopy, o=fht->data, r=fht->relocations; p<gtop; p++)
   { if ( needs_relocation(*p) )
     { size_t this_rel = p-gcopy;
-      *o++ = relocate_down(*p, offset);
+
+      if ( isIndirect(*p) )
+      { Word ip = addressIndirect(*p);
+	size_t sz = wsizeofInd(*ip)+2;
+	size_t go = gBase - (Word)base_addresses[STG_GLOBAL];
+
+	memcpy(indirects, ip, sz*sizeof(word));
+	*o++ = ((go+indirects-fht->data)<<PTR_SHIFT) | tagex(*p);
+	indirects += sz;
+      } else
+      { *o++ = relocate_down(*p, offset);
+      }
       *r++ = this_rel-last_rel;
       last_rel = this_rel;
     } else
     { *o++ = *p;
-      p += offset_cell(p);
     }
   }
   *r++ = REL_END;
