@@ -728,8 +728,8 @@ PRED_IMPL("$tbl_wkl_work", 3, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 
       if ( !( put_trie_term(an, answer PASS_LD) &&
 	      PL_recorded(sr, suspension) &&
-	      PL_unify(A2, answer) &&
-	      PL_unify(A3, suspension) ) )
+	      PL_unify_output(A2, answer) &&
+	      PL_unify_output(A3, suspension) ) )
       { freeForeignState(state, sizeof(*state));
 	return FALSE;			/* resource error */
       }
