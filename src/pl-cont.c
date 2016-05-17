@@ -264,14 +264,6 @@ PRED_IMPL("shift", 1, shift, 0)
     }
     resetfr = (LocalFrame)valTermRef(reset);
 
-					/* leave (dynamic) predicates */
-    for(fr = environment_frame->parent;
-	(fr > (LocalFrame)LD->choicepoints &&
-	 fr > resetfr
-	);
-	fr = fr->parent)
-    { leaveDefinition(fr->predicate);
-    }
 					/* trim lTop.  Note that I_EXIT */
 					/* does not touch this (FR_KEEPLTOP) */
     if ( fr <= (LocalFrame)LD->choicepoints )
