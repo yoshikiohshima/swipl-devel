@@ -675,6 +675,7 @@ typedef struct trie_stats
 { size_t bytes;
   size_t nodes;
   size_t hashes;
+  size_t values;
 } trie_stats;
 
 
@@ -684,17 +685,21 @@ stat_node(trie_node *n, trie_stats *stats)
 
   stats->nodes++;
   stats->bytes += sizeof(*n);
+  if ( n->value )
+    stats->values++;
 
   if ( children.any )
   { switch( children.any->type )
     { case TN_KEY:
 	stats->bytes += sizeof(*children.key);
+        stat_node(children.key->child, stats);
         break;
       case TN_HASHED:
       { TableEnum e = newTableEnum(children.hash->table);
 	void *k, *v;
 
 	stats->bytes += sizeofTable(children.hash->table);
+	stats->hashes++;
 
 	while( advanceTableEnum(e, &k, &v) )
 	  stat_node(v, stats);
@@ -714,6 +719,7 @@ stat_trie(trie *t, trie_stats *stats)
 { stats->bytes  = sizeof(*t) - sizeof(t->root);
   stats->nodes  = 0;
   stats->hashes = 0;
+  stats->values = 0;
 
   stat_node(&t->root, stats);
 }
@@ -1252,6 +1258,10 @@ PRED_IMPL("$trie_property", 2, trie_property, 0)
       { trie_stats stats;
 	stat_trie(trie, &stats);
 	return PL_unify_int64(arg, stats.hashes);
+      } else if ( name == ATOM_value_count )
+      { trie_stats stats;
+	stat_trie(trie, &stats);
+	return PL_unify_int64(arg, stats.values);
       }
     }
   }

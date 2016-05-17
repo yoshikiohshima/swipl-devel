@@ -1049,12 +1049,24 @@ working_directory(Old, New) :-
 
 %%	current_trie(?Trie) is nondet.
 %
-%	True if Trie is the handle of an existing trie
+%	True if Trie is the handle of an existing trie.
 
 current_trie(Trie) :-
 	current_blob(Trie, trie).
 
 %%	trie_property(?Trie, ?Property)
+%
+%	True when Property is a property of Trie. Defined properties
+%	are:
+%
+%	  - value_count(Count)
+%	  Number of terms in the trie.
+%	  - node_count(Count)
+%	  Number of nodes in the trie.
+%	  - size(Bytes)
+%	  Number of bytes needed to store the trie.
+%	  - hashed(Count)
+%	  Number of hashed nodes.
 
 trie_property(Trie, Property) :-
 	current_trie(Trie),
@@ -1062,6 +1074,7 @@ trie_property(Trie, Property) :-
 	'$trie_property'(Trie, Property).
 
 trie_property(node_count(_)).
+trie_property(value_count(_)).
 trie_property(size(_)).
 trie_property(hashed(_)).
 
