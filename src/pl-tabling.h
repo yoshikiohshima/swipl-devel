@@ -71,7 +71,6 @@ typedef struct worklist
   int		magic;			/* WORKLIST_MAGIC */
   unsigned	executing : 1;		/* $tbl_wkl_work/3 in progress */
   unsigned	in_global_wl : 1;	/* already in global worklist */
-  unsigned	active : 1;
 
   trie	       *table;			/* table I belong to */
 } worklist;

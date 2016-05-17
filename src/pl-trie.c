@@ -49,7 +49,7 @@ because a sequence that represents a term   is  _never_ the prefix of of
 the sequence of another term.
 
 TODO
-  - Query and limit size of the tries
+  - Limit size of the tries
   - Avoid using a hash-table for small number of branches
   - Thread safe reclaiming
     - Reclaim single-child node after moving to a hash
