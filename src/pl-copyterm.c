@@ -606,11 +606,21 @@ duplicate_term(term_t in, term_t copy ARG_LD)
 		 *	  FAST HEAP TERMS	*
 		 *******************************/
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+The code below copies a  term  to   the  heap  (program space) just like
+PL_record(). The representation is particularly   suited  for copying it
+back to the stack really quickly: the memory can simply be copied to the
+global stack, after which a quick series of relocations is performed.
+
+This  representations  is   particularly    suited   for   re-activating
+continuations as needed for tabling.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
 #define REL_END (~(unsigned int)0)
 
 static int
 needs_relocation(word w)
-{ return ( isTerm(w) || isRef(w) || isIndirect(w) );
+{ return ( isTerm(w) || isRef(w) || isIndirect(w) || isAtom(w) );
 }
 
 #if SIZEOF_VOIDP == 8
@@ -621,12 +631,22 @@ needs_relocation(word w)
 
 static word
 relocate_down(word w, size_t offset)
-{ return (((w>>PTR_SHIFT)-offset)<<PTR_SHIFT) | tagex(w);
+{ if ( isAtom(w) )
+  { PL_register_atom(w);
+    return w;
+  } else
+  { return (((w>>PTR_SHIFT)-offset)<<PTR_SHIFT) | tagex(w);
+  }
 }
 
 static word
-relocate_up(word w, size_t offset)
-{ return (((w>>PTR_SHIFT)+offset)<<PTR_SHIFT) | tagex(w);
+relocate_up(word w, size_t offset ARG_LD)
+{ if ( isAtom(w) )
+  { pushVolatileAtom(w);
+    return w;
+  } else
+  { return (((w>>PTR_SHIFT)+offset)<<PTR_SHIFT) | tagex(w);
+  }
 }
 
 
@@ -700,7 +720,16 @@ term_to_fastheap(term_t t ARG_LD)
 
 void
 free_fastheap(fastheap_term *fht)
-{ free(fht);
+{ unsigned int *r;
+  Word p = fht->data;
+
+  for(r = fht->relocations; *r != REL_END; r++)
+  { p += *r;
+    if ( isAtom(*p) )
+      PL_unregister_atom(*p);
+  }
+
+  free(fht);
 }
 
 
@@ -723,7 +752,7 @@ put_fastheap(fastheap_term *fht, term_t t ARG_LD)
   offset = o-gBase;
   for(r = fht->relocations, p=o; *r != REL_END; r++)
   { p += *r;
-    *p = relocate_up(*p, offset);
+    *p = relocate_up(*p, offset PASS_LD);
   }
 
   gTop += fht->data_len;
