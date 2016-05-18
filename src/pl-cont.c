@@ -264,15 +264,19 @@ PRED_IMPL("shift", 1, shift, 0)
     }
     resetfr = (LocalFrame)valTermRef(reset);
 
-					/* trim lTop.  Note that I_EXIT */
-					/* does not touch this (FR_KEEPLTOP) */
-    if ( fr <= (LocalFrame)LD->choicepoints )
-    { lTop = (LocalFrame)(LD->choicepoints+1);
-    } else
-    { assert(fr == resetfr);
-      lTop = (LocalFrame)argFrameP(fr, fr->clause->value.clause->variables);
+					/* Find parent to keep and trim lTop */
+					/* Note that I_EXIT does not touch this */
+					/* (FR_KEEPLTOP) */
+    for( fr = environment_frame->parent; ; fr = fr->parent )
+    { if ( fr <= (LocalFrame)LD->choicepoints )
+      { lTop = (LocalFrame)(LD->choicepoints+1);
+	break;				/* found newer choicepoint */
+      } else if ( fr == resetfr )
+      { lTop = (LocalFrame)argFrameP(fr, fr->clause->value.clause->variables);
+        break;
+      }
+      assert(fr > resetfr);
     }
-
 					/* return as from reset/3 */
     fr = environment_frame;
     fr->programPointer = resetfr->programPointer;
