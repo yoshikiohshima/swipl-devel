@@ -185,6 +185,7 @@ get_variant_table(term_t t, int create ARG_LD)
     } else if ( create )
     { trie *vt = trie_create();
       node->value = trie_symbol(vt);
+      vt->data.variant = node;
       return vt;
     } else
       return NULL;

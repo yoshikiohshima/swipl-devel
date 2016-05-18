@@ -80,8 +80,9 @@ typedef struct trie
   unsigned int		node_count;	/* # nodes */
   trie_node	        root;		/* the root node */
   indirect_table       *indirects;	/* indirect values */
-  union
+  struct
   { struct worklist *worklist;		/* tabling worklist */
+    trie_node	    *variant;		/* node in variant trie */
   } data;
 } trie;
 
