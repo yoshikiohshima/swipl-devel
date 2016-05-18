@@ -217,6 +217,9 @@ static void
 clear_node(trie *trie, trie_node *n)
 { trie_children children = n->children;
 
+  if ( trie->release_node )
+    (*trie->release_node)(trie, n);
+
   release_key(n->key);
   if ( n->value )
     release_key(n->value);
@@ -257,7 +260,7 @@ destroy_node(trie *trie, trie_node *n)
  * TBD: Need to think about concurrency here.
  */
 
-static void
+void
 prune_node(trie *trie, trie_node *n)
 { trie_node *p;
   int empty = TRUE;

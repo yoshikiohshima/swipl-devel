@@ -80,6 +80,7 @@ typedef struct trie
   unsigned int		node_count;	/* # nodes */
   trie_node	        root;		/* the root node */
   indirect_table       *indirects;	/* indirect values */
+  void		      (*release_node)(struct trie *, trie_node *);
   struct
   { struct worklist *worklist;		/* tabling worklist */
     trie_node	    *variant;		/* node in variant trie */
@@ -90,6 +91,7 @@ COMMON(void)	initTries(void);
 COMMON(trie *)	trie_create(void);
 COMMON(void)	trie_destroy(trie *trie);
 COMMON(void)	trie_empty(trie *trie);
+COMMON(void)	prune_node(trie *trie, trie_node *n);
 COMMON(int)	get_trie(term_t t, trie **tp);
 COMMON(int)	put_trie_term(trie_node *node, term_t term ARG_LD);
 COMMON(int)	trie_lookup(trie *trie, trie_node **nodep, Word k,

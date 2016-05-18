@@ -152,14 +152,35 @@ newly_created_worklists(worklist ***wlp ARG_LD)
 		 *     THREAD VARIANT TABLE	*
 		 *******************************/
 
+static void release_variant_table_node(trie *trie, trie_node *node);
+
 static trie *
 thread_variant_table(ARG1_LD)
 { if ( !LD->tabling.variant_table )
   { LD->tabling.variant_table = trie_create();
     trie_symbol(LD->tabling.variant_table);
+    LD->tabling.variant_table->release_node = release_variant_table_node;
   }
 
   return LD->tabling.variant_table;
+}
+
+
+static void
+release_variant_table_node(trie *variant_table, trie_node *node)
+{ (void)variant_table;
+
+  if ( node->value )
+  { trie *vtrie = symbol_trie(node->value);
+
+    assert(vtrie->data.variant == node);
+    vtrie->data.variant = NULL;
+    if ( vtrie->data.worklist )
+    { free_worklist(vtrie->data.worklist);
+      vtrie->data.worklist = NULL;
+    }
+    trie_empty(vtrie);
+  }
 }
 
 
@@ -835,6 +856,32 @@ PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
 }
 
 
+/** '$tbl_table_discard_all'
+ *
+ * Discard all newly created tables.  This is used if an exception
+ * happens during tabling.
+ */
+
+static
+PRED_IMPL("$tbl_table_discard_all", 0, tbl_table_discard_all, 0)
+{ PRED_LD
+  size_t i, ntables;
+  worklist **wls;
+
+  ntables = newly_created_worklists(&wls PASS_LD);
+  for(i=0; i<ntables; i++)
+  { worklist *wl = wls[i];
+    trie *trie = wl->table;
+
+    prune_node(LD->tabling.variant_table, trie->data.variant);
+  }
+  reset_newly_created_worklists(LD);
+
+  return TRUE;
+}
+
+
+
 static
 PRED_IMPL("$tbl_scheduling_component", 2, tbl_scheduling_component, 0)
 { PRED_LD
@@ -874,6 +921,7 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_variant_table",        1, tbl_variant_table,        0)
   PRED_DEF("$tbl_table_status",		2, tbl_table_status,	     0)
   PRED_DEF("$tbl_table_complete_all",	0, tbl_table_complete_all,   0)
+  PRED_DEF("$tbl_table_discard_all",    0, tbl_table_discard_all,    0)
   PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
   PRED_DEF("$tbl_abolish_all_tables",   0, tbl_abolish_all_tables,   0)
 EndPredDefs
