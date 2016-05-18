@@ -82,6 +82,7 @@ setupProlog(void)
 			 GD->options.trailSize) )
     fatalError("Not enough address space to allocate Prolog stacks");
   initPrologLocalData(PASS_LD1);
+  LD->tabling.node_pool.limit = GD->options.tableSpace;
 
   DEBUG(1, Sdprintf("Atoms ...\n"));
   initAtoms();

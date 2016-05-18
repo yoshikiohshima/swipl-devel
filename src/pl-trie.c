@@ -206,8 +206,8 @@ new_trie_node(trie *trie, word key)
 { trie_node *n;
 
   if ( trie->alloc_pool )
-  { if ( trie->alloc_pool->size+1 <= trie->alloc_pool->limit )
-    { ATOMIC_INC(&trie->alloc_pool->size);
+  { if ( trie->alloc_pool->size+sizeof(trie_node) <= trie->alloc_pool->limit )
+    { ATOMIC_ADD(&trie->alloc_pool->size, sizeof(trie_node));
     } else
     { PL_resource_error("table_space");
       return NULL;
@@ -263,7 +263,7 @@ destroy_node(trie *trie, trie_node *n)
 { clear_node(trie, n);
 
   if ( trie->alloc_pool )
-    ATOMIC_DEC(&trie->alloc_pool->size);
+    ATOMIC_SUB(&trie->alloc_pool->size, sizeof(trie_node));
 
   PL_free(n);
 }
