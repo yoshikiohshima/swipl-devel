@@ -130,8 +130,8 @@ static PL_blob_t trie_blob =
 
 static trie_node       *new_trie_node(word key);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
-static void		destroy_node(trie_node *n);
-static void		clear_node(trie_node *n);
+static void		destroy_node(trie *trie, trie_node *n);
+static void		clear_node(trie *trie, trie_node *n);
 
 static inline void
 acquire_key(word key)
@@ -174,7 +174,7 @@ void
 trie_empty(trie *trie)
 { indirect_table *it = trie->indirects;
 
-  clear_node(&trie->root);			/* TBD: verify not accessed */
+  clear_node(trie, &trie->root);	/* TBD: verify not accessed */
   if ( it && COMPARE_AND_SWAP(&trie->indirects, it, NULL) )
     destroy_indirect_table(it);
 }
@@ -214,15 +214,13 @@ new_trie_node(word key)
 
 
 static void
-destroy_hnode(trie_children_hashed *hnode)
-{ destroyHTable(hnode->table);
-}
-
-static void
-clear_node(trie_node *n)
+clear_node(trie *trie, trie_node *n)
 { trie_children children = n->children;
 
   release_key(n->key);
+  if ( n->value )
+    release_key(n->value);
+
   if ( children.any &&
        COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
   { switch( children.any->type )
@@ -230,15 +228,23 @@ clear_node(trie_node *n)
         PL_free(children.key);
 	break;
       case TN_HASHED:
-	destroy_hnode(children.hash);
-        break;
+      { TableEnum e = newTableEnum(children.hash->table);
+	void *k, *v;
+
+	while(advanceTableEnum(e, &k, &v))
+	  destroy_node(trie, v);
+
+	freeTableEnum(e);
+	destroyHTable(children.hash->table);
+	break;
+      }
     }
   }
 }
 
 static void
-destroy_node(trie_node *n)
-{ clear_node(n);
+destroy_node(trie *trie, trie_node *n)
+{ clear_node(trie, n);
   PL_free(n);
 }
 
@@ -275,17 +281,9 @@ prune_node(trie *trie, trie_node *n)
       }
     }
 
-    destroy_node(n);
+    destroy_node(trie, n);
     ATOMIC_DEC(&trie->node_count);
   }
-}
-
-
-static void
-free_hnode_symbol(void *key, void *value)
-{ (void)key;
-
-  destroy_node(value);
 }
 
 
@@ -305,7 +303,6 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 
 	    hnode->type  = TN_HASHED;
 	    hnode->table = newHTable(4);
-	    hnode->table->free_symbol = free_hnode_symbol;
 	    addHTable(hnode->table, (void*)children.key->key,
 				    children.key->child);
 	    addHTable(hnode->table, (void*)key, (void*)new);
@@ -316,7 +313,9 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	      ATOMIC_INC(&trie->node_count);
 	      return new;
 	    }
-	    destroy_hnode(hnode);
+	    destroy_node(trie, new);
+	    destroyHTable(hnode->table);
+	    PL_free(hnode);
 	    continue;
 	  }
 	}
@@ -329,7 +328,7 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	  { new->parent = n;
 	    ATOMIC_INC(&trie->node_count);
 	  } else
-	  { destroy_node(new);
+	  { destroy_node(trie, new);
 	  }
 	  return old;
 	}
@@ -348,7 +347,7 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	ATOMIC_INC(&trie->node_count);
 	return child->child;
       }
-      destroy_node(child->child);
+      destroy_node(trie, child->child);
       PL_free(child);
     }
   }
