@@ -23,6 +23,7 @@
 
 #ifndef PL_GLOBAL_H_INCLUDED
 #define PL_GLOBAL_H_INCLUDED
+#include "pl-trie.h"
 
 #ifndef GLOBAL			/* global variables */
 #define GLOBAL extern
@@ -515,6 +516,7 @@ struct PL_local_data
   { struct worklist_set *worklist;		/* Worklist of current query */
     struct worklist_set *created_worklists;	/* Worklists created */
     struct trie      *variant_table;	/* Variant --> table */
+    trie_allocation_pool node_pool;	/* Node allocation pool for tries */
     int	has_scheduling_component;	/* A leader was created */
   } tabling;
 

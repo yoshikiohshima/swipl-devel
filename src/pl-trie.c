@@ -128,7 +128,7 @@ static PL_blob_t trie_blob =
 		 *	     THE TRIE		*
 		 *******************************/
 
-static trie_node       *new_trie_node(word key);
+static trie_node       *new_trie_node(trie *trie, word key);
 static void		clear_vars(Word k, size_t var_number ARG_LD);
 static void		destroy_node(trie *trie, trie_node *n);
 static void		clear_node(trie *trie, trie_node *n);
@@ -202,12 +202,25 @@ get_child(trie_node *n, word key ARG_LD)
 
 
 static trie_node *
-new_trie_node(word key)
-{ trie_node *n = PL_malloc(sizeof(*n));
+new_trie_node(trie *trie, word key)
+{ trie_node *n;
 
-  memset(n, 0, sizeof(*n));
-  acquire_key(key);
-  n->key = key;
+  if ( trie->alloc_pool )
+  { if ( trie->alloc_pool->size+1 <= trie->alloc_pool->limit )
+    { ATOMIC_INC(&trie->alloc_pool->size);
+    } else
+    { PL_resource_error("table_space");
+      return NULL;
+    }
+  }
+
+  if ( (n = PL_malloc(sizeof(*n))) )
+  { memset(n, 0, sizeof(*n));
+    acquire_key(key);
+    n->key = key;
+  } else
+  { PL_resource_error("memory");
+  }
 
   return n;
 }
@@ -248,6 +261,10 @@ clear_node(trie *trie, trie_node *n)
 static void
 destroy_node(trie *trie, trie_node *n)
 { clear_node(trie, n);
+
+  if ( trie->alloc_pool )
+    ATOMIC_DEC(&trie->alloc_pool->size);
+
   PL_free(n);
 }
 
@@ -294,6 +311,10 @@ static trie_node *
 insert_child(trie *trie, trie_node *n, word key ARG_LD)
 { for(;;)
   { trie_children children = n->children;
+    trie_node *new = new_trie_node(trie, key);
+
+    if ( !new )
+      return NULL;			/* resource error */
 
     if ( children.any )
     { switch( children.any->type )
@@ -302,7 +323,6 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	  { return children.key->child;
 	  } else
 	  { trie_children_hashed *hnode = PL_malloc(sizeof(*hnode));
-	    trie_node *new = new_trie_node(key);
 
 	    hnode->type  = TN_HASHED;
 	    hnode->table = newHTable(4);
@@ -323,8 +343,7 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	  }
 	}
 	case TN_HASHED:
-	{ trie_node *new = new_trie_node(key);
-	  trie_node *old = addHTable(children.hash->table,
+	{ trie_node *old = addHTable(children.hash->table,
 				     (void*)key, (void*)new);
 
 	  if ( new == old )
@@ -343,14 +362,14 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 
       child->type  = TN_KEY;
       child->key   = key;
-      child->child = new_trie_node(key);
+      child->child = new;
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
       { child->child->parent = n;
 	ATOMIC_INC(&trie->node_count);
 	return child->child;
       }
-      destroy_node(trie, child->child);
+      destroy_node(trie, new);
       PL_free(child);
     }
   }

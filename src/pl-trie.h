@@ -74,6 +74,11 @@ typedef struct trie_node
 } trie_node;
 
 
+typedef struct trie_allocation_pool
+{ size_t	size;			/* # nodes in use */
+  size_t	limit;			/* Limit of the pool */
+} trie_allocation_pool;
+
 typedef struct trie
 { atom_t		symbol;		/* The associated symbol */
   int			magic;		/* TRIE_MAGIC */
@@ -81,11 +86,13 @@ typedef struct trie
   trie_node	        root;		/* the root node */
   indirect_table       *indirects;	/* indirect values */
   void		      (*release_node)(struct trie *, trie_node *);
+  trie_allocation_pool *alloc_pool;	/* Node allocation pool */
   struct
   { struct worklist *worklist;		/* tabling worklist */
     trie_node	    *variant;		/* node in variant trie */
   } data;
 } trie;
+
 
 COMMON(void)	initTries(void);
 COMMON(trie *)	trie_create(void);
