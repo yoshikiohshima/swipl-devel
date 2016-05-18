@@ -844,8 +844,7 @@ this is above the stack anyway.
 
 VMI(B_ATOM, 0, 1, (CA1_DATA))
 { word c = (word)*PC++;
-  if (GD->atoms.gc_active)
-    markAtom(c);
+  pushVolatileAtom(c);
   *ARGP++ = c;
   NEXT_INSTRUCTION;
 }
