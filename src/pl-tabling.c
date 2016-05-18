@@ -563,6 +563,33 @@ PRED_IMPL("$tbl_new_worklist", 2, tbl_new_worklist, 0)
 }
 
 
+/** '$tbl_destroy_table'(+Trie)
+ *
+ * Destroy a single trie table.
+ */
+
+static
+PRED_IMPL("$tbl_destroy_table", 1, tbl_destroy_table, 0)
+{ PRED_LD
+  trie *table;
+
+  if ( get_trie(A1, &table) )
+  { if ( table->data.variant )
+    { trie *vtrie = get_trie_form_node(table->data.variant);
+
+      if ( vtrie == LD->tabling.variant_table )
+      { prune_node(vtrie, table->data.variant);
+	return TRUE;
+      }
+
+      return PL_type_error("table", A1);
+    }
+  }
+
+  return FALSE;
+}
+
+
 /** '$tbl_pop_worklist'(-Worklist) is semidet.
  *
  * Pop next worklist from the global worklist.
@@ -924,4 +951,6 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_table_discard_all",    0, tbl_table_discard_all,    0)
   PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
   PRED_DEF("$tbl_abolish_all_tables",   0, tbl_abolish_all_tables,   0)
+  PRED_DEF("$tbl_destroy_table",        1, tbl_destroy_table,        0)
+
 EndPredDefs

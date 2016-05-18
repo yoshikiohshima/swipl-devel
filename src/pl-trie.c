@@ -489,6 +489,19 @@ clear_vars(Word k, size_t var_number ARG_LD)
 }
 
 
+trie *
+get_trie_form_node(trie_node *node)
+{ trie *trie_ptr;
+
+  for( ; node->parent; node = node->parent )
+    ;
+  trie_ptr = (trie *)((char*)node - offsetof(trie, root));
+  assert(trie_ptr->magic == TRIE_MAGIC);
+
+  return trie_ptr;
+}
+
+
 		 /*******************************
 		 *    BUILD TERM FROM PATH	*
 		 *******************************/

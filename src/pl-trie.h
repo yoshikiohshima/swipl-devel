@@ -92,6 +92,7 @@ COMMON(trie *)	trie_create(void);
 COMMON(void)	trie_destroy(trie *trie);
 COMMON(void)	trie_empty(trie *trie);
 COMMON(void)	prune_node(trie *trie, trie_node *n);
+COMMON(trie *)	get_trie_form_node(trie_node *node);
 COMMON(int)	get_trie(term_t t, trie **tp);
 COMMON(int)	put_trie_term(trie_node *node, term_t term ARG_LD);
 COMMON(int)	trie_lookup(trie *trie, trie_node **nodep, Word k,
