@@ -731,5 +731,7 @@ advanceTableEnum(TableEnum e, void **name, void **value)
 
 size_t
 sizeofTable(Table ht)				/* memory usage in bytes */
-{ return sizeof(struct table) + sizeof(struct kvs) + ht->kvs->len * sizeof(struct symbol);
+{ return ( sizeof(struct table) +
+	   sizeof(struct kvs) +
+	   ht->kvs->len * sizeof(struct symbol) );
 }
