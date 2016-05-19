@@ -215,7 +215,8 @@ new_trie_node(trie *trie, word key)
   }
 
   if ( (n = PL_malloc(sizeof(*n))) )
-  { memset(n, 0, sizeof(*n));
+  { ATOMIC_INC(&trie->node_count);
+    memset(n, 0, sizeof(*n));
     acquire_key(key);
     n->key = key;
   } else
@@ -263,6 +264,7 @@ static void
 destroy_node(trie *trie, trie_node *n)
 { clear_node(trie, n);
 
+  ATOMIC_DEC(&trie->node_count);
   if ( trie->alloc_pool )
     ATOMIC_SUB(&trie->alloc_pool->size, sizeof(trie_node));
 
@@ -303,7 +305,6 @@ prune_node(trie *trie, trie_node *n)
     }
 
     destroy_node(trie, n);
-    ATOMIC_DEC(&trie->node_count);
   }
 }
 
@@ -334,7 +335,6 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 	    if ( COMPARE_AND_SWAP(&n->children.hash, children.any, hnode) )
 	    { PL_free(children.any);		/* TBD: Safely free */
 	      new->parent = n;
-	      ATOMIC_INC(&trie->node_count);
 	      return new;
 	    }
 	    destroy_node(trie, new);
@@ -349,7 +349,6 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 
 	  if ( new == old )
 	  { new->parent = n;
-	    ATOMIC_INC(&trie->node_count);
 	  } else
 	  { destroy_node(trie, new);
 	  }
@@ -367,7 +366,6 @@ insert_child(trie *trie, trie_node *n, word key ARG_LD)
 
       if ( COMPARE_AND_SWAP(&n->children.key, NULL, child) )
       { child->child->parent = n;
-	ATOMIC_INC(&trie->node_count);
 	return child->child;
       }
       destroy_node(trie, new);
