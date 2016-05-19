@@ -930,9 +930,15 @@ static
 PRED_IMPL("$tbl_abolish_all_tables", 0, tbl_abolish_all_tables, 0)
 { PRED_LD
 
-  clearThreadTablingData(LD);
+  if ( !LD->tabling.has_scheduling_component )
+  { clearThreadTablingData(LD);
+    return TRUE;
+  } else
+  { term_t ex = PL_new_term_ref();
 
-  return TRUE;
+    PL_put_atom(ex, ATOM_all);
+    return PL_permission_error("abolish", "tables", ex);
+  }
 }
 
 
