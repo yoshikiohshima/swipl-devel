@@ -241,6 +241,7 @@ clear_node(trie *trie, trie_node *n)
        COMPARE_AND_SWAP(&n->children.any, children.any, NULL) )
   { switch( children.any->type )
     { case TN_KEY:
+	destroy_node(trie, children.key->child);
         PL_free(children.key);
 	break;
       case TN_HASHED:
