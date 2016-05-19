@@ -175,10 +175,7 @@ release_variant_table_node(trie *variant_table, trie_node *node)
 
     assert(vtrie->data.variant == node);
     vtrie->data.variant = NULL;
-    if ( vtrie->data.worklist )
-    { free_worklist(vtrie->data.worklist);
-      vtrie->data.worklist = NULL;
-    }
+    vtrie->data.worklist = NULL;
     trie_empty(vtrie);
   }
 }
@@ -188,6 +185,7 @@ static void
 clear_variant_table(ARG1_LD)
 { if ( LD->tabling.variant_table )
   { trie_empty(LD->tabling.variant_table);
+    PL_unregister_atom(LD->tabling.variant_table->symbol);
     LD->tabling.variant_table = NULL;
   }
 }
