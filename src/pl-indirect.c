@@ -94,7 +94,7 @@ new_indirect_table(void)
   memset(tab, 0, sizeof(*tab));
   simpleMutexInit(&tab->mutex);
 
-  for(i=0; i<MSB(MAX_INDIRECT_BLOCKS); i++)
+  for(i=0; i<MSB(PREALLOCATED_INDIRECT_BLOCKS); i++)
   { arr->blocks[i] = arr->preallocated;
   }
 
@@ -110,6 +110,17 @@ new_indirect_table(void)
 }
 
 
+static void
+clean_block(indirect *block, size_t size)
+{ indirect *end = block+size;
+  indirect *b = block;
+
+  for(; b < end; b++)
+  { if ( b->data )
+      PL_free(b->data);
+  }
+}
+
 void
 destroy_indirect_table(indirect_table *tab)
 { int i;
@@ -117,9 +128,15 @@ destroy_indirect_table(indirect_table *tab)
   indirect_array *arr = &tab->array;
 
   simpleMutexDelete(&tab->mutex);
-  for(i=MSB(MAX_INDIRECT_BLOCKS); i<32; i++)
+  clean_block(arr->preallocated, PREALLOCATED_INDIRECT_BLOCKS);
+  for(i=MSB(PREALLOCATED_INDIRECT_BLOCKS); i<MAX_INDIRECT_BLOCKS; i++)
   { if ( arr->blocks[i] )
-      PL_free(arr->blocks[i]);
+    { size_t bs = (size_t)1<<i;
+      indirect *block = arr->blocks[i]+bs;
+
+      clean_block(block, bs);
+      PL_free(block);
+    }
   }
 
   for(buckets = tab->table; buckets; buckets = prev)

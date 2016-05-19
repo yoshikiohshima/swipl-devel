@@ -35,7 +35,8 @@
 #ifndef _PL_INDIRECT_H
 #define _PL_INDIRECT_H
 
-#define MAX_INDIRECT_BLOCKS 32
+#define MAX_INDIRECT_BLOCKS		32
+#define PREALLOCATED_INDIRECT_BLOCKS	32
 
 		 /*******************************
 		 *	      TYPES		*
@@ -51,7 +52,7 @@ typedef struct indirect
 
 typedef struct indirect_array		/* dynamic array of indirects */
 { indirect *blocks[MAX_INDIRECT_BLOCKS];
-  indirect  preallocated[32];
+  indirect  preallocated[PREALLOCATED_INDIRECT_BLOCKS];
 } indirect_array;
 
 typedef struct indirect_buckets		/* The actual buckets */
