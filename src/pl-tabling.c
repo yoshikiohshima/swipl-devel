@@ -884,8 +884,8 @@ PRED_IMPL("$tbl_table_complete_all", 0, tbl_table_complete_all, 0)
 
 /** '$tbl_table_discard_all'
  *
- * Discard all newly created tables.  This is used if an exception
- * happens during tabling.
+ * Discard all newly created tables and the worklists. This is used if
+ * an exception happens during tabling.
  */
 
 static
@@ -900,8 +900,12 @@ PRED_IMPL("$tbl_table_discard_all", 0, tbl_table_discard_all, 0)
     trie *trie = wl->table;
 
     prune_node(LD->tabling.variant_table, trie->data.variant);
+    if ( !wl->in_global_wl )
+      free_worklist(wl);
   }
   reset_newly_created_worklists(LD);
+  reset_global_worklist(LD);
+  LD->tabling.has_scheduling_component = FALSE;
 
   return TRUE;
 }
