@@ -1248,7 +1248,10 @@ rename(Term, Term).
 
 rename_preds([], [], _).
 rename_preds([H0|T0], [H|T], M) :-
-	rename(H0, H, M),
+	(   rename(H0, H, M)
+	->  true
+	;   H = H0
+	),
 	rename_preds(T0, T, M).
 
 rename(Var, Var, _) :-
