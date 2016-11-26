@@ -49,7 +49,7 @@
 	    lazy_message_queue/4,		% +Queue, +Options, -List, -Tail
 	    lazy_engine_next/4,			% +Engine, +N, -List, -Tail
 
-	    lazy_list_interator/4		% +Iterator, -Next, :GetNext,
+	    lazy_list_iterator/4		% +Iterator, -Next, :GetNext,
 						% :TestEnd
 	  ]).
 :- use_module(library(option)).
@@ -91,7 +91,7 @@ follows the pattern below:
 ```
 	setup_call_cleanup(
 	    <open resource>(R),
-	    (  lazy_list(<interator>(R), List),
+	    (  lazy_list(<iterator>(R), List),
 	       process_list(List)
 	    ),
 	    <close resource>(R))
@@ -193,7 +193,7 @@ lazy_list_length(List, L0, L) :- !,
 		 *******************************/
 
 lazy_list_expand_handler(
-    lazy_list_interator(Handler, Next, Get1, TestEnd),
+    lazy_list_iterator(Handler, Next, Get1, TestEnd),
     Clauses) :-
 	negate(TestEnd, NotTestEnd),
 	extend_goal(Handler, [N, List, Tail], Head),
@@ -243,20 +243,20 @@ general_goal(G, GG) :- !,
 :- multifile
 	system:term_expansion/2.
 
-system:term_expansion((:- lazy_list_interator(It, One, GetNext, TestEnd)),
+system:term_expansion((:- lazy_list_iterator(It, One, GetNext, TestEnd)),
 		      Expanded) :-
 	lazy_list_expand_handler(
-	    lazy_list_interator(It, One, GetNext, TestEnd),
+	    lazy_list_iterator(It, One, GetNext, TestEnd),
 	    Expanded).
 
-%%	lazy_list_interator(+Iterator, -Next, :GetNext, :TestEnd)
+%%	lazy_list_iterator(+Iterator, -Next, :GetNext, :TestEnd)
 %
-%	Directive to create a lazy list  interator from a predicate that
+%	Directive to create a lazy list  iterator from a predicate that
 %	gets a single next value.
 
-lazy_list_interator(Iterator, Next, GetNext, TestEnd) :-
+lazy_list_iterator(Iterator, Next, GetNext, TestEnd) :-
 	throw(error(context_error(nodirective,
-				  lazy_list_interator(Iterator, Next,
+				  lazy_list_iterator(Iterator, Next,
 						      GetNext, TestEnd)),
 		    _)).
 
@@ -270,7 +270,7 @@ lazy_list_interator(Iterator, Next, GetNext, TestEnd) :-
 %	low-level primitives and supports fetching   the location in the
 %	stream.
 
-:- lazy_list_interator(lazy_get_codes(Stream), Code,
+:- lazy_list_iterator(lazy_get_codes(Stream), Code,
 		       get_code(Stream, Code),
 		       Code == -1).
 
@@ -286,7 +286,7 @@ lazy_read_terms(Stream, Options, List, Tail) :-
 	select_option(chunk(N), Options, ReadOptions, 10),
 	lazy_read_terms_(Stream, ReadOptions, N, List, Tail).
 
-:- lazy_list_interator(lazy_read_terms_(Stream, Options), Term,
+:- lazy_list_iterator(lazy_read_terms_(Stream, Options), Term,
 		       read_term(Stream, Term, Options),
 		       Term == end_of_file).
 
@@ -316,16 +316,16 @@ lazy_read_lines(codes, Stream, ChunkSize, List, Tail) :-
 lazy_read_lines(chars, Stream, ChunkSize, List, Tail) :-
 	lazy_read_chars_lines(Stream, ChunkSize, List, Tail).
 
-:- lazy_list_interator(lazy_read_string_lines(Stream), Line,
+:- lazy_list_iterator(lazy_read_string_lines(Stream), Line,
 		       read_line_to_string(Stream, Line),
 		       Line == end_of_file).
-:- lazy_list_interator(lazy_read_codes_lines(Stream), Line,
+:- lazy_list_iterator(lazy_read_codes_lines(Stream), Line,
 		       read_line_to_codes(Stream, Line),
 		       Line == end_of_file).
-:- lazy_list_interator(lazy_read_chars_lines(Stream), Line,
+:- lazy_list_iterator(lazy_read_chars_lines(Stream), Line,
 		       read_line_to_chars(Stream, Line),
 		       Line == end_of_file).
-:- lazy_list_interator(lazy_read_atom_lines(Stream), Line,
+:- lazy_list_iterator(lazy_read_atom_lines(Stream), Line,
 		       read_line_to_atom(Stream, Line),
 		       Line == -1).
 
@@ -364,7 +364,7 @@ lazy_message_queue(Queue, Options, List, Tail) :-
 	select_option(chunk(ChunkSize), Options, QueueOptions, 1),
 	lazy_message_queue_(Queue, QueueOptions, ChunkSize, List, Tail).
 
-:- lazy_list_interator(lazy_message_queue_(Queue, Options), Message,
+:- lazy_list_iterator(lazy_message_queue_(Queue, Options), Message,
 		       thread_get_message(Queue, Message, Options),
 		       fail).
 
@@ -374,7 +374,7 @@ lazy_message_queue(Queue, Options, List, Tail) :-
 %	Lazy list iterator for  engines.  This   is  used  to  implement
 %	lazy_findall/3,4.
 
-:- lazy_list_interator(lazy_engine_next(Engine), Answer,
+:- lazy_list_iterator(lazy_engine_next(Engine), Answer,
 		       engine_next(Engine, Answer),
 		       fail).
 
