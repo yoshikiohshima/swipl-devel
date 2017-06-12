@@ -180,6 +180,21 @@ get_mode_list([H|TM], TP) :-
 get_mode_list([H|TM], [H|TP]) :-
     get_mode_list(TM, TP).
 
+%!  separate_args(+Modes, -Args, -NoModesArgs, -ModeArgs) is det.
+%
+%   Split the arguments in those that  need   to  be part of the variant
+%   identity (NoModesArgs) and those that are aggregated (ModeArgs).
+%
+%   @arg Args seems a copy of ModeArgs, why?
+
+separate_args([], [], [], []).
+separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
+    var(HM),
+    !,
+    separate_args(TM, TA, TNA, TMA).
+separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
+    separate_args(TM, TA, TNA, TMA).
+
 
 %!  completion
 %
@@ -312,13 +327,6 @@ wrappers(TableSpec) -->
     { type_error(table_desclaration, TableSpec)
     }.
 
-separate_args([], [], [], []).
-separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
-    var(HM),
-    !,
-    separate_args(TM, TA, TNA, TMA).
-separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
-    separate_args(TM, TA, TNA, TMA).
 
 %!  prolog:rename_predicate(:Head0, :Head) is semidet.
 %
