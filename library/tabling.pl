@@ -131,12 +131,12 @@ delim(Wrapper, WrapperNoModes, Worker, WorkList) :-
         '$tbl_wkl_add_suspension'(SourceWL, Dependency)
     ).
 
-add_answer(WorkList, M:Wrapper, M:Wrapper) :-
+add_answer(WorkList, Wrapper, Wrapper) :-
      !,
-    '$tbl_wkl_add_answer'(WorkList, M:Wrapper).
-add_answer(WorkList, M:Wrapper, M:WrapperNoModes) :-
-    get_wrapper_no_mode_args(M:Wrapper, _, ModeArgs),
-    '$tbl_wkl_mode_add_answer'(WorkList, M:WrapperNoModes, ModeArgs, M:Wrapper).
+    '$tbl_wkl_add_answer'(WorkList, Wrapper).
+add_answer(WorkList, Wrapper, WrapperNoModes) :-
+    get_wrapper_no_mode_args(Wrapper, _, ModeArgs),
+    '$tbl_wkl_mode_add_answer'(WorkList, WrapperNoModes, ModeArgs, Wrapper).
 
 %!  update(+Wrapper, +A1, +A2, -A3) is det.
 %
