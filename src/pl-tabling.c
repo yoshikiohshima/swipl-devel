@@ -679,8 +679,9 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
 
 /** '$tbl_wkl_mode_add_answer'(+Worklist, +Term, +Args) is semidet.
  *
- * Add an answer Args for moded arguments to the worklist's trie  and the worklist answer cluster
- * using trie_insert_new/3 and mode directed tabling
+ * Add an answer Args for moded arguments to the worklist's trie
+ * and the worklist answer cluster using trie_insert_new/3 and mode
+ * directed tabling
  */
 
 static
@@ -709,26 +710,20 @@ PRED_IMPL("$tbl_wkl_mode_add_answer", 4, tbl_wkl_mode_add_answer, 0)
     update= PL_new_term_ref();
     update_func= PL_new_functor(PL_new_atom("update"),4);
 
-  trie *trie;
-
-  trie=wl->table;
-
     if ( (rc=trie_lookup(wl->table, &node, kp, TRUE PASS_LD)) == TRUE )
     { if ( node->value )
-      {
-        if (node->value==ATOM_nil)
-		return PL_permission_error("modify", "trie_key", A2);
-        retrieve_term(node->value,old_val);
-        if (!PL_cons_functor(update,update_func,wrapper,old_val,val,new_val))
+      { if ( node->value == ATOM_nil )
+	  return PL_permission_error("modify", "trie_key", A2);
+	retrieve_term(node->value,old_val);
+	if ( !PL_cons_functor(update, update_func, wrapper,
+			      old_val, val, new_val) )
           return FALSE;
         module_name=PL_new_atom("tabling");
         PL_call(update,PL_new_module(module_name));
         release_key(node->value);
         node->value = acquire_key(new_val);
-      }
-     else
-      {
-        node->value = acquire_key(val);
+      } else
+      { node->value = acquire_key(val);
       }
       return wkl_add_answer(wl, node PASS_LD);
     }
@@ -738,6 +733,8 @@ PRED_IMPL("$tbl_wkl_mode_add_answer", 4, tbl_wkl_mode_add_answer, 0)
 
   return FALSE;
 }
+
+
 /** '$tbl_wkl_add_suspension'(+Worklist, +Suspension) is det.
  *
  * Add a suspension to the worklist.
