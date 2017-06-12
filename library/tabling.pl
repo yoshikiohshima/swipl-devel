@@ -43,7 +43,7 @@
             op(1150, fx, table)
           ]).
 :- use_module(library(error)).
-:- set_prolog_flag(generate_debug_info, false).
+%:- set_prolog_flag(generate_debug_info, false).
 
 :- meta_predicate
     start_tabling(+, 0),
@@ -99,11 +99,8 @@ start_tabling(Wrapper, Worker) :-
         )
     ).
 
-get_wrapper_no_mode_args(M:Wrapper, M:WrapperNoModes, ModeArgs):-
-    M:'$table_modes'(Wrapper,_),
-    !,
-    extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes).
-get_wrapper_no_mode_args(Wrapper, Wrapper, []).
+get_wrapper_no_mode_args(M:Wrapper, M:WrapperNoModes, ModeArgs) :-
+    M:'$table_mode'(Wrapper, WrapperNoModes, ModeArgs).
 
 run_follower(fresh, Wrapper, WrapperNoModes, Worker, Trie) :-
     !,
@@ -179,22 +176,6 @@ get_mode_list([H|TM], TP) :-
 
 get_mode_list([H|TM], [H|TP]) :-
     get_mode_list(TM, TP).
-
-%! separate_args(+Modes, +ModeSpec, -NoModesArgs, -ModeArgs) is det.
-%
-%   Split the arguments in those that  need   to  be part of the variant
-%   identity (NoModesArgs) and those that are aggregated (ModeArgs).
-%
-%   @arg Args seems a copy of ModeArgs, why?
-
-separate_args([], [], [], []).
-separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
-    var(HM),
-    !,
-    separate_args(TM, TA, TNA, TMA).
-separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
-    separate_args(TM, TA, TNA, TMA).
-
 
 %!  completion
 %
@@ -302,6 +283,7 @@ wrappers(Name/Arity) -->
       prolog_load_context(module, Module)
     },
     [ '$tabled'(Head),
+      '$table_mode'(Head, Head, []),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
       )
@@ -315,10 +297,12 @@ wrappers(ModeDirectedSpec) -->
       atom_concat(Name, ' tabled', WrapName),
       Head =.. [Name|Args],
       WrappedHead =.. [WrapName|Args],
+      extract_modes(ModeDirectedSpec, Head, Variant, Moded),
       prolog_load_context(module, Module)
     },
     [ '$tabled'(Head),
-      '$table_modes'(Head, Modes),
+      '$table_modes'(Head, Modes),      % should become obsolete
+      '$table_mode'(Head, Variant, Moded),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
       )
@@ -326,6 +310,38 @@ wrappers(ModeDirectedSpec) -->
 wrappers(TableSpec) -->
     { type_error(table_desclaration, TableSpec)
     }.
+
+
+%!  extract_modes(+Mode, +Head, -Variant, -ModedAnswer) is det.
+%
+%   Split Head into  its  variant  and   term  that  matches  the  moded
+%   arguments.
+
+extract_modes(Mode, Head, Variant, ModedAnswer) :-
+    compound_name_arguments(Mode, Name, ModeArgs),
+    compound_name_arguments(Head, Name, HeadArgs),
+    separate_args(ModeArgs, HeadArgs, VariantArgs, ModedAnswer),
+    Variant =.. [Name|VariantArgs].
+%   compound_name_arguments(Moded, Name, ModeArgs).
+
+% ! separate_args(+Modes, +HeadArgs, -NoModesArgs, -ModeArgs) is det.
+%
+%   Split the arguments in those that  need   to  be part of the variant
+%   identity (NoModesArgs) and those that are aggregated (ModeArgs).
+%
+%   @arg Args seems a copy of ModeArgs, why?
+
+separate_args([], [], [], []).
+separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
+    var(HM),
+    !,
+    separate_args(TM, TA, TNA, TMA).
+separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
+    separate_args(TM, TA, TNA, TMA).
+
+
+
+
 
 
 %!  prolog:rename_predicate(:Head0, :Head) is semidet.
@@ -351,8 +367,8 @@ rename_term(Name, WrapName) :-
 
 system:term_expansion((:- table(Preds)),
                       [ (:- multifile('$tabled'/1)),
-                        (:- dynamic('$table_modes'/2)),
-                        (:- multifile('$table_modes'/2))
+                        (:- multifile('$table_modes'/2)),
+                        (:- multifile('$table_mode'/3))
                       | Clauses
                       ]) :-
     phrase(wrappers(Preds), Clauses).
