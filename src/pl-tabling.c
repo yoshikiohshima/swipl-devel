@@ -677,11 +677,15 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
   return FALSE;
 }
 
-/** '$tbl_wkl_mode_add_answer'(+Worklist, +Term, +Args) is semidet.
+/** '$tbl_wkl_mode_add_answer'(+Worklist, +TermNoModes, +Args, +Term) is semidet.
  *
- * Add an answer Args for moded arguments to the worklist's trie
- * and the worklist answer cluster using trie_insert_new/3 and mode
- * directed tabling
+ * Add an answer Args for moded arguments to the worklist's trie and the
+ * worklist answer cluster using  trie_insert_new/3   and  mode directed
+ * tabling.
+ *
+ * @arg TermNoModes is the call variant without moded arguments
+ * @arg Args is a list of moded arguments (represented how?)
+ * @arg Term is the full call variant, including moded arguments
  */
 
 static
