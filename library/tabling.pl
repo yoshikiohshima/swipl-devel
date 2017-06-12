@@ -89,7 +89,8 @@ start_tabling(Wrapper, Worker) :-
     (   Status == complete
     ->  trie_gen(Trie, WrapperNoModes, ModeArgs)
     ;   (   '$tbl_scheduling_component'(false, true)
-        ->  catch(run_leader(Wrapper, WrapperNoModes, Worker, Trie), E, true),
+        ->  catch(run_leader(Wrapper, WrapperNoModes, Worker, Trie),
+                  E, true),
             (   var(E)
             ->  trie_gen(Trie, WrapperNoModes, ModeArgs)
             ;   '$tbl_table_discard_all',
@@ -175,7 +176,7 @@ completion_step(SourceTable) :-
     ;   true
     ).
 
-dep([], Answer,                                 % TBD: Unique symbol for [].
+dep([], Answer,				% TBD: Unique symbol for [].
     dependency(Answer, Continuation, call_info(Wrapper, TargetTable)),
     Wrapper, Wrapper, Continuation, TargetTable) :- !.
 dep(ModeArgs, Answer,
