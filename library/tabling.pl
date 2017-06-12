@@ -284,56 +284,80 @@ wrappers(ModeDirectedSpec) -->
     { callable(ModeDirectedSpec),
       !,
       functor(ModeDirectedSpec, Name, Arity),
-      ModeDirectedSpec =.. [Name|Modes],
+      ModeDirectedSpec =.. [Name|ModeSpec],
       functor(Head, Name, Arity),
       atom_concat(Name, ' tabled', WrapName),
       Head =.. [Name|Args],
       WrappedHead =.. [WrapName|Args],
-      extract_modes(ModeDirectedSpec, Head, Variant, Moded),
+      extract_modes(ModeDirectedSpec, Head, Variant, Modes, Moded),
+      updater_clauses(Modes, Head, UpdateClauses),
       prolog_load_context(module, Module)
     },
     [ '$tabled'(Head),
-      '$table_modes'(Head, Modes),      % should become obsolete
+      '$table_modes'(Head, ModeSpec),      % should become obsolete
       '$table_mode'(Head, Variant, Moded),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
       )
+    | UpdateClauses
     ].
 wrappers(TableSpec) -->
     { type_error(table_desclaration, TableSpec)
     }.
 
 
-%!  extract_modes(+Mode, +Head, -Variant, -ModedAnswer) is det.
+%!  extract_modes(+ModeSpec, +Head, -Variant, -Modes, -ModedAnswer) is det.
 %
 %   Split Head into  its  variant  and   term  that  matches  the  moded
 %   arguments.
 
-extract_modes(Mode, Head, Variant, ModedAnswer) :-
-    compound_name_arguments(Mode, Name, ModeArgs),
+extract_modes(ModeSpec, Head, Variant, Modes, ModedAnswer) :-
+    compound_name_arguments(ModeSpec, Name, ModeSpecArgs),
     compound_name_arguments(Head, Name, HeadArgs),
-    separate_args(ModeArgs, HeadArgs, VariantArgs, ModedAnswer),
+    separate_args(ModeSpecArgs, HeadArgs, VariantArgs, Modes, ModedAnswer),
     Variant =.. [Name|VariantArgs].
 %   compound_name_arguments(Moded, Name, ModeArgs).
 
-% ! separate_args(+Modes, +HeadArgs, -NoModesArgs, -ModeArgs) is det.
+%!  separate_args(+ModeSpecArgs, +HeadArgs,
+%!		  -NoModesArgs, -Modes, -ModeArgs) is det.
 %
 %   Split the arguments in those that  need   to  be part of the variant
 %   identity (NoModesArgs) and those that are aggregated (ModeArgs).
 %
 %   @arg Args seems a copy of ModeArgs, why?
 
-separate_args([], [], [], []).
-separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
+separate_args([], [], [], [], []).
+separate_args([HM|TM], [H|TA], [H|TNA], Modes, TMA):-
     var(HM),
     !,
-    separate_args(TM, TA, TNA, TMA).
-separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
-    separate_args(TM, TA, TNA, TMA).
+    separate_args(TM, TA, TNA, Modes, TMA).
+separate_args([M|TM], [H|TA], TNA, [M|Modes], [H|TMA]):-
+    separate_args(TM, TA, TNA, Modes, TMA).
 
+%!  updater_clauses(+Modes, +Head, -Clauses)
+%
+%   Generates a clause to update the aggregated state.  Modes is
+%   a list of predicate names we apply to the state.
 
+updater_clauses([], _, []) :- !.
+updater_clauses(Modes, Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :-
+    length(Modes, Len),
+    functor(S0, s, Len),
+    functor(S1, s, Len),
+    functor(S2, s, Len),
+    S0 =.. [_|Args0],
+    S1 =.. [_|Args1],
+    S2 =.. [_|Args2],
+    update_body(Modes, Args0, Args1, Args2, true, Body).
 
+update_body([], _, _, _, Body, Body).
+update_body([P|TM], [A0|Args0], [A1|Args1], [A2|Args2], Body0, Body) :-
+    Goal =.. [P,A0,A1,A2],
+    mkconj(Body0, Goal, Body1),
+    update_body(TM, Args0, Args1, Args2, Body1, Body).
 
+mkconj(true, G,  G) :- !.
+mkconj(G1,   G2, (G1,G2)).
 
 
 %!  prolog:rename_predicate(:Head0, :Head) is semidet.
@@ -360,7 +384,8 @@ rename_term(Name, WrapName) :-
 system:term_expansion((:- table(Preds)),
                       [ (:- multifile('$tabled'/1)),
                         (:- multifile('$table_modes'/2)),
-                        (:- multifile('$table_mode'/3))
+                        (:- multifile('$table_mode'/3)),
+                        (:- multifile('$table_update'/4))
                       | Clauses
                       ]) :-
     phrase(wrappers(Preds), Clauses).
