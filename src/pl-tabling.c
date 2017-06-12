@@ -664,9 +664,12 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
  * tabling.
  *
  * @arg TermNoModes is the call variant without moded arguments
- * @arg Args is a list of moded arguments (represented how?)
- * @arg Term is the full call variant, including moded arguments.
- *      This is used to find the aggregation predicates.
+ * @arg Args is a term holding the moded arguments.  If there is
+ * only one moded argument, this is the value.  Otherwise it is a
+ * term s(V1,V2,...).  See extract_modes/5.
+ * @arg Term is the full tabled goal, including moded
+ * arguments. This is is passed to update/4 to find the correct
+ * update clause.
  */
 
 static
