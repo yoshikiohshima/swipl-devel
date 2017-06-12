@@ -135,7 +135,7 @@ add_answer(WorkList, M:Wrapper, M:Wrapper) :-
      !,
     '$tbl_wkl_add_answer'(WorkList, M:Wrapper).
 add_answer(WorkList, M:Wrapper, M:WrapperNoModes) :-
-    extract_mode_args(M:Wrapper, ModeArgs, _WrapperNoModes),
+    get_wrapper_no_mode_args(M:Wrapper, _, ModeArgs),
     '$tbl_wkl_mode_add_answer'(WorkList, M:WrapperNoModes, ModeArgs, M:Wrapper).
 
 %!  update(+Wrapper, +A1, +A2, -A3) is det.
@@ -154,14 +154,6 @@ update(M:Wrapper, A1, A2, A3) :-
 
 join(M,Pred,E1,E2,E3) :-
     call(M:Pred,E1,E2,E3).
-
-%!  extract_mode_args(+TableDecl, -ModeArgs, -VariantTerm) is det.
-
-extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes) :-
-    get_modes(M:Wrapper, Modes),
-    Wrapper =.. [P|Args],
-    separate_args(Modes, Args, NoModesArgs, ModeArgs),
-    WrapperNoModes =.. [P|NoModesArgs].
 
 get_modes(M:Wrapper, Modes) :-
     functor(Wrapper, Name, Arity),
