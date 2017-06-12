@@ -333,9 +333,9 @@ rename_term(Name, WrapName) :-
 
 
 system:term_expansion((:- table(Preds)),
-                      [ (:- discontiguous('$tabled'/1)),
+                      [ (:- multifile('$tabled'/1)),
                         (:- dynamic('$table_modes'/2)),
-                        (:- discontiguous('$table_modes'/2))
+                        (:- multifile('$table_modes'/2))
                       | Clauses
                       ]) :-
     phrase(wrappers(Preds), Clauses).
