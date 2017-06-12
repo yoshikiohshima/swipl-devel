@@ -49,10 +49,6 @@
     start_tabling(+, 0),
     current_table(:, -),
     abolish_table_subgoals(:).
-%    get_wrapper_no_mode_args(:,:).
-%    add_answer(+,0,0).
-  %  extract_mode_args(+,:,-),
-  %  get_modes(:,-).
 
 /** <module> Tabled execution (SLG WAM)
 
