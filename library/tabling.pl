@@ -100,9 +100,9 @@ start_tabling(Wrapper,Worker) :-
     ).
 
 get_wrapper_no_mode_args(M:Wrapper,M:WrapperNoModes,ModeArgs):-
-    M:'$table_modes'(Wrapper,_),!,
+    M:'$table_modes'(Wrapper,_),
+    !,
     extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes).
-
 get_wrapper_no_mode_args(Wrapper,Wrapper,[]).
 
 run_follower(fresh, Wrapper, WrapperNoModes, Worker, Trie) :-
@@ -127,52 +127,63 @@ activate(Wrapper, WrapperNoModes, Worker, Trie, WorkList) :-
 delim(Wrapper, WrapperNoModes, Worker, WorkList) :-
     reset(Worker,SourceCall,Continuation),
     (   Continuation == 0
-    ->  add_answer(WorkList,Wrapper,WrapperNoModes)
-
+    ->  add_answer(WorkList, Wrapper, WrapperNoModes)
     ;   SourceCall = call_info(SrcWrapper, SourceWL),
         TargetCall = call_info(Wrapper,    WorkList),
         Dependency = dependency(SrcWrapper,Continuation,TargetCall),
         '$tbl_wkl_add_suspension'(SourceWL, Dependency)
     ).
 
-add_answer(WorkList, M:Wrapper,M:Wrapper):-
+add_answer(WorkList, M:Wrapper, M:Wrapper) :-
      !,
-%    no mode directed tabling
     '$tbl_wkl_add_answer'(WorkList, M:Wrapper).
-
-add_answer(WorkList, M:Wrapper, M:WrapperNoModes):-
-% mode directed tabling
+add_answer(WorkList, M:Wrapper, M:WrapperNoModes) :-
     extract_mode_args(M:Wrapper, ModeArgs, _WrapperNoModes),
     '$tbl_wkl_mode_add_answer'(WorkList, M:WrapperNoModes,ModeArgs,M:Wrapper).
 
-extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes):-
-  get_modes(M:Wrapper, Modes),
-  Wrapper =.. [P|Args],
-  separate_args(Modes,Args,NoModesArgs,ModeArgs),
-  WrapperNoModes =.. [P|NoModesArgs].
+%!  update(+Wrapper, +A1, +A2, -A3) is det.
+%
+%   Update the aggregated value for  an   answer.  Wrapper is the tabled
+%   goal, A1 is the aggregated value so far, A2 is the new answer and A3
+%   should be unified with the new aggregated value.
 
-update(M:Wrapper,A1,A2,A3):-
-  get_modes(M:Wrapper, Modes),
-  get_mode_list(Modes,Preds),
-  maplist(join(M),Preds,A1,A2,A3).
+:- public
+    update/4.
 
-get_modes(M:Wrapper,Modes):-
-  functor(Wrapper,Name,Args),
-  functor(Head,Name,Args),
-  M:'$table_modes'(Head, Modes).
+update(M:Wrapper, A1, A2, A3) :-
+    get_modes(M:Wrapper, Modes),
+    get_mode_list(Modes, Preds),
+    maplist(join(M), Preds, A1, A2, A3).
 
-get_mode_list([],[]).
+join(M,Pred,E1,E2,E3) :-
+    call(M:Pred,E1,E2,E3).
 
-get_mode_list([H|TM],TP):-
-  var(H),!,
-  get_mode_list(TM,TP).
+%!  extract_mode_args(+TableDecl, -ModeArgs, -VariantTerm) is det.
 
-get_mode_list([H|TM],[H|TP]):-
-  get_mode_list(TM,TP).
+extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes) :-
+    get_modes(M:Wrapper, Modes),
+    Wrapper =.. [P|Args],
+    separate_args(Modes, Args, NoModesArgs, ModeArgs),
+    WrapperNoModes =.. [P|NoModesArgs].
+
+get_modes(M:Wrapper, Modes) :-
+    functor(Wrapper, Name, Args),
+    functor(Head, Name, Args),
+    M:'$table_modes'(Head, Modes).
+
+get_mode_list([], []).
+get_mode_list([H|TM], TP) :-
+    var(H),
+    !,
+    get_mode_list(TM, TP).
+
+get_mode_list([H|TM], [H|TP]) :-
+    get_mode_list(TM, TP).
 
 
-join(M,Pred,E1,E2,E3):-
-  M:call(Pred,E1,E2,E3).
+%!  completion
+%
+%   Wakeup suspended goals until no new answers are generated.
 
 completion :-
     '$tbl_pop_worklist'(WorkList),
@@ -184,16 +195,17 @@ completion :-
 
 completion_step(SourceTable) :-
     (   '$tbl_wkl_work'(SourceTable, Answer, ModeArgs, Dependency),
-        dep(Answer, ModeArgs,Dependency, Wrapper,Continuation,TargetTable),
-        get_wrapper_no_mode_args(Wrapper,WrapperNoModes,_ModeArgs),
-        delim(Wrapper,WrapperNoModes,Continuation,TargetTable),
+        dep(Answer, ModeArgs,Dependency, Wrapper, Continuation, TargetTable),
+        get_wrapper_no_mode_args(Wrapper, WrapperNoModes,_ModeArgs),
+        delim(Wrapper, WrapperNoModes, Continuation, TargetTable),
         fail
     ;   true
     ).
 
-dep(Answer,ModeArgs, dependency(Goal, Continuation, call_info(Wrapper, TargetTable)),
-    Wrapper, Continuation,TargetTable):-
-            get_wrapper_no_mode_args(Goal,Answer,ModeArgs).
+dep(Answer,ModeArgs,
+    dependency(Goal, Continuation, call_info(Wrapper, TargetTable)),
+    Wrapper, Continuation, TargetTable) :-
+    get_wrapper_no_mode_args(Goal,Answer,ModeArgs).
 
 
                  /*******************************
