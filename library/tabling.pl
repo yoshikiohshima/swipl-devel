@@ -148,26 +148,8 @@ add_answer(WorkList, M:Wrapper, M:WrapperNoModes) :-
     update/4.
 
 update(M:Wrapper, A1, A2, A3) :-
-    get_modes(M:Wrapper, Modes),
-    get_mode_list(Modes, Preds),
-    maplist(join(M), Preds, A1, A2, A3).
+    M:'$table_update'(Wrapper, A1, A2, A3).
 
-join(M,Pred,E1,E2,E3) :-
-    call(M:Pred,E1,E2,E3).
-
-get_modes(M:Wrapper, Modes) :-
-    functor(Wrapper, Name, Arity),
-    functor(Head, Name, Arity),
-    M:'$table_modes'(Head, Modes).
-
-get_mode_list([], []).
-get_mode_list([H|TM], TP) :-
-    var(H),
-    !,
-    get_mode_list(TM, TP).
-
-get_mode_list([H|TM], [H|TP]) :-
-    get_mode_list(TM, TP).
 
 %!  completion
 %
@@ -284,7 +266,6 @@ wrappers(ModeDirectedSpec) -->
     { callable(ModeDirectedSpec),
       !,
       functor(ModeDirectedSpec, Name, Arity),
-      ModeDirectedSpec =.. [Name|ModeSpec],
       functor(Head, Name, Arity),
       atom_concat(Name, ' tabled', WrapName),
       Head =.. [Name|Args],
@@ -294,7 +275,6 @@ wrappers(ModeDirectedSpec) -->
       prolog_load_context(module, Module)
     },
     [ '$tabled'(Head),
-      '$table_modes'(Head, ModeSpec),      % should become obsolete
       '$table_mode'(Head, Variant, Moded),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
@@ -310,13 +290,20 @@ wrappers(TableSpec) -->
 %
 %   Split Head into  its  variant  and   term  that  matches  the  moded
 %   arguments.
+%
+%   @arg ModedAnswer is a term that  captures   that  value of all moded
+%   arguments of an answer. If there  is   only  one,  this is the value
+%   itself. If there are multiple, this is a term s(A1,A2,...)
 
 extract_modes(ModeSpec, Head, Variant, Modes, ModedAnswer) :-
     compound_name_arguments(ModeSpec, Name, ModeSpecArgs),
     compound_name_arguments(Head, Name, HeadArgs),
-    separate_args(ModeSpecArgs, HeadArgs, VariantArgs, Modes, ModedAnswer),
-    Variant =.. [Name|VariantArgs].
-%   compound_name_arguments(Moded, Name, ModeArgs).
+    separate_args(ModeSpecArgs, HeadArgs, VariantArgs, Modes, ModedArgs),
+    Variant =.. [Name|VariantArgs],
+    (   ModedArgs = [ModedAnswer]
+    ->  true
+    ;   ModedAnswer =.. [s|ModedArgs]
+    ).
 
 %!  separate_args(+ModeSpecArgs, +HeadArgs,
 %!		  -NoModesArgs, -Modes, -ModeArgs) is det.
@@ -340,6 +327,8 @@ separate_args([M|TM], [H|TA], TNA, [M|Modes], [H|TMA]):-
 %   a list of predicate names we apply to the state.
 
 updater_clauses([], _, []) :- !.
+updater_clauses([P], Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :- !,
+    Body =.. [P,S0,S1,S2].
 updater_clauses(Modes, Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :-
     length(Modes, Len),
     functor(S0, s, Len),
@@ -383,7 +372,6 @@ rename_term(Name, WrapName) :-
 
 system:term_expansion((:- table(Preds)),
                       [ (:- multifile('$tabled'/1)),
-                        (:- multifile('$table_modes'/2)),
                         (:- multifile('$table_mode'/3)),
                         (:- multifile('$table_update'/4))
                       | Clauses
