@@ -167,8 +167,8 @@ extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes) :-
     WrapperNoModes =.. [P|NoModesArgs].
 
 get_modes(M:Wrapper, Modes) :-
-    functor(Wrapper, Name, Args),
-    functor(Head, Name, Args),
+    functor(Wrapper, Name, Arity),
+    functor(Head, Name, Arity),
     M:'$table_modes'(Head, Modes).
 
 get_mode_list([], []).
