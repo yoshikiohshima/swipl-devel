@@ -292,32 +292,33 @@ wrappers(Name/Arity) -->
       )
     ].
 wrappers(ModeDirectedSpec) -->
-    {
+    { callable(ModeDirectedSpec),
+      !,
       functor(ModeDirectedSpec, Name, Arity),
-      ModeDirectedSpec=..[Name|Modes],
+      ModeDirectedSpec =.. [Name|Modes],
       functor(Head, Name, Arity),
       atom_concat(Name, ' tabled', WrapName),
       Head =.. [Name|Args],
       WrappedHead =.. [WrapName|Args],
-%      separate_args(Modes,Args,NoModesArg,_ModeArgs),
-%      HeadNoModeArgs =..[Name|NoModesArg],
       prolog_load_context(module, Module)
     },
     [ '$tabled'(Head),
-      '$table_modes'(Head,Modes),
+      '$table_modes'(Head, Modes),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
       )
     ].
+wrappers(TableSpec) -->
+    { type_error(table_desclaration, TableSpec)
+    }.
 
-separate_args([],[],[],[]).
-
-separate_args([HM|TM],[H|TA],[H|TNA],TMA):-
-  var(HM),!,
-  separate_args(TM,TA,TNA,TMA).
-
-separate_args([_H|TM],[H|TA],TNA,[H|TMA]):-
-  separate_args(TM,TA,TNA,TMA).
+separate_args([], [], [], []).
+separate_args([HM|TM], [H|TA], [H|TNA], TMA):-
+    var(HM),
+    !,
+    separate_args(TM, TA, TNA, TMA).
+separate_args([_H|TM], [H|TA], TNA, [H|TMA]):-
+    separate_args(TM, TA, TNA, TMA).
 
 %!  prolog:rename_predicate(:Head0, :Head) is semidet.
 %
