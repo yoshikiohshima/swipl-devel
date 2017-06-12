@@ -123,20 +123,23 @@ activate(Wrapper, WrapperNoModes, Worker, Trie, WorkList) :-
 
 delim(Wrapper, WrapperNoModes, Worker, WorkList) :-
     reset(Worker, SourceCall, Continuation),
-    (   Continuation == 0
-    ->  add_answer(WorkList, Wrapper, WrapperNoModes)
-    ;   SourceCall = call_info(SrcWrapper, SourceWL),
-        TargetCall = call_info(Wrapper,    WorkList),
-        Dependency = dependency(SrcWrapper, Continuation, TargetCall),
-        '$tbl_wkl_add_suspension'(SourceWL, Dependency)
-    ).
+    add_answer_or_suspend(Continuation, Wrapper, WrapperNoModes,
+                          WorkList, SourceCall).
 
-add_answer(WorkList, Wrapper, Wrapper) :-
-     !,
+add_answer_or_suspend(0, Wrapper, Wrapper, WorkList, _) :-
+    !,
     '$tbl_wkl_add_answer'(WorkList, Wrapper).
-add_answer(WorkList, Wrapper, WrapperNoModes) :-
+add_answer_or_suspend(0, Wrapper, WrapperNoModes, WorkList, _) :-
+    !,
     get_wrapper_no_mode_args(Wrapper, _, ModeArgs),
-    '$tbl_wkl_mode_add_answer'(WorkList, WrapperNoModes, ModeArgs, Wrapper).
+    '$tbl_wkl_mode_add_answer'(WorkList, WrapperNoModes,
+                               ModeArgs, Wrapper).
+add_answer_or_suspend(Continuation, Wrapper, _WrapperNoModes, WorkList,
+                      call_info(SrcWrapper, SourceWL)) :-
+    '$tbl_wkl_add_suspension'(
+        SourceWL,
+        dependency(SrcWrapper, Continuation,
+                   call_info(Wrapper, WorkList))).
 
 %!  update(+Wrapper, +A1, +A2, -A3) is det.
 %
