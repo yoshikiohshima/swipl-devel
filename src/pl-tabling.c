@@ -35,28 +35,6 @@
 #include "pl-incl.h"
 #include "pl-tabling.h"
 #include "pl-copyterm.h"
-static  word
-acquire_key(word key)
-{
-  word ret;
-
-  ret= (word) PL_record(key);
-  return ret;
-}
-
-static  void
-release_key(word key)
-{
-  if (!(key==ATOM_nil))
-  PL_erase((record_t)key);
-}
-
-static  void
-retrieve_term(word key,term_t key_t)
-{
-  if (!(key==ATOM_nil))
-    PL_recorded((record_t)key,key_t);
-}
 
 #define record_t fastheap_term *
 #define PL_record(t)      term_to_fastheap(t PASS_LD)
@@ -685,7 +663,8 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
  *
  * @arg TermNoModes is the call variant without moded arguments
  * @arg Args is a list of moded arguments (represented how?)
- * @arg Term is the full call variant, including moded arguments
+ * @arg Term is the full call variant, including moded arguments.
+ *      This is used to find the aggregation predicates.
  */
 
 static
@@ -697,37 +676,30 @@ PRED_IMPL("$tbl_wkl_mode_add_answer", 4, tbl_wkl_mode_add_answer, 0)
   { Word kp;
     trie_node *node;
     int rc;
-    term_t val,old_val,new_val,update,key,wrapper;
-    atom_t module_name;
-    functor_t update_func;
 
     kp = valTermRef(A2);
-    key = PL_new_term_ref();
-    val= PL_new_term_ref();
-    wrapper =PL_new_term_ref();
-    PL_unify(A3,val);
-    PL_unify(A2,key);
-    PL_unify(A4,wrapper);
-
-    old_val= PL_new_term_ref();
-    new_val= PL_new_term_ref();
-    update= PL_new_term_ref();
-    update_func= PL_new_functor(PL_new_atom("update"),4);
 
     if ( (rc=trie_lookup(wl->table, &node, kp, TRUE PASS_LD)) == TRUE )
     { if ( node->value )
-      { if ( node->value == ATOM_nil )
+      { static predicate_t PRED_update4 = 0;
+	term_t av;
+
+	if ( !PRED_update4 )
+	  PRED_update4 = PL_predicate("update", 4, "tabling");
+
+	if ( node->value == ATOM_nil )
 	  return PL_permission_error("modify", "trie_key", A2);
-	retrieve_term(node->value,old_val);
-	if ( !PL_cons_functor(update, update_func, wrapper,
-			      old_val, val, new_val) )
-          return FALSE;
-        module_name=PL_new_atom("tabling");
-        PL_call(update,PL_new_module(module_name));
-        release_key(node->value);
-        node->value = acquire_key(new_val);
+
+	if ( !((av=PL_new_term_refs(4)) &&
+	       PL_put_term(av+0, A4) &&
+	       put_trie_value(av+1, node PASS_LD) &&
+	       PL_put_term(av+2, A3) &&
+	       PL_call_predicate(NULL, PL_Q_PASS_EXCEPTION, PRED_update4, av) &&
+	       set_trie_value(node, av+3 PASS_LD)) )
+	  return FALSE;
       } else
-      { node->value = acquire_key(val);
+      { if ( !set_trie_value(node, A3 PASS_LD) )
+	  return FALSE;
       }
       return wkl_add_answer(wl, node PASS_LD);
     }
@@ -866,16 +838,19 @@ PRED_IMPL("$tbl_wkl_work", 4, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   { trie_node *an = get_answer_from_cluster(state->acp, state->acp_index-1);
 
     if ( state->scp_index > 0 )
-    { record_t sr       = get_suspension_from_cluster(state->scp, state->scp_index-1);
-      term_t answer     = PL_new_term_ref();
-      term_t suspension = PL_new_term_ref();
-      term_t value      = PL_new_term_ref();
-                retrieve_term(an->value,value);
+    { record_t sr       = get_suspension_from_cluster(state->scp,
+						      state->scp_index-1);
+      term_t av         = PL_new_term_refs(3);
+      term_t answer     = av+0;
+      term_t suspension = av+1;
+      term_t value      = av+2;
+
       if ( !( put_trie_term(an, answer PASS_LD) &&
+	      put_trie_value(value, an PASS_LD) &&
 	      PL_recorded(sr, suspension) &&
 	      PL_unify_output(A2, answer) &&
 	      PL_unify_output(A4, suspension) &&
-        PL_unify_output(A3,value)
+	      PL_unify_output(A3, value)
          ) )
       { freeForeignState(state, sizeof(*state));
 	return FALSE;			/* resource error */
