@@ -83,15 +83,15 @@ table(PIList) :-
 %   @compat This interface may change or disappear without notice
 %           from future versions.
 
-start_tabling(Wrapper,Worker) :-
-    get_wrapper_no_mode_args(Wrapper,WrapperNoModes,ModeArgs),
+start_tabling(Wrapper, Worker) :-
+    get_wrapper_no_mode_args(Wrapper, WrapperNoModes, ModeArgs),
     '$tbl_variant_table'(WrapperNoModes, Trie, Status),
     (   Status == complete
     ->  trie_gen(Trie, WrapperNoModes, ModeArgs)
     ;   (   '$tbl_scheduling_component'(false, true)
         ->  catch(run_leader(Wrapper, WrapperNoModes, Worker, Trie), E, true),
             (   var(E)
-            ->   trie_gen(Trie, WrapperNoModes, ModeArgs)
+            ->  trie_gen(Trie, WrapperNoModes, ModeArgs)
             ;   '$tbl_table_discard_all',
                 throw(E)
             )
@@ -99,11 +99,11 @@ start_tabling(Wrapper,Worker) :-
         )
     ).
 
-get_wrapper_no_mode_args(M:Wrapper,M:WrapperNoModes,ModeArgs):-
+get_wrapper_no_mode_args(M:Wrapper, M:WrapperNoModes, ModeArgs):-
     M:'$table_modes'(Wrapper,_),
     !,
     extract_mode_args(M:Wrapper, ModeArgs, WrapperNoModes).
-get_wrapper_no_mode_args(Wrapper,Wrapper,[]).
+get_wrapper_no_mode_args(Wrapper, Wrapper, []).
 
 run_follower(fresh, Wrapper, WrapperNoModes, Worker, Trie) :-
     !,
@@ -125,12 +125,12 @@ activate(Wrapper, WrapperNoModes, Worker, Trie, WorkList) :-
     ).
 
 delim(Wrapper, WrapperNoModes, Worker, WorkList) :-
-    reset(Worker,SourceCall,Continuation),
+    reset(Worker, SourceCall, Continuation),
     (   Continuation == 0
     ->  add_answer(WorkList, Wrapper, WrapperNoModes)
     ;   SourceCall = call_info(SrcWrapper, SourceWL),
         TargetCall = call_info(Wrapper,    WorkList),
-        Dependency = dependency(SrcWrapper,Continuation,TargetCall),
+        Dependency = dependency(SrcWrapper, Continuation, TargetCall),
         '$tbl_wkl_add_suspension'(SourceWL, Dependency)
     ).
 
@@ -139,7 +139,7 @@ add_answer(WorkList, M:Wrapper, M:Wrapper) :-
     '$tbl_wkl_add_answer'(WorkList, M:Wrapper).
 add_answer(WorkList, M:Wrapper, M:WrapperNoModes) :-
     extract_mode_args(M:Wrapper, ModeArgs, _WrapperNoModes),
-    '$tbl_wkl_mode_add_answer'(WorkList, M:WrapperNoModes,ModeArgs,M:Wrapper).
+    '$tbl_wkl_mode_add_answer'(WorkList, M:WrapperNoModes, ModeArgs, M:Wrapper).
 
 %!  update(+Wrapper, +A1, +A2, -A3) is det.
 %
@@ -180,7 +180,7 @@ get_mode_list([H|TM], TP) :-
 get_mode_list([H|TM], [H|TP]) :-
     get_mode_list(TM, TP).
 
-%!  separate_args(+Modes, -Args, -NoModesArgs, -ModeArgs) is det.
+%! separate_args(+Modes, +ModeSpec, -NoModesArgs, -ModeArgs) is det.
 %
 %   Split the arguments in those that  need   to  be part of the variant
 %   identity (NoModesArgs) and those that are aggregated (ModeArgs).
@@ -210,17 +210,17 @@ completion :-
 
 completion_step(SourceTable) :-
     (   '$tbl_wkl_work'(SourceTable, Answer, ModeArgs, Dependency),
-        dep(Answer, ModeArgs,Dependency, Wrapper, Continuation, TargetTable),
-        get_wrapper_no_mode_args(Wrapper, WrapperNoModes,_ModeArgs),
+        dep(Answer, ModeArgs, Dependency, Wrapper, Continuation, TargetTable),
+        get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _ModeArgs),
         delim(Wrapper, WrapperNoModes, Continuation, TargetTable),
         fail
     ;   true
     ).
 
-dep(Answer,ModeArgs,
+dep(Answer, ModeArgs,
     dependency(Goal, Continuation, call_info(Wrapper, TargetTable)),
     Wrapper, Continuation, TargetTable) :-
-    get_wrapper_no_mode_args(Goal,Answer,ModeArgs).
+    get_wrapper_no_mode_args(Goal, Answer, ModeArgs).
 
 
                  /*******************************
