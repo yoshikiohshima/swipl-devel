@@ -3,7 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2016, VU University Amsterdam
+    Copyright (c)  2017, VU University Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -223,21 +223,10 @@ get_variant_table(term_t t, int create ARG_LD)
 
   if ( (rc=trie_lookup(variants, &node, v, create PASS_LD)) == TRUE )
   { if ( node->value )
-    {
-      atom_t trie_s[1];
-      term_t val;
-      val = PL_new_term_ref();
-      retrieve_term(node->value,val);
-      PL_get_atom(val,trie_s);
-      return symbol_trie(trie_s[0]);
+    { return symbol_trie(node->value);
     } else if ( create )
     { trie *vt = trie_create();
-      atom_t trie_sym = trie_symbol(vt);
-      term_t trie_term= PL_new_term_ref();
-      PL_put_atom(trie_term,trie_sym);
-      node->value = acquire_key(trie_term);
-      vt->data.variant = node;
-      vt->alloc_pool = &LD->tabling.node_pool;
+      node->value = trie_symbol(vt);
       return vt;
     } else
       return NULL;
