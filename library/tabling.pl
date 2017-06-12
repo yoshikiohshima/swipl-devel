@@ -165,17 +165,21 @@ completion :-
 
 completion_step(SourceTable) :-
     (   '$tbl_wkl_work'(SourceTable, Answer, ModeArgs, Dependency),
-        dep(Answer, ModeArgs, Dependency, Wrapper, Continuation, TargetTable),
-        get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _ModeArgs),
+        dep(ModeArgs, Answer, Dependency, Wrapper, WrapperNoModes,
+            Continuation, TargetTable),
         delim(Wrapper, WrapperNoModes, Continuation, TargetTable),
         fail
     ;   true
     ).
 
-dep(Answer, ModeArgs,
+dep([], Answer,                                 % TBD: Unique symbol for [].
+    dependency(Answer, Continuation, call_info(Wrapper, TargetTable)),
+    Wrapper, Wrapper, Continuation, TargetTable) :- !.
+dep(ModeArgs, Answer,
     dependency(Goal, Continuation, call_info(Wrapper, TargetTable)),
-    Wrapper, Continuation, TargetTable) :-
-    get_wrapper_no_mode_args(Goal, Answer, ModeArgs).
+    Wrapper, WrapperNoModes, Continuation, TargetTable) :-
+    get_wrapper_no_mode_args(Goal, Answer, ModeArgs),
+    get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _).
 
 
                  /*******************************
