@@ -702,6 +702,8 @@ PRED_IMPL("$tbl_wkl_mode_add_answer", 4, tbl_wkl_mode_add_answer, 0)
 	       PL_call_predicate(NULL, PL_Q_PASS_EXCEPTION, PRED_update4, av) &&
 	       set_trie_value(node, av+3 PASS_LD)) )
 	  return FALSE;
+
+	return TRUE;
       } else
       { if ( !set_trie_value(node, A3 PASS_LD) )
 	  return FALSE;
