@@ -323,11 +323,17 @@ extract_modes(ModeSpec, Head, Variant, Modes, ModedAnswer) :-
 
 separate_args([], [], [], [], []).
 separate_args([HM|TM], [H|TA], [H|TNA], Modes, TMA):-
-    var(HM),
+    indexed_mode(HM),
     !,
     separate_args(TM, TA, TNA, Modes, TMA).
 separate_args([M|TM], [H|TA], TNA, [M|Modes], [H|TMA]):-
     separate_args(TM, TA, TNA, Modes, TMA).
+
+indexed_mode(Mode) :-                           % XSB
+    var(Mode),
+    !.
+indexed_mode(index).                            % YAP
+indexed_mode(+).                                % B
 
 %!  updater_clauses(+Modes, +Head, -Clauses)
 %
@@ -400,6 +406,7 @@ update_goal(Mode, _,_,_, _) :-
     domain_error(tabled_mode, Mode).
 
 update_alias(first, lattice(tabling:first/3)).
+update_alias(-,     lattice(tabling:first/3)).
 update_alias(last,  lattice(tabling:last/3)).
 update_alias(min,   lattice(tabling:min/3)).
 update_alias(max,   lattice(tabling:max/3)).
