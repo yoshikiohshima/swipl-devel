@@ -336,7 +336,7 @@ separate_args([M|TM], [H|TA], TNA, [M|Modes], [H|TMA]):-
 
 updater_clauses([], _, []) :- !.
 updater_clauses([P], Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :- !,
-    Body =.. [P,S0,S1,S2].
+    update_goal(P, S0,S1,S2, Body).
 updater_clauses(Modes, Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :-
     length(Modes, Len),
     functor(S0, s, Len),
@@ -349,13 +349,90 @@ updater_clauses(Modes, Head, [('$table_update'(Head, S0, S1, S2) :- Body)]) :-
 
 update_body([], _, _, _, Body, Body).
 update_body([P|TM], [A0|Args0], [A1|Args1], [A2|Args2], Body0, Body) :-
-    Goal =.. [P,A0,A1,A2],
+    update_goal(P, A0,A1,A2, Goal),
     mkconj(Body0, Goal, Body1),
     update_body(TM, Args0, Args1, Args2, Body1, Body).
+
+update_goal(Var, _,_,_, _) :-
+    var(Var),
+    !,
+    instantiation_error(Var).
+update_goal(lattice(M:PI), S0,S1,S2, M:Goal) :-
+    !,
+    must_be(atom, M),
+    update_goal(lattice(PI), S0,S1,S2, Goal).
+update_goal(lattice(Name/Arity), S0,S1,S2, Goal) :-
+    !,
+    must_be(oneof([3]), Arity),
+    must_be(atom, Name),
+    Goal =.. [Name,S0,S1,S2].
+update_goal(lattice(Name), S0,S1,S2, Goal) :-
+    !,
+    must_be(atom, Name),
+    update_goal(lattice(Name/3), S0,S1,S2, Goal).
+update_goal(po(Name/Arity), S0,S1,S2, Goal) :-
+    !,
+    must_be(oneof([2]), Arity),
+    must_be(atom, Name),
+    Call =.. [Name, S0, S1],
+    Goal = (Call -> S2 = S0 ; S2 = S1).
+update_goal(po(M:Name/Arity), S0,S1,S2, Goal) :-
+    !,
+    must_be(atom, M),
+    must_be(oneof([2]), Arity),
+    must_be(atom, Name),
+    Call =.. [Name, S0, S1],
+    Goal = (M:Call -> S2 = S0 ; S2 = S1).
+update_goal(po(M:Name), S0,S1,S2, Goal) :-
+    !,
+    must_be(atom, M),
+    must_be(atom, Name),
+    update_goal(po(M:Name/2), S0,S1,S2, Goal).
+update_goal(po(Name), S0,S1,S2, Goal) :-
+    !,
+    must_be(atom, Name),
+    update_goal(po(Name/2), S0,S1,S2, Goal).
+update_goal(Alias, S0,S1,S2, Goal) :-
+    update_alias(Alias, Update),
+    !,
+    update_goal(Update, S0,S1,S2, Goal).
+update_goal(Mode, _,_,_, _) :-
+    domain_error(tabled_mode, Mode).
+
+update_alias(first, lattice(tabling:first/3)).
+update_alias(last,  lattice(tabling:last/3)).
+update_alias(min,   lattice(tabling:min/3)).
+update_alias(max,   lattice(tabling:max/3)).
+update_alias(sum,   lattice(tabling:sum/3)).
 
 mkconj(true, G,  G) :- !.
 mkconj(G1,   G2, (G1,G2)).
 
+
+		 /*******************************
+		 *          AGGREGATION		*
+		 *******************************/
+
+%!  first(+S0, +S1, -S) is det.
+%!  last(+S0, +S1, -S) is det.
+%!  min(+S0, +S1, -S) is det.
+%!  max(+S0, +S1, -S) is det.
+%!  sum(+S0, +S1, -S) is det.
+%
+%   Implement YAP tabling modes.
+
+:- public first/3, last/3, min/3, max/3, sum/3.
+
+first(S, _, S).
+last(_, S, S).
+min(S0, S1, S) :- (S0 @< S1 -> S = S0 ; S = S1).
+max(S0, S1, S) :- (S0 @> S1 -> S = S0 ; S = S1).
+sum(S0, S1, S) :- S is S0+S1.
+
+
+		 /*******************************
+		 *         RENAME WORKER	*
+		 *******************************/
 
 %!  prolog:rename_predicate(:Head0, :Head) is semidet.
 %
