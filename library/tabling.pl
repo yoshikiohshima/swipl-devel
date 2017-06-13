@@ -69,6 +69,17 @@ table space and work lists are part of the SWI-Prolog core.
 %     ==
 %     :- table edge/2, statement//1.
 %     ==
+%
+%   In addition to using _predicate  indicators_,   a  predicate  can be
+%   declared for _mode  directed  tabling_  using   a  term  where  each
+%   argument declares the intended mode.  For example:
+%
+%     ==
+%     :- table connection(_,_,min).
+%     ==
+%
+%   _Mode directed tabling_ is  discussed   in  the general introduction
+%   section about tabling.
 
 table(PIList) :-
     throw(error(context_error(nodirective, table(PIList)), _)).
