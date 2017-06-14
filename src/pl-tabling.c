@@ -642,11 +642,11 @@ PRED_IMPL("$tbl_wkl_add_answer", 2, tbl_wkl_add_answer, 0)
 
     if ( (rc=trie_lookup(wl->table, &node, kp, TRUE PASS_LD)) == TRUE )
     { if ( node->value )
-      { if ( node->value == ATOM_nil )
+      { if ( node->value == ATOM_trienode )
 	  return FALSE;				/* already in trie */
 	return PL_permission_error("modify", "trie_key", A2);
       }
-      node->value = ATOM_nil;
+      node->value = ATOM_trienode;
 
       return wkl_add_answer(wl, node PASS_LD);
     }
@@ -691,9 +691,6 @@ PRED_IMPL("$tbl_wkl_mode_add_answer", 4, tbl_wkl_mode_add_answer, 0)
 
 	if ( !PRED_update4 )
 	  PRED_update4 = PL_predicate("update", 4, "tabling");
-
-	if ( node->value == ATOM_nil )
-	  return PL_permission_error("modify", "trie_key", A2);
 
 	if ( !((av=PL_new_term_refs(4)) &&
 	       PL_put_term(av+0, A4) &&
@@ -1062,6 +1059,18 @@ PRED_IMPL("$tbl_abolish_all_tables", 0, tbl_abolish_all_tables, 0)
   }
 }
 
+/** '$tbl_trienode'(-X) is det.
+ *
+ * X is the reserved node value for non-moded arguments.
+ */
+
+static
+PRED_IMPL("$tbl_trienode", 1, tbl_trienode, 0)
+{ PRED_LD
+
+  return PL_unify_atom(A1, ATOM_trienode);
+}
+
 
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
@@ -1083,5 +1092,6 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_scheduling_component",	2, tbl_scheduling_component, 0)
   PRED_DEF("$tbl_abolish_all_tables",   0, tbl_abolish_all_tables,   0)
   PRED_DEF("$tbl_destroy_table",        1, tbl_destroy_table,        0)
+  PRED_DEF("$tbl_trienode",             1, tbl_trienode,             0)
 
 EndPredDefs

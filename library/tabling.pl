@@ -182,10 +182,11 @@ completion :-
     '$tbl_table_complete_all'.
 
 completion_step(SourceTable) :-
-    (   '$tbl_wkl_work'(SourceTable,
+    (   '$tbl_trienode'(Reserved),
+        '$tbl_wkl_work'(SourceTable,
                         Answer, ModeArgs,
                         Goal, Continuation, Wrapper, TargetTable),
-        (   ModeArgs == []
+        (   ModeArgs == Reserved
         ->  Goal = Answer,
             delim(Wrapper, Continuation, TargetTable)
         ;   get_wrapper_no_mode_args(Goal, Answer, ModeArgs),
@@ -272,10 +273,11 @@ wrappers(Name/Arity) -->
       atom_concat(Name, ' tabled', WrapName),
       Head =.. [Name|Args],
       WrappedHead =.. [WrapName|Args],
-      prolog_load_context(module, Module)
+      prolog_load_context(module, Module),
+      '$tbl_trienode'(Reserved)
     },
     [ '$tabled'(Head),
-      '$table_mode'(Head, Head, []),
+      '$table_mode'(Head, Head, Reserved),
       (   Head :-
              start_tabling(Module:Head, WrappedHead)
       )
@@ -318,7 +320,9 @@ extract_modes(ModeSpec, Head, Variant, Modes, ModedAnswer) :-
     compound_name_arguments(Head, Name, HeadArgs),
     separate_args(ModeSpecArgs, HeadArgs, VariantArgs, Modes, ModedArgs),
     Variant =.. [Name|VariantArgs],
-    (   ModedArgs = [ModedAnswer]
+    (   ModedArgs == []
+    ->  '$tbl_trienode'(ModedAnswer)
+    ;   ModedArgs = [ModedAnswer]
     ->  true
     ;   ModedAnswer =.. [s|ModedArgs]
     ).
