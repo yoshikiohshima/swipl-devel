@@ -150,8 +150,7 @@ add_answer_or_suspend(Continuation, Wrapper, _WrapperNoModes, WorkList,
                       call_info(SrcWrapper, SourceWL)) :-
     '$tbl_wkl_add_suspension'(
         SourceWL,
-        dependency(SrcWrapper, Continuation,
-                   call_info(Wrapper, WorkList))).
+        dependency(SrcWrapper, Continuation, Wrapper, WorkList)).
 
 %!  update(+Wrapper, +A1, +A2, -A3) is det.
 %
@@ -180,18 +179,16 @@ completion :-
 
 completion_step(SourceTable) :-
     (   '$tbl_wkl_work'(SourceTable, Answer, ModeArgs, Dependency),
-        dep(ModeArgs, Answer, Dependency, Wrapper, WrapperNoModes,
-            Continuation, TargetTable),
+        dep(ModeArgs, Answer, Dependency,
+            Wrapper, WrapperNoModes, Continuation, TargetTable),
         delim(Wrapper, WrapperNoModes, Continuation, TargetTable),
         fail
     ;   true
     ).
 
-dep([], Answer,				% TBD: Unique symbol for [].
-    dependency(Answer, Continuation, call_info(Wrapper, TargetTable)),
+dep([], Answer, dependency(Answer, Continuation, Wrapper, TargetTable),
     Wrapper, Wrapper, Continuation, TargetTable) :- !.
-dep(ModeArgs, Answer,
-    dependency(Goal, Continuation, call_info(Wrapper, TargetTable)),
+dep(ModeArgs, Answer, dependency(Goal, Continuation, Wrapper, TargetTable),
     Wrapper, WrapperNoModes, Continuation, TargetTable) :-
     get_wrapper_no_mode_args(Goal, Answer, ModeArgs),
     get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _).
