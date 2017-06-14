@@ -779,10 +779,41 @@ typedef struct
 } wkl_step_state;
 
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Unify the 4 arguments  of  the   dependecy  structure  with subsequent 4
+output arguments.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+static inline void
+unify_arg_term(term_t a, Word v ARG_LD)
+{ Word p = valTermRef(a);
+
+  deRef(p);
+  DEBUG(CHK_SECURE, assert(isVar(*p)));
+  Trail(p, linkVal(v));
+}
+
 static int
-unify_dependency_arg(term_t t, int i, term_t tmp, term_t suspension ARG_LD)
-{ _PL_get_arg(i, suspension, tmp);
-  return PL_unify_output(t, tmp);
+unify_dependency(term_t a0, term_t dependency ARG_LD)
+{ if ( tTop + 4 < tMax ||
+       makeMoreStackSpace(TRAIL_OVERFLOW, ALLOW_GC|ALLOW_SHIFT) )
+  { Word dp = valTermRef(dependency);
+    Functor f;
+
+    deRef(dp);
+    if ( unlikely(!isTerm(*dp)) )
+      return FALSE;
+    f = (Functor)valPtr(*dp);
+
+    unify_arg_term(a0+0, &f->arguments[0] PASS_LD);
+    unify_arg_term(a0+1, &f->arguments[1] PASS_LD);
+    unify_arg_term(a0+2, &f->arguments[2] PASS_LD);
+    unify_arg_term(a0+3, &f->arguments[3] PASS_LD);
+
+    return TRUE;
+  }
+
+  return FALSE;
 }
 
 
@@ -860,17 +891,13 @@ PRED_IMPL("$tbl_wkl_work", 7, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
       term_t answer     = av+0;
       term_t suspension = av+1;
       term_t modeargs   = av+2;
-      term_t tmp        = answer;
 
       if ( !( put_trie_term(an, answer PASS_LD) &&
 	      put_trie_value(modeargs, an PASS_LD) &&
 	      PL_recorded(sr, suspension) &&
 	      PL_unify_output(A2, answer) &&
 	      PL_unify_output(A3, modeargs) &&
-	      unify_dependency_arg(A4, 1, tmp, suspension PASS_LD) &&
-	      unify_dependency_arg(A5, 2, tmp, suspension PASS_LD) &&
-	      unify_dependency_arg(A6, 3, tmp, suspension PASS_LD) &&
-	      unify_dependency_arg(A7, 4, tmp, suspension PASS_LD)
+	      unify_dependency(A4, suspension PASS_LD)
          ) )
       { freeForeignState(state, sizeof(*state));
 	return FALSE;			/* resource error */
