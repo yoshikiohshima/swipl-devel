@@ -189,6 +189,7 @@ tables and ground facts.
 \subsubsection{Mode directed tabling}
 \label{sec:tabling-mode-directed}
 
+\index{answer subsumption,tabling}%
 Tabling as defined above has a serious limitation. Although the
 definition of \nopredref{connection}{2} from section
 \secref{tabling-non-termination} can compute the transitive closure of
@@ -198,10 +199,15 @@ the network and each new route found will be added to the answer table
 and cause the tabled execution's completion algorithm to search for more
 routes, eventually running out of memory.
 
-The solution to this problem is called \jargon{mode directed tabling}.
-In this execution model one or more arguments are \emph{not} added to
-the table. Instead, we remember a single \jargon{aggregated} value for
-these arguments. The example below is derived from
+The solution to this problem is called \jargon{mode directed tabling} or
+\jargon{answer subsumption}.\footnote{The term \jargon{answer
+subsumption} is used by XSB and \jargon{mode directed tabling} by YAP
+and B-Prolog. The idea is that some arguments are considered `outputs',
+where multiple values for the same `input' are combined. Possibly
+\jargon{answer aggregation} would have been a better name.} In this
+execution model one or more arguments are \emph{not} added to the table.
+Instead, we remember a single \jargon{aggregated} value for these
+arguments. The example below is derived from
 \secref{tabling-non-termination} and returns the connection as a list of
 cities. This argument is defined as a \jargon{moded} argument using the
 \term{lattice}{PI} mode.\footnote{This mode is compatible to XSB
