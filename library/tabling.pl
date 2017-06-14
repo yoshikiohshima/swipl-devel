@@ -2,7 +2,8 @@
 
     Author:        Benoit Desouter <Benoit.Desouter@UGent.be>
                    Jan Wielemaker (SWI-Prolog port)
-    Copyright (c)  2016, Benoit Desouter
+                   Fabrizio Riguzzi (mode directed tabling)
+    Copyright (c)  2016, Benoit Desouter, Jan Wielemaker, Fabrizio Riguzzi
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -43,7 +44,7 @@
             op(1150, fx, table)
           ]).
 :- use_module(library(error)).
-%:- set_prolog_flag(generate_debug_info, false).
+:- set_prolog_flag(generate_debug_info, false).
 
 :- meta_predicate
     start_tabling(+, 0),
