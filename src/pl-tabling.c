@@ -747,7 +747,8 @@ PRED_IMPL("$tbl_wkl_done", 1, tbl_wkl_done, 0)
 }
 
 
-/** '$tbl_wkl_work'(+Worklist, -Answer, -Suspension) is nondet.
+/** '$tbl_wkl_work'(+Worklist, -Answer, -ModeArgs,
+ *		    -Goal, -Continuation, -Wrapper, -TargetTable) is nondet.
  *
  * True when Answer must be tried on Suspension.  Backtracking
  * basically does
@@ -777,8 +778,16 @@ typedef struct
   int next_step;
 } wkl_step_state;
 
+
+static int
+unify_dependency_arg(term_t t, int i, term_t tmp, term_t suspension ARG_LD)
+{ _PL_get_arg(i, suspension, tmp);
+  return PL_unify_output(t, tmp);
+}
+
+
 static
-PRED_IMPL("$tbl_wkl_work", 4, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
+PRED_IMPL("$tbl_wkl_work", 7, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
 { PRED_LD
   wkl_step_state *state;
 
@@ -850,14 +859,18 @@ PRED_IMPL("$tbl_wkl_work", 4, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
       term_t av         = PL_new_term_refs(3);
       term_t answer     = av+0;
       term_t suspension = av+1;
-      term_t value      = av+2;
+      term_t modeargs   = av+2;
+      term_t tmp        = answer;
 
       if ( !( put_trie_term(an, answer PASS_LD) &&
-	      put_trie_value(value, an PASS_LD) &&
+	      put_trie_value(modeargs, an PASS_LD) &&
 	      PL_recorded(sr, suspension) &&
 	      PL_unify_output(A2, answer) &&
-	      PL_unify_output(A4, suspension) &&
-	      PL_unify_output(A3, value)
+	      PL_unify_output(A3, modeargs) &&
+	      unify_dependency_arg(A4, 1, tmp, suspension PASS_LD) &&
+	      unify_dependency_arg(A5, 2, tmp, suspension PASS_LD) &&
+	      unify_dependency_arg(A6, 3, tmp, suspension PASS_LD) &&
+	      unify_dependency_arg(A7, 4, tmp, suspension PASS_LD)
          ) )
       { freeForeignState(state, sizeof(*state));
 	return FALSE;			/* resource error */
@@ -1031,10 +1044,10 @@ BeginPredDefs(tabling)
   PRED_DEF("$tbl_new_worklist",		2, tbl_new_worklist,	     0)
   PRED_DEF("$tbl_pop_worklist",		1, tbl_pop_worklist,	     0)
   PRED_DEF("$tbl_wkl_add_answer",	2, tbl_wkl_add_answer,	     0)
-  PRED_DEF("$tbl_wkl_mode_add_answer",	4, tbl_wkl_mode_add_answer,	     0)
+  PRED_DEF("$tbl_wkl_mode_add_answer",	4, tbl_wkl_mode_add_answer,  0)
   PRED_DEF("$tbl_wkl_add_suspension",	2, tbl_wkl_add_suspension,   0)
   PRED_DEF("$tbl_wkl_done",		1, tbl_wkl_done,	     0)
-  PRED_DEF("$tbl_wkl_work",		4, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
+  PRED_DEF("$tbl_wkl_work",		7, tbl_wkl_work, PL_FA_NONDETERMINISTIC)
   PRED_DEF("$tbl_variant_table",	3, tbl_variant_table,	     0)
   PRED_DEF("$tbl_variant_table",        1, tbl_variant_table,        0)
   PRED_DEF("$tbl_table_status",		2, tbl_table_status,	     0)

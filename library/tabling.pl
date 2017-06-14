@@ -133,6 +133,10 @@ activate(Wrapper, WrapperNoModes, Worker, Trie, WorkList) :-
     ;   true
     ).
 
+delim(Wrapper, Worker, WorkList) :-
+    reset(Worker, SourceCall, Continuation),
+    add_answer_or_suspend(Continuation, Wrapper, Wrapper,
+                          WorkList, SourceCall).
 delim(Wrapper, WrapperNoModes, Worker, WorkList) :-
     reset(Worker, SourceCall, Continuation),
     add_answer_or_suspend(Continuation, Wrapper, WrapperNoModes,
@@ -178,21 +182,19 @@ completion :-
     '$tbl_table_complete_all'.
 
 completion_step(SourceTable) :-
-    (   '$tbl_wkl_work'(SourceTable, Answer, ModeArgs, Dependency),
-        dep(ModeArgs, Answer, Dependency,
-            Wrapper, WrapperNoModes, Continuation, TargetTable),
-        delim(Wrapper, WrapperNoModes, Continuation, TargetTable),
+    (   '$tbl_wkl_work'(SourceTable,
+                        Answer, ModeArgs,
+                        Goal, Continuation, Wrapper, TargetTable),
+        (   ModeArgs == []
+        ->  Goal = Answer,
+            delim(Wrapper, Continuation, TargetTable)
+        ;   get_wrapper_no_mode_args(Goal, Answer, ModeArgs),
+            get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _),
+            delim(Wrapper, WrapperNoModes, Continuation, TargetTable)
+        ),
         fail
     ;   true
     ).
-
-dep([], Answer, dependency(Answer, Continuation, Wrapper, TargetTable),
-    Wrapper, Wrapper, Continuation, TargetTable) :- !.
-dep(ModeArgs, Answer, dependency(Goal, Continuation, Wrapper, TargetTable),
-    Wrapper, WrapperNoModes, Continuation, TargetTable) :-
-    get_wrapper_no_mode_args(Goal, Answer, ModeArgs),
-    get_wrapper_no_mode_args(Wrapper, WrapperNoModes, _).
-
 
                  /*******************************
                  *            CLEANUP           *
