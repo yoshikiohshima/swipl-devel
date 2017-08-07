@@ -5010,22 +5010,29 @@ $call_continuation(Cont)
 
 VMI(I_CALLCONT, 0, 1, (CA1_VAR))
 { Word cp = varFrameP(FR, (int)*PC++);
-  term_t cont = pushWordAsTermRef(cp);
-  Code pc;
 
-  SAVE_REGISTERS(qid);
-  pc = push_continuation(cont, FR, PC PASS_LD);
-  LOAD_REGISTERS(qid);
-  popTermRef();
-
-  if ( pc )
-  { PC = pc;
-    FR = environment_frame;
-    DEF = FR->predicate;
-    ARGP = argFrameP(lTop, 0);
-    NEXT_INSTRUCTION;
+  deRef(cp);
+  if ( hasFunctor(*cp, FUNCTOR_call1) )
+  { *ARGP++ = linkVal(argTermP(*cp, 0));
+    VMI_GOTO(I_USERCALL0);
   } else
-  { THROW_EXCEPTION;
+  { term_t cont = pushWordAsTermRef(cp);
+    Code pc;
+
+    SAVE_REGISTERS(qid);
+    pc = push_continuation(cont, FR, PC PASS_LD);
+    LOAD_REGISTERS(qid);
+    popTermRef();
+
+    if ( pc )
+    { PC = pc;
+      FR = environment_frame;
+      DEF = FR->predicate;
+      ARGP = argFrameP(lTop, 0);
+      NEXT_INSTRUCTION;
+    } else
+    { THROW_EXCEPTION;
+    }
   }
 }
 

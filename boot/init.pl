@@ -399,14 +399,8 @@ reset(_Goal, _Ball, _Cont) :-
 
 call_continuation([]).
 call_continuation([TB|Rest]) :-
-    call_one_continuation(TB),
+    '$call_continuation'(TB),
     call_continuation(Rest).
-
-call_one_continuation(call(Goal)) :-
-    !,
-    call(Goal).
-call_one_continuation(Continuation) :-
-    '$call_continuation'(Continuation).
 
 
 %!  '$recover_and_rethrow'(:Goal, +Term)
