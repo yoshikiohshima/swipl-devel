@@ -552,8 +552,15 @@ retry:
 #endif
     setGenerationFrame(fr, global_generation());
     enterDefinition(fr->predicate);
+    environment_frame = fr;
 
-    return cl->codes+pcoffset;
+    DEBUG(MSG_CONTINUE,
+	  Sdprintf("Resume clause %d of %s at PC=%ld\n",
+		   clauseNo(fr->predicate, cl, 0),
+		   predicateName(fr->predicate),
+		   pcoffset));
+
+    return cl->codes + pcoffset;
   } else
   { PL_type_error("continuation", continuation);
     return NULL;

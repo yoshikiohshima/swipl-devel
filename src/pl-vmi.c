@@ -5020,6 +5020,9 @@ VMI(I_CALLCONT, 0, 1, (CA1_VAR))
 
   if ( pc )
   { PC = pc;
+    FR = environment_frame;
+    DEF = FR->predicate;
+    ARGP = argFrameP(lTop, 0);
     NEXT_INSTRUCTION;
   } else
   { THROW_EXCEPTION;
