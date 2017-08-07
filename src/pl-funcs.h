@@ -800,5 +800,9 @@ COMMON(int)     promoteNumber(Number n1, numtype type) WUNUSED;
 COMMON(int)	cmpNumbers(Number n1, Number n2);
 COMMON(void)	cpNumber(Number to, Number from);
 
+/* pl-cont.c */
+COMMON(Code)	push_continuation(term_t cont, LocalFrame pfr, Code pcret
+				  ARG_LD);
+
 /* pl-version.h */
 COMMON(void)	setGITVersion(void);

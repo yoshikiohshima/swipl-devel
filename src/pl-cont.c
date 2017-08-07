@@ -465,6 +465,102 @@ retry:
   }
 }
 
+Code
+push_continuation(term_t continuation, LocalFrame pfr, Code pcret ARG_LD)
+{ LocalFrame top, fr;
+  Word cont;
+
+retry:
+  cont = valTermRef(continuation);
+  top  = lTop;
+
+  deRef(cont);
+
+  if ( isTerm(*cont) )
+  { Functor f = valueTerm(*cont);
+    Word ep = f->arguments;
+    Word ap;
+    Clause cl;
+    ClauseRef cref;
+    intptr_t pcoffset;
+    size_t lneeded, lroom;
+    int i;
+
+    if ( !(cl = clause_clref(*ep++)) ||
+	 arityFunctor(f->definition) != cl->variables + 2 )
+    { PL_type_error("continuation", continuation);
+      return NULL;
+    }
+
+    pcoffset = valInt(*ep++);
+
+    lneeded = SIZEOF_CREF_CLAUSE +
+	      (size_t)argFrameP((LocalFrame)NULL, cl->variables);
+    lroom   = roomStack(local);
+    if ( unlikely(lroom < lneeded) )	/* resize the stack */
+    { int rc;
+
+      if ( (rc=growLocalSpace__LD(roomStack(local)*2, ALLOW_SHIFT PASS_LD))
+	   != TRUE )
+      { raiseStackOverflow(rc);
+	return NULL;
+      }
+      goto retry;
+    }
+
+    cref = (ClauseRef)top;
+    fr   = addPointer(cref, SIZEOF_CREF_CLAUSE);
+    top  = addPointer(top, lneeded);
+
+    ap = argFrameP(fr, 0);
+
+    for(i=0; i<cl->prolog_vars; i++, ep++, ap++)
+    { *ap = linkVal(ep);
+    }
+
+    for(; i<cl->variables; i++, ep++, ap++)
+    { if ( isTaggedInt(*ep) )
+      { intptr_t i = valInt(*ep);
+	Choice ch, chp;
+
+	ch = (Choice)valTermRef(i);
+	for ( chp = LD->choicepoints; chp > ch; chp = chp->parent )
+	  ;
+	if ( ch == chp )
+	  *ap = i;
+	else
+	  *ap = consTermRef(LD->choicepoints);
+      } else
+      { *ap = consTermRef(LD->choicepoints);
+      }
+    }
+
+    lTop = top;
+
+    cref->next         = NULL;
+    cref->d.key        = 0;
+    cref->value.clause = cl;
+
+    fr->programPointer = pcret;
+    fr->parent         = pfr;
+    fr->clause         = cref;
+    fr->predicate      = cl->predicate;
+    fr->context	       = fr->predicate->module;
+    setNextFrameFlags(fr, pfr);
+#ifdef O_PROFILE
+    fr->prof_node      = NULL;
+#endif
+    setGenerationFrame(fr, global_generation());
+    enterDefinition(fr->predicate);
+
+    return cl->codes+pcoffset;
+  } else
+  { PL_type_error("continuation", continuation);
+    return NULL;
+  }
+}
+
+
 		 /*******************************
 		 *      PUBLISH PREDICATES	*
 		 *******************************/

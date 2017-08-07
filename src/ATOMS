@@ -164,6 +164,7 @@ A db_reference		"db_reference"
 A dc_call_prolog	"$c_call_prolog"
 A dcall			"<meta-call>"
 A dcall_cleanup		"$call_cleanup"
+A dcall_continuation	"$call_continuation"
 A dcatch		"$catch"
 A dcont			"$cont$"
 A dcut			"$cut"
@@ -854,6 +855,7 @@ F date			3
 F date			9
 F dc_call_prolog	0
 F dcall			1
+F dcall_continuation	1
 F dcont			3
 F dcut			1
 F dde_error		2

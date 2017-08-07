@@ -406,7 +406,7 @@ call_one_continuation(call(Goal)) :-
     !,
     call(Goal).
 call_one_continuation(Continuation) :-
-    '$call_one_tail_body'(Continuation).
+    '$call_continuation'(Continuation).
 
 
 %!  '$recover_and_rethrow'(:Goal, +Term)

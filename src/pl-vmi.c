@@ -5004,4 +5004,26 @@ VMI(I_EXITRESET, 0, 0, ())
   }
 }
 
+/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+$call_continuation(Cont)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+VMI(I_CALLCONT, 0, 1, (CA1_VAR))
+{ Word cp = varFrameP(FR, (int)*PC++);
+  term_t cont = pushWordAsTermRef(cp);
+  Code pc;
+
+  SAVE_REGISTERS(qid);
+  pc = push_continuation(cont, FR, PC PASS_LD);
+  LOAD_REGISTERS(qid);
+  popTermRef();
+
+  if ( pc )
+  { PC = pc;
+    NEXT_INSTRUCTION;
+  } else
+  { THROW_EXCEPTION;
+  }
+}
+
 END_SHAREDVARS
