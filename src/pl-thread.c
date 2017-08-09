@@ -5256,6 +5256,58 @@ PL_destroy_engine(PL_engine_t e)
 
 
 		 /*******************************
+		 *	      GC THREAD		*
+		 *******************************/
+
+static int GC_id = 0;
+
+static void *
+GCmain(void *closure)
+{ PL_thread_attr_t attrs = {0};
+  PL_engine_t e;
+  static predicate_t pred = 0;
+
+  if ( !pred )
+    pred = PL_predicate("$gc", 0, "system");
+
+  attrs.alias = "__GC";
+  attrs.flags = PL_THREAD_NO_DEBUG;
+
+  if ( (e = PL_create_engine(&attrs)) )
+  { GC_id = e->thread.info->pl_tid;
+    PL_call_predicate(NULL, PL_Q_NORMAL, pred, 0);
+    GC_id = 0;
+    PL_destroy_engine(e);
+  }
+}
+
+
+static int
+GCthread(void)
+{ if ( !GC_id )
+  { pthread_attr_t attr;
+    int rc;
+    pthread_t thr;
+
+    pthread_attr_init(&attr);
+    rc = pthread_create(&thr, &attr, GCmain, NULL);
+    pthread_attr_destroy(&attr);
+    if ( rc != 0 )
+      return 0;
+  }
+
+  return GC_id;
+}
+
+
+int
+signalGCThread(atom_t action)
+{
+}
+
+
+
+		 /*******************************
 		 *	     STATISTICS		*
 		 *******************************/
 
