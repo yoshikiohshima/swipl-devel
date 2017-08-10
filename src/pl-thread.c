@@ -4122,45 +4122,58 @@ process_deadline_options(term_t options,
 
 
 static int
-thread_send_message__LD(term_t queue, term_t msgterm,
-			struct timespec *deadline ARG_LD)
-{ message_queue *q;
-  thread_message *msg;
-  int rc;
-
-  if ( !(msg = create_thread_message(msgterm PASS_LD)) )
-    return PL_no_memory();
+wait_queue_message(term_t qterm, message_queue *q, thread_message *msg,
+		   struct timespec *deadline ARG_LD)
+{ int rc;
 
   for(;;)
-  { if ( !get_message_queue__LD(queue, &q PASS_LD) )
-    { free_thread_message(msg);
-      return FALSE;
-    }
-
-    rc = queue_message(q, msg, deadline PASS_LD);
+  { rc = queue_message(q, msg, deadline PASS_LD);
     release_message_queue(q);
 
     switch(rc)
     { case MSG_WAIT_INTR:
       { if ( PL_handle_signals() >= 0 )
 	  continue;
-	free_thread_message(msg);
 	rc = FALSE;
-
 	break;
       }
       case MSG_WAIT_DESTROYED:
-      { free_thread_message(msg);
-	rc = PL_error(NULL, 0, NULL, ERR_EXISTENCE, ATOM_message_queue, queue);
+      { if ( qterm )
+	  PL_existence_error("message_queue", qterm);
+	rc = FALSE;
 	break;
       }
       case MSG_WAIT_TIMEOUT:
-	 rc = FALSE;
-	 break;
+	rc = FALSE;
+        break;
+      case TRUE:
+	break;
+      default:
+	assert(0);
     }
 
     break;
   }
+
+  return rc;
+}
+
+static int
+thread_send_message__LD(term_t queue, term_t msgterm,
+			struct timespec *deadline ARG_LD)
+{ message_queue *q;
+  thread_message *msg;
+  int rc;
+
+  if ( !get_message_queue__LD(queue, &q PASS_LD) )
+    return FALSE;
+  if ( !(msg = create_thread_message(msgterm PASS_LD)) )
+  { release_message_queue(q);
+    return PL_no_memory();
+  }
+
+  if ( (rc=wait_queue_message(queue, q, msg, deadline PASS_LD)) == FALSE )
+    free_thread_message(msg);
 
   return rc;
 }
@@ -5290,6 +5303,8 @@ GCmain(void *closure)
     GC_id = 0;
     PL_destroy_engine(e);
   }
+
+  return NULL;
 }
 
 
