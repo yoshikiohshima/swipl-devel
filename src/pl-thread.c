@@ -1082,10 +1082,8 @@ gc_thread() is (indirectly) called from atom-GC if the engine is not yet
 fully reclaimed, we have several situations:
 
   - The engine is still running.  Detach it, such that it will be
-    reclaimed slilently when done.
+    reclaimed silently when done.
   - The engine has completed.  Join it.
-
-collectAtoms() is called with many locks   held: L_ATOM and L_AGC.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 static thread_handle *gced_threads = NULL;
