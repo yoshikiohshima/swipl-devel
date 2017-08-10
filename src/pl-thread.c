@@ -4047,20 +4047,28 @@ static const opt_spec thread_get_message_options[] =
 #define DBL_MAX         1.7976931348623158e+308
 #endif
 
-/* This function is shared between thread_get_message/3 and thread_send_message/3.
-	It extracts a deadline from the deadline/1 and timeout/1 options.
+/* This function is shared between thread_get_message/3 and
+   thread_send_message/3.
+
+   It extracts a deadline from the deadline/1 and timeout/1 options.
    In both cases, the deadline is passed through to dispatch_cond_wait().
-	Semantics are relatively simple:
-	1. If neither option is given, the deadline is NULL, which corresponds to
-		an indefinite wait, or a deadline in the infinite future.
-	2. A timeout is _exactly_ like a deadline of Now + Timeout, where Now is
-		evaluated near the beginning of this function.
-	3. If both deadline and a timeout options are given, the earlier deadline is effective.
-	4. If the effective deadline is before Now, then return FALSE (leading to failure).
+   Semantics are relatively simple:
+
+	1. If neither option is given, the deadline is NULL, which
+	   corresponds to an indefinite wait, or a deadline in the
+	   infinite future.
+	2. A timeout is _exactly_ like a deadline of Now + Timeout,
+	   where Now is evaluated near the beginning of this function.
+	3. If both deadline and a timeout options are given, the
+	   earlier deadline is effective.
+	4. If the effective deadline is before Now, then return
+	   FALSE (leading to failure).
 */
-static int process_deadline_options(term_t options, struct timespec *ts, struct timespec **pts)
-{
-  struct timespec now;
+
+static int
+process_deadline_options(term_t options,
+			 struct timespec *ts, struct timespec **pts)
+{ struct timespec now;
   struct timespec deadline;
   struct timespec timeout;
   struct timespec *dlop=NULL;
@@ -4103,9 +4111,12 @@ static int process_deadline_options(term_t options, struct timespec *ts, struct 
       return FALSE;      // ... then FAIL
   }
   if (dlop)
-  { *ts=*dlop; *pts=ts; }
-  else
-  { *pts=NULL; }
+  { *ts  = *dlop;
+    *pts = ts;
+  } else
+  { *pts=NULL;
+  }
+
   return TRUE;
 }
 
