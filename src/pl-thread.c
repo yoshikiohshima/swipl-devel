@@ -1509,7 +1509,6 @@ thread_wait_signal(ARG1_LD)
       { if ( LD->signal.pending[i] & mask )
 	{ __sync_and_and_fetch(&LD->signal.pending[i], ~mask);
 
-	  Sdprintf("Returning %d\n", sig);
 	  return sig;
 	}
       }
