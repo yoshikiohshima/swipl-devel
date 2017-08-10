@@ -5328,7 +5328,27 @@ GCthread(void)
 
 int
 signalGCThread(atom_t action)
-{
+{ GET_LD
+  int tid;
+
+retry:
+  if ( (tid = GCthread()) )
+  { PL_thread_info_t *info = GD->thread.threads[tid];
+    PL_local_data_t *ld = acquire_ldata(info);
+    message_queue *q = &ld->thread.messages;
+    int rc = TRUE;
+
+    simpleMutexLock(&q->mutex);
+    if ( q->destroyed )
+      goto retry;
+
+    release_message_queue(q);
+
+    release_ldata(ld);
+    return rc;
+  }
+
+  return FALSE;
 }
 
 
