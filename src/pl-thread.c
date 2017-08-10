@@ -1487,6 +1487,58 @@ PL_thread_raise(int tid, int sig)
 }
 
 
+int
+thread_wait_signal(ARG1_LD)
+{ int i;
+
+  while( !is_signalled(PASS_LD1) )
+  {
+#ifdef __WINDOWS__
+    MSG *msg;
+    if ( !GetMessage(&msg, -1, WM_SIGNALLED, WM_SIGNALLED) )
+      return -1;
+#else
+    sigset_t set;
+    int sig;
+
+    sigemptyset(&set);
+    sigaddset(&set, GD->signals.sig_alert);
+    sigwait(&set, &sig);
+#endif
+  }
+
+  for(i=0; i<2; i++)
+  { while( LD->signal.pending[i] )
+    { int sig = 1+32*i;
+      int mask = 1;
+
+      for( ; mask ; mask <<= 1, sig++ )
+      { if ( LD->signal.pending[i] & mask )
+	{ __sync_and_and_fetch(&LD->signal.pending[i], ~mask);
+
+	  Sdprintf("Returning %d\n", sig);
+	  return sig;
+	}
+      }
+    }
+  }
+
+  return -1;					/* cannot happen */
+}
+
+static
+PRED_IMPL("$thread_sigwait", 1, thread_sigwait, 0)
+{ PRED_LD
+  int sig;
+
+  if ( (sig = thread_wait_signal(PASS_LD1)) >= 0 )
+    return PL_unify_atom_chars(A1, signal_name(sig));
+
+  return FALSE;
+}
+
+
+
 const char *
 threadName(int id)
 { PL_thread_info_t *info;
@@ -5288,20 +5340,20 @@ static int GC_id = 0;
 static void *
 GCmain(void *closure)
 { PL_thread_attr_t attrs = {0};
-  PL_engine_t e;
-  static predicate_t pred = 0;
-
-  if ( !pred )
-    pred = PL_predicate("$gc", 0, "system");
 
   attrs.alias = "__GC";
   attrs.flags = PL_THREAD_NO_DEBUG;
 
-  if ( (e = PL_create_engine(&attrs)) )
-  { GC_id = e->thread.info->pl_tid;
+  if ( PL_thread_attach_engine(&attrs) )
+  { static predicate_t pred = 0;
+
+    if ( !pred )
+      pred = PL_predicate("$gc", 0, "system");
+
+    GC_id = PL_thread_self();
     PL_call_predicate(NULL, PL_Q_NORMAL, pred, 0);
     GC_id = 0;
-    PL_destroy_engine(e);
+    PL_thread_destroy_engine();
   }
 
   return NULL;
@@ -5327,28 +5379,15 @@ GCthread(void)
 
 
 int
-signalGCThread(atom_t action)
+signalGCThread(int sig)
 { GET_LD
   int tid;
 
-retry:
-  if ( (tid = GCthread()) )
-  { PL_thread_info_t *info = GD->thread.threads[tid];
-    PL_local_data_t *ld = acquire_ldata(info);
-    message_queue *q = &ld->thread.messages;
-    int rc = TRUE;
+  if ( (tid = GCthread()) &&
+       PL_thread_raise(tid, sig) )
+    return TRUE;
 
-    simpleMutexLock(&q->mutex);
-    if ( q->destroyed )
-      goto retry;
-
-    release_message_queue(q);
-
-    release_ldata(ld);
-    return rc;
-  }
-
-  return FALSE;
+  return raiseSignal(LD, sig);
 }
 
 
@@ -6533,6 +6572,7 @@ BeginPredDefs(thread)
   PRED_DEF("thread_statistics",	     3,	thread_statistics,     0)
   PRED_DEF("thread_property",	     2,	thread_property,       NDET|PL_FA_ISO)
   PRED_DEF("is_thread",		     1,	is_thread,	       0)
+  PRED_DEF("$thread_sigwait",	     1, thread_sigwait,	       0)
 
   PRED_DEF("message_queue_create",   1,	message_queue_create,  0)
   PRED_DEF("message_queue_create",   2,	message_queue_create2, PL_FA_ISO)
