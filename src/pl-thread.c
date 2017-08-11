@@ -5339,6 +5339,9 @@ PL_destroy_engine(PL_engine_t e)
 		 *******************************/
 
 static int GC_id = 0;
+static int GC_starting = 0;
+static pthread_mutex_t GC_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  GC_cond  = PTHREAD_COND_INITIALIZER;
 
 static void *
 GCmain(void *closure)
@@ -5356,7 +5359,11 @@ GCmain(void *closure)
     if ( !pred )
       pred = PL_predicate("$gc", 0, "system");
 
+    pthread_mutex_lock(&GC_mutex);
     GC_id = PL_thread_self();
+    GC_starting = FALSE;
+    pthread_cond_broadcast(&GC_cond);
+    pthread_mutex_unlock(&GC_mutex);
     rc = PL_call_predicate(NULL, PL_Q_PASS_EXCEPTION, pred, 0);
     GC_id = 0;
 
@@ -5371,15 +5378,28 @@ GCmain(void *closure)
 static int
 GCthread(void)
 { if ( GC_id <= 0 )
-  { pthread_attr_t attr;
-    int rc;
-    pthread_t thr;
+  { pthread_mutex_lock(&GC_mutex);
 
-    pthread_attr_init(&attr);
-    rc = pthread_create(&thr, &attr, GCmain, NULL);
-    pthread_attr_destroy(&attr);
-    if ( rc != 0 )
-      return 0;
+    if ( GC_id <= 0 )
+    { pthread_attr_t attr;
+      int rc;
+      pthread_t thr;
+
+      if ( !GC_starting )
+      { GC_starting = TRUE;
+	pthread_attr_init(&attr);
+	rc = pthread_create(&thr, &attr, GCmain, NULL);
+	pthread_attr_destroy(&attr);
+	if ( rc != 0 )
+	{ pthread_mutex_unlock(&GC_mutex);
+	  return 0;
+	}
+      }
+
+      while( GC_id <= 0 )
+	pthread_cond_wait(&GC_cond, &GC_mutex);
+      pthread_mutex_unlock(&GC_mutex);
+    }
   }
 
   return GC_id;
@@ -5391,7 +5411,8 @@ signalGCThread(int sig)
 { GET_LD
   int tid;
 
-  if ( !GD->bootsession &&
+  if ( truePrologFlag(PLFLAG_GCTHREAD) &&
+       !GD->bootsession &&
        (tid = GCthread() > 0) &&
        PL_thread_raise(tid, sig) )
     return TRUE;
@@ -5413,7 +5434,7 @@ isSignalledGCThread(int sig ARG_LD)
     rc = PL_pending__LD(sig, ld);
     release_ldata(ld);
   } else
-  { rc = FALSE;
+  { rc = PL_pending(sig);
   }
 
   return rc;
