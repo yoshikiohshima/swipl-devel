@@ -5347,7 +5347,7 @@ static void *
 GCmain(void *closure)
 { PL_thread_attr_t attrs = {0};
 
-  attrs.alias = "__GC";
+  attrs.alias = "gc";
   attrs.flags = PL_THREAD_NO_DEBUG|PL_THREAD_NOT_DETACHED;
 
   if ( PL_thread_attach_engine(&attrs) > 0 )
