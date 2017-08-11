@@ -382,6 +382,7 @@ COMMON(void)		cleanupThreads(void);
 COMMON(intptr_t)	system_thread_id(PL_thread_info_t *info);
 COMMON(double)	        ThreadCPUTime(PL_local_data_t *ld, int which);
 COMMON(int)		signalGCThread(int sig);
+COMMON(int)		isSignalledGCThread(int sig ARG_LD);
 
 		 /*******************************
 		 *	 GLOBAL GC SUPPORT	*

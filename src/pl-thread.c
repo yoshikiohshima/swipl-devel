@@ -5375,13 +5375,33 @@ signalGCThread(int sig)
 { GET_LD
   int tid;
 
-  if ( (tid = GCthread()) &&
+  if ( !GD->bootsession &&
+       (tid = GCthread()) &&
        PL_thread_raise(tid, sig) )
     return TRUE;
 
   return raiseSignal(LD, sig);
 }
 
+
+int
+isSignalledGCThread(int sig ARG_LD)
+{ int tid;
+  PL_thread_info_t *info;
+  int rc;
+
+  if ( (tid=GC_id) && (info = GD->thread.threads[tid]) &&
+       info->status == PL_THREAD_RUNNING )
+  { PL_local_data_t *ld = acquire_ldata(info);
+
+    rc = PL_pending__LD(sig, ld);
+    release_ldata(ld);
+  } else
+  { rc = FALSE;
+  }
+
+  return rc;
+}
 
 
 		 /*******************************

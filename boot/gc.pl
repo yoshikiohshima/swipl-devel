@@ -53,3 +53,5 @@ gc_loop :-
 
 process('prolog:atom_gc') :-
     garbage_collect_atoms.
+process('prolog:clause_gc') :-
+    garbage_collect_clauses.
