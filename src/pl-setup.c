@@ -393,7 +393,7 @@ to the main thread.
 #undef LD
 #define LD LOCAL_LD
 
-static void
+void
 dispatch_signal(int sig, int sync)
 { GET_LD
   SigHandler sh = &GD->signals.handlers[sig-1];

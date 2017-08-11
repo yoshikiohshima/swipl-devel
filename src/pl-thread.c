@@ -1509,7 +1509,13 @@ thread_wait_signal(ARG1_LD)
       { if ( LD->signal.pending[i] & mask )
 	{ __sync_and_and_fetch(&LD->signal.pending[i], ~mask);
 
-	  return sig;
+	  if ( sig == SIG_THREAD_SIGNAL )
+	  { dispatch_signal(sig, TRUE);
+	    if ( exception_term )
+	      return -1;
+	  } else
+	  { return sig;
+	  }
 	}
       }
     }
@@ -1626,6 +1632,26 @@ mk_kbytes(size_t *sz, atom_t name ARG_LD)
 }
 
 
+static void
+set_thread_completion(PL_thread_info_t *info, int rc, term_t ex)
+{ PL_LOCK(L_THREAD);
+  if ( rc )
+  { info->status = PL_THREAD_SUCCEEDED;
+  } else
+  { if ( ex )
+    { if ( info->detached )
+	info->return_value = 0;
+      else
+	info->return_value = PL_record(ex);
+      info->status = PL_THREAD_EXCEPTION;
+    } else
+    { info->status = PL_THREAD_FAILED;
+    }
+  }
+  PL_UNLOCK(L_THREAD);
+}
+
+
 static void *
 start_thread(void *closure)
 { PL_thread_info_t *info = closure;
@@ -1690,22 +1716,7 @@ start_thread(void *closure)
       }
     }
 
-    PL_LOCK(L_THREAD);
-    if ( rval )
-    { info->status = PL_THREAD_SUCCEEDED;
-    } else
-    { if ( ex )
-      { if ( info->detached )
-	  info->return_value = 0;
-	else
-	  info->return_value = PL_record(ex);
-	info->status = PL_THREAD_EXCEPTION;
-      } else
-      { info->status = PL_THREAD_FAILED;
-      }
-    }
-    PL_UNLOCK(L_THREAD);
-
+    set_thread_completion(info, rval, ex);
     pthread_cleanup_pop(1);
   }
 
@@ -5145,7 +5156,7 @@ PL_thread_attach_engine(PL_thread_attr_t *attr)
 
   info->goal       = NULL;
   info->module     = MODULE_user;
-  info->detached   = TRUE;		/* C-side should join me */
+  info->detached   = (attr->flags & PL_THREAD_NOT_DETACHED) == 0;
   info->open_count = 1;
 
   copy_local_data(ldnew, ldmain);
@@ -5334,17 +5345,22 @@ GCmain(void *closure)
 { PL_thread_attr_t attrs = {0};
 
   attrs.alias = "__GC";
-  attrs.flags = PL_THREAD_NO_DEBUG;
+  attrs.flags = PL_THREAD_NO_DEBUG|PL_THREAD_NOT_DETACHED;
 
-  if ( PL_thread_attach_engine(&attrs) )
-  { static predicate_t pred = 0;
+  if ( PL_thread_attach_engine(&attrs) > 0 )
+  { GET_LD
+    PL_thread_info_t *info = LD->thread.info;
+    static predicate_t pred = 0;
+    int rc;
 
     if ( !pred )
       pred = PL_predicate("$gc", 0, "system");
 
     GC_id = PL_thread_self();
-    PL_call_predicate(NULL, PL_Q_NORMAL, pred, 0);
+    rc = PL_call_predicate(NULL, PL_Q_PASS_EXCEPTION, pred, 0);
     GC_id = 0;
+
+    set_thread_completion(info, rc, exception_term);
     PL_thread_destroy_engine();
   }
 
@@ -5354,7 +5370,7 @@ GCmain(void *closure)
 
 static int
 GCthread(void)
-{ if ( !GC_id )
+{ if ( GC_id <= 0 )
   { pthread_attr_t attr;
     int rc;
     pthread_t thr;
@@ -5376,7 +5392,7 @@ signalGCThread(int sig)
   int tid;
 
   if ( !GD->bootsession &&
-       (tid = GCthread()) &&
+       (tid = GCthread() > 0) &&
        PL_thread_raise(tid, sig) )
     return TRUE;
 
@@ -5390,7 +5406,7 @@ isSignalledGCThread(int sig ARG_LD)
   PL_thread_info_t *info;
   int rc;
 
-  if ( (tid=GC_id) && (info = GD->thread.threads[tid]) &&
+  if ( (tid=GC_id) > 0 && (info = GD->thread.threads[tid]) &&
        info->status == PL_THREAD_RUNNING )
   { PL_local_data_t *ld = acquire_ldata(info);
 

@@ -47,8 +47,9 @@ gc_loop :-
     '$thread_sigwait'(Signal),
     (   Signal == 'prolog:abort'
     ->  true
-    ;   process(Signal),
-        fail
+    ;   process(Signal)
+    ->  fail
+    ;   print_message(warning, gc(ignored(Signal)))
     ).
 
 process('prolog:atom_gc') :-
