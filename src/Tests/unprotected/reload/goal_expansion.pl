@@ -40,14 +40,12 @@ goal_expansion(foo__2, _) :-
 	;   assertion(fail)
 	),
 	fail.
-/*
 goal_expansion(foo__2, _) :-
 	(   predicate_property(bar__2, number_of_clauses(_))
 	->  assertion(fail)
 	;   true
 	),
 	fail.
-*/
 goal_expansion(foo__2, _) :-
 	(   current_predicate(bar__2/0)
 	->  true
