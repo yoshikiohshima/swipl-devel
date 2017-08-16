@@ -288,7 +288,9 @@ isCurrentProcedure__LD(functor_t f, Module m ARG_LD)
 ClauseRef
 hasClausesDefinition(Definition def)
 { if ( def->impl.clauses.first_clause )
-  { if ( def->impl.clauses.erased_clauses == 0 )
+  { GET_LD
+    if ( def->impl.clauses.erased_clauses == 0 &&
+         LD->gen_reload == GEN_INVALID )
     { return def->impl.clauses.first_clause;
     } else
     { GET_LD
