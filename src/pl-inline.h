@@ -445,12 +445,7 @@ register_attvar(Word gp ARG_LD)
 
 static inline int
 visibleClause__LD(Clause cl, gen_t gen ARG_LD)
-{ if ( unlikely(LD->in_reconsult) )
-  { return VISIBLE_CLAUSE_DURING_RELOAD(cl, gen);
-  }
-  else
-  { return VISIBLE_CLAUSE(cl, gen);
-  }
+{ return VISIBLE_CLAUSE(cl, gen);
 }
 
 static inline int

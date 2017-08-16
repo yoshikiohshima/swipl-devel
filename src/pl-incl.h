@@ -1193,20 +1193,22 @@ typedef struct functor_table
 #ifdef O_LOGICAL_UPDATE
 #define VISIBLE_CLAUSE(cl, gen) \
 	( (cl)->generation.created <= (gen) && \
-	  (cl)->generation.erased   > (gen) \
-	)
-#define VISIBLE_CLAUSE_DURING_RELOAD(cl, gen) \
-	( (cl)->generation.created <= (gen) && \
 	  (cl)->generation.erased   > (gen) && \
-	  (cl)->generation.erased  != GEN_MAX - LD->thread.info->pl_tid \
+	  (cl)->generation.erased  != LD->gen_reload \
+	)
+#define GLOBALLY_VISIBLE_CLAUSE(cl, gen) \
+	( (cl)->generation.created <= (gen) && \
+	  (cl)->generation.erased   > (gen) \
 	)
 #else
 #define VISIBLE_CLAUSE(cl, gen) false(cl, CL_ERASED)
-#define VISIBLE_CLAUSE_DURING_RELOAD(cl, gen) false(cl, CL_ERASED)
+#define GLOBALLY_VISIBLE_CLAUSE(cl, gen) false(cl, CL_ERASED)
 #endif
 
 #define visibleClause(cl, gen) visibleClause__LD(cl, gen PASS_LD)
 #define visibleClauseCNT(cl, gen) visibleClauseCNT__LD(cl, gen PASS_LD)
+
+#define GEN_INVALID 0
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Struct clause must be a  multiple   of  sizeof(word)  for compilation on

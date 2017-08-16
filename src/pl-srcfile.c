@@ -720,13 +720,13 @@ startReconsultFile(SourceFile sf)
   if ( (r = allocHeap(sizeof(*sf->reload))) )
   { ListCell cell, next;
 
-    LD->in_reconsult = TRUE;
-
     memset(r, 0, sizeof(*r));
     r->procedures        = newHTable(16);
     r->reload_gen        = GEN_MAX-PL_thread_self();
     r->pred_access_count = popNPredicateAccess(0);
     sf->reload = r;
+
+    LD->gen_reload = r->reload_gen;
 
     for(cell = sf->procedures; cell; cell = next)
     { Procedure proc = cell->value;
@@ -738,7 +738,7 @@ startReconsultFile(SourceFile sf)
       for(c = def->impl.clauses.first_clause; c; c = c->next)
       { Clause cl = c->value.clause;
 
-        if ( !VISIBLE_CLAUSE(cl, global_generation()) || true(cl, CL_ERASED) )
+        if ( !GLOBALLY_VISIBLE_CLAUSE(cl, global_generation()) || true(cl, CL_ERASED) )
           continue;
         if ( true(def, P_MULTIFILE) && cl->owner_no != sf->index )
           continue;
@@ -758,7 +758,7 @@ startReconsultFile(SourceFile sf)
 static ClauseRef
 find_clause(ClauseRef cref, gen_t generation)
 { for(; cref; cref = cref->next)
-  { if ( VISIBLE_CLAUSE(cref->value.clause, generation) )
+  { if ( GLOBALLY_VISIBLE_CLAUSE(cref->value.clause, generation) )
       break;
   }
 
@@ -773,7 +773,7 @@ advance_clause(p_reload *r ARG_LD)
   if ( (cref = r->current_clause) )
   { acquire_def(r->predicate);
     for(cref = cref->next; cref; cref = cref->next)
-    { if ( VISIBLE_CLAUSE(cref->value.clause, r->generation) )
+    { if ( GLOBALLY_VISIBLE_CLAUSE(cref->value.clause, r->generation) )
 	break;
     }
     release_def(r->predicate);
@@ -795,6 +795,7 @@ keep_clause(p_reload *r, Clause clause ARG_LD)
 { ClauseRef cref = r->current_clause;
   Clause keep = cref->value.clause;
 
+  keep->generation.erased = GEN_MAX;
   copy_clause_source(keep, clause);
   freeClause(clause);
   advance_clause(r PASS_LD);
@@ -865,7 +866,7 @@ isRedefinedProcedure(Procedure proc, gen_t gen)
   acquire_def(def);
   for(c = def->impl.clauses.first_clause; c; c = c->next)
   { Clause cl = c->value.clause;
-    if ( VISIBLE_CLAUSE(cl, gen) )
+    if ( GLOBALLY_VISIBLE_CLAUSE(cl, gen) )
     { ret = TRUE;
       break;
     }
@@ -943,7 +944,6 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       { DEBUG(MSG_RECONSULT_CLAUSE,
 	      Sdprintf("  Keeping clause %d\n",
 		       clauseNo(def, cref->value.clause, reload->generation)));
-        cref->value.clause->generation.erased = GEN_MAX;
 	return keep_clause(reload, clause PASS_LD);
       }
 
@@ -953,7 +953,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
       for(cref2 = cref->next; cref2; cref2 = cref2->next)
       { Clause c2 = cref2->value.clause;
 
-	if ( !VISIBLE_CLAUSE(c2, reload->generation) )
+	if ( !GLOBALLY_VISIBLE_CLAUSE(c2, reload->generation) )
 	  continue;
 	if ( true(def, P_MULTIFILE) && c2->owner_no != sf->index )
 	  continue;
@@ -964,7 +964,7 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 	  for(del = cref; del != cref2; del = del->next)
 	  { Clause c = del->value.clause;
 
-	    if ( !VISIBLE_CLAUSE(c, reload->generation) ||
+	    if ( !GLOBALLY_VISIBLE_CLAUSE(c, reload->generation) ||
 		 true(c, CL_ERASED) )
 	      continue;
 	    if ( true(def, P_MULTIFILE) && c->owner_no != sf->index )
@@ -980,7 +980,6 @@ assertProcedureSource(SourceFile sf, Procedure proc, Clause clause ARG_LD)
 	  DEBUG(MSG_RECONSULT_CLAUSE,
 		Sdprintf("  Keeping clause %d\n",
 			 clauseNo(def, cref2->value.clause, reload->generation)));
-          cref2->value.clause->generation.erased = GEN_MAX;
 	  return keep_clause(reload, clause PASS_LD);
 	}
       }
@@ -1268,7 +1267,7 @@ delete_pending_clauses(SourceFile sf, Definition def, p_reload *r ARG_LD)
   for(cref = r->current_clause; cref; cref = cref->next)
   { Clause c = cref->value.clause;
 
-    if ( !VISIBLE_CLAUSE(c, r->generation) ||
+    if ( !GLOBALLY_VISIBLE_CLAUSE(c, r->generation) ||
 	 true(c, CL_ERASED) )
       continue;
     if ( true(r->predicate, P_MULTIFILE|P_DYNAMIC) && c->owner_no != sf->index )
@@ -1338,7 +1337,7 @@ endReconsult(SourceFile sf)
     sf->reload = NULL;
     freeHeap(reload, sizeof(*reload));
 
-    LD->in_reconsult = FALSE;
+    LD->gen_reload = GEN_INVALID;
 
     pl_garbage_collect_clauses();
   }
