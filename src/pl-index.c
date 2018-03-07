@@ -500,6 +500,10 @@ retry:
     if ( (ci=hashDefinition(clist, &hints, ctx)) )
     { int hi;
 
+      if ( ci->incomplete )
+      { wait_for_index(ci);
+      }
+
       chp->key = indexKeyFromArgv(ci, argv PASS_LD);
       assert(chp->key);
       hi = hashIndex(chp->key, ci->buckets);
