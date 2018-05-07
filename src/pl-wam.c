@@ -1541,7 +1541,7 @@ handler. If no GC is needed, we call trimStacks() to re-enable the spare
 stack-space if applicable.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-static void
+void
 resumeAfterException(int clear, Stack outofstack)
 { GET_LD
 

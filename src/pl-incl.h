@@ -249,7 +249,7 @@ gcc.
 /* AIX requires this to be the first thing in the file.  */
 #ifdef __GNUC__
 # ifndef alloca
-#  define alloca __builtin_alloca
+/*#  define alloca __builtin_alloca*/
 # endif
 #else
 # if HAVE_ALLOCA_H
@@ -348,7 +348,7 @@ typedef _sigset_t sigset_t;
 */
 
 #ifndef MAXPATHLEN
-#define MAXPATHLEN 1024
+#define MAXPATHLEN PATH_MAX
 #endif
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

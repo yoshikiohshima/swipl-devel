@@ -53,7 +53,7 @@ COMMON(Word)		alloc_attvar(ARG1_LD);
 
 /* pl-gvar.c */
 
-COMMON(void)		destroyGlobalVars();
+COMMON(void)		destroyGlobalVars(void);
 COMMON(void)		freezeGlobal(ARG1_LD);
 COMMON(int)		gvar_value__LD(atom_t name, Word p ARG_LD);
 

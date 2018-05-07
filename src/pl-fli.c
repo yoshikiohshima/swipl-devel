@@ -4334,7 +4334,8 @@ PL_clear_exception(void)
 { GET_LD
 
   if ( exception_term )
-  { resumeAfterException(TRUE, LD->outofstack);
+  {extern void resumeAfterException(int clear, Stack outofstack);
+      resumeAfterException(TRUE, LD->outofstack);
     LD->outofstack = NULL;
   }
 }
