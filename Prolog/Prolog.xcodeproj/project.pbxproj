@@ -131,7 +131,7 @@
 		BD4E808A20A11A3100D3F15B /* ios-main.m in Sources */ = {isa = PBXBuildFile; fileRef = BD4E808920A11A3100D3F15B /* ios-main.m */; };
 		BD4E808C20A209FD00D3F15B /* library in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808B20A209FD00D3F15B /* library */; };
 		BD4E808E20A2107800D3F15B /* main.pl in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808D20A2107800D3F15B /* main.pl */; };
-		BD4E809020A219AC00D3F15B /* main.prc in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808F20A219AC00D3F15B /* main.prc */; };
+		BD4E809320A260D800D3F15B /* PrologTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = BD4E809220A260D800D3F15B /* PrologTextView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -323,7 +323,8 @@
 		BD4E808920A11A3100D3F15B /* ios-main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ios-main.m"; sourceTree = SOURCE_ROOT; };
 		BD4E808B20A209FD00D3F15B /* library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = library; path = ../../library; sourceTree = "<group>"; };
 		BD4E808D20A2107800D3F15B /* main.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = main.pl; sourceTree = SOURCE_ROOT; };
-		BD4E808F20A219AC00D3F15B /* main.prc */ = {isa = PBXFileReference; lastKnownFileType = file; path = main.prc; sourceTree = "<group>"; };
+		BD4E809120A260A300D3F15B /* PrologTextView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrologTextView.h; sourceTree = "<group>"; };
+		BD4E809220A260D800D3F15B /* PrologTextView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PrologTextView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -356,7 +357,6 @@
 		BD4E7F1320A0E1B700D3F15B /* Prolog */ = {
 			isa = PBXGroup;
 			children = (
-				BD4E808F20A219AC00D3F15B /* main.prc */,
 				BD4E808D20A2107800D3F15B /* main.pl */,
 				BD4E808B20A209FD00D3F15B /* library */,
 				BD4E808920A11A3100D3F15B /* ios-main.m */,
@@ -367,6 +367,8 @@
 				BD4E7F1520A0E1B700D3F15B /* AppDelegate.m */,
 				BD4E7F1720A0E1B700D3F15B /* ViewController.h */,
 				BD4E7F1820A0E1B700D3F15B /* ViewController.m */,
+				BD4E809120A260A300D3F15B /* PrologTextView.h */,
+				BD4E809220A260D800D3F15B /* PrologTextView.m */,
 				BD4E7F1A20A0E1B700D3F15B /* Main.storyboard */,
 				BD4E7F1D20A0E1B800D3F15B /* Assets.xcassets */,
 				BD4E7F1F20A0E1B800D3F15B /* LaunchScreen.storyboard */,
@@ -641,7 +643,6 @@
 				BD4E7F2120A0E1B800D3F15B /* LaunchScreen.storyboard in Resources */,
 				BD4E808C20A209FD00D3F15B /* library in Resources */,
 				BD4E7F1E20A0E1B800D3F15B /* Assets.xcassets in Resources */,
-				BD4E809020A219AC00D3F15B /* main.prc in Resources */,
 				BD4E7F1C20A0E1B700D3F15B /* Main.storyboard in Resources */,
 				BD4E808820A102BE00D3F15B /* swipl.prc in Resources */,
 			);
@@ -678,6 +679,7 @@
 				BD4E7F9A20A0E34E00D3F15B /* pl-xterm.c in Sources */,
 				BD4E807120A0FB6400D3F15B /* leapsecs_read.c in Sources */,
 				BD4E806520A0FB6400D3F15B /* taia_approx.c in Sources */,
+				BD4E809320A260D800D3F15B /* PrologTextView.m in Sources */,
 				BD4E805C20A0FB6400D3F15B /* taia_sub.c in Sources */,
 				BD4E7FA820A0E34E00D3F15B /* pl-dde.c in Sources */,
 				BD4E808A20A11A3100D3F15B /* ios-main.m in Sources */,

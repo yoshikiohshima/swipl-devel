@@ -2900,6 +2900,10 @@ Swrite_file(void *handle, char *buf, size_t size)
   bytes = write((int)h, buf, size);
 #endif
 
+#ifdef IOS
+  extern int Swrite_fileToPrologTextView(char *buf, size_t size);
+  Swrite_fileToPrologTextView(buf, size);
+#endif
   return bytes;
 }
 

@@ -76,8 +76,7 @@ ios_main(void)
   strcpy(mainPath, mainDir);
   strcat(mainPath, "/main.pl");
 
-  const char *arg[] = {"swipl", mainPath, NULL};
-  
+  const char *arg[] = {"swipl", mainPath, NULL};  
   const char *dirs[] = {execPath, rscPath, documentsPath, NULL};
 
   //  const char *arg[] = {mainPath, NULL};
@@ -85,13 +84,6 @@ ios_main(void)
   if ( !ios_PL_initialise(2, arg, 3, dirs) )
     PL_halt(1);
 
-  for(;;)
-  { int status = PL_toplevel() ? 0 : 1;
-
-    PL_halt(status);
-  }
-
   return 0;
 }
-
-
+  
