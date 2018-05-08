@@ -74,7 +74,6 @@
 		BD4E7FD920A0E34E00D3F15B /* pl-ressymbol.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7F8F20A0E34E00D3F15B /* pl-ressymbol.c */; };
 		BD4E7FDA20A0E34E00D3F15B /* pl-trie.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7F9020A0E34E00D3F15B /* pl-trie.c */; };
 		BD4E7FDB20A0E34E00D3F15B /* pl-termhash.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7F9120A0E34E00D3F15B /* pl-termhash.c */; };
-		BD4E7FDE20A0E39800D3F15B /* ios-main.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7FDC20A0E39800D3F15B /* ios-main.c */; };
 		BD4E800320A0F6C100D3F15B /* pl-table.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7FE120A0F6BF00D3F15B /* pl-table.c */; };
 		BD4E800420A0F6C100D3F15B /* pl-dtoa.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7FE220A0F6BF00D3F15B /* pl-dtoa.c */; };
 		BD4E800520A0F6C100D3F15B /* pl-fmt.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E7FE320A0F6BF00D3F15B /* pl-fmt.c */; };
@@ -129,6 +128,7 @@
 		BD4E808320A0FD2B00D3F15B /* zip.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E807920A0FD2A00D3F15B /* zip.c */; };
 		BD4E808420A0FD2B00D3F15B /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E807C20A0FD2A00D3F15B /* ioapi.c */; };
 		BD4E808820A102BE00D3F15B /* swipl.prc in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808720A102BD00D3F15B /* swipl.prc */; };
+		BD4E808A20A11A3100D3F15B /* ios-main.m in Sources */ = {isa = PBXBuildFile; fileRef = BD4E808920A11A3100D3F15B /* ios-main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -238,7 +238,6 @@
 		BD4E7F9020A0E34E00D3F15B /* pl-trie.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pl-trie.c"; path = "../../../src/pl-trie.c"; sourceTree = "<group>"; };
 		BD4E7F9120A0E34E00D3F15B /* pl-termhash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pl-termhash.c"; path = "../../../src/pl-termhash.c"; sourceTree = "<group>"; };
 		BD4E7F9220A0E34E00D3F15B /* pl-thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "pl-thread.h"; path = "../../../src/pl-thread.h"; sourceTree = "<group>"; };
-		BD4E7FDC20A0E39800D3F15B /* ios-main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "ios-main.c"; sourceTree = SOURCE_ROOT; };
 		BD4E7FDD20A0E39800D3F15B /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
 		BD4E7FE020A0F6BF00D3F15B /* pl-cstack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "pl-cstack.h"; path = "../../../../src/os/pl-cstack.h"; sourceTree = "<group>"; };
 		BD4E7FE120A0F6BF00D3F15B /* pl-table.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "pl-table.c"; path = "../../../../src/os/pl-table.c"; sourceTree = "<group>"; };
@@ -318,6 +317,7 @@
 		BD4E807D20A0FD2A00D3F15B /* zip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zip.h; path = ../../../../src/minizip/zip.h; sourceTree = "<group>"; };
 		BD4E807E20A0FD2B00D3F15B /* unzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unzip.h; path = ../../../../src/minizip/unzip.h; sourceTree = "<group>"; };
 		BD4E808720A102BD00D3F15B /* swipl.prc */ = {isa = PBXFileReference; lastKnownFileType = file; path = swipl.prc; sourceTree = "<group>"; };
+		BD4E808920A11A3100D3F15B /* ios-main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ios-main.m"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -350,9 +350,9 @@
 		BD4E7F1320A0E1B700D3F15B /* Prolog */ = {
 			isa = PBXGroup;
 			children = (
+				BD4E808920A11A3100D3F15B /* ios-main.m */,
 				BD4E808720A102BD00D3F15B /* swipl.prc */,
 				BD4E7FDD20A0E39800D3F15B /* config.h */,
-				BD4E7FDC20A0E39800D3F15B /* ios-main.c */,
 				BD4E7F2A20A0E1CC00D3F15B /* src */,
 				BD4E7F1420A0E1B700D3F15B /* AppDelegate.h */,
 				BD4E7F1520A0E1B700D3F15B /* AppDelegate.m */,
@@ -668,6 +668,7 @@
 				BD4E806520A0FB6400D3F15B /* taia_approx.c in Sources */,
 				BD4E805C20A0FB6400D3F15B /* taia_sub.c in Sources */,
 				BD4E7FA820A0E34E00D3F15B /* pl-dde.c in Sources */,
+				BD4E808A20A11A3100D3F15B /* ios-main.m in Sources */,
 				BD4E805220A0FB6400D3F15B /* taia_now.c in Sources */,
 				BD4E7F9620A0E34E00D3F15B /* pl-trace.c in Sources */,
 				BD4E800920A0F6C100D3F15B /* pl-files.c in Sources */,
@@ -675,7 +676,6 @@
 				BD4E800C20A0F6C100D3F15B /* pl-text.c in Sources */,
 				BD4E800D20A0F6C100D3F15B /* pl-codelist.c in Sources */,
 				BD4E7FCD20A0E34E00D3F15B /* pl-variant.c in Sources */,
-				BD4E7FDE20A0E39800D3F15B /* ios-main.c in Sources */,
 				BD4E7FC120A0E34E00D3F15B /* pl-prof.c in Sources */,
 				BD4E801020A0F6C100D3F15B /* pl-buffer.c in Sources */,
 				BD4E805B20A0FB6400D3F15B /* leapsecs_add.c in Sources */,
@@ -827,8 +827,8 @@
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
+					"IOS=1",
+					"Debug=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -886,6 +886,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "IOS=1";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;

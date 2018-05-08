@@ -203,6 +203,7 @@ opt_append(opt_list **l, const char *s)
   return TRUE;
 }
 
+#ifndef IOS
 
 static char *
 findHome(const char *symbols, int argc, const char **argv)
@@ -293,6 +294,17 @@ findHome(const char *symbols, int argc, const char **argv)
 
   return NULL;
 }
+
+#else
+
+static char *
+findHome(const char *symbols, int argc, const char **argv)
+{ const char *home = argv[1];
+
+  return store_string(home);
+}
+
+#endif
 
 /*
   -- atoenne -- convert state to an absolute path. This allows relative
@@ -857,6 +869,24 @@ openResourceDB(int argc, char **argv)
   return NULL;
 }
 
+static zipper *
+ios_openResourceDB(char *rcpath)
+{ zipper *rc;
+  char *xfile = rcpath;
+  int flags = (GD->bootsession ? RC_WRONLY|RC_CREATE|RC_TRUNC : RC_RDONLY);
+  char tmp[MAXPATHLEN];
+  int n;
+
+  if ( xfile )
+  { errno = 0;
+    if ( !(rc = zip_open_archive(xfile, flags)) )
+      fatalError("Could not open resource database \"%s\": %s",
+		 xfile, errno ? OsError() : "not a ZIP file");
+
+    return rc;
+  }
+  return NULL;
+}
 
 int
 PL_is_initialised(int *argc, char ***argv)
@@ -1034,6 +1064,94 @@ PL_initialise(int argc, char **argv)
   }					/* { GET_LD } */
 }
 
+int
+ios_PL_initialise(int argc, char **argv)
+{ int n;
+  bool compile = FALSE;
+  char tmpPath[MAXPATHLEN] = {0};
+  char *rcpath = tmpPath;
+
+  if ( GD->initialised )
+    succeed;
+
+  initAlloc();
+  initPrologThreads();			/* initialise thread system */
+  SinitStreams();
+
+  GD->cmdline.os_argc = argc;
+  GD->cmdline.os_argv = argv;
+
+  initOs();				/* Initialise OS bindings */
+  initDefaults();			/* Initialise global defaults */
+  initPaths(argc, (const char**)argv);	/* fetch some useful paths */
+
+  { GET_LD
+#ifdef HAVE_SIGNAL
+    setPrologFlagMask(PLFLAG_SIGNALS);	/* default: handle signals */
+#endif
+
+    strcpy(tmpPath, argv[1]);
+    strcat(tmpPath, "/swipl.prc");
+
+    DEBUG(MSG_INITIALISE, if (GD->bootsession) Sdprintf("Boot session\n"););
+
+    if ( !GD->resources.DB )
+    { if ( !(GD->resources.DB = ios_openResourceDB(tmpPath)) )
+      { fatalError("Could not find system resources");
+      }
+      rcpath = zipper_file(GD->resources.DB);
+      initDefaultOptions();
+    }
+
+  GD->cmdline.appl_argc = 0;
+  GD->cmdline.appl_argv = NULL;
+
+  if ( !setupProlog() )
+    return FALSE;
+#ifdef O_PLMT
+  aliasThread(PL_thread_self(), ATOM_thread, ATOM_main);
+  enableThreads(TRUE);
+#endif
+  PL_set_prolog_flag("resource_database", PL_ATOM|FF_READONLY, rcpath);
+  initialiseForeign(GD->cmdline.os_argc, /* PL_initialise_hook() functions */
+		    GD->cmdline.os_argv);
+  setAccessLevel(ACCESS_LEVEL_SYSTEM);
+
+  { IOSTREAM *statefd = SopenZIP(GD->resources.DB, "$prolog/state.qlf", RC_RDONLY);
+
+    if ( statefd )
+    { GD->bootsession = TRUE;
+      if ( !loadWicFromStream(rcpath, statefd) )
+	return FALSE;
+      GD->bootsession = FALSE;
+
+      Sclose(statefd);
+    } else
+    { fatalError("Resource database \"%s\" does not contain "
+		 "\"$prolog/state.qlf\"", rcpath);
+    }
+  }
+
+  debugstatus.styleCheck = (SINGLETON_CHECK|SEMSINGLETON_CHECK|
+			    DISCONTIGUOUS_STYLE|
+			    NOEFFECT_CHECK);
+  setAccessLevel(ACCESS_LEVEL_USER);
+  GD->initialised = TRUE;
+  registerForeignLicenses();
+
+  DEBUG(MSG_INITIALISE, Sdprintf("Starting Prolog Part of initialisation\n"));
+
+  if ( compile )
+  { int status = prologToplevel(PL_new_atom("$compile")) ? 0 : 1;
+
+    PL_halt(status);
+    fail;				/* make compiler happy */
+  } else
+  { int status = prologToplevel(PL_new_atom("$initialise"));
+    return status;
+  }
+  }					/* { GET_LD } */
+}
 
 int
 PL_set_resource_db_mem(const unsigned char *data, size_t size)

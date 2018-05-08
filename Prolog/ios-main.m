@@ -33,34 +33,14 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <Foundation/Foundation.h>
+
 #include <stdio.h>
-#ifndef __WINDOWS__
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#define __WINDOWS__ 1
-#endif
-#endif
-
-#ifdef __WINDOWS__
-#include <winsock2.h>
-#include <windows.h>
-#include "os/SWI-Stream.h"
-#define PL_ARITY_AS_SIZE 1
-#include "SWI-Prolog.h"
-#include <signal.h>
-
-#ifndef O_CTRLC
-#define O_CTRLC 1
-#endif
-#ifndef O_ANSI_COLORS
-#define O_ANSI_COLORS 1
-#endif
-
-#else /* non-Windows version */
 
 #define PL_ARITY_AS_SIZE
 #include "SWI-Prolog.h"
 
-#endif
+#include "ios-main.h"
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 This is SWI-Prolog's main(),  creating   swipl  or  swipl.exe (Windows).
@@ -70,47 +50,24 @@ interface to get the system going.
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 		 /*******************************
-		 *	     INTERRUPT		*
-		 *******************************/
-
-#if O_CTRLC
-static DWORD main_thread_id;
-
-static BOOL
-consoleHandlerRoutine(DWORD id)
-{ switch(id)
-  { case CTRL_C_EVENT:
-#ifdef O_PLMT
-      PL_w32thread_raise(main_thread_id, SIGINT);
-#else
-      PL_raise(SIGINT);
-#endif
-      return TRUE;
-  }
-
-  return FALSE;
-}
-#endif
-
-
-		 /*******************************
 		 *		MAIN		*
 		 *******************************/
 
 
 int
-ios_main(int argc, char **argv)
+ios_main(void)
 {
-#if O_CTRLC
-  main_thread_id = GetCurrentThreadId();
-  SetConsoleCtrlHandler((PHANDLER_ROUTINE)consoleHandlerRoutine, TRUE);
-#endif
+  NSString *path;
 
-#if O_ANSI_COLORS
-  PL_w32_wrap_ansi_console();	/* decode ANSI color sequences (ESC[...m) */
-#endif
+  path = [[NSBundle mainBundle] executablePath];
+  const char *execPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
-  if ( !PL_initialise(argc, argv) )
+  path = [[NSBundle mainBundle] resourcePath];
+  const char *rscPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
+
+  const char *arg[] = {execPath, rscPath, NULL};
+
+  if ( !ios_PL_initialise(2, arg) )
     PL_halt(1);
 
   for(;;)

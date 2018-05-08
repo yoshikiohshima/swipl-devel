@@ -17,10 +17,9 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
-    extern int ios_main(int argc, char **argv);
+    extern int ios_main(void);
 
-    char *arg[] = {"swipl", NULL};
-    ios_main(1, arg);
+    ios_main();
 }
 
 

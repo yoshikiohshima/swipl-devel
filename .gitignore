@@ -23,7 +23,6 @@
 *.bbl
 *.blg
 TAGS
-config.h
 config.log
 config.status
 build
