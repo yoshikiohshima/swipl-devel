@@ -1065,7 +1065,7 @@ PL_initialise(int argc, char **argv)
 }
 
 int
-ios_PL_initialise(int argc, char **argv)
+ios_PL_initialise(int argc, char **argv, int dirc, char **dirv)
 { int n;
   bool compile = FALSE;
   char tmpPath[MAXPATHLEN] = {0};
@@ -1083,14 +1083,14 @@ ios_PL_initialise(int argc, char **argv)
 
   initOs();				/* Initialise OS bindings */
   initDefaults();			/* Initialise global defaults */
-  initPaths(argc, (const char**)argv);	/* fetch some useful paths */
+  initPaths(dirc, (const char**)dirv);	/* fetch some useful paths */
 
   { GET_LD
 #ifdef HAVE_SIGNAL
     setPrologFlagMask(PLFLAG_SIGNALS);	/* default: handle signals */
 #endif
 
-    strcpy(tmpPath, argv[1]);
+    strcpy(tmpPath, dirv[1]);
     strcat(tmpPath, "/swipl.prc");
 
     DEBUG(MSG_INITIALISE, if (GD->bootsession) Sdprintf("Boot session\n"););
@@ -1103,8 +1103,8 @@ ios_PL_initialise(int argc, char **argv)
       initDefaultOptions();
     }
 
-  GD->cmdline.appl_argc = 0;
-  GD->cmdline.appl_argv = NULL;
+  GD->cmdline.appl_argc = 1;
+  GD->cmdline.appl_argv = &argv[1];
 
   if ( !setupProlog() )
     return FALSE;

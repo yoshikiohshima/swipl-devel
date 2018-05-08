@@ -65,9 +65,24 @@ ios_main(void)
   path = [[NSBundle mainBundle] resourcePath];
   const char *rscPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
-  const char *arg[] = {execPath, rscPath, NULL};
+  NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+  path = [paths objectAtIndex:0];
+  const char *documentsPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
-  if ( !ios_PL_initialise(2, arg) )
+  path = [[NSBundle mainBundle] bundlePath];
+  const char *mainDir = [path cStringUsingEncoding:NSUTF8StringEncoding];
+
+  char mainPath[MAXPATHLEN] = {0};
+  strcpy(mainPath, mainDir);
+  strcat(mainPath, "/main.pl");
+
+  const char *arg[] = {"swipl", mainPath, NULL};
+  
+  const char *dirs[] = {execPath, rscPath, documentsPath, NULL};
+
+  //  const char *arg[] = {mainPath, NULL};
+  //if ( !PL_initialise(1, arg, dirs) )
+  if ( !ios_PL_initialise(2, arg, 3, dirs) )
     PL_halt(1);
 
   for(;;)

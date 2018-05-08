@@ -129,6 +129,9 @@
 		BD4E808420A0FD2B00D3F15B /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = BD4E807C20A0FD2A00D3F15B /* ioapi.c */; };
 		BD4E808820A102BE00D3F15B /* swipl.prc in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808720A102BD00D3F15B /* swipl.prc */; };
 		BD4E808A20A11A3100D3F15B /* ios-main.m in Sources */ = {isa = PBXBuildFile; fileRef = BD4E808920A11A3100D3F15B /* ios-main.m */; };
+		BD4E808C20A209FD00D3F15B /* library in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808B20A209FD00D3F15B /* library */; };
+		BD4E808E20A2107800D3F15B /* main.pl in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808D20A2107800D3F15B /* main.pl */; };
+		BD4E809020A219AC00D3F15B /* main.prc in Resources */ = {isa = PBXBuildFile; fileRef = BD4E808F20A219AC00D3F15B /* main.prc */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -318,6 +321,9 @@
 		BD4E807E20A0FD2B00D3F15B /* unzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = unzip.h; path = ../../../../src/minizip/unzip.h; sourceTree = "<group>"; };
 		BD4E808720A102BD00D3F15B /* swipl.prc */ = {isa = PBXFileReference; lastKnownFileType = file; path = swipl.prc; sourceTree = "<group>"; };
 		BD4E808920A11A3100D3F15B /* ios-main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "ios-main.m"; sourceTree = SOURCE_ROOT; };
+		BD4E808B20A209FD00D3F15B /* library */ = {isa = PBXFileReference; lastKnownFileType = folder; name = library; path = ../../library; sourceTree = "<group>"; };
+		BD4E808D20A2107800D3F15B /* main.pl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.perl; path = main.pl; sourceTree = SOURCE_ROOT; };
+		BD4E808F20A219AC00D3F15B /* main.prc */ = {isa = PBXFileReference; lastKnownFileType = file; path = main.prc; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -350,6 +356,9 @@
 		BD4E7F1320A0E1B700D3F15B /* Prolog */ = {
 			isa = PBXGroup;
 			children = (
+				BD4E808F20A219AC00D3F15B /* main.prc */,
+				BD4E808D20A2107800D3F15B /* main.pl */,
+				BD4E808B20A209FD00D3F15B /* library */,
 				BD4E808920A11A3100D3F15B /* ios-main.m */,
 				BD4E808720A102BD00D3F15B /* swipl.prc */,
 				BD4E7FDD20A0E39800D3F15B /* config.h */,
@@ -628,8 +637,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD4E808E20A2107800D3F15B /* main.pl in Resources */,
 				BD4E7F2120A0E1B800D3F15B /* LaunchScreen.storyboard in Resources */,
+				BD4E808C20A209FD00D3F15B /* library in Resources */,
 				BD4E7F1E20A0E1B800D3F15B /* Assets.xcassets in Resources */,
+				BD4E809020A219AC00D3F15B /* main.prc in Resources */,
 				BD4E7F1C20A0E1B700D3F15B /* Main.storyboard in Resources */,
 				BD4E808820A102BE00D3F15B /* swipl.prc in Resources */,
 			);
