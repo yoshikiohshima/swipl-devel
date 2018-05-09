@@ -4631,6 +4631,23 @@ pl_raw_read(term_t term)
 }
 
 
+char *ios_input_string = "";
+int ios_input_string_length = 0;
+
+void
+set_ios_input_string(char *str, int len) {
+  ios_input_string = str;
+  ios_input_string_length = len;
+}
+
+
+word
+pl_raw_ios_read(term_t term)
+{
+  IOSTREAM *stream = Sopen_string(NULL, ios_input_string, ios_input_string_length, "r");
+  return pl_raw_read2(stream, term);
+}
+
 word
 pl_read2(term_t from, term_t term)
 { GET_LD
@@ -5153,7 +5170,7 @@ PL_put_term_from_chars(term_t t, int flags, size_t len, const char *s)
 
 int
 PL_chars_to_term(const char *s, term_t t)
-{ return PL_put_term_from_chars(t, REP_ISO_LATIN_1, (size_t)-1, s);
+{ return PL_put_term_from_chars(t, REP_UTF8, (size_t)-1, s);
 }
 
 

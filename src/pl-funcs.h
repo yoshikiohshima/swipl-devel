@@ -573,6 +573,7 @@ COMMON(strnumstat)	str_number(const unsigned char *string,
 COMMON(const char *)	str_number_error(strnumstat rc);
 COMMON(word)		pl_raw_read(term_t term);
 COMMON(word)		pl_raw_read2(term_t stream, term_t term);
+COMMON(word)		pl_raw_ios_read(term_t term);
 COMMON(word)		pl_read(term_t term);
 COMMON(word)		pl_read2(term_t stream, term_t term);
 COMMON(void)		initCharConversion(void);

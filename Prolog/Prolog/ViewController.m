@@ -37,13 +37,13 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     prologView = ctv;
     ctv.layer.borderWidth = 2.0f;
     ctv.layer.borderColor = [[UIColor grayColor] CGColor];
-    ctv.text = @"replace this with a lengthy text.....";
+    ctv.text = @"SWI-Prolog!\n";
     prologView = ctv;
 
     inputView = [[PrologInputView alloc] init];
     inputView.layer.borderWidth = 2.0f;
     inputView.layer.borderColor = [[UIColor grayColor] CGColor];
-    inputView.text = @"";
+    inputView.text = @"X is 3 + 5.";
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     [button setTitle:@"Go!" forState:UIControlStateNormal];
@@ -97,6 +97,15 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     NSString *textValue = [NSString stringWithFormat:@"%@\n", inputView.text];
     appendText(textValue);
     [inputView setText: @""];
+
+    extern void set_ios_input_string(char *str, int len);
+    char *in = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
+    int len = strlen(in);
+    set_ios_input_string(in, len);
+
+    extern int PL_query_loop(void);
+
+    int status = PL_query_loop();
 }
 
 
@@ -106,9 +115,3 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
 }
 
 @end
-
-
-
-
-
-  

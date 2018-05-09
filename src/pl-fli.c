@@ -4554,6 +4554,16 @@ PL_toplevel(void)
   return rval;
 }
 
+int
+PL_query_loop(void)
+{ atom_t a = PL_new_atom("$query_loop");
+    int rval = prologToplevel(a);
+    
+    PL_unregister_atom(a);
+    
+    return rval;
+}
+
 
 int
 PL_halt(int status)

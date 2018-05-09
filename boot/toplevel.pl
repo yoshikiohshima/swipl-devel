@@ -797,6 +797,17 @@ break_level(BreakLev) :-
     ).
 
 read_expanded_query(BreakLev, ExpandedQuery, ExpandedBindings) :-
+    current_prolog_flag(ios, true),
+    !,
+    format('ios is true in read_expanded_query (2)\n'),
+    trim_stacks,
+    read_query(Prompt, Query, Bindings),
+    catch(call_expand_query(Query, ExpandedQuery,
+                            Bindings, ExpandedBindings),
+          Error,
+          (print_message(error, Error), fail)).
+
+read_expanded_query(BreakLev, ExpandedQuery, ExpandedBindings) :-
     '$current_typein_module'(TypeIn),
     (   stream_property(user_input, tty(true))
     ->  '$system_prompt'(TypeIn, BreakLev, Prompt),
@@ -820,6 +831,20 @@ read_expanded_query(BreakLev, ExpandedQuery, ExpandedBindings) :-
 %   Read the next query. The first  clause   deals  with  the case where
 %   !-based history is enabled. The second is   used  if we have command
 %   line editing.
+
+read_query(Prompt, Goal, Bindings) :-
+    current_prolog_flag(ios, true),
+    !,
+    read_query_line(user_input, Line),
+    format('Line is ~w, ~w\n', [Line, var(Line)]),
+    '$current_typein_module'(TypeIn),
+    catch(read_term_from_atom(Line, Goal,
+                              [ variable_names(Bindings),
+                                module(TypeIn)
+                              ]), E,
+          (   print_message(error, E),
+              fail
+          )).
 
 read_query(Prompt, Goal, Bindings) :-
     current_prolog_flag(history, N),
@@ -848,7 +873,10 @@ read_query(Prompt, Goal, Bindings) :-
 %!  read_query_line(+Input, -Line) is det.
 
 read_query_line(Input, Line) :-
-    catch(read_term_as_atom(Input, Line), Error, true),
+    (    current_prolog_flag(ios, true)
+    ->   format('ios is true in read_query_line\n'),
+         '$raw_ios_read'(Line)
+    ; catch(read_term_as_atom(Input, Line), Error, true)),
     save_debug_after_read,
     (   var(Error)
     ->  true
