@@ -799,7 +799,6 @@ break_level(BreakLev) :-
 read_expanded_query(BreakLev, ExpandedQuery, ExpandedBindings) :-
     current_prolog_flag(ios, true),
     !,
-    format('ios is true in read_expanded_query (2)\n'),
     trim_stacks,
     read_query(Prompt, Query, Bindings),
     catch(call_expand_query(Query, ExpandedQuery,
@@ -836,7 +835,6 @@ read_query(Prompt, Goal, Bindings) :-
     current_prolog_flag(ios, true),
     !,
     read_query_line(user_input, Line),
-    format('Line is ~w, ~w\n', [Line, var(Line)]),
     '$current_typein_module'(TypeIn),
     catch(read_term_from_atom(Line, Goal,
                               [ variable_names(Bindings),
@@ -874,8 +872,7 @@ read_query(Prompt, Goal, Bindings) :-
 
 read_query_line(Input, Line) :-
     (    current_prolog_flag(ios, true)
-    ->   format('ios is true in read_query_line\n'),
-         '$raw_ios_read'(Line)
+    ->   '$raw_ios_read'(Line)
     ; catch(read_term_as_atom(Input, Line), Error, true)),
     save_debug_after_read,
     (   var(Error)

@@ -4645,7 +4645,8 @@ word
 pl_raw_ios_read(term_t term)
 {
   IOSTREAM *stream = Sopen_string(NULL, ios_input_string, ios_input_string_length, "r");
-  return pl_raw_read2(stream, term);
+  //return pl_raw_read2(stream, term);
+  return pl_raw_read2(0, term);
 }
 
 word
