@@ -1,16 +1,16 @@
 //
-//  PrologTextView.h
+//  PrologInputView.h
 //  Prolog
 //
 //  Created by Yoshiki Ohshima on 2018/05/08.
 //  Copyright © 2018年 Yoshiki Ohshima. All rights reserved.
 //
 
-#ifndef PrologTextView_h
-#define PrologTextView_h
+#ifndef PrologInputView_h
+#define PrologInputView_h
 
 #import <UIKit/UIKit.h>
-@interface PrologTextView : UITextView
+@interface PrologInputView : UITextView
 @end
 
-#endif /* PrologTextView_h */
+#endif /* PrologInputView_h */

@@ -1,5 +1,5 @@
 //
-//  PrologTextView.m
+//  PrologInputView.m
 //  Prolog
 //
 //  Created by Yoshiki Ohshima on 2018/05/08.
@@ -7,10 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "PrologInputView.h"
 
-#import "PrologTextView.h"
 
-@implementation PrologTextView
+@implementation PrologInputView
 - (id)initWithCoder:(NSCoder *)aDecoder{
     self = [super initWithCoder:aDecoder];
     if (self)
@@ -26,10 +26,10 @@
 }
 
 - (void)initialSetup{
-    self.textContainer.maximumNumberOfLines = 0;
+    self.textContainer.maximumNumberOfLines = 3;
     self.textContainer.lineBreakMode = NSLineBreakByTruncatingTail;
-    self.scrollEnabled = TRUE;
-    self.editable = FALSE;
+    self.scrollEnabled = false;
+    self.editable = TRUE;
     self.selectable = TRUE;
 }
 
@@ -38,4 +38,3 @@
 }
 
 @end
-
