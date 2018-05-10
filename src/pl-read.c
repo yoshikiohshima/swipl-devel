@@ -4652,8 +4652,8 @@ pl_raw_ios_read(term_t term)
   PL_put_atom_chars(av, ios_input_string);
   int status = PL_unify(term, av);
 
-    ios_input_string = "";
-    ios_input_string_length = 0;
+  ios_input_string = "";
+  ios_input_string_length = 0;
   return status;
 
   //IOSTREAM *stream = Sopen_string(NULL, ios_input_string, ios_input_string_length, "r");
