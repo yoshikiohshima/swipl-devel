@@ -14,6 +14,7 @@
 
 static PrologTextView *prologView = NULL;
 static PrologInputView *inputView = NULL;
+static NSDictionary *viewsDictionary = NULL;
 
 void appendText(NSString *str) {
     [prologView setText:[prologView.text stringByAppendingString:str]];
@@ -46,6 +47,13 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     inputView.layer.borderWidth = 2.0f;
     inputView.layer.borderColor = [[UIColor grayColor] CGColor];
     inputView.text = @"X is 3 + 5.";
+    inputView.delegate = self;
+
+    [self.view addSubview:ctv];
+    [self.view addSubview:inputView];
+    
+    [ctv resignFirstResponder];
+    [inputView resignFirstResponder];
 
     UIButton *goButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [goButton setTitle:@"Go!" forState:UIControlStateNormal];
@@ -65,51 +73,23 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
 
     [self.view addSubview:qButton];
 
-
- 
     [ctv setTranslatesAutoresizingMaskIntoConstraints:NO];
     [inputView setTranslatesAutoresizingMaskIntoConstraints:NO];
     [goButton setTranslatesAutoresizingMaskIntoConstraints:NO];
     [qButton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    [self.view addSubview:ctv];
-    [self.view addSubview:inputView];
 
-    NSDictionary *viewsDictionary = NSDictionaryOfVariableBindings(ctv, inputView, goButton, qButton);
+    viewsDictionary = NSDictionaryOfVariableBindings(ctv, inputView, goButton, qButton);
 
-    [self.view addConstraints:
-     [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[ctv]-5-|"
-                                             options:0
-                                             metrics:nil views:viewsDictionary]];
-    [self.view addConstraints:
-     [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[inputView]-[goButton]-[qButton]-5-|"
-                                             options:0
-                                             metrics:nil views:viewsDictionary]];
-    [self.view addConstraints:
-     [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[ctv]-[inputView]-5-|"
-                                             options:0
-                                             metrics:nil views:viewsDictionary]];
+    extern int ios_initialize(void);
+    ios_initialize();
+    
+    [inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
 
-    NSLayoutConstraint *eq = [NSLayoutConstraint constraintWithItem:inputView
-                                                         attribute:NSLayoutAttributeCenterY
-                                                         relatedBy:NSLayoutRelationEqual
-                                                            toItem:goButton
-                                                         attribute:NSLayoutAttributeCenterY
-                                                        multiplier:1
-                                                           constant:0];
-    NSLayoutConstraint *eq2 = [NSLayoutConstraint constraintWithItem:inputView
-                                                         attribute:NSLayoutAttributeCenterY
-                                                         relatedBy:NSLayoutRelationEqual
-                                                            toItem:qButton
-                                                         attribute:NSLayoutAttributeCenterY
-                                                        multiplier:1
-                                                           constant:0];
-    NSArray *cnts = @[eq, eq2];
-    [self.view addConstraints: cnts];
-
-    // Do any additional setup after loading the view, typically from a nib.
-    extern int ios_main(void);
-    ios_main();
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+					     selector:@selector(keyboardWillShow:)
+						 name:UIKeyboardWillShowNotification
+					       object:nil];
 }
 
 - (void)doGoButton {
@@ -131,6 +111,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   int status;
   predicate_t teaches = PL_predicate("teaches", 2, NULL);
 
+  char *newTerm = "learner(haruko, scratch)";
+
   term_t av = PL_new_term_refs(2);
   PL_put_atom_chars(av, "suzuko");
   pid_t q = PL_open_query(NULL, PL_Q_NODEBUG|PL_Q_ALLOW_YIELD|PL_Q_EXT_STATUS, teaches, av);
@@ -144,7 +126,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
       char *str;
       status = PL_get_atom_chars(av+1, &str);
       if (status) {
-        printf("print: %s\n", str);
+	Swrite_fileToPrologTextView(str, strlen(str));
+	Swrite_fileToPrologTextView("\n", 1);
       }
     } else {
       PL_close_query(q);
@@ -153,6 +136,50 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   }
 }
 
+- (BOOL)textViewShouldBeginEditing:(UITextView *)textView {
+  return TRUE;
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification
+{
+  [self.view addConstraints:
+	 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[ctv]-5-|"
+						 options:0
+						 metrics:nil views:viewsDictionary]];
+  [self.view addConstraints:
+	 [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[inputView]-[goButton]-[qButton]-5-|"
+						 options:0
+						 metrics:nil views:viewsDictionary]];
+
+  char layout[1000];
+  int keyboardH = (int)([notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height) + 5;
+
+  sprintf(layout, "V:|-20-[ctv]-[inputView]-%d-|", keyboardH);
+
+
+  [self.view addConstraints:
+    [NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithUTF8String: layout]
+					    options:0
+					    metrics:nil views:viewsDictionary]];
+
+  NSLayoutConstraint *eq = [NSLayoutConstraint constraintWithItem:[viewsDictionary objectForKey: @"inputView"]
+							attribute:NSLayoutAttributeCenterY
+							relatedBy:NSLayoutRelationEqual
+							   toItem:[viewsDictionary objectForKey: @"goButton"]
+							attribute:NSLayoutAttributeCenterY
+						       multiplier:1
+							 constant:0];
+  NSLayoutConstraint *eq2 = [NSLayoutConstraint constraintWithItem:[viewsDictionary objectForKey: @"inputView"]
+                                                         attribute:NSLayoutAttributeCenterY
+                                                         relatedBy:NSLayoutRelationEqual
+                                                            toItem:[viewsDictionary objectForKey: @"qButton"]
+                                                         attribute:NSLayoutAttributeCenterY
+                                                        multiplier:1
+							  constant:0];
+
+  NSArray *cnts = @[eq, eq2];
+  [self.view addConstraints: cnts];
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

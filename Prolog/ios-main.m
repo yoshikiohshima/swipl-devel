@@ -55,7 +55,7 @@ interface to get the system going.
 
 
 int
-ios_main(void)
+ios_initialize(void)
 {
   NSString *path;
 

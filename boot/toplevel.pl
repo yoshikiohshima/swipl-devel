@@ -892,6 +892,12 @@ ios_read_query(Goal, Bindings) :-
 ios_read_query_line(Line) :-
     '$raw_ios_read'(Line).
 
+load_string(Id, Text) :- 
+    setup_call_cleanup(
+            open_string(Text, Stream),
+            load_files(Id, [stream(Stream)]),
+            close(Stream)).
+
 
 %!  read_term_as_atom(+Input, -Line)
 %

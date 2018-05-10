@@ -18,5 +18,3 @@ learner(ken, scratch).
 learner(ken, volleyball).
 
 teaches(X, Y) :- expert(X, S), learner(Y, S).
-
-
