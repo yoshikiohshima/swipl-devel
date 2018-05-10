@@ -10,3 +10,13 @@ go :-
         Val is Term,
         format('Result is ~w~n', [Val]).
 
+expert(suzuko, scratch).
+expert(yoshiki, volleyball).
+
+learner(yoshiki, scratch).
+learner(ken, scratch).
+learner(ken, volleyball).
+
+teaches(X, Y) :- expert(X, S), learner(Y, S).
+
+
