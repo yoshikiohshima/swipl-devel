@@ -874,8 +874,6 @@ ios_openResourceDB(char *rcpath)
 { zipper *rc;
   char *xfile = rcpath;
   int flags = (GD->bootsession ? RC_WRONLY|RC_CREATE|RC_TRUNC : RC_RDONLY);
-  char tmp[MAXPATHLEN];
-  int n;
 
   if ( xfile )
   { errno = 0;

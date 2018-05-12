@@ -18,6 +18,7 @@ static NSDictionary *viewsDictionary = NULL;
 
 void appendText(NSString *str) {
     [prologView setText:[prologView.text stringByAppendingString:str]];
+[prologView scrollRangeToVisible:NSMakeRange([prologView.text length], 0)];
 }
 
 int Swrite_fileToPrologTextView(char *buf, size_t size) {
@@ -46,6 +47,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     inputView = [[PrologInputView alloc] init];
     inputView.layer.borderWidth = 2.0f;
     inputView.layer.borderColor = [[UIColor grayColor] CGColor];
+    inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
     inputView.text = @"X is 3 + 5.";
     inputView.delegate = self;
 
@@ -98,7 +100,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     [inputView setText: @""];
 
     extern void set_ios_input_string(char *str, int len);
-    char *in = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *in = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
     int len = strlen(in);
     set_ios_input_string(in, len);
 
@@ -110,8 +112,6 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
 - (void)doQueryButton {
   int status;
   predicate_t teaches = PL_predicate("teaches", 2, NULL);
-
-  char *newTerm = "learner(haruko, scratch)";
 
   term_t av = PL_new_term_refs(2);
   PL_put_atom_chars(av, "suzuko");
