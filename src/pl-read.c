@@ -4648,6 +4648,21 @@ pl_raw_ios_read(term_t term)
   if (ios_input_string_length == 0) {
     fail;
   }
+
+  return PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
+  ios_input_string = "";
+  ios_input_string_length = 0;
+}
+
+
+/*
+word
+pl_raw_ios_read(term_t term)
+{ GET_LD
+
+  if (ios_input_string_length == 0) {
+    fail;
+  }
   term_t av = PL_new_term_ref();
   PL_put_atom_chars(av, ios_input_string);
   int status = PL_unify(term, av);
@@ -4660,6 +4675,7 @@ pl_raw_ios_read(term_t term)
   //return pl_raw_read2(stream, term);
   //return pl_raw_read2(0, term);
 }
+*/
 
 word
 pl_read2(term_t from, term_t term)
