@@ -1,11 +1,9 @@
 /*  Part of SWI-Prolog
 
-    Author:        Jan Wielemaker
-    E-mail:        J.Wielemaker@vu.nl
+    Author:        Yoshiki Ohshima
+    E-mail:        Yoshiki.Ohshima@acm.org
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  1985-2012, University of Amsterdam
-                              VU University Amsterdam
-    All rights reserved.
+    Copyright (c)  2018 All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions
@@ -42,12 +40,6 @@
 
 #include "ios-main.h"
 
-/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-This is SWI-Prolog's main(),  creating   swipl  or  swipl.exe (Windows).
-SWI-Prolog itself is in  the   library  libswipl.{a,so,dll,...}, this is
-merely a main() routine that sets up I/O and uses SWI-Prolog's embedding
-interface to get the system going.
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 		 /*******************************
 		 *		MAIN		*

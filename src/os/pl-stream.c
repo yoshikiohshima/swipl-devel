@@ -2902,7 +2902,9 @@ Swrite_file(void *handle, char *buf, size_t size)
 
 #ifdef IOS
   extern int Swrite_fileToPrologTextView(char *buf, size_t size);
-  Swrite_fileToPrologTextView(buf, size);
+  if (handle == 1) {
+    Swrite_fileToPrologTextView(buf, size);
+  }
 #endif
   return bytes;
 }

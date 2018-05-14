@@ -8,7 +8,16 @@
 
 #import <UIKit/UIKit.h>
 
+#import "PrologTextView.h"
+#import "PrologInputView.h"
+
 @interface ViewController : UIViewController <UITextViewDelegate>
+
+@property PrologTextView *prologView;
+@property PrologInputView *inputView;
+@property NSDictionary *viewsDictionary;
+
+- (void)appendText: (NSString*)str;
 
 
 @end
