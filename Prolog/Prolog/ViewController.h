@@ -16,8 +16,17 @@
 @property PrologTextView *prologView;
 @property PrologInputView *inputView;
 @property NSDictionary *viewsDictionary;
+@property NSThread *interpreterThread;
+@property NSCondition *inputCondition;
+
+@property char *inputString;
+@property int *inputLength;
+
+//@property NSArray* outputArray;
+
 
 - (void)appendText: (NSString*)str;
+- (void)readFromPrologInput;
 
 
 @end

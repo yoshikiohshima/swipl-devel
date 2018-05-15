@@ -2902,7 +2902,7 @@ Swrite_file(void *handle, char *buf, size_t size)
 
 #ifdef IOS
   extern int Swrite_fileToPrologTextView(char *buf, size_t size);
-  if (handle == 1) {
+  if (handle == 1 || handle == 2) {
     Swrite_fileToPrologTextView(buf, size);
   }
 #endif
@@ -3703,6 +3703,7 @@ Sopenmem(char **bufp, size_t *sizep, const char *mode)
   return Snew(mf, flags, &Smemfunctions);
 }
 
+
 		 /*******************************
 		 *	      STRINGS		*
 		 *******************************/
@@ -3773,6 +3774,91 @@ Sopen_string(IOSTREAM *s, char *buf, size_t size, const char *mode)
   s->handle    = s;			/* for Sclose_string() */
   s->functions = &Sstringfunctions;
   s->encoding  = ENC_ISO_LATIN_1;
+
+  switch(*mode)
+  { case 'r':
+      if ( size == (size_t)-1 )
+	size = strlen(buf);
+      flags |= SIO_INPUT;
+      break;
+    case 'w':
+      flags |= SIO_OUTPUT;
+      break;
+    default:
+      errno = EINVAL;
+      return NULL;
+  }
+
+  s->flags  = flags;
+  s->limitp = &buf[size];
+  s->magic  = SIO_MAGIC;
+
+  return s;
+}
+
+
+
+		 /*******************************
+		 *	  IOS UI-based STREAMS	*
+		 *******************************/
+
+static ssize_t
+Sread_ios_view(void *handle, char *buf, size_t size)
+{
+  if ((int)handle == 1) {
+    extern int read_from_input(void);
+    read_from_input();
+    extern int ios_input_string_length;
+
+    return ios_input_string_length;
+  }
+
+  return 0;				/* signal EOF */
+}
+
+static ssize_t
+Swrite_ios_view(void *handle, char *buf, size_t size)
+{ (void)handle;
+  (void)buf;
+  (void)size;
+
+  errno = ENOSPC;			/* signal error */
+  return -1;
+}
+
+static int
+Sclose_ios_view(void *handle)
+{    return 0;
+}
+
+IOFUNCTIONS Siosviewfunctions =
+{ Sread_ios_view,
+  Swrite_ios_view,
+  (Sseek_function)0,
+  Sclose_ios_view
+};
+
+
+IOSTREAM *
+Sopen_ios_view(IOSTREAM *s, char *buf, size_t size, const char *mode)
+{ int flags = SIO_NBUF|SIO_USERBUF;
+
+  if ( !s )
+  { if ( !(s = PL_malloc_uncollectable(sizeof(IOSTREAM))) ) /* TBD: Use GC */
+    { errno = ENOMEM;
+      return NULL;
+    }
+  } else
+    flags |= SIO_STATIC;
+
+  memset((char *)s, 0, sizeof(IOSTREAM));
+  s->timeout   = -1;
+  s->buffer    = buf;
+  s->bufp      = buf;
+  s->unbuffer  = buf;
+  s->handle    = s;			/* for Sclose_string() */
+  s->functions = &Siosviewfunctions;
+  s->encoding  = ENC_UTF8;
 
   switch(*mode)
   { case 'r':

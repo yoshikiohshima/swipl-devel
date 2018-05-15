@@ -53,6 +53,13 @@ procedureName(Procedure proc)
 { return predicateName(proc->definition);
 }
 
+char *term_atom_summary(term_t t) {
+    GET_LD
+  atom_t a;
+  PL_get_atom(t, &a);
+  return atom_summary(a, 100);
+}
+
 
 #define fetch_text(s, i) \
 	((s)->encoding == ENC_ISO_LATIN_1 ? (s)->text.t[i]&0xff \

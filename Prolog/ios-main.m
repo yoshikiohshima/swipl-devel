@@ -45,7 +45,6 @@
 		 *		MAIN		*
 		 *******************************/
 
-
 int
 ios_initialize(void)
 {
@@ -75,6 +74,14 @@ ios_initialize(void)
   //if ( !PL_initialise(1, arg, dirs) )
   if ( !ios_PL_initialise(2, arg, 3, dirs) )
     PL_halt(1);
+
+  // A hack to make it go
+  extern void setPrologFlag(const char *name, int flags, ...);
+  
+
+  term_t av = PL_new_term_ref();
+  PL_put_atom_chars(av, "default");
+  setPrologFlag("toplevel_goal", 4 /* FT_ATOM */, av);
 
   return 0;
 }

@@ -1064,7 +1064,7 @@ PL_initialise(int argc, char **argv)
 
 int
 ios_PL_initialise(int argc, char **argv, int dirc, char **dirv)
-{ int n;
+{
   bool compile = FALSE;
   char tmpPath[MAXPATHLEN] = {0};
   char *rcpath = tmpPath;
@@ -1074,6 +1074,11 @@ ios_PL_initialise(int argc, char **argv, int dirc, char **dirv)
 
   initAlloc();
   initPrologThreads();			/* initialise thread system */
+  extern IOSTREAM *Sopen_ios_view(IOSTREAM *s, char *buf, size_t size, const char *mode);
+  //Sopen_ios_view(&(S__getiob()[0]), "", 0, "r");
+  //Sopen_ios_view(&(S__getiob()[1]), "", 0, "w");
+  //Sopen_ios_view(&(S__getiob()[2]), "", 0, "w");
+
   SinitStreams();
 
   GD->cmdline.os_argc = argc;

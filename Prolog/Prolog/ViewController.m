@@ -13,90 +13,129 @@
 static ViewController *theView = NULL;
 
 int Swrite_fileToPrologTextView(char *buf, size_t size) {
-    NSString *str = [[NSString alloc] initWithBytes: buf length: size encoding:NSASCIIStringEncoding];
-    [theView appendText: str];
+  NSString *str = [[NSString alloc] initWithBytes: buf length: size encoding:NSASCIIStringEncoding];
+
+  [theView performSelectorOnMainThread:@selector(appendText:)
+			    withObject:(id)str 
+			 waitUntilDone:(BOOL)NO];
     return 0;
 }
 
-@interface ViewController ()
+int read_from_input() {
+  [theView readFromPrologInput];
+  return 0;
+}
 
-@end
+
 
 @implementation ViewController
 
 - (void)viewDidLoad {
-    [super viewDidLoad];
+  [super viewDidLoad];
 
-    theView = self;
+  self.inputString = "";
+  self.inputLength = 0;
+
+  theView = self;
     
-    PrologTextView *prologView = [[PrologTextView alloc] init];
-    prologView.layer.borderWidth = 2.0f;
-    prologView.layer.borderColor = [[UIColor grayColor] CGColor];
-    prologView.text = @"SWI-Prolog!\n";
-    self.prologView = prologView;
+  PrologTextView *prologView = [[PrologTextView alloc] init];
+  prologView.layer.borderWidth = 2.0f;
+  prologView.layer.borderColor = [[UIColor grayColor] CGColor];
+  prologView.text = @"SWI-Prolog!\n";
+  self.prologView = prologView;
 
-    PrologInputView *inputView = [[PrologInputView alloc] init];
-    inputView.layer.borderWidth = 2.0f;
-    inputView.layer.borderColor = [[UIColor grayColor] CGColor];
-    inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    inputView.text = @"X is 3 + 5.";
-    inputView.delegate = self;
-    self.inputView = inputView;
+  PrologInputView *inputView = [[PrologInputView alloc] init];
+  inputView.layer.borderWidth = 2.0f;
+  inputView.layer.borderColor = [[UIColor grayColor] CGColor];
+  inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
+  inputView.text = @"X is 3 + 5.";
+  inputView.delegate = self;
+  self.inputView = inputView;
 
-    [self.view addSubview:prologView];
-    [self.view addSubview:inputView];
+  [self.view addSubview:prologView];
+  [self.view addSubview:inputView];
     
-    [prologView resignFirstResponder];
-    [inputView resignFirstResponder];
+  [prologView resignFirstResponder];
+  [inputView resignFirstResponder];
 
-    UIButton *goButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [goButton setTitle:@"Go!" forState:UIControlStateNormal];
+  UIButton *goButton = [UIButton buttonWithType:UIButtonTypeSystem];
+  [goButton setTitle:@"Go!" forState:UIControlStateNormal];
 
-    [goButton addTarget:self 
+  [goButton addTarget:self 
                action:@selector(doGoButton)
-            forControlEvents:UIControlEventTouchUpInside];
+     forControlEvents:UIControlEventTouchUpInside];
 
-    [self.view addSubview:goButton];
+  [self.view addSubview:goButton];
 
-    UIButton *qButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [qButton setTitle:@"Query!" forState:UIControlStateNormal];
+  UIButton *qButton = [UIButton buttonWithType:UIButtonTypeSystem];
+  [qButton setTitle:@"Query!" forState:UIControlStateNormal];
 
-    [qButton addTarget:self 
-               action:@selector(doQueryButton)
-            forControlEvents:UIControlEventTouchUpInside];
+  [qButton addTarget:self 
+	      action:@selector(doQueryButton)
+    forControlEvents:UIControlEventTouchUpInside];
 
-    [self.view addSubview:qButton];
+  [self.view addSubview:qButton];
 
-    [prologView setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [inputView setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [goButton setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [qButton setTranslatesAutoresizingMaskIntoConstraints:NO];
+  [prologView setTranslatesAutoresizingMaskIntoConstraints:NO];
+  [inputView setTranslatesAutoresizingMaskIntoConstraints:NO];
+  [goButton setTranslatesAutoresizingMaskIntoConstraints:NO];
+  [qButton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    self.viewsDictionary = NSDictionaryOfVariableBindings(prologView, inputView, goButton, qButton);
+  self.viewsDictionary = NSDictionaryOfVariableBindings(prologView, inputView, goButton, qButton);
 
-    extern int ios_initialize(void);
-    ios_initialize();
-    
-    [inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
+  [inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+					   selector:@selector(keyboardWillShow:)
+					       name:UIKeyboardWillShowNotification
+					     object:nil];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self 
-                                             selector:@selector(keyboardWillShow:)
-                                                 name:UIKeyboardWillShowNotification
-                                               object:nil];
+  self.interpreterThread = [[NSThread alloc] initWithTarget:self
+						   selector:@selector(runInterpreterThread:)
+						   object:nil];
+
+  /*[self runInterpreterThread: nil];*/
+  [self.interpreterThread start];
 }
 
+- (void) runInterpreterThread: (NSObject*)obj {
+  extern int ios_initialize(void);
+  extern int PL_toplevel(void);
+  ios_initialize();
+
+  /*    for(;;)
+    { int status = PL_toplevel() ? 0 : 1;
+        
+        PL_halt(status);
+	}*/
+}
+
+-(void)readFromPrologInput {
+  [self.inputCondition lock];
+  while (self.inputLength == 0) {
+    [self.inputCondition wait];
+  }
+  extern void set_ios_input_string(char *str, int len);
+  set_ios_input_string(self.inputString, self.inputLength);
+  self.inputString = "";
+  self.inputLength = 0;
+  [self.inputCondition unlock];
+}
+
+
 - (void)doGoButton {
-    NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
-    [self appendText: textValue];
-    [self.inputView setText: @""];
+  NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
+  [self appendText: textValue];
+  [self.inputView setText: @""];
 
-    extern void set_ios_input_string(char *str, int len);
-    const char *in = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
-    int len = strlen(in);
-    set_ios_input_string(in, len);
+  [self.inputCondition lock];
+  self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
+  self.inputLength = strlen(self.inputString);
+  [self.inputCondition signal];
+  [self.inputCondition unlock];
+}
 
-    extern int PL_query_loop(void);
-    int status = PL_query_loop();
+- (void)addOutput: (NSString*)str {
+  [self appendText: str];
 }
 
 - (void)doQueryButton {

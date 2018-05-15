@@ -4644,38 +4644,15 @@ set_ios_input_string(char *str, int len) {
 word
 pl_raw_ios_read(term_t term)
 { GET_LD
+  extern int read_from_input();
 
-  if (ios_input_string_length == 0) {
-    fail;
-  }
-
-  return PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
+  read_from_input();
+  word result = PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
   ios_input_string = "";
   ios_input_string_length = 0;
+  return result;
 }
 
-
-/*
-word
-pl_raw_ios_read(term_t term)
-{ GET_LD
-
-  if (ios_input_string_length == 0) {
-    fail;
-  }
-  term_t av = PL_new_term_ref();
-  PL_put_atom_chars(av, ios_input_string);
-  int status = PL_unify(term, av);
-
-  ios_input_string = "";
-  ios_input_string_length = 0;
-  return status;
-
-  //IOSTREAM *stream = Sopen_string(NULL, ios_input_string, ios_input_string_length, "r");
-  //return pl_raw_read2(stream, term);
-  //return pl_raw_read2(0, term);
-}
-*/
 
 word
 pl_read2(term_t from, term_t term)
