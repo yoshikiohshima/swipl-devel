@@ -1420,6 +1420,10 @@ initPrologFlags(void)
   setPrologFlag("apple", FT_BOOL|FF_READONLY, TRUE, 0);
 #endif
 
+#ifdef IOS
+  setPrologFlag("ios", FT_BOOL|FF_READONLY, TRUE, 0);
+#endif
+
   setPrologFlag("encoding", FT_ATOM, stringAtom(encoding_to_atom(LD->encoding)));
 
   setPrologFlag("tty_control", FT_BOOL,

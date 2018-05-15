@@ -4632,6 +4632,29 @@ pl_raw_read(term_t term)
 }
 
 
+char *ios_input_string = "";
+int ios_input_string_length = 0;
+
+void
+set_ios_input_string(char *str, int len) {
+  ios_input_string = str;
+  ios_input_string_length = len;
+}
+
+
+word
+pl_raw_ios_read(term_t term)
+{
+  extern int read_from_input(void);
+
+  read_from_input();
+  word result = PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
+  ios_input_string = "";
+  ios_input_string_length = 0;
+  return result;
+}
+
+
 word
 pl_read2(term_t from, term_t term)
 { GET_LD

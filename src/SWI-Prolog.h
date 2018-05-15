@@ -171,7 +171,7 @@ typedef wchar_t	        pl_wchar_t;	/* Prolog wide character */
 #ifdef __cplusplus
 typedef void *		pl_function_t;      /* pass function as void* */
 #else
-typedef foreign_t	(*pl_function_t)(); /* foreign language functions */
+typedef foreign_t	(*pl_function_t)(void); /* foreign language functions */
 #endif
 
 #ifndef NORETURN
@@ -933,7 +933,7 @@ PL_EXPORT(int)		PL_set_resource_db_mem(const unsigned char *data,
 					       size_t size);
 PL_EXPORT(int)		PL_toplevel(void);
 PL_EXPORT(int)		PL_cleanup(int status);
-PL_EXPORT(void)		PL_cleanup_fork();
+PL_EXPORT(void)		PL_cleanup_fork(void);
 PL_EXPORT(int)		PL_halt(int status);
 
 		 /*******************************

@@ -4555,6 +4555,16 @@ PL_toplevel(void)
   return rval;
 }
 
+int
+PL_query_loop(void)
+{ atom_t a = PL_new_atom("$query_loop");
+    int rval = prologToplevel(a);
+    
+    PL_unregister_atom(a);
+    
+    return rval;
+}
+
 
 int
 PL_halt(int status)
@@ -4566,7 +4576,8 @@ PL_halt(int status)
 
   if ( cleanupProlog(status, reclaim_memory) )
   { run_on_halt(&GD->os.exit_hooks, status);
-    exit(status);
+    //exit(status);
+    return status;
   }
 
   return FALSE;
