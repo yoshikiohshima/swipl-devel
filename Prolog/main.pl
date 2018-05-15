@@ -3,8 +3,6 @@
 :- initialization(go, main).
 
 go :-
-        current_prolog_flag(ios, IOS),
-        format('ios is ~w~n', IOS),
         concat_atom([3, '+', 4], ' ', SingleArg),
         term_to_atom(Term, SingleArg),
         Val is Term,
@@ -17,4 +15,7 @@ learner(yoshiki, scratch).
 learner(ken, scratch).
 learner(ken, volleyball).
 
+cooks(haruko, cuisine(japanese)).
+
+teaches(X, cuisine(Y)) :- cooks(X, cuisine(Y)).
 teaches(X, Y) :- expert(X, S), learner(Y, S).
