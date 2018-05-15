@@ -67,7 +67,7 @@ ios_initialize(void)
   strcpy(mainPath, mainDir);
   strcat(mainPath, "/main.pl");
 
-  const char *arg[] = {"swipl", mainPath, NULL};  
+  const char *arg[] = {"swipl", mainPath, NULL};
   const char *dirs[] = {execPath, rscPath, documentsPath, NULL};
 
   //  const char *arg[] = {mainPath, NULL};
@@ -77,7 +77,6 @@ ios_initialize(void)
 
   // A hack to make it go
   extern void setPrologFlag(const char *name, int flags, ...);
-  
 
   term_t av = PL_new_term_ref();
   PL_put_atom_chars(av, "default");

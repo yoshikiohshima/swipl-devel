@@ -20,7 +20,7 @@
 @property NSCondition *inputCondition;
 
 @property char *inputString;
-@property int *inputLength;
+@property int inputLength;
 
 //@property NSArray* outputArray;
 

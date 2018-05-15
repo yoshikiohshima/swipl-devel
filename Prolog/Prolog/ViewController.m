@@ -102,17 +102,19 @@ int read_from_input() {
   extern int PL_toplevel(void);
   ios_initialize();
 
-  /*    for(;;)
+  self.inputCondition = [[NSCondition alloc] init];
+  for(;;)
     { int status = PL_toplevel() ? 0 : 1;
         
         PL_halt(status);
-	}*/
+    }
 }
 
 -(void)readFromPrologInput {
   [self.inputCondition lock];
   while (self.inputLength == 0) {
     [self.inputCondition wait];
+      printf("wait over\n");
   }
   extern void set_ios_input_string(char *str, int len);
   set_ios_input_string(self.inputString, self.inputLength);
@@ -130,6 +132,12 @@ int read_from_input() {
   [self.inputCondition lock];
   self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
   self.inputLength = strlen(self.inputString);
+
+  if (self.inputString[self.inputLength-1] == '\n') {
+    self.inputString[self.inputLength-1] = '\0';
+    self.inputLength--;
+  }
+    
   [self.inputCondition signal];
   [self.inputCondition unlock];
 }

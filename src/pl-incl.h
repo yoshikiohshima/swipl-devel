@@ -195,6 +195,11 @@ handy for it someone wants to add a data type to the system.
 #endif
 #endif
 
+#ifdef IOS
+#define NOTTYCONTROL           TRUE
+#endif
+
+
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 The ia64 says setjmp()/longjmp() buffer must be aligned at 128 bits
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

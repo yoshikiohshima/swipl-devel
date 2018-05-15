@@ -4643,8 +4643,8 @@ set_ios_input_string(char *str, int len) {
 
 word
 pl_raw_ios_read(term_t term)
-{ GET_LD
-  extern int read_from_input();
+{
+  extern int read_from_input(void);
 
   read_from_input();
   word result = PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
