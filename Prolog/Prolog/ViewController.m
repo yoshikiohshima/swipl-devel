@@ -88,6 +88,12 @@ int read_from_input() {
 					   selector:@selector(keyboardWillShow:)
 					       name:UIKeyboardWillShowNotification
 					     object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardWillHide:)
+                                                 name:UIKeyboardWillHideNotification
+                                               object:nil];
+
+  [self layout];
 
   self.interpreterThread = [[NSThread alloc] initWithTarget:self
 						   selector:@selector(runInterpreterThread:)
@@ -103,18 +109,16 @@ int read_from_input() {
   ios_initialize();
 
   self.inputCondition = [[NSCondition alloc] init];
-  for(;;)
-    { int status = PL_toplevel() ? 0 : 1;
-        
-        PL_halt(status);
-    }
+  for(;;) {
+    int status = PL_toplevel() ? 0 : 1;
+    PL_halt(status);
+  }
 }
 
 -(void)readFromPrologInput {
   [self.inputCondition lock];
   while (self.inputLength == 0) {
     [self.inputCondition wait];
-      printf("wait over\n");
   }
   extern void set_ios_input_string(char *str, int len);
   set_ios_input_string(self.inputString, self.inputLength);
@@ -173,12 +177,7 @@ int read_from_input() {
   }
 }
 
-- (BOOL)textViewShouldBeginEditing:(UITextView *)textView {
-  return TRUE;
-}
-
-- (void)keyboardWillShow:(NSNotification *)notification
-{
+- (void)layout {
   [self.view addConstraints:
          [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[prologView]-5-|"
                                                  options:0
@@ -187,16 +186,13 @@ int read_from_input() {
          [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[inputView]-[goButton]-[qButton]-5-|"
                                                  options:0
                                                  metrics:nil views:self.viewsDictionary]];
+    
+  self.keyConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[prologView]-[inputView]-5-|"
+								options:0
+								metrics:nil views:self.viewsDictionary];
 
-  char layout[1000];
-  int keyboardH = (int)([notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height) + 5;
-
-  sprintf(layout, "V:|-20-[prologView]-[inputView]-%d-|", keyboardH);
-
-  [self.view addConstraints:
-    [NSLayoutConstraint constraintsWithVisualFormat:[NSString stringWithUTF8String: layout]
-                                            options:0
-                                            metrics:nil views:self.viewsDictionary]];
+  self.theKeyConstraint = [self.keyConstraints objectAtIndex: 2];
+  [self.view addConstraints: self.keyConstraints];
 
   NSLayoutConstraint *eq = [NSLayoutConstraint constraintWithItem:[self.viewsDictionary objectForKey: @"inputView"]
                                                         attribute:NSLayoutAttributeCenterY
@@ -217,15 +213,35 @@ int read_from_input() {
   [self.view addConstraints: cnts];
 }
 
+
+- (BOOL)textViewShouldBeginEditing:(UITextView *)textView {
+  return TRUE;
+}
+
+- (void)keyboardWillShow:(NSNotification *)notification
+{
+  float keyH = ([notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue].size.height) + 5;
+  self.theKeyConstraint.constant = keyH;
+  [self.view setNeedsLayout];
+  [self.view layoutIfNeeded];
+}
+
+- (void)keyboardWillHide:(NSNotification *)notification
+{
+  self.theKeyConstraint.constant = 5.0;
+  [self.view setNeedsLayout];
+  [self.view layoutIfNeeded];
+}
+
 - (void)appendText: (NSString*)str {
-    [self.prologView setText:[self.prologView.text stringByAppendingString:str]];
-    [self.prologView scrollRangeToVisible:NSMakeRange([self.prologView.text length], 0)];
+  [self.prologView setText:[self.prologView.text stringByAppendingString:str]];
+  [self.prologView scrollRangeToVisible:NSMakeRange([self.prologView.text length], 0)];
 }
 
 
 - (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+  [super didReceiveMemoryWarning];
+  // Dispose of any resources that can be recreated.
 }
 
 @end

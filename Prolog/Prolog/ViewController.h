@@ -16,6 +16,9 @@
 @property PrologTextView *prologView;
 @property PrologInputView *inputView;
 @property NSDictionary *viewsDictionary;
+@property NSArray *keyConstraints;
+@property NSLayoutConstraint *theKeyConstraint;
+
 @property NSThread *interpreterThread;
 @property NSCondition *inputCondition;
 
