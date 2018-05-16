@@ -24,3 +24,7 @@ formats.
 
 You can also install the website locally to  use its richness if you are
 offline. It is available from https://github.com/SWI-Prolog/plweb.
+
+## About this fork
+
+This fork is a working in progress of supporting iOS devices (iPhone and iPad).  It can read the boot file, it can autoload library files, and it can evaluate one line query.
