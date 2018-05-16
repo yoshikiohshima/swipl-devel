@@ -45,30 +45,42 @@
 		 *		MAIN		*
 		 *******************************/
 
+int checkDocumentsPath(NSString *documentsDir) {
+  NSFileManager *mgr = [NSFileManager defaultManager];
+  return [mgr fileExistsAtPath: [documentsDir stringByAppendingString: @"/main.pl"]];
+}
+
+
 int
 ios_initialize(void)
 {
   NSString *path;
 
   path = [[NSBundle mainBundle] executablePath];
-  const char *execPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
+  const char *execDir = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
   path = [[NSBundle mainBundle] resourcePath];
-  const char *rscPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
+  const char *rscDir = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
   NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-  path = [paths objectAtIndex:0];
-  const char *documentsPath = [path cStringUsingEncoding:NSUTF8StringEncoding];
+  NSString *dPath = [paths objectAtIndex:0];
+  const char *documentsDir = [dPath cStringUsingEncoding:NSUTF8StringEncoding];
 
   path = [[NSBundle mainBundle] bundlePath];
   const char *mainDir = [path cStringUsingEncoding:NSUTF8StringEncoding];
 
   char mainPath[MAXPATHLEN] = {0};
-  strcpy(mainPath, mainDir);
+
+  if (checkDocumentsPath(dPath)) {
+    strcpy(mainPath, documentsDir);
+  } else {
+    strcpy(mainPath, mainDir);
+  }
+
   strcat(mainPath, "/main.pl");
 
-  const char *arg[] = {"swipl", mainPath, NULL};
-  const char *dirs[] = {execPath, rscPath, documentsPath, NULL};
+  const char *arg[] = {"swipl", mainDir, NULL};
+  const char *dirs[] = {execDir, rscDir, documentsDir, NULL};
 
   //  const char *arg[] = {mainPath, NULL};
   //if ( !PL_initialise(1, arg, dirs) )
