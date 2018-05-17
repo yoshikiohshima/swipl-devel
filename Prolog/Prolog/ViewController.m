@@ -21,13 +21,6 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     return 0;
 }
 
-int read_from_input() {
-  [theView readFromPrologInput];
-  return 0;
-}
-
-
-
 @implementation ViewController
 
 - (void)viewDidLoad {
@@ -48,7 +41,7 @@ int read_from_input() {
   inputView.layer.borderWidth = 2.0f;
   inputView.layer.borderColor = [[UIColor grayColor] CGColor];
   inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
-  inputView.text = @"X is 3 + 5.";
+  inputView.text = @"X is 3 + 4";
   inputView.delegate = self;
   self.inputView = inputView;
 
@@ -62,88 +55,50 @@ int read_from_input() {
   [goButton setTitle:@"Go!" forState:UIControlStateNormal];
 
   [goButton addTarget:self 
-               action:@selector(doGoButton)
+	      action:@selector(doQueryButton)
      forControlEvents:UIControlEventTouchUpInside];
 
   [self.view addSubview:goButton];
 
-  UIButton *qButton = [UIButton buttonWithType:UIButtonTypeSystem];
-  [qButton setTitle:@"Query!" forState:UIControlStateNormal];
-
-  [qButton addTarget:self 
-	      action:@selector(doQueryButton)
-    forControlEvents:UIControlEventTouchUpInside];
-
-  [self.view addSubview:qButton];
-
   [prologView setTranslatesAutoresizingMaskIntoConstraints:NO];
   [inputView setTranslatesAutoresizingMaskIntoConstraints:NO];
   [goButton setTranslatesAutoresizingMaskIntoConstraints:NO];
-  [qButton setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-  self.viewsDictionary = NSDictionaryOfVariableBindings(prologView, inputView, goButton, qButton);
+  self.viewsDictionary = NSDictionaryOfVariableBindings(prologView, inputView, goButton);
 
-  [inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
+  [self.inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
+
   [[NSNotificationCenter defaultCenter] addObserver:self
 					   selector:@selector(keyboardWillShow:)
 					       name:UIKeyboardWillShowNotification
 					     object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(keyboardWillHide:)
-                                                 name:UIKeyboardWillHideNotification
-                                               object:nil];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+					   selector:@selector(keyboardWillHide:)
+					       name:UIKeyboardWillHideNotification
+					     object:nil];
 
   [self layout];
-
-  self.interpreterThread = [[NSThread alloc] initWithTarget:self
-						   selector:@selector(runInterpreterThread:)
-						   object:nil];
-
-  /*[self runInterpreterThread: nil];*/
-  [self.interpreterThread start];
+  [self runInterpreterThread: nil];
 }
 
-- (void) runInterpreterThread: (NSObject*)obj {
+- (void) runInterpreterThread: (NSObject*)loop {
   extern int ios_initialize(void);
   extern int PL_toplevel(void);
   ios_initialize();
 
-  self.inputCondition = [[NSCondition alloc] init];
-  for(;;) {
-    int status = PL_toplevel() ? 0 : 1;
-    PL_halt(status);
+  if (loop != NULL) {
+    for(;;) {
+      int status = PL_toplevel() ? 0 : 1;
+      PL_halt(status);
+    }
   }
 }
 
 -(void)readFromPrologInput {
-  [self.inputCondition lock];
-  while (self.inputLength == 0) {
-    [self.inputCondition wait];
-  }
   extern void set_ios_input_string(char *str, int len);
   set_ios_input_string(self.inputString, self.inputLength);
   self.inputString = "";
   self.inputLength = 0;
-  [self.inputCondition unlock];
-}
-
-
-- (void)doGoButton {
-  NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
-  [self appendText: textValue];
-  [self.inputView setText: @""];
-
-  [self.inputCondition lock];
-  self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
-  self.inputLength = strlen(self.inputString);
-
-  if (self.inputString[self.inputLength-1] == '\n') {
-    self.inputString[self.inputLength-1] = '\0';
-    self.inputLength--;
-  }
-    
-  [self.inputCondition signal];
-  [self.inputCondition unlock];
 }
 
 - (void)addOutput: (NSString*)str {
@@ -152,29 +107,80 @@ int read_from_input() {
 
 - (void)doQueryButton {
   int status;
-  predicate_t teaches = PL_predicate("teaches", 2, NULL);
 
-  term_t av = PL_new_term_refs(2);
-  PL_put_atom_chars(av, "suzuko");
-  pid_t q = PL_open_query(NULL, PL_Q_NODEBUG|PL_Q_ALLOW_YIELD|PL_Q_EXT_STATUS, teaches, av);
-  if (q == 0) {
+  if (self.threadId == 0) {
+    self.threadId = PL_thread_attach_engine(NULL);
+  }
+  printf("threadId: %d\n", PL_thread_self());
+
+  NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
+  [self.inputView setText: @""];
+  self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
+  self.inputLength = strlen(self.inputString);
+
+  if (self.inputLength == 0) {
+    return;
+  }
+
+  [self appendText: textValue];
+
+  fid_t fid = PL_open_foreign_frame();
+  if (!fid) {
+    printf("opening foreign frame failed\n");
+    return;
+  }
+
+  term_t term = PL_new_term_ref();
+  status = PL_chars_to_term(self.inputString, term);
+
+  status = PL_is_callable(term);
+  printf("callable: %s\n", status ? "yes" : "no");
+
+  functor_t functor;
+  status = PL_get_functor(term, &functor);
+  printf("functor: %s\n",  status ? "yes" : "no");
+
+  atom_t atom;
+  int arity = 0;
+  status = PL_get_name_arity(term, &atom, &arity);
+  printf("arity: %d\n", arity);
+
+  module_t module;
+  status = PL_get_module(term, &module);
+  printf("module: %s\n",  status ? "yes" : "no");
+
+  predicate_t pred;
+  pred = PL_pred(functor, module);
+
+  term_t av = PL_new_term_refs(arity);
+  for (int ind = 1; ind <= arity; ind++) {
+    status =  PL_get_arg(ind, term, av+(ind-1));
+  }
+ /* for (int ind = 1; ind <= arity; ind++) {
+    status =  PL_unify_arg(ind, term, av+(ind-1));
+  }*/
+
+  qid_t qid = PL_open_query(NULL, PL_Q_NODEBUG|PL_Q_ALLOW_YIELD|PL_Q_EXT_STATUS, pred, av);
+
+  if (qid == 0) {
     printf("not enough memory\n");
     return;
   }
   while (true) {
-    status = PL_next_solution(q);
+    status = PL_next_solution(qid);
     if (status) {
       char *str;
       status = PL_get_atom_chars(av+1, &str);
       if (status) {
-        Swrite_fileToPrologTextView(str, strlen(str));
-        Swrite_fileToPrologTextView("\n", 1);
+	Swrite_fileToPrologTextView(str, strlen(str));
+	Swrite_fileToPrologTextView("\n", 1);
       }
     } else {
-      PL_close_query(q);
+      PL_close_query(qid);
       break;
     }
   }
+  PL_discard_foreign_frame(fid);
 }
 
 - (void)layout {
@@ -183,7 +189,7 @@ int read_from_input() {
                                                  options:0
                                                  metrics:nil views:self.viewsDictionary]];
   [self.view addConstraints:
-         [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[inputView]-[goButton]-[qButton]-5-|"
+         [NSLayoutConstraint constraintsWithVisualFormat:@"H:|-5-[inputView]-[goButton]-5-|"
                                                  options:0
                                                  metrics:nil views:self.viewsDictionary]];
     
@@ -201,15 +207,8 @@ int read_from_input() {
                                                         attribute:NSLayoutAttributeCenterY
                                                        multiplier:1
                                                          constant:0];
-  NSLayoutConstraint *eq2 = [NSLayoutConstraint constraintWithItem:[self.viewsDictionary objectForKey: @"inputView"]
-                                                         attribute:NSLayoutAttributeCenterY
-                                                         relatedBy:NSLayoutRelationEqual
-                                                            toItem:[self.viewsDictionary objectForKey: @"qButton"]
-                                                         attribute:NSLayoutAttributeCenterY
-                                                        multiplier:1
-                                                          constant:0];
 
-  NSArray *cnts = @[eq, eq2];
+  NSArray *cnts = @[eq];
   [self.view addConstraints: cnts];
 }
 

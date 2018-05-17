@@ -4645,13 +4645,14 @@ set_ios_input_string(char *str, int len) {
 word
 pl_raw_ios_read(term_t term)
 {
-  extern int read_from_input(void);
+  /*  extern int read_from_input(void);
 
   read_from_input();
   word result = PL_unify_chars(term, PL_ATOM|REP_UTF8, (size_t)-1, ios_input_string);
   ios_input_string = "";
   ios_input_string_length = 0;
-  return result;
+  */
+  return FALSE;
 }
 
 

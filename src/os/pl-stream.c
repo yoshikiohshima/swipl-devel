@@ -2900,12 +2900,6 @@ Swrite_file(void *handle, char *buf, size_t size)
   bytes = write((int)h, buf, size);
 #endif
 
-#ifdef IOS
-  extern int Swrite_fileToPrologTextView(char *buf, size_t size);
-  if (handle == 1 || handle == 2) {
-    Swrite_fileToPrologTextView(buf, size);
-  }
-#endif
   return bytes;
 }
 
@@ -3804,13 +3798,14 @@ Sopen_string(IOSTREAM *s, char *buf, size_t size, const char *mode)
 static ssize_t
 Sread_ios_view(void *handle, char *buf, size_t size)
 {
+  /*
   if ((int)handle == 1) {
     extern int read_from_input(void);
     read_from_input();
     extern int ios_input_string_length;
 
     return ios_input_string_length;
-  }
+    }*/
 
   return 0;				/* signal EOF */
 }

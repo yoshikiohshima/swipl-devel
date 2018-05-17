@@ -25,6 +25,8 @@
 @property char *inputString;
 @property int inputLength;
 
+@property int threadId;
+
 //@property NSArray* outputArray;
 
 

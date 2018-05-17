@@ -3102,22 +3102,6 @@ static
 PRED_IMPL("get_single_char", 1, get_single_char, 0)
 { GET_LD
 
-#ifdef IOS
-
-  extern int read_from_input(void);
-  extern char *ios_input_string;
-  extern int ios_input_string_length;
-  read_from_input();
-
-  if (ios_input_string_length == 1) {
-    int result = PL_unify_integer(A1, ios_input_string[0]);
-    ios_input_string = "";
-    ios_input_string_length = 0;
-    return result;
-  }
-
-#endif
-
   IOSTREAM *s = getStream(Suser_input);
   int c;
 
