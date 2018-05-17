@@ -9,6 +9,11 @@
 #import "ViewController.h"
 
 #include "SWI-Prolog.h"
+#include "SWI-Stream.h"
+extern int PL_unify_stream(term_t t, IOSTREAM *s);
+extern foreign_t pl_write_term3(term_t stream, term_t term, term_t opts);
+extern varName(term_t t, char *name);
+
 
 static ViewController *theView = NULL;
 
@@ -105,6 +110,28 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   [self appendText: str];
 }
 
+- (char*)printAllOf: (int)varsSize variables: (char*)vars names: (char*[])names terms:(term_t)av {
+  int status;
+  char buf[1024];
+  char *bufp = buf;
+  size_t size = sizeof(buf);
+
+  IOSTREAM *s = Sopenmem(&bufp, &size, "w");
+  term_t write0 = PL_new_term_ref();
+  PL_unify_stream(write0, s);
+  term_t opts = PL_new_term_ref();
+  status = PL_put_nil(opts);
+  for (int ind = 0; ind < varsSize; ind++) {
+    if (vars[ind]) {
+      Sfputs(names[ind], s);
+      Sfputs(" = ", s);
+      pl_write_term3(write0, av+ind, opts);
+    }
+  }
+  Sclose(s);
+  return bufp;
+}
+
 - (void)doQueryButton {
   int status;
 
@@ -153,8 +180,18 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   pred = PL_pred(functor, module);
 
   term_t av = PL_new_term_refs(arity);
+  char *vars = (char*)PL_malloc(arity);
+  char **names = (char**)PL_malloc(arity * sizeof(char*));
+
   for (int ind = 1; ind <= arity; ind++) {
-    status =  PL_get_arg(ind, term, av+(ind-1));
+    status = PL_get_arg(ind, term, av+(ind-1));
+    vars[ind-1] = PL_is_variable(av+(ind-1));
+    if (vars[ind-1]) {
+      names[ind-1] = PL_malloc(32);
+        varName(av+(ind-1), names[ind-1]);
+    } else {
+      names[ind-1] = NULL;
+    }
   }
  /* for (int ind = 1; ind <= arity; ind++) {
     status =  PL_unify_arg(ind, term, av+(ind-1));
@@ -169,17 +206,21 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   while (true) {
     status = PL_next_solution(qid);
     if (status) {
-      char *str;
-      status = PL_get_atom_chars(av+1, &str);
-      if (status) {
-	Swrite_fileToPrologTextView(str, strlen(str));
-	Swrite_fileToPrologTextView("\n", 1);
-      }
+      char *result = [self printAllOf: arity variables: vars names: names terms: av];
+      Swrite_fileToPrologTextView(result, strlen(result));
+      Swrite_fileToPrologTextView("\n", 1);
     } else {
       PL_close_query(qid);
       break;
     }
   }
+  for (int ind = 1; ind <= arity; ind++) {
+    if (vars[ind-1]) {
+      PL_free(names[ind-1]);
+    }
+  }
+  PL_free(names);
+  PL_free(vars);
   PL_discard_foreign_frame(fid);
 }
 
