@@ -44,7 +44,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   inputView.layer.borderWidth = 2.0f;
   inputView.layer.borderColor = [[UIColor grayColor] CGColor];
   inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
-  inputView.text = @"teaches(suzuko,X)";
+  inputView.text = @"likes(sam,X)";
   inputView.delegate = self;
   self.inputView = inputView;
 
