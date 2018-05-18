@@ -143,11 +143,11 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   status = PL_chars_to_term(self.inputString, self.userTerm);
 
   status = PL_is_callable(self.userTerm);
-  printf("callable: %s\n", status ? "yes" : "no");
+    if (!status) { return;}
 
   status = PL_get_functor(self.userTerm, &_functor);
-  printf("functor: %s\n",  status ? "yes" : "no");
-
+    if (!status) {return;}
+ 
   atom_t atom;
   self.arity = 0;
   status = PL_get_name_arity(self.userTerm, &atom, &_arity);
