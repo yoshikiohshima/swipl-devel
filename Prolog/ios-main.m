@@ -79,7 +79,7 @@ ios_initialize(void)
 
   strcat(mainPath, "/main.pl");
 
-  const char *arg[] = {"swipl", mainDir, NULL};
+  const char *arg[] = {"swipl", mainPath, NULL};
   const char *dirs[] = {execDir, rscDir, documentsDir, NULL};
 
   //  const char *arg[] = {mainPath, NULL};
