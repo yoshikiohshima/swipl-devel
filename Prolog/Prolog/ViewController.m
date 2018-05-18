@@ -153,10 +153,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   status = PL_get_name_arity(self.userTerm, &atom, &_arity);
   printf("arity: %d\n", self.arity);
     
-  self.module = PL_context();
-  printf("module: %s\n",  status ? "yes" : "no");
-
- // status = PL_get_module(self.userTerm, &_module);
+  status = PL_get_module(self.userTerm, &_module);
   printf("module: %s\n",  status ? "yes" : "no");
 
   self.pred = PL_pred(self.functor, self.module);
@@ -197,6 +194,10 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
       char *result = [self printAllOf: self.arity variables: self.vars names: self.names terms: self.userArgs];
       Swrite_fileToPrologTextView(result, strlen(result));
       Swrite_fileToPrologTextView("\n", 1);
+        
+       UIButton *goButton = [self.viewsDictionary objectForKey: @"goButton"];
+        [goButton setTitle:@";" forState:UIControlStateNormal];
+
     } else {
       [self lastTime];
     }
@@ -204,6 +205,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
 }
 
 - (void)lastTime {
+    UIButton *goButton = [self.viewsDictionary objectForKey: @"goButton"];
+    [goButton setTitle:@"Go!" forState:UIControlStateNormal];
   if (self.qid) {
     PL_close_query(self.qid);
     self.qid = 0;
@@ -231,7 +234,6 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   if (self.threadId == 0) {
     self.threadId = PL_thread_attach_engine(NULL);
   }
-  printf("threadId: %d\n", PL_thread_self());
 
   if (self.queryState == 0) {
     NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
@@ -239,7 +241,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
     self.inputLength = strlen(self.inputString);
   
-    if (self.inputLength == 0) {
+    if (self.inputLength == 1 && self.inputString[0] == '\n') {
       return;
     }
 

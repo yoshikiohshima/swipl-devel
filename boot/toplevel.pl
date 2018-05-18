@@ -762,11 +762,6 @@ prolog :-
 %   exceptions are really unhandled (in Prolog).
 
 '$query_loop' :-
-    current_prolog_flag(ios, true),
-    !,
-    ios_query.
-
-'$query_loop' :-
     current_prolog_flag(toplevel_mode, recursive),
     !,
     break_level(Level),
@@ -863,41 +858,6 @@ read_query_line(Input, Line) :-
     ;   print_message(error, Error),
         throw(Error)
     ).
-
-%!  iOS specific call.  ios_query makes a query (without looping)
-
-ios_query :-
-    ios_read_expanded_query(Query, Bindings),
-    '$execute'(Query, Bindings).
-
-ios_read_expanded_query(ExpandedQuery, ExpandedBindings) :-
-    trim_stacks,
-    ios_read_query(Query, Bindings),
-    catch(call_expand_query(Query, ExpandedQuery,
-                            Bindings, ExpandedBindings),
-          Error,
-          (print_message(error, Error), fail)).
-
-ios_read_query(Goal, Bindings) :-
-    ios_read_query_line(Line),
-    '$current_typein_module'(TypeIn),
-    catch(read_term_from_atom(Line, Goal,
-                              [ variable_names(Bindings),
-                                module(TypeIn)
-                              ]), E,
-          (   print_message(error, E),
-              fail
-          )).
-
-ios_read_query_line(Line) :-
-    '$raw_ios_read'(Line).
-
-load_string(Id, Text) :- 
-    setup_call_cleanup(
-            open_string(Text, Stream),
-            load_files(Id, [stream(Stream)]),
-            close(Stream)).
-
 
 %!  read_term_as_atom(+Input, -Line)
 %

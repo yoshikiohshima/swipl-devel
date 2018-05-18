@@ -1,21 +1,26 @@
 #!/usr/bin/env swipl
 
-:- initialization(go, main).
+likes(sam,Food) :-
+    indian(Food),
+    mild(Food).
+likes(sam,Food) :-
+    chinese(Food).
+likes(sam,Food) :-
+    italian(Food).
+likes(sam,chips).
 
-go :-
-        concat_atom([3, '+', 4], ' ', SingleArg),
-        term_to_atom(Term, SingleArg),
-        Val is Term,
-        format('Result is ~w~n', [Val]).
+indian(curry).
+indian(dahl).
+indian(tandoori).
+indian(kurma).
 
-expert(suzuko, scratch).
-expert(yoshiki, volleyball).
+mild(dahl).
+mild(tandoori).
+mild(kurma).
 
-learner(yoshiki, scratch).
-learner(ken, scratch).
-learner(ken, volleyball).
+chinese(chow_mein).
+chinese(chop_suey).
+chinese(sweet_and_sour).
 
-cooks(haruko, cuisine(japanese)).
-
-teaches(X, cuisine(Y)) :- cooks(X, cuisine(Y)).
-teaches(X, Y) :- expert(X, S), learner(Y, S).
+italian(pizza).
+italian(spaghetti).
