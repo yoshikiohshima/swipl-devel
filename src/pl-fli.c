@@ -4576,8 +4576,7 @@ PL_halt(int status)
 
   if ( cleanupProlog(status, reclaim_memory) )
   { run_on_halt(&GD->os.exit_hooks, status);
-    //exit(status);
-    return status;
+    exit(status);
   }
 
   return FALSE;

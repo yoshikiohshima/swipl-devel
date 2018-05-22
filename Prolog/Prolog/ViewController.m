@@ -1,10 +1,35 @@
-//
-//  ViewController.m
-//  SWI-Prolog on iPhone
-//
-//  Created by Yoshiki Ohshima on 2018/05/07.
-//  Copyright © 2018 Yoshiki Ohshima. All rights reserved.
-//
+/*  Part of SWI-Prolog
+
+    Author:        Yoshiki Ohshima
+    E-mail:        Yoshiki.Ohshima@acm.org
+    WWW:           http://www.swi-prolog.org
+    Copyright (c)  2018 All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+
+    1. Redistributions of source code must retain the above copyright
+       notice, this list of conditions and the following disclaimer.
+
+    2. Redistributions in binary form must reproduce the above copyright
+       notice, this list of conditions and the following disclaimer in
+       the documentation and/or other materials provided with the
+       distribution.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+    COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+    POSSIBILITY OF SUCH DAMAGE.
+*/
 
 #import "ViewController.h"
 
@@ -19,8 +44,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   NSString *str = [[NSString alloc] initWithBytes: buf length: size encoding:NSASCIIStringEncoding];
 
   [theView performSelectorOnMainThread:@selector(appendText:)
-			    withObject:(id)str 
-			 waitUntilDone:(BOOL)NO];
+                            withObject:(id)str 
+                         waitUntilDone:(BOOL)NO];
     return 0;
 }
 
@@ -35,12 +60,14 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   theView = self;
     
   PrologTextView *prologView = [[PrologTextView alloc] init];
+  [prologView setFont:[UIFont fontWithName:@"Helvetica" size:14]];
   prologView.layer.borderWidth = 2.0f;
   prologView.layer.borderColor = [[UIColor grayColor] CGColor];
   prologView.text = @"SWI-Prolog!\n";
   self.prologView = prologView;
 
   PrologInputView *inputView = [[PrologInputView alloc] init];
+  [inputView setFont:[UIFont fontWithName:@"Helvetica" size:14]];
   inputView.layer.borderWidth = 2.0f;
   inputView.layer.borderColor = [[UIColor grayColor] CGColor];
   inputView.autocapitalizationType = UITextAutocapitalizationTypeNone;
@@ -58,7 +85,7 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   [goButton setTitle:@"Go!" forState:UIControlStateNormal];
 
   [goButton addTarget:self 
-	      action:@selector(doQueryButton)
+              action:@selector(doQueryButton)
      forControlEvents:UIControlEventTouchUpInside];
 
   [self.view addSubview:goButton];
@@ -72,13 +99,13 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   [self.inputView performSelector:@selector(becomeFirstResponder) withObject:nil afterDelay:0];
 
   [[NSNotificationCenter defaultCenter] addObserver:self
-					   selector:@selector(keyboardWillShow:)
-					       name:UIKeyboardWillShowNotification
-					     object:nil];
+                                           selector:@selector(keyboardWillShow:)
+                                               name:UIKeyboardWillShowNotification
+                                             object:nil];
   [[NSNotificationCenter defaultCenter] addObserver:self
-					   selector:@selector(keyboardWillHide:)
-					       name:UIKeyboardWillHideNotification
-					     object:nil];
+                                           selector:@selector(keyboardWillHide:)
+                                               name:UIKeyboardWillHideNotification
+                                             object:nil];
 
   [self layout];
   [self runInterpreterThread: nil];
@@ -205,8 +232,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
 }
 
 - (void)lastTime {
-    UIButton *goButton = [self.viewsDictionary objectForKey: @"goButton"];
-    [goButton setTitle:@"Go!" forState:UIControlStateNormal];
+  UIButton *goButton = [self.viewsDictionary objectForKey: @"goButton"];
+  [goButton setTitle:@"Go!" forState:UIControlStateNormal];
   if (self.qid) {
     PL_close_query(self.qid);
     self.qid = 0;
@@ -235,12 +262,12 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
     self.threadId = PL_thread_attach_engine(NULL);
   }
 
+  NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
+  [self.inputView setText: @""];
+  self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
+  self.inputLength = strlen(self.inputString);
+
   if (self.queryState == 0) {
-    NSString *textValue = [NSString stringWithFormat:@"%@\n", self.inputView.text];
-    [self.inputView setText: @""];
-    self.inputString = [textValue cStringUsingEncoding:NSUTF8StringEncoding];
-    self.inputLength = strlen(self.inputString);
-  
     if (self.inputLength == 1 && self.inputString[0] == '\n') {
       return;
     }
@@ -251,6 +278,15 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
   }
 
   if (self.queryState == 1) {
+    if (self.inputLength >= 1 && self.inputString[0] == '.') {
+        [self lastTime];
+        return;
+    }
+    if (self.inputLength >= 1 && self.inputString[0] != '\n') {
+      [self lastTime];
+        [self appendText: textValue];
+      [self firstTime];
+    }
     [self eachTime];
   }
 }
@@ -267,8 +303,8 @@ int Swrite_fileToPrologTextView(char *buf, size_t size) {
                                                  metrics:nil views:self.viewsDictionary]];
     
   self.keyConstraints = [NSLayoutConstraint constraintsWithVisualFormat:@"V:|-20-[prologView]-[inputView]-5-|"
-								options:0
-								metrics:nil views:self.viewsDictionary];
+                                                                options:0
+                                                                metrics:nil views:self.viewsDictionary];
 
   self.theKeyConstraint = [self.keyConstraints objectAtIndex: 2];
   [self.view addConstraints: self.keyConstraints];
