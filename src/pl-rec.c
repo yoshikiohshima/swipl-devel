@@ -1246,17 +1246,14 @@ fetchSizeInt(CopyInfo b)
 
 static int64_t
 fetchInt64(CopyInfo b)
-{ int64_t val = 0;
+{ uint64_t val = 0;
   uint bytes = *b->data++;
-  uint shift = (sizeof(int64_t)-bytes)*8;
+  uint64_t sign = 1ULL << (bytes * 8 - 1);
 
   while(bytes-- > 0)
     val = (val << 8) | (*b->data++ & 0xff);
 
-  val <<= shift;
-  val >>= shift;
-
-  return val;
+  return (int64_t)((val ^ sign) - sign);
 }
 
 

@@ -1746,23 +1746,23 @@ ar_pow(Number n1, Number n2, Number r)
     }
 
   { GET_LD				/* estimate the size, see above */
-    size_t  op1_bytes;
-    int64_t r_bytes;
+    size_t  op1_bits;
+    int64_t r_bits;
 
     switch(n1->type)
     { case V_INTEGER:
-	op1_bytes = MSB64(n1->value.i)+7/8;
+	op1_bits = MSB64(n1->value.i);
         break;
       case V_MPZ:
-	op1_bytes = mpz_sizeinbase(n1->value.mpz, 256);
+	op1_bits = mpz_sizeinbase(n1->value.mpz, 2);
         break;
       default:
 	assert(0);
         fail;
     }
 
-    if ( !( mul64(op1_bytes, exp, &r_bytes) &&
-	    r_bytes < (int64_t)globalStackLimit()
+    if ( !( mul64(op1_bits, exp, &r_bits) &&
+	    r_bits/8 < (int64_t)globalStackLimit()
 	  ) )
       return int_too_big();
   }
@@ -3249,13 +3249,17 @@ seed_random(ARG1_LD)
 { if ( !seed_from_dev("/dev/urandom" PASS_LD) &&
        !seed_from_dev("/dev/random" PASS_LD) &&
        !seed_from_crypt_context(PASS_LD1) )
-  { double t[1] = { WallTime() };
+  { union
+    { double t;
+      unsigned long l[sizeof(double)/sizeof(long)];
+    } u;
     unsigned long key = 0;
-    unsigned long *p = (unsigned long*)t;
-    unsigned long *e = (unsigned long*)&t[1];
+    int i;
 
-    for(; p<e; p++)
-      key ^= *p;
+    u.t = WallTime();
+
+    for(i=0; i<sizeof(double)/sizeof(long); i++)
+      key ^= u.l[i];
 
     LD->gmp.persistent++;
     gmp_randseed_ui(LD->arith.random.state, key);

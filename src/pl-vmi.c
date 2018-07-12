@@ -2740,7 +2740,8 @@ VMI(S_VIRGIN, 0, 0, ())
     if ( FR->prof_node )
       profSetHandle(FR->prof_node, DEF);
 #endif
-    goto retry_continue;
+    if ( DEF->impl.any.defined )
+      goto retry_continue;
 #ifdef O_PLMT
   } else if ( true(DEF, P_THREAD_LOCAL) )
   { DEF = getProcDefinition__LD(DEF PASS_LD);
@@ -2816,6 +2817,8 @@ VMI(S_UNDEF, 0, 0, ())
     }
     case UNKNOWN_FAIL:
     default:
+      if ( debugstatus.debugging )
+	newChoice(CHP_DEBUG, FR PASS_LD);
       FRAME_FAILED;
   }
 }
@@ -4356,6 +4359,7 @@ again:
 
     SAVE_REGISTERS(qid);
     rc = isCaughtInOuterQuery(qid, exception_term PASS_LD);
+    DEBUG(MSG_THROW, Sdprintf("Caught in outer: %s\n", rc ? "YES" : "NO"));
     LOAD_REGISTERS(qid);
 
     if ( !rc )					/* uncaught exception */
@@ -4444,17 +4448,32 @@ again:
 	setVar(*valTermRef(LD->exception.pending));
       }
 
+					/* discard as much as we can from the local stack */
       l_top = argFrameP(FR, FR->predicate->functor->arity);
-      if ( FR->predicate == PROCEDURE_dcall1->definition )
-        FR->clause = NULL;	/* clause is above me, but no longer needed */
+      FR->clause = NULL;		/* We do not care about the arguments */
+      DEBUG(MSG_UNWIND_EXCEPTION,
+	    Sdprintf("l_top above [%d] %s: %p\n",
+		     (int)FR->level, predicateName(FR->predicate), l_top));
       if ( l_top < (void*)(BFR+1) )
+      { DEBUG(MSG_UNWIND_EXCEPTION,
+	      Sdprintf("Include choice points: %p -> %p\n", l_top, (void*)(BFR+1)));
         l_top = (void*)(BFR+1);
+      }
       lTop = l_top;
+
+      while(fli_context > (FliFrame)lTop)
+        fli_context = fli_context->parent;
+
+      DEBUG(CHK_SECURE,
+	    { SAVE_REGISTERS(qid);
+	      memset(lTop, 0xfb, lMax-lTop);
+	      checkStacks(NULL);
+	      LOAD_REGISTERS(qid)
+	    });
 
       if ( true(FR, FR_WATCHED) )
       { SAVE_REGISTERS(qid);
 	dbg_discardChoicesAfter(FR, FINISH_EXTERNAL_EXCEPT PASS_LD);
-	exceptionUnwindGC();
 	LOAD_REGISTERS(qid);
 	discardFrame(FR PASS_LD);
 	SAVE_REGISTERS(qid);
@@ -4518,9 +4537,6 @@ again:
       discardFrame(FR PASS_LD);
       if ( true(FR, FR_WATCHED) )
       { SAVE_REGISTERS(qid);
-	exceptionUnwindGC();
-	LOAD_REGISTERS(qid);
-	SAVE_REGISTERS(qid);
 	frameFinished(FR, FINISH_EXCEPT PASS_LD);
 	LOAD_REGISTERS(qid);
       }
@@ -4582,9 +4598,14 @@ again:
     QF->foreign_frame = PL_open_foreign_frame();
     QF->exception = PL_copy_term_ref(exception_term);
 
+    SAVE_REGISTERS(qid);
     resumeAfterException(false(QF, PL_Q_PASS_EXCEPTION), outofstack);
+    LOAD_REGISTERS(qid);
     if ( PL_pending(SIG_GC) )
+    { SAVE_REGISTERS(qid);
       garbageCollect();
+      LOAD_REGISTERS(qid);
+    }
     QF = QueryFromQid(qid);		/* may be shifted: recompute */
 
     assert(LD->exception.throw_environment == &throw_env);

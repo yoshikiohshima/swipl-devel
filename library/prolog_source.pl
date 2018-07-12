@@ -399,17 +399,19 @@ read_source_term_at_location(Stream, Term, Options) :-
     debug(read, 'Trying with syntax ~w', [Syntax]),
     push_operators(Module:Ops),
     call(Setup),
-    asserta(user:thread_message_hook(_,_,_), Ref), % silence messages
-    catch(qq_read_term(Stream, Term0,
-                       [ module(Module)
-                       | Options
-                       ]),
-          Error,
-          true),
-    erase(Ref),
+    Error = error(Formal,_),                 % do not catch timeout, etc.
+    setup_call_cleanup(
+        asserta(user:thread_message_hook(_,_,_), Ref), % silence messages
+        catch(qq_read_term(Stream, Term0,
+                           [ module(Module)
+                           | Options
+                           ]),
+              Error,
+              true),
+        erase(Ref)),
     call(Restore),
     pop_operators,
-    (   var(Error)
+    (   var(Formal)
     ->  !, Term = Term0
     ;   assert_error(Error, Options),
         fail

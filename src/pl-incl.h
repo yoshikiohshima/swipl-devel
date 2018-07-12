@@ -902,6 +902,7 @@ with one operation, it turns out to be faster as well.
 #define UNKNOWN_ERROR		(0x0400) /* module */
 #define UNKNOWN_MASK		(UNKNOWN_ERROR|UNKNOWN_WARNING|UNKNOWN_FAIL)
 #define M_VARPREFIX		(0x0800)
+#define M_DESTROYED		(0x1000)
 
 /* Flags on functors */
 
@@ -1494,6 +1495,8 @@ struct clause_choice
 #else
 #define acquire_def(def) (void)0
 #define release_def(def) (void)0
+#define acquire_def2(def,store) (void)store
+#define release_def2(def,store) (void)store
 #endif
 
 struct choice
@@ -1721,7 +1724,7 @@ struct module
   size_t	code_size;	/* #Bytes used for its procedures */
   size_t	code_limit;	/* Limit for code_size */
 #ifdef O_PLMT
-  counting_mutex *mutex;	/* Mutex to guard procedures */
+  counting_mutex *mutex;	/* Mutex to guard module modifications */
 #endif
 #ifdef O_PROLOG_HOOK
   Procedure	hook;		/* Hooked module */
@@ -1729,6 +1732,7 @@ struct module
   int		level;		/* Distance to root (root=0) */
   unsigned int	line_no;	/* Source line-number */
   unsigned int  flags;		/* booleans: */
+  int		references;	/* see acquireModule() */
   gen_t		last_modified;	/* Generation I was last modified */
 };
 
@@ -1912,7 +1916,9 @@ typedef enum pl_event_type
   PLEV_TRACING,				/* changed tracing mode */
   PLEV_SPY,				/* changed spypoint */
   PLEV_BREAK,				/* a break-point was set */
+  PLEV_BREAK_EXISTS,			/* existing breakpoint */
   PLEV_NOBREAK,				/* a break-point was cleared */
+  PLEV_GCNOBREAK,			/* cleared due to clause GC */
   PLEV_FRAMEFINISHED,			/* A watched frame was discarded */
   PL_EV_THREADFINISHED			/* A thread has finished */
 } pl_event_type;
@@ -2351,7 +2357,7 @@ typedef enum
 #endif
 
 #ifdef O_INFERENCE_LIMIT
-#define INFERENCE_NO_LIMIT (~((int64_t)1<<63)) /* Highest value */
+#define INFERENCE_NO_LIMIT 0x7fffffffffffffffLL /* Highest value */
 #endif
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

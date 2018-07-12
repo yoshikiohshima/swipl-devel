@@ -139,6 +139,7 @@
 #define	MSG_SHIFT_POINTER	 125
 #define	MSG_SHIFT_FRAME		 126
 #define	MSG_STACK_OVERFLOW	 127
+#define MSG_UNWIND_EXCEPTION	 128
 
 #define MSG_ATTVAR_LINK		 150
 #define MSG_CALL_RESIDUE_VARS	 151
@@ -173,7 +174,10 @@
 #define MSG_ZIP			 250
 #define MSG_ZIP_STATE		 251
 
+#define MSG_MODULE_REF		 260
+
 #define MSG_TABLING_WORK	 300
+#define MSG_TABLING_MODED	 301
 
 #define CHK_SECURE              1000
 #define CHK_HIGH_ARITY          1001
