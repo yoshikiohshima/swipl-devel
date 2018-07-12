@@ -1627,11 +1627,11 @@ digits([])    --> [].
 
 %!  pack_inquiry(+URL, +DownloadFile, +Info, +Options) is semidet.
 %
-%   Query the status of a package with the central repository. To do
-%   this, we POST a Prolog document containing the URL, info and the
-%   SHA1 hash to  http://www.swi-prolog.org/pack/eval.   The  server
-%   replies using a list of Prolog terms, described below.  The only
-%   member that is always is downloads (which may be 0).
+%   Query the status of a package  with   the  central repository. To do
+%   this, we POST a Prolog document  containing   the  URL, info and the
+%   SHA1 hash to http://www.swi-prolog.org/pack/eval. The server replies
+%   using a list of Prolog terms, described  below. The only member that
+%   is always included is downloads (with default value 0).
 %
 %     - alt_hash(Count, URLs, Hash)
 %       A file with the same base-name, but a different hash was
@@ -2164,7 +2164,7 @@ relay([H|T], Outputs0, Outputs) :-
     ).
 
 relay(error,  Codes) :-
-    set_prolog_flag(thread_message_prefix, false),
+    set_prolog_flag(message_context, []),
     print_error(Codes, []).
 relay(output, Codes) :-
     print_output(Codes, []).

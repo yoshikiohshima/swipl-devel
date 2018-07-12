@@ -19,12 +19,12 @@
 ./packages/plunit/plunit.pdf
 ./packages/semweb/semweb.pdf
 ./packages/cppproxy/cppproxy.pdf
-./packages/space/space.pdf
 ./packages/PDT/pdt.pdf
 ./packages/utf8proc/utf8proc.pdf
 ./packages/archive/archive.pdf
 ./packages/cql/cql.pdf
 ./packages/pcre/pcre.pdf
+./packages/paxos/paxos.pdf
 ./packages/yaml/yaml.pdf
 ./packages/bdb/bdb4pl.html
 ./packages/cpp/pl2cpp.html
@@ -43,7 +43,6 @@
 ./packages/plunit/plunit.html
 ./packages/semweb/semweb.html
 ./packages/cppproxy/cppproxy.html
-./packages/space/space.html
 ./packages/protobufs/protobufs.html
 ./packages/PDT/pdt.html
 ./packages/utf8proc/utf8proc.html
@@ -58,3 +57,4 @@
 ./packages/libedit/libedit.html
 ./packages/pcre/pcre.html
 ./packages/yaml/yaml.html
+./packages/paxos/paxos.html

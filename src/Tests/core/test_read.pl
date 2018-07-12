@@ -3,8 +3,7 @@
     Author:        Jan Wielemaker
     E-mail:        J.Wielemaker@vu.nl
     WWW:           http://www.swi-prolog.org
-    Copyright (c)  2015, University of Amsterdam
-                         VU University Amsterdam
+    Copyright (c)  2011-2016, University of Amsterdam
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without
@@ -33,75 +32,61 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-:- module(test_cgc, [test_cgc/0]).
+:- module(test_read, [test_read/0]).
 :- use_module(library(plunit)).
-:- use_module(library(debug)).
-:- use_module(library(apply)).
 
-/** <module> Test clause garbage collection
+/** <module> Read tests
 
-This module tests clause gc. The current   test is about the interaction
-between predicate marking and (local) stack shifts.
+Test term reading, notably option processing
+
+@author	Jan Wielemaker
 */
 
-test_cgc :-
-	run_tests([ cgc
+test_read :-
+	run_tests([ read_term
 		  ]).
 
-shift_cgc(Steps, Threads) :-
-	length(L, Threads),
-	maplist(count_thread(Steps), L),
-	maplist(join, L).
+:- begin_tests(read_term).
 
-join(Id) :-
-	thread_join(Id, Status),
-	assertion(Status == true).
+test(singletons, Names == ['_a','_A','_0','A']) :-
+	term_string(_, "a(_,_a,_A,_0,A)",
+		    [ singletons(Singletons)
+		    ]),
+	maplist(arg(1), Singletons, Names).
+test(warn_singletons, Messages == [singletons(['_a','A'])]) :-
+	catch_messages(_,
+		       term_string(_, "a(_,_a,_A,_0,A)",
+				   [ singletons(warning)
+				   ]),
+		       Messages).
 
-count_thread(N, Id) :-
-	thread_create(count(N), Id, [ stack_limit(2_000_000) ]).
+:- end_tests(read_term).
 
-count(N) :-
-	between(1, N, _),
-	catch(count2,
-	      error(resource_error(stack), _),
-	      fail).
-count(_).
+%%	catch_messages(+Kind, :Goal, -Messages) is semidet.
 
-count2 :-
-	step,
-	(   maybe(0.01)
-	->  lshift
-	;   true
-	),
-	count2.
+:- thread_local
+	message/1.
+:- meta_predicate
+	catch_messages(?, 0, -).
 
-step :-
-	with_mutex(step, step_).
+catch_messages(Kind, Goal, Messages) :-
+	setup_call_cleanup(
+	    asserta((user:thread_message_hook(Term, Kind, _) :-
+		        \+ \+ (prolog_load_context(variable_names, VarNames),
+			       bind_variable_names(VarNames),
+			       assertz(message(Term)))), Ref),
+	    once(Goal),
+	    erase(Ref)),
+	findall(Msg, retract(message(Msg)), Messages).
 
-:- dynamic counter/1.
+bind_variable_names([]).
+bind_variable_names([Name='$VAR'(Int)|T]) :- !,
+	var_name(Int, Name),
+	bind_variable_names(T).
+bind_variable_names([_|T]) :-
+	bind_variable_names(T).
 
-step_ :-
-	(   retract(counter(X))
-	->  X2 is X+1
-	;   X2 = 1
-	),
-	assert(counter(X2)).
-
-lshift :-
-	statistics(local_shifts, S0),
-	lshift(S0), !.
-
-lshift(S0) :-
-	statistics(local_shifts, S0),
-	lshift(S0).
-lshift(_).
-
-
-:- begin_tests(cgc, [ sto(rational_trees),
-		      condition(current_prolog_flag(threads, true))
-		    ]).
-
-test(shift_cgc) :-
-	shift_cgc(4, 4).
-
-:- end_tests(cgc).
+var_name(N, Name) :-
+	atom_codes(Name, [C]),
+	between(0'A, 0'Z, C),
+	N is C - 0'A.

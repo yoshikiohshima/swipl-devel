@@ -51,6 +51,8 @@
 :- public
     translate_message//1.
 
+:- create_prolog_flag(message_context, [thread], []).
+
 %!  translate_message(+Term)// is det.
 %
 %   Translate a message Term into message lines. The produced lines
@@ -803,12 +805,10 @@ prolog_message(cgc(done(CollectedClauses, _CollectedBytes,
 		 *******************************/
 
 out_of_stack(Context) -->
-    { human_stack_size(Context.localused,  Local),
-      human_stack_size(Context.globalused, Global),
-      human_stack_size(Context.trailused,  Trail),
-      current_prolog_flag(stack_limit, LimitBytes),
-      LimitK is LimitBytes//1024,
-      human_stack_size(LimitK, Limit),
+    { human_stack_size(Context.localused,   Local),
+      human_stack_size(Context.globalused,  Global),
+      human_stack_size(Context.trailused,   Trail),
+      human_stack_size(Context.stack_limit, Limit),
       LCO is (100*(Context.depth - Context.environments))/Context.depth
     },
     [ 'Stack limit (~s) exceeded'-[Limit], nl,
@@ -1493,9 +1493,11 @@ deprecated(set_prolog_stack(_Stack,limit)) -->
                  *******************************/
 
 :- multifile
-    user:message_hook/3.
+    user:message_hook/3,
+    prolog:message_prefix_hook/2.
 :- dynamic
-    user:message_hook/3.
+    user:message_hook/3,
+    prolog:message_prefix_hook/2.
 :- thread_local
     user:thread_message_hook/3.
 
@@ -1582,28 +1584,62 @@ msg_property(warning,
                              '~NWarning: ~w:~d:'-[File,Line], '~N\t')) :- !.
 msg_property(error,   wait(0.1)) :- !.
 
-msg_prefix(debug(_),      '~N% ').
-msg_prefix(warning,           Prefix) :-
-    (   thread_message_id(Id)
-    ->  Prefix = '~NWarning: [Thread ~w] '-Id
-    ;   Prefix = '~NWarning: '
-    ).
-msg_prefix(error,             Prefix) :-
-    (   thread_message_id(Id)
-    ->  Prefix = '~NERROR: [Thread ~w] '-Id
-    ;   Prefix = '~NERROR: '
-    ).
+msg_prefix(debug(_), Prefix) :-
+    msg_context('~N% ', Prefix).
+msg_prefix(warning, Prefix) :-
+    msg_context('~NWarning: ', Prefix).
+msg_prefix(error, Prefix) :-
+    msg_context('~NERROR: ', Prefix).
 msg_prefix(informational, '~N% ').
 msg_prefix(information,   '~N% ').
 
-thread_message_id(Id) :-
+%!  msg_context(+Prefix0, -Prefix) is det.
+%
+%   Add contextual information to a message.   This uses the Prolog flag
+%   `message_context`. Recognised context terms are:
+%
+%     - time
+%     - time(Format)
+%     - thread
+%
+%   In addition, the hook prolog:message_prefix_hook/2   is  called that
+%   allows for additional context information.
+
+msg_context(Prefix0, Prefix) :-
+    current_prolog_flag(message_context, Context),
+    is_list(Context),
+    !,
+    add_message_context(Context, Prefix0, Prefix).
+msg_context(Prefix, Prefix).
+
+add_message_context([], Prefix, Prefix).
+add_message_context([H|T], Prefix0, Prefix) :-
+    (   add_message_context1(H, Prefix0, Prefix1)
+    ->  true
+    ;   Prefix1 = Prefix0
+    ),
+    add_message_context(T, Prefix1, Prefix).
+
+add_message_context1(Context, Prefix0, Prefix) :-
+    prolog:message_prefix_hook(Context, Extra),
+    atomics_to_string([Prefix0, Extra, ' '], Prefix).
+add_message_context1(time, Prefix0, Prefix) :-
+    get_time(Now),
+    format_time(string(S), '%T.%3f ', Now),
+    string_concat(Prefix0, S, Prefix).
+add_message_context1(time(Format), Prefix0, Prefix) :-
+    get_time(Now),
+    format_time(string(S), Format, Now),
+    atomics_to_string([Prefix0, S, ' '], Prefix).
+add_message_context1(thread, Prefix0, Prefix) :-
     thread_self(Id0),
     Id0 \== main,
-    \+ current_prolog_flag(thread_message_prefix, false),
+    !,
     (   atom(Id0)
     ->  Id = Id0
     ;   thread_property(Id0, id(Id))
-    ).
+    ),
+    format(string(Prefix), '~w[Thread ~w] ', [Prefix0, Id]).
 
 %!  print_message_lines(+Stream, +PrefixOrKind, +Lines)
 %

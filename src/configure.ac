@@ -65,6 +65,9 @@ AC_SUBST(HOST_OS_FLAG)
 AC_SUBST(DEFSTARTUP)
 AC_SUBST(EXEFORMAT)
 AC_SUBST(ONEFILE)
+AC_SUBST(DEVPL)
+AC_SUBST(CROSSRUNNER)
+AC_SUBST(WASM)
 
 if test -z "$CIFLAGS"; then
     CIFLAGS="$CPPFLAGS"
@@ -92,7 +95,9 @@ PLLIB=libswipl.a
 MKLIBS=""
 PLVERSION=`cat ../VERSION`
 CNFG=""				dnl Package configuration options
+DEVPL=./swipl.sh
 DEFSTARTUP=.swiplrc
+CROSSRUNNER=""
 
 AC_ARG_ENABLE(mt, [  --disable-mt            Disable multi-threading],
              [case "$enableval" in
@@ -156,7 +161,11 @@ AC_PROG_FGREP
 AC_PROG_CC
 AC_PROG_CXX		dnl used for packages
 LDEXE="$CC"
-AC_CANONICAL_HOST
+if test "x$EMMAKEN_JUST_CONFIGURE" = x1; then
+  host=wasm-emscripten
+else
+  AC_CANONICAL_HOST
+fi
 changequote(,)dnl
 if test "x$PLARCH" = "x"; then
   case "$host" in
@@ -458,7 +467,10 @@ case "$PLARCH" in
     *-win32|*-win64)
         HOST_TOOLCHAIN_FLAG=-DHOST_TOOLCHAIN_MINGW
         HOST_OS_FLAG=-DHOST_OS_WINDOWS
-       ;;
+	;;
+    *wasm*)
+	ax_cv_c_float_words_bigendian=no
+	;;
 esac
 
 AC_C_INLINE
@@ -742,6 +754,13 @@ case "$PLARCH" in
         LDFLAGS="$oldflags"
 	MINGW=true
 	;;
+  *wasm*)
+	CHRPATH=:
+	EXEEXT=.bc		dnl LVMM byte code.  Will be compiled to .js using emcc
+	WASM=true
+	DEVPL=swipl.js
+	CROSSRUNNER=node
+	;;
   *)
 	;;
 esac
@@ -978,42 +997,32 @@ AC_MSG_RESULT(assuming no))
 
 fi	dnl End of MT configuration
 
-
 AC_CHECK_LIB(m, main)
-AC_CHECK_LIB(ncursesw, main)
-if test ! "$ac_cv_lib_ncursesw_main" = "yes"; then
-  AC_CHECK_LIB(ncurses, main)
-  if test ! "$ac_cv_lib_ncurses_main" = "yes"; then
-    AC_CHECK_LIB(curses, main)
-    if test ! "$ac_cv_lib_curses_main" = "yes"; then
-      AC_CHECK_LIB(termcap, main)
-      if test "$ac_cv_lib_termcap_main" = "yes"; then
-	AC_MSG_CHECKING("whether -ltermcap needs -lucb")
-	AC_TRY_LINK([],
-		    [ tgetent();
-		    ],
-		    AC_MSG_RESULT(no)
-		    true,
-		    AC_MSG_RESULT(maybe ...)
-		    checkucb=yes)
-      fi
+dnl -lucb is for Solaris and needed for libtermcap, possibly on some
+dnl old versions.
+if test -d /usr/ucblib; then
+  AC_CHECK_LIB(ucb, rindex)
+fi
+AC_CHECK_LIB(ncursesw, tgetent)
+if test ! "$ac_cv_lib_ncursesw_tgetent" = "yes"; then
+  AC_CHECK_LIB(ncurses, tgetent)
+  if test ! "$ac_cv_lib_ncurses_tgetent" = "yes"; then
+    AC_CHECK_LIB(curses, tgetent)
+    if test ! "$ac_cv_lib_curses_tgetent" = "yes"; then
+      AC_CHECK_LIB(termcap, tgetent)
     fi
   fi
 fi
 
 AC_CHECK_HEADERS(term.h ncurses/term.h curses.h ncurses/curses.h)
 
-if test "$checkucb" = "yes"; then
-    AC_CHECK_LIB(ucb, rindex)
-fi
-
-
 dnl ================================================================
 
 AC_MSG_CHECKING(for cc -c -o)
   cat > conftest.c << _EOP_
-main()
-{ exit(0);
+int
+hello(int n)
+{ return n*2;
 }
 _EOP_
   if ${CC-cc} $CFLAGS -c conftest.c -o conftest.o 1>&5 2>&5 && test -r conftest.o; then

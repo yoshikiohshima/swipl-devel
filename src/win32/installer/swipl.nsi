@@ -841,6 +841,16 @@ Section "YAML library"
   File ${SWIPL}\doc\packages\yaml.html
 SectionEnd
 
+Section "Paxos library"
+  SectionIn 1 3
+  SetOutPath $INSTDIR\library
+  File ${SWIPL}\library\paxos.pl
+# SetOutPath $INSTDIR\bin
+# File ${SWIPL}\bin\paxos.dll
+  SetOutPath $INSTDIR\doc\packages
+  File ${SWIPL}\doc\packages\paxos.html
+SectionEnd
+
 Section "ZLIB package"
   SectionIn 1 3
   SetOutPath $INSTDIR\bin

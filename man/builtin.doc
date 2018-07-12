@@ -364,6 +364,10 @@ directive.
 If this option is not present, it uses the value of the Prolog
 flag \prologflag{qcompile} as default.
 
+    \termitem{optimise}{+Boolean}
+Explicitly set the optimization for compiling this module.  See
+\prologflag{optimise}.
+
     \termitem{redefine_module}{+Action}
 Defines what to do if a file is loaded that provides a module that is
 already loaded from another file. \arg{Action} is one of \const{false}
@@ -2622,6 +2626,12 @@ This hook is called to print the individual elements of a message from
 print_message_lines/3. This hook is used by e.g., library
 \pllib{ansi_term} to colour messages on ANSI-capable terminals.
 
+    \predicate{prolog:message_prefix_hook}{2}{+ContextTerm, -Prefix}
+This hook is called to add context to the message prefix.
+\arg{ContextTerm} is a member of the list provided by the
+\prologflag{message_context}. \arg{Prefix} must be unified with an
+atomic value that is added to the message prefix.
+
     \predicate{message_to_string}{2}{+Term, -String}
 Translates a message term into a string object (see \secref{strings}).
 
@@ -4767,13 +4777,18 @@ input.}
 \begin{description}
     \predicate[det]{wait_for_input}{3}{+ListOfStreams, -ReadyList, +TimeOut}
 Wait for input on one of the streams in \arg{ListOfStreams} and return a
-list of streams on which input is available in \arg{ReadyList}.
-wait_for_input/3 waits for at most \arg{TimeOut} seconds. \arg{TimeOut}
+list of streams on which input is available in \arg{ReadyList}. Each
+element of \arg{ListOfStreams} is either a stream or an integer.
+Integers are consider waitable OS handles. This can be used to wait
+(also) wait for handles that are not associated with Prolog streams such
+as UDP sockets. See tcp_sockopt/2.
+
+This predicate waits for at most \arg{TimeOut} seconds. \arg{TimeOut}
 may be specified as a floating point number to specify fractions of a
-second. If \arg{TimeOut} equals \const{infinite}, wait_for_input/3
-waits indefinitely.  If \arg{Timeout} is 0 or 0.0 this predicate returns
-without waiting.\footnote{Prior to 7.3.23, the integer value `0' was
-the same as \const{infinite}.}
+second. If \arg{TimeOut} equals \const{infinite}, wait_for_input/3 waits
+indefinitely. If \arg{Timeout} is 0 or 0.0 this predicate returns
+without waiting.\footnote{Prior to 7.3.23, the integer value `0' was the
+same as \const{infinite}.}
 
 This predicate can be used to implement timeout while reading and to
 handle input from multiple sources and is typically used to wait for
@@ -5466,10 +5481,16 @@ intended to support tools that manipulate Prolog source text.
 
     \termitem{singletons}{Vars}
 As \const{variable_names}, but only reports the variables occurring only
-once in the \arg{Term} read. Variables starting with an underscore
-(`\chr{_}') are not included in this list. (ISO).  If \arg{Vars} is the
-constant \const{warning}, singleton variables are reported using
-print_message/2. The variables appear in the order they have been read.
+once in the \arg{Term} read (ISO). If \arg{Vars} is the constant
+\const{warning}, singleton variables are reported using print_message/2.
+The variables appear in the order they have been read. The latter option
+provides backward compatibility and is used to read terms from source
+files. Not all singleton variables are reported as a warning.  See
+\secref{singleton} for the rules that apply for warning about a
+singleton variable.\footnote{As of version 7.7.17, \emph{all} variables
+starting with an underscore except for the the truely anonymous variable
+are returned in \arg{Vars}. Older versions only reported those that
+would have been reported if \const{warning} is used.}
 
     \termitem{syntax_errors}{Atom}
 If \const{error} (default), throw an exception on a syntax error. Other
@@ -9443,8 +9464,10 @@ real_time	& [ Wall time, Wall time since last ]
 walltime	& [ Wall time since start, Wall time since last]
 		  (milliseconds, SICStus compatibility) \\
 memory		& [ Total unshared data, free memory ]
-		  (Uses getrusage() if available, otherwise incomplete own
-		  statistics.) \\
+		  (Used is based on \const{ru_idrss} from getrusage().
+		   Free is based on \const{RLIMIT_DATA} from
+		   getrlimit(). Both are reported as zero if the OS
+		   lacks support.) \\
 stacks		& [ global use, local use ] \\
 program		& [ heap, 0 ] \\
 global_stack	& [ global use, global free ] \\
